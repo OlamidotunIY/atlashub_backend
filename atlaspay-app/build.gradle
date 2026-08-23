@@ -20,6 +20,8 @@ dependencies {
     implementation project(':atlaspay-notifications')
     implementation project(':atlaspay-rate-limiter')
     implementation project(':atlaspay-eventbus')
+    implementation project(':atlaspay-admin')
+    implementation project(':atlaspay-auth')
 
     // ── Spring Boot ─────────────────────────────────────────────────────────
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
@@ -58,4 +60,5 @@ dependencies {
 bootJar {
     archiveFileName = 'atlaspay.jar'
 }
+
 
