@@ -21,8 +21,11 @@ public class RedisSlidingWindowRateLimiter implements RateLimiterPort {
     private static final Logger log = LoggerFactory.getLogger(RedisSlidingWindowRateLimiter.class);
 
     private final StringRedisTemplate redisTemplate;
+    
+    @SuppressWarnings("rawtypes")
     private final DefaultRedisScript<List> script;
 
+    @SuppressWarnings("rawtypes")
     public RedisSlidingWindowRateLimiter(StringRedisTemplate redisTemplate) {
         this.redisTemplate = redisTemplate;
         
@@ -32,11 +35,11 @@ public class RedisSlidingWindowRateLimiter implements RateLimiterPort {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public RateLimitResult evaluate(String key, RateLimitRule rule) {
         long nowMs = System.currentTimeMillis();
         long windowSizeMs = rule.windowSizeSeconds() * 1000L;
         
-        // Calculate the current window timestamp
         long currentWindowStartMs = (nowMs / windowSizeMs) * windowSizeMs;
         long previousWindowStartMs = currentWindowStartMs - windowSizeMs;
         
@@ -46,7 +49,7 @@ public class RedisSlidingWindowRateLimiter implements RateLimiterPort {
         List<String> keys = Arrays.asList(currentKey, previousKey);
         
         try {
-            List<Long> result = redisTemplate.execute(
+            List<Long> result = (List<Long>) redisTemplate.execute(
                 script,
                 keys,
                 String.valueOf(rule.windowSizeSeconds()),
@@ -68,11 +71,9 @@ public class RedisSlidingWindowRateLimiter implements RateLimiterPort {
             }
         } catch (DataAccessException e) {
             log.warn("Redis is down or timed out. Failing open for rate limit key: {}", key, e);
-            // Fail-open strategy
             return RateLimitResult.allowed(rule.maxRequests(), rule.maxRequests());
         }
         
-        // Fallback fail-open if script returns malformed result
         return RateLimitResult.allowed(rule.maxRequests(), rule.maxRequests());
     }
 }

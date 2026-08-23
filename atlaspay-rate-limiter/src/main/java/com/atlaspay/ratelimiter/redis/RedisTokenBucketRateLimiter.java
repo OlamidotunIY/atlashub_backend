@@ -21,8 +21,10 @@ public class RedisTokenBucketRateLimiter implements RateLimiterPort {
     private static final Logger log = LoggerFactory.getLogger(RedisTokenBucketRateLimiter.class);
     
     private final StringRedisTemplate redisTemplate;
+    @SuppressWarnings("rawtypes")
     private final DefaultRedisScript<List> script;
 
+    @SuppressWarnings("rawtypes")
     public RedisTokenBucketRateLimiter(StringRedisTemplate redisTemplate) {
         this.redisTemplate = redisTemplate;
         
@@ -32,12 +34,13 @@ public class RedisTokenBucketRateLimiter implements RateLimiterPort {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public RateLimitResult evaluate(String key, RateLimitRule rule) {
         List<String> keys = Collections.singletonList("rate_limit:tb:" + key);
         long now = System.currentTimeMillis() / 1000;
         
         try {
-            List<Long> result = redisTemplate.execute(
+            List<Long> result = (List<Long>) redisTemplate.execute(
                 script,
                 keys,
                 String.valueOf(rule.capacity()),
