@@ -1,6 +1,6 @@
-package com.atlaspay.notifications.infrastructure.messaging;
+package com.atlaspay.notifications.infrastructure.messaging.consumer;
 
-import com.atlaspay.notifications.infrastructure.messaging.event.VirtualAccountActivatedNotificationEvent;
+import com.atlaspay.notifications.infrastructure.messaging.dto.VirtualAccountActivatedNotificationEvent;
 import com.atlaspay.shared.event.BaseKafkaEventListener;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;

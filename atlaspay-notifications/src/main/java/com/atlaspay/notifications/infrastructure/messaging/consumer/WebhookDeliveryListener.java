@@ -1,4 +1,4 @@
-package com.atlaspay.notifications.infrastructure.messaging;
+package com.atlaspay.notifications.infrastructure.messaging.consumer;
 
 import com.atlaspay.shared.event.WebhookDeliveryRequestedEvent;
 import com.atlaspay.shared.event.EnvelopedDomainEvent;

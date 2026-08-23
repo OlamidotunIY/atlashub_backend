@@ -1,4 +1,4 @@
-package com.atlaspay.notifications.infrastructure.adapter;
+package com.atlaspay.notifications.infrastructure.external.smtp.adapter;
 
 import com.atlaspay.notifications.application.port.EmailSenderPort;
 import jakarta.mail.MessagingException;

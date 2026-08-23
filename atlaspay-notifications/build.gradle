@@ -1,9 +1,12 @@
 dependencies {
     implementation project(':atlaspay-shared-kernel')
+    implementation project(':atlaspay-rate-limiter')
     
     // Spring Boot
     implementation 'org.springframework.boot:spring-boot-starter-mail'
     implementation 'org.springframework.boot:spring-boot-starter-websocket'
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
     implementation 'org.springframework.kafka:spring-kafka'
     implementation 'org.springframework.boot:spring-boot-starter-json'
 }
+

@@ -1,4 +1,4 @@
-package com.atlaspay.notifications.infrastructure.messaging;
+package com.atlaspay.notifications.infrastructure.messaging.consumer;
 
 import com.atlaspay.notifications.application.usecase.SendVerificationEmailUseCase;
 import com.atlaspay.shared.event.BaseKafkaEventListener;
