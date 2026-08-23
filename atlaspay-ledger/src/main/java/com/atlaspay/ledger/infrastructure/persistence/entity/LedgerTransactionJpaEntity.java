@@ -1,4 +1,4 @@
-package com.atlaspay.ledger.infrastructure.entity;
+package com.atlaspay.ledger.infrastructure.persistence.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;

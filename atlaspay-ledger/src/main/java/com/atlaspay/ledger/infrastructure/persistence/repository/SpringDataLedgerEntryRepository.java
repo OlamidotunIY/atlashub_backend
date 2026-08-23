@@ -1,6 +1,6 @@
-package com.atlaspay.ledger.infrastructure.repository;
+package com.atlaspay.ledger.infrastructure.persistence.repository;
 
-import com.atlaspay.ledger.infrastructure.entity.LedgerEntryJpaEntity;
+import com.atlaspay.ledger.infrastructure.persistence.entity.LedgerEntryJpaEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

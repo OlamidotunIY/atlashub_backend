@@ -1,7 +1,7 @@
-package com.atlaspay.ledger.infrastructure.mapper;
+package com.atlaspay.ledger.infrastructure.persistence.mapper;
 
 import com.atlaspay.ledger.domain.model.BalanceSnapshot;
-import com.atlaspay.ledger.infrastructure.entity.BalanceSnapshotJpaEntity;
+import com.atlaspay.ledger.infrastructure.persistence.entity.BalanceSnapshotJpaEntity;
 import com.atlaspay.shared.money.CurrencyCode;
 import com.atlaspay.shared.money.Money;
 import org.springframework.stereotype.Component;

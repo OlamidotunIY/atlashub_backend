@@ -1,9 +1,9 @@
-package com.atlaspay.ledger.infrastructure.mapper;
+package com.atlaspay.ledger.infrastructure.persistence.mapper;
 
 import com.atlaspay.ledger.domain.model.EntryType;
 import com.atlaspay.ledger.domain.model.LedgerEntry;
 import com.atlaspay.ledger.domain.model.TransactionReference;
-import com.atlaspay.ledger.infrastructure.entity.LedgerEntryJpaEntity;
+import com.atlaspay.ledger.infrastructure.persistence.entity.LedgerEntryJpaEntity;
 import com.atlaspay.shared.money.CurrencyCode;
 import com.atlaspay.shared.money.Money;
 import java.math.BigDecimal;

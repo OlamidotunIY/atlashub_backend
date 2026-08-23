@@ -1,8 +1,8 @@
-package com.atlaspay.ledger.infrastructure.mapper;
+package com.atlaspay.ledger.infrastructure.persistence.mapper;
 
 import com.atlaspay.ledger.domain.model.LedgerTransaction;
-import com.atlaspay.ledger.infrastructure.entity.LedgerEntryJpaEntity;
-import com.atlaspay.ledger.infrastructure.entity.LedgerTransactionJpaEntity;
+import com.atlaspay.ledger.infrastructure.persistence.entity.LedgerEntryJpaEntity;
+import com.atlaspay.ledger.infrastructure.persistence.entity.LedgerTransactionJpaEntity;
 import org.springframework.stereotype.Component;
 
 import java.util.List;

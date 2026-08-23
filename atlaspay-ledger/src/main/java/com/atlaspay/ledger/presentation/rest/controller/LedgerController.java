@@ -1,4 +1,4 @@
-package com.atlaspay.ledger.presentation.rest;
+package com.atlaspay.ledger.presentation.rest.controller;
 
 import com.atlaspay.ledger.application.dto.BalanceDto;
 import com.atlaspay.ledger.application.dto.LedgerHistoryDto;
