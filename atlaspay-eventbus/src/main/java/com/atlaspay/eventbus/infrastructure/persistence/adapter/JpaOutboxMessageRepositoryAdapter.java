@@ -1,9 +1,9 @@
-package com.atlaspay.eventbus.infrastructure.adapter;
+package com.atlaspay.eventbus.infrastructure.persistence.adapter;
 
 import com.atlaspay.eventbus.domain.model.OutboxMessage;
 import com.atlaspay.eventbus.domain.model.OutboxStatus;
 import com.atlaspay.eventbus.domain.repository.OutboxMessageRepository;
-import com.atlaspay.eventbus.infrastructure.entity.OutboxMessageJpaEntity;
+import com.atlaspay.eventbus.infrastructure.persistence.entity.OutboxMessageJpaEntity;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 

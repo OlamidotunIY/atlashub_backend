@@ -1,4 +1,4 @@
-package com.atlaspay.eventbus.infrastructure.listener;
+package com.atlaspay.eventbus.infrastructure.messaging.consumer.listener;
 
 import com.atlaspay.eventbus.application.command.SaveOutboxMessageCommand;
 import com.atlaspay.eventbus.application.usecase.SaveOutboxMessageUseCase;

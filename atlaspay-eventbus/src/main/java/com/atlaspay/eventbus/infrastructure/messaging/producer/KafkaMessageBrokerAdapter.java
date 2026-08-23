@@ -1,4 +1,4 @@
-package com.atlaspay.eventbus.infrastructure.messaging;
+package com.atlaspay.eventbus.infrastructure.messaging.producer;
 
 import com.atlaspay.eventbus.application.port.MessageBrokerPort;
 import org.slf4j.Logger;
