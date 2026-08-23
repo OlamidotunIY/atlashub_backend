@@ -1,4 +1,4 @@
-package com.atlaspay.accounts.presentation;
+package com.atlaspay.accounts.presentation.rest.controller;
 
 import com.atlaspay.accounts.application.command.IssueVirtualAccountCommand;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -9,6 +9,7 @@ import com.atlaspay.accounts.application.usecase.ForceCloseAccountsUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.atlaspay.shared.dto.ApiResponse;
 
 @RestController
 @RequestMapping("/api/v1/dedicated_account")
@@ -21,7 +22,7 @@ public class VirtualAccountController {
     private final ForceCloseAccountsUseCase forceCloseAccountsUseCase;
 
     @PostMapping
-    public ResponseEntity<String> issueCustomerAccount(
+    public ResponseEntity<ApiResponse<String>> issueCustomerAccount(
             @RequestHeader("X-Merchant-Id") String merchantId,
             @RequestBody IssueVirtualAccountCommand command) {
         
@@ -34,12 +35,13 @@ public class VirtualAccountController {
                 command.idempotencyKey()
         ));
         
-        return ResponseEntity.accepted().body(String.valueOf(accountId));
+        return ResponseEntity.accepted().body(new ApiResponse<>(true, "Virtual account issued successfully", String.valueOf(accountId), null));
     }
 
     @GetMapping
-    public ResponseEntity<?> listAccounts(@RequestHeader("X-Merchant-Id") String merchantId) {
+    public ResponseEntity<ApiResponse<?>> listAccounts(@RequestHeader("X-Merchant-Id") String merchantId) {
         var accounts = getVirtualAccountsUseCase.execute(new GetVirtualAccountsQuery(Long.valueOf(merchantId)));
-        return ResponseEntity.ok(accounts);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Accounts retrieved successfully", accounts, null));
     }
 }
+

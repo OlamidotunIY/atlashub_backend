@@ -1,4 +1,4 @@
-package com.atlaspay.accounts.infrastructure.messaging;
+package com.atlaspay.accounts.infrastructure.messaging.consumer;
 
 import com.atlaspay.accounts.application.command.ForceCloseAccountsCommand;
 import com.atlaspay.accounts.application.usecase.ForceCloseAccountsUseCase;

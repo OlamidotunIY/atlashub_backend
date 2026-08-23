@@ -1,4 +1,4 @@
-package com.atlaspay.accounts.infrastructure.entity;
+package com.atlaspay.accounts.infrastructure.persistence.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

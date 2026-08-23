@@ -1,8 +1,8 @@
-package com.atlaspay.accounts.infrastructure.mapper;
+package com.atlaspay.accounts.infrastructure.persistence.mapper;
 
 import com.atlaspay.accounts.domain.model.AccountStatus;
 import com.atlaspay.accounts.domain.model.VirtualAccount;
-import com.atlaspay.accounts.infrastructure.entity.VirtualAccountEntity;
+import com.atlaspay.accounts.infrastructure.persistence.entity.VirtualAccountEntity;
 import com.atlaspay.shared.domain.valueobject.NUBAN;
 import com.atlaspay.shared.money.CurrencyCode;
 import java.time.ZonedDateTime;

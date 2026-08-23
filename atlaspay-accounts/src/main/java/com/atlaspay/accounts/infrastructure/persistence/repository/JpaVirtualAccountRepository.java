@@ -1,6 +1,6 @@
-package com.atlaspay.accounts.infrastructure.repository;
+package com.atlaspay.accounts.infrastructure.persistence.repository;
 
-import com.atlaspay.accounts.infrastructure.entity.VirtualAccountEntity;
+import com.atlaspay.accounts.infrastructure.persistence.entity.VirtualAccountEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
