@@ -1,7 +1,7 @@
-package com.atlaspay.auth.infrastructure.mapper;
+package com.atlaspay.auth.infrastructure.persistence.mapper;
 
 import com.atlaspay.auth.domain.model.Verification;
-import com.atlaspay.auth.infrastructure.entity.VerificationJpaEntity;
+import com.atlaspay.auth.infrastructure.persistence.entity.VerificationJpaEntity;
 import org.springframework.stereotype.Component;
 
 @Component

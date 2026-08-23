@@ -1,4 +1,4 @@
-package com.atlaspay.auth.infrastructure.entity;
+package com.atlaspay.auth.infrastructure.persistence.entity;
 
 import com.atlaspay.auth.domain.model.AuthProvider;
 import com.atlaspay.auth.domain.model.AuthStatus;

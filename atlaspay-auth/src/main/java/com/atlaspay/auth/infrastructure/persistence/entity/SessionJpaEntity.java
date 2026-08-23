@@ -1,7 +1,7 @@
-package com.atlaspay.auth.infrastructure.entity;
+package com.atlaspay.auth.infrastructure.persistence.entity;
 
-import com.atlaspay.auth.domain.model.VerificationStatus;
-import com.atlaspay.auth.domain.model.VerificationType;
+import com.atlaspay.auth.domain.model.PrincipalType;
+import com.atlaspay.auth.domain.model.SessionStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -18,49 +18,46 @@ import lombok.NoArgsConstructor;
 import java.time.ZonedDateTime;
 
 @Entity
-@Table(name = "verifications", indexes = {
-        @Index(name = "idx_verification_identifier", columnList = "identifier"),
-        @Index(name = "idx_verification_type_value_status", columnList = "type, value, status")
+@Table(name = "sessions", indexes = {
+        @Index(name = "idx_session_token", columnList = "token"),
+        @Index(name = "idx_session_auth_account_status", columnList = "authAccountId, status")
 })
 @Getter
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-public class VerificationJpaEntity {
+public class SessionJpaEntity {
     @Id
     private Long id;
 
+    @Column(nullable = false)
     private Long authAccountId;
 
     @Column(nullable = false)
-    private String identifier;
-
-    @Column(nullable = false)
-    private String value;
-
-    @Column(nullable = false)
-    private String code;
+    private Long principalId;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private VerificationType type;
+    private PrincipalType principalType;
+
+    @Column(nullable = false, unique = true)
+    private String token;
+
+    @Column(nullable = false)
+    private String ipAddress;
+
+    private String userAgent;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private VerificationStatus status;
-    
-    @Column(nullable = false)
-    private int attempts;
-    
-    @Column(nullable = false)
-    private int maxAttempts;
+    private SessionStatus status;
 
     @Column(nullable = false, updatable = false)
     private ZonedDateTime createdAt;
 
     @Column(nullable = false)
     private ZonedDateTime expiresAt;
-    
-    private ZonedDateTime verifiedAt;
+
+    private ZonedDateTime revokedAt;
 }
 

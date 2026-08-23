@@ -1,7 +1,7 @@
-package com.atlaspay.auth.infrastructure.entity;
+package com.atlaspay.auth.infrastructure.persistence.entity;
 
-import com.atlaspay.auth.domain.model.PrincipalType;
-import com.atlaspay.auth.domain.model.SessionStatus;
+import com.atlaspay.auth.domain.model.VerificationStatus;
+import com.atlaspay.auth.domain.model.VerificationType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -18,46 +18,49 @@ import lombok.NoArgsConstructor;
 import java.time.ZonedDateTime;
 
 @Entity
-@Table(name = "sessions", indexes = {
-        @Index(name = "idx_session_token", columnList = "token"),
-        @Index(name = "idx_session_auth_account_status", columnList = "authAccountId, status")
+@Table(name = "verifications", indexes = {
+        @Index(name = "idx_verification_identifier", columnList = "identifier"),
+        @Index(name = "idx_verification_type_value_status", columnList = "type, value, status")
 })
 @Getter
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-public class SessionJpaEntity {
+public class VerificationJpaEntity {
     @Id
     private Long id;
 
-    @Column(nullable = false)
     private Long authAccountId;
 
     @Column(nullable = false)
-    private Long principalId;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    private PrincipalType principalType;
-
-    @Column(nullable = false, unique = true)
-    private String token;
+    private String identifier;
 
     @Column(nullable = false)
-    private String ipAddress;
+    private String value;
 
-    private String userAgent;
+    @Column(nullable = false)
+    private String code;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private SessionStatus status;
+    private VerificationType type;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private VerificationStatus status;
+    
+    @Column(nullable = false)
+    private int attempts;
+    
+    @Column(nullable = false)
+    private int maxAttempts;
 
     @Column(nullable = false, updatable = false)
     private ZonedDateTime createdAt;
 
     @Column(nullable = false)
     private ZonedDateTime expiresAt;
-
-    private ZonedDateTime revokedAt;
+    
+    private ZonedDateTime verifiedAt;
 }
 

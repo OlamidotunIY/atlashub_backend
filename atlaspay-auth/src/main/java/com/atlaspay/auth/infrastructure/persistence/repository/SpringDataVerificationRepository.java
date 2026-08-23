@@ -1,8 +1,8 @@
-package com.atlaspay.auth.infrastructure.repository;
+package com.atlaspay.auth.infrastructure.persistence.repository;
 
 import com.atlaspay.auth.domain.model.VerificationStatus;
 import com.atlaspay.auth.domain.model.VerificationType;
-import com.atlaspay.auth.infrastructure.entity.VerificationJpaEntity;
+import com.atlaspay.auth.infrastructure.persistence.entity.VerificationJpaEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;

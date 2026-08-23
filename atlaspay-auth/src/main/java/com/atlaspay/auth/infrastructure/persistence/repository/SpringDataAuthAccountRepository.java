@@ -1,7 +1,7 @@
-package com.atlaspay.auth.infrastructure.repository;
+package com.atlaspay.auth.infrastructure.persistence.repository;
 
 import com.atlaspay.auth.domain.model.PrincipalType;
-import com.atlaspay.auth.infrastructure.entity.AuthAccountJpaEntity;
+import com.atlaspay.auth.infrastructure.persistence.entity.AuthAccountJpaEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
