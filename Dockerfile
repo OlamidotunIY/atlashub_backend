@@ -24,6 +24,9 @@ COPY atlaspay-notifications/build.gradle         atlaspay-notifications/
 COPY atlaspay-rate-limiter/build.gradle          atlaspay-rate-limiter/
 COPY atlaspay-eventbus/build.gradle              atlaspay-eventbus/
 COPY atlaspay-app/build.gradle                   atlaspay-app/
+COPY atlaspay-admin/build.gradle               atlaspay-admin/
+COPY atlaspay-auth/build.gradle                atlaspay-auth/
+COPY atlaspay-audit/build.gradle               atlaspay-audit/
 
 # Download dependencies (cached unless build files change)
 RUN chmod +x gradlew && ./gradlew dependencies --no-daemon --quiet || true
@@ -80,3 +83,4 @@ ENV OTEL_OPTS="-javaagent:/app/otel-agent.jar \
                -Dotel.traces.exporter=${OTEL_EXPORTER:-none}"
 
 ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS $OTEL_OPTS org.springframework.boot.loader.launch.JarLauncher"]
+
