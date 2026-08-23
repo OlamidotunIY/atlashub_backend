@@ -1,4 +1,4 @@
-package com.atlaspay.admin.infrastructure.adapter.external;
+package com.atlaspay.admin.infrastructure.external.cloudflare.adapter;
 
 import com.atlaspay.admin.application.port.out.CloudflareEmailPort;
 import org.slf4j.Logger;

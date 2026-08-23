@@ -1,9 +1,11 @@
-package com.atlaspay.admin.infrastructure.mapper;
+package com.atlaspay.admin.infrastructure.persistence.mapper;
 
 import com.atlaspay.admin.domain.model.Admin;
-import com.atlaspay.admin.infrastructure.entity.AdminJpaEntity;
+import com.atlaspay.admin.infrastructure.persistence.entity.AdminJpaEntity;
 import com.atlaspay.shared.domain.valueobject.EmailAddress;
 import org.springframework.stereotype.Component;
+
+import java.util.HashSet;
 
 @Component
 public class AdminMapper {
@@ -13,16 +15,14 @@ public class AdminMapper {
             return null;
         }
 
-        EmailAddress companyEmail = entity.getCompanyEmail() != null ? new EmailAddress(entity.getCompanyEmail()) : null;
-
         return new Admin(
             entity.getId(),
-            entity.getEmployeeCode(),
-            entity.getFullName(),
-            new EmailAddress(entity.getPersonalEmail()),
-            companyEmail,
+            entity.getUsername(),
+            new EmailAddress(entity.getEmail()),
             entity.getRole(),
-            entity.getStatus()
+            entity.getStatus(),
+            entity.getCreatedBy(),
+            entity.getPermissions() != null ? new HashSet<>(entity.getPermissions()) : new HashSet<>()
         );
     }
 
@@ -33,16 +33,12 @@ public class AdminMapper {
 
         AdminJpaEntity entity = new AdminJpaEntity();
         entity.setId(domain.getId());
-        entity.setEmployeeCode(domain.getEmployeeCode());
-        entity.setFullName(domain.getFullName());
-        entity.setPersonalEmail(domain.getPersonalEmail().value());
-        
-        if (domain.getCompanyEmail() != null) {
-            entity.setCompanyEmail(domain.getCompanyEmail().value());
-        }
-        
+        entity.setUsername(domain.getUsername());
+        entity.setEmail(domain.getEmail().value());
         entity.setRole(domain.getRole());
         entity.setStatus(domain.getStatus());
+        entity.setCreatedBy(domain.getCreatedBy());
+        entity.setPermissions(domain.getPermissions() != null ? new HashSet<>(domain.getPermissions()) : new HashSet<>());
         
         return entity;
     }

@@ -1,21 +1,21 @@
 package com.atlaspay.admin.domain.exception;
 
 import com.atlaspay.shared.exception.ErrorCode;
-import org.springframework.http.HttpStatus;
 
 public enum AdminErrorCode implements ErrorCode {
-    ADMIN_NOT_FOUND("ADM_001", "Admin not found", HttpStatus.NOT_FOUND),
-    ADMIN_EMAIL_ALREADY_EXISTS("ADM_002", "Admin personal email already exists", HttpStatus.CONFLICT),
-    COMPANY_EMAIL_ALREADY_GENERATED("ADM_003", "Admin already has a company email", HttpStatus.CONFLICT);
+    ADMIN_NOT_FOUND("ADM_001", "Admin not found", 404),
+    ADMIN_USERNAME_ALREADY_EXISTS("ADM_002", "Admin username already exists", 409),
+    MASTER_ADMIN_ALREADY_EXISTS("ADM_003", "Master admin already exists", 409),
+    INSUFFICIENT_PERMISSIONS("ADM_004", "Insufficient permissions for this action", 403);
 
     private final String code;
     private final String defaultMessage;
-    private final HttpStatus status;
+    private final int statusCode;
 
-    AdminErrorCode(String code, String defaultMessage, HttpStatus status) {
+    AdminErrorCode(String code, String defaultMessage, int statusCode) {
         this.code = code;
         this.defaultMessage = defaultMessage;
-        this.status = status;
+        this.statusCode = statusCode;
     }
 
     public String getCode() {
@@ -26,8 +26,7 @@ public enum AdminErrorCode implements ErrorCode {
         return defaultMessage;
     }
 
-    public HttpStatus getHttpStatus() {
-        return status;
+    public int getStatusCode() {
+        return statusCode;
     }
 }
-
