@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
+@io.swagger.v3.oas.annotations.tags.Tag(name = "Ledger", description = "Core ledger balances and entries")
 @RequestMapping("/api/v1/balance")
 public class LedgerController {
 
@@ -67,3 +68,4 @@ public class LedgerController {
         return ResponseEntity.ok(new ApiResponse<>(true, "Balance ledger retrieved", result.content(), meta));
     }
 }
+

@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
+@io.swagger.v3.oas.annotations.tags.Tag(name = "Webhooks", description = "External webhook receivers")
 @RequestMapping("/api/v1/accounts/webhooks/anchor")
 public class AnchorWebhookController {
 
@@ -42,3 +43,4 @@ public class AnchorWebhookController {
         return ResponseEntity.ok(new ApiResponse<>(true, "Webhook processed", null, null));
     }
 }
+

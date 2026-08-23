@@ -11,6 +11,7 @@ import java.security.Principal;
 import com.atlaspay.notifications.presentation.rest.response.WsTicketResponseDto;
 
 @RestController
+@io.swagger.v3.oas.annotations.tags.Tag(name = "WebSockets", description = "WebSocket ticket generation for realtime events")
 @RequestMapping("/api/v1/ws")
 public class WsTicketController {
 
@@ -32,4 +33,5 @@ public class WsTicketController {
         return ResponseEntity.ok(new ApiResponse<>(true, "Ticket generated", new WsTicketResponseDto(ticket), null));
     }
 }
+
 

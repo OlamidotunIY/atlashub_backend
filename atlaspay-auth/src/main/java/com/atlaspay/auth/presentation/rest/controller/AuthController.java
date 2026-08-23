@@ -39,6 +39,7 @@ import com.atlaspay.auth.presentation.rest.request.RefreshTokenRequestDto;
 import com.atlaspay.auth.presentation.rest.request.LogoutRequestDto;
 
 @RestController
+@io.swagger.v3.oas.annotations.tags.Tag(name = "Authentication", description = "Authentication and session management")
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
 public class AuthController {
@@ -173,3 +174,4 @@ public class AuthController {
         return request.getHeader("User-Agent");
     }
 }
+
