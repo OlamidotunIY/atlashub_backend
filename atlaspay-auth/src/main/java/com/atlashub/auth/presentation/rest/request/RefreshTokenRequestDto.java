@@ -1,0 +1,7 @@
+package com.atlashub.auth.presentation.rest.request;
+
+import jakarta.validation.constraints.NotBlank;
+
+public record RefreshTokenRequestDto(
+        @NotBlank String refreshToken
+) {}

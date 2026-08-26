@@ -1,0 +1,21 @@
+package com.atlashub.identity.presentation.rest.request;
+
+import com.atlashub.identity.domain.model.StaffSize;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import java.math.BigDecimal;
+
+public record CompleteComplianceProfileRequest(
+    String description,
+    
+    @NotNull(message = "Staff size is required")
+    StaffSize staffSize,
+    
+    @NotBlank(message = "Industry is required")
+    String industry,
+    
+    @NotBlank(message = "Category is required")
+    String category,
+    
+    AnnualProjectedSalesVolumeDto annualProjectedSalesVolume
+) {}

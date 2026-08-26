@@ -45,8 +45,10 @@ spring:
       mail:
         smtp:
           auth: true
-          starttls:
+          ssl:
             enable: true
+          starttls:
+            enable: false
 
 # ── Actuator ──────────────────────────────────────────────────────────────────
 management:
@@ -96,7 +98,7 @@ atlaspay:
 logging:
   level:
     root: INFO
-    com.atlaspay: DEBUG
+    com.atlashub: DEBUG
     org.hibernate.SQL: INFO
     org.apache.kafka: WARN
   config: classpath:logback-spring.xml

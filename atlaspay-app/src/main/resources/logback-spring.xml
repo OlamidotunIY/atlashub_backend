@@ -33,7 +33,7 @@
         <root level="INFO">
             <appender-ref ref="CONSOLE"/>
         </root>
-        <logger name="com.atlaspay" level="DEBUG" additivity="false">
+        <logger name="com.atlashub" level="DEBUG" additivity="false">
             <appender-ref ref="CONSOLE"/>
         </logger>
         <logger name="org.hibernate.SQL" level="INFO"/>
@@ -45,7 +45,7 @@
         <root level="INFO">
             <appender-ref ref="JSON_CONSOLE"/>
         </root>
-        <logger name="com.atlaspay" level="INFO" additivity="false">
+        <logger name="com.atlashub" level="INFO" additivity="false">
             <appender-ref ref="JSON_CONSOLE"/>
         </logger>
     </springProfile>

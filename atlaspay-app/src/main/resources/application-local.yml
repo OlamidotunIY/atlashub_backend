@@ -9,5 +9,5 @@ spring:
 
 logging:
   level:
-    com.atlaspay: DEBUG
+    com.atlashub: DEBUG
     org.hibernate.SQL: INFO

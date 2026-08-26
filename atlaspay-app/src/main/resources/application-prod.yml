@@ -17,4 +17,4 @@ spring:
 logging:
   level:
     root: INFO
-    com.atlaspay: INFO
+    com.atlashub: INFO
