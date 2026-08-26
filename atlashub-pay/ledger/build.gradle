@@ -1,0 +1,12 @@
+dependencies {
+    implementation 'io.swagger.core.v3:swagger-annotations:2.2.20'
+    implementation project(':atlashub-shared')
+
+    // Spring context for @Service and @Transactional
+    implementation 'org.springframework.boot:spring-boot-starter'
+    // Spring Data JPA for persistence annotations and transaction management
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    // Spring Web for REST controllers
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+}
+
