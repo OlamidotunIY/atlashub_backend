@@ -1,22 +1,43 @@
-rootProject.name = 'atlaspay'
+rootProject.name = 'atlashub'
 
-include 'atlaspay-shared-kernel'
-include 'atlaspay-identity'
-include 'atlaspay-accounts'
-include 'atlaspay-ledger'
-include 'atlaspay-transfers'
-include 'atlaspay-charges'
-include 'atlaspay-subscriptions'
-include 'atlaspay-escrow'
-include 'atlaspay-settlement'
-include 'atlaspay-transaction-splits'
-include 'atlaspay-transactions-query'
-include 'atlaspay-notifications'
-include 'atlaspay-rate-limiter'
-include 'atlaspay-eventbus'
-include 'atlaspay-app'
-include 'atlaspay-audit'
-include 'atlaspay-admin'
-include 'atlaspay-auth'
+// Shared
+include 'atlashub-shared'
 
+// Platform
+include 'atlashub-platform'
+include 'atlashub-platform:identity'
+include 'atlashub-platform:auth'
+include 'atlashub-platform:catalog'
+include 'atlashub-platform:admin'
 
+// Payments
+include 'atlashub-pay'
+include 'atlashub-pay:accounts'
+include 'atlashub-pay:ledger'
+include 'atlashub-pay:transfers'
+include 'atlashub-pay:charges'
+include 'atlashub-pay:subscriptions'
+include 'atlashub-pay:escrow'
+include 'atlashub-pay:settlement'
+include 'atlashub-pay:splits'
+include 'atlashub-pay:transactions-query'
+
+// Commerce
+include 'atlashub-commerce'
+include 'atlashub-commerce:inventory'
+include 'atlashub-commerce:orders'
+include 'atlashub-commerce:storefront'
+
+// Logistics
+include 'atlashub-logistics'
+include 'atlashub-logistics:shipping'
+
+// Infrastructure
+include 'atlashub-infrastructure'
+include 'atlashub-infrastructure:eventbus'
+include 'atlashub-infrastructure:notifications'
+include 'atlashub-infrastructure:rate-limiter'
+include 'atlashub-infrastructure:audit'
+
+// App
+include 'atlashub-app'
