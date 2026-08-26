@@ -1,26 +1,26 @@
-# AtlasPay — Local Development Stack
+# atlashub — Local Development Stack
 # Usage: docker compose up -d
 # Services: MySQL, Redis, Kafka (+ Zookeeper), Prometheus, Grafana
 #
 # All data is persisted in named volumes so containers can be recreated without data loss.
 # Stop and remove everything (including volumes): docker compose down -v
 
-name: atlaspay
+name: atlashub
 
 services:
 
   # ── MySQL 8.x ──────────────────────────────────────────────────────────────
   mysql:
     image: mysql:8.0
-    container_name: atlaspay-mysql
+    container_name: atlashub-mysql
     restart: unless-stopped
     networks:
-      - atlaspay-net
+      - atlashub-net
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: atlaspay
-      MYSQL_USER: atlaspay
-      MYSQL_PASSWORD: atlaspay
+      MYSQL_DATABASE: atlashub
+      MYSQL_USER: atlashub
+      MYSQL_PASSWORD: atlashub
     ports:
       - "3306:3306"
     volumes:
@@ -31,7 +31,7 @@ services:
       --sql-mode=STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO
       --default-time-zone=+00:00
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "atlaspay", "-patlaspay"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "atlashub", "-patlashub"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -40,10 +40,10 @@ services:
   # ── Redis ──────────────────────────────────────────────────────────────────
   redis:
     image: redis:7.2-alpine
-    container_name: atlaspay-redis
+    container_name: atlashub-redis
     restart: unless-stopped
     networks:
-      - atlaspay-net
+      - atlashub-net
     ports:
       - "6379:6379"
     volumes:
@@ -58,10 +58,10 @@ services:
   # ── Kafka (KRaft Mode) ───────────────────────────────────────────────────────
   kafka:
     image: confluentinc/cp-kafka:7.7.1
-    container_name: atlaspay-kafka
+    container_name: atlashub-kafka
     restart: unless-stopped
     networks:
-      - atlaspay-net
+      - atlashub-net
     ports:
       - "9092:9092"   # external (host machine) access
       - "29092:29092" # internal (container-to-container) access
@@ -93,27 +93,27 @@ services:
   # ── Kafka UI (developer convenience) ──────────────────────────────────────
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
-    container_name: atlaspay-kafka-ui
+    container_name: atlashub-kafka-ui
     restart: unless-stopped
     networks:
-      - atlaspay-net
+      - atlashub-net
     depends_on:
       kafka:
         condition: service_healthy
     ports:
       - "8090:8080"
     environment:
-      KAFKA_CLUSTERS_0_NAME: atlaspay-local
+      KAFKA_CLUSTERS_0_NAME: atlashub-local
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
 
   # ── Tempo (Distributed Tracing) ─────────────────────────────────────────────
   tempo:
     image: grafana/tempo:2.6.1
     user: "0:0"
-    container_name: atlaspay-tempo
+    container_name: atlashub-tempo
     restart: unless-stopped
     networks:
-      - atlaspay-net
+      - atlashub-net
     command: [ "-config.file=/etc/tempo.yaml" ]
     volumes:
       - ./docker/tempo/tempo.yml:/etc/tempo.yaml
@@ -131,10 +131,10 @@ services:
   # ── Prometheus ─────────────────────────────────────────────────────────────
   prometheus:
     image: prom/prometheus:v2.54.1
-    container_name: atlaspay-prometheus
+    container_name: atlashub-prometheus
     restart: unless-stopped
     networks:
-      - atlaspay-net
+      - atlashub-net
     ports:
       - "9090:9090"
     volumes:
@@ -154,10 +154,10 @@ services:
   # ── Grafana ────────────────────────────────────────────────────────────────
   grafana:
     image: grafana/grafana:11.4.0
-    container_name: atlaspay-grafana
+    container_name: atlashub-grafana
     restart: unless-stopped
     networks:
-      - atlaspay-net
+      - atlashub-net
     depends_on:
       prometheus:
         condition: service_healthy
@@ -165,7 +165,7 @@ services:
       - "3000:3000"
     environment:
       GF_SECURITY_ADMIN_USER: admin
-      GF_SECURITY_ADMIN_PASSWORD: atlaspay
+      GF_SECURITY_ADMIN_PASSWORD: atlashub
       GF_USERS_ALLOW_SIGN_UP: "false"
       GF_FEATURE_TOGGLES_ENABLE: publicDashboards
     volumes:
@@ -177,16 +177,16 @@ services:
       timeout: 5s
       retries: 3
 
-  # ── AtlasPay Application ─────────────────────────────────────────────────
+  # ── atlashub Application ─────────────────────────────────────────────────
   # Commented out — run the app locally with: ./gradlew bootRun
   # app:
   #   build:
   #     context: .
   #     target: runtime
-  #   container_name: atlaspay-app
+  #   container_name: atlashub-app
   #   restart: unless-stopped
   #   networks:
-  #     - atlaspay-net
+  #     - atlashub-net
   #   depends_on:
   #     mysql:
   #       condition: service_healthy
@@ -197,13 +197,13 @@ services:
   #   ports:
   #     - "8080:8080"
   #   environment:
-  #     ATLASPAY_DB_URL: jdbc:mysql://mysql:3306/atlaspay?serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true
-  #     ATLASPAY_DB_USERNAME: atlaspay
-  #     ATLASPAY_DB_PASSWORD: atlaspay
+  #     atlashub_DB_URL: jdbc:mysql://mysql:3306/atlashub?serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true
+  #     atlashub_DB_USERNAME: atlashub
+  #     atlashub_DB_PASSWORD: atlashub
   #     REDIS_HOST: redis
   #     REDIS_PORT: 6379
   #     SPRING_PROFILES_ACTIVE: local
-  #     ATLASPAY_ENV: docker
+  #     atlashub_ENV: docker
   #     OTEL_EXPORTER_ENDPOINT: http://tempo:4318
   #     OTEL_TRACES_EXPORTER: otlp
   #     OTEL_METRICS_EXPORTER: none
@@ -222,8 +222,8 @@ services:
 
 # ── Shared network — all containers talk to each other by service name ────────
 networks:
-  atlaspay-net:
-    name: atlaspay-net
+  atlashub-net:
+    name: atlashub-net
     driver: bridge
 
 # ── Named volumes — data survives container restarts ─────────────────────────

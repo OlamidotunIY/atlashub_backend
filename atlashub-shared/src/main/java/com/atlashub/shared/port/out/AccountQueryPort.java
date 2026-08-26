@@ -1,4 +1,4 @@
-package com.atlaspay.shared.port.out;
+package com.atlashub.shared.port.out;
 
 import java.util.List;
 import java.util.Optional;

@@ -19,7 +19,7 @@ class OrganizationTest {
 
     @Test
     void shouldRegisterSuccessfully() {
-        Organization Organization = new Organization(1L, Country.NIGERIA, "Test Inc", "John", "Doe", new EmailAddress("test@atlaspay.com"), new PhoneNumber("+2348000000000"), BusinessType.REGISTERED);
+        Organization Organization = new Organization(1L, Country.NIGERIA, "Test Inc", "John", "Doe", new EmailAddress("test@atlashub.com"), new PhoneNumber("+2348000000000"), BusinessType.REGISTERED);
         
         assertEquals(ComplianceStatus.NOT_STARTED, Organization.getComplianceStatus());
         assertEquals("Test Inc", Organization.getBusinessName());
@@ -28,7 +28,7 @@ class OrganizationTest {
 
     @Test
     void shouldCompleteComplianceStep() {
-        Organization Organization = new Organization(1L, Country.NIGERIA, "Test Inc", "John", "Doe", new EmailAddress("test@atlaspay.com"), new PhoneNumber("+2348000000000"), BusinessType.REGISTERED);
+        Organization Organization = new Organization(1L, Country.NIGERIA, "Test Inc", "John", "Doe", new EmailAddress("test@atlashub.com"), new PhoneNumber("+2348000000000"), BusinessType.REGISTERED);
         Organization.pullDomainEvents(); // clear initial events
         
         Organization.updateComplianceProfile("Desc", StaffSize.ONE_TO_TEN, "IT", "Tech", java.math.BigDecimal.valueOf(1000), "NGN");

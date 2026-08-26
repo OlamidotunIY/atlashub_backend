@@ -7,7 +7,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Base class for all aggregate roots in the AtlasPay domain.
+ * Base class for all aggregate roots in the AtlasHub domain.
  *
  * <h3>Domain event pattern</h3>
  * <ol>

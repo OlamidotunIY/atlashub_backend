@@ -22,10 +22,10 @@ public class CreateVerificationUseCase extends BaseUseCase<CreateVerificationCom
     private final PasswordEncoderPort passwordEncoderPort;
     private final DomainEventPublisher eventPublisher;
     
-    @Value("${atlaspay.auth.verification.expires-in-minutes:10}")
+    @Value("${atlashub.auth.verification.expires-in-minutes:10}")
     private int expiresInMinutes;
 
-    @Value("${atlaspay.auth.verification.max-attempts:3}")
+    @Value("${atlashub.auth.verification.max-attempts:3}")
     private int maxAttempts;
 
     public CreateVerificationUseCase(

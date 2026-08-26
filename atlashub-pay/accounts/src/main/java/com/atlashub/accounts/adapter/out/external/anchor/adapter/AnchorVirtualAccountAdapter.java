@@ -70,7 +70,7 @@ public class AnchorVirtualAccountAdapter implements AccountIssuancePort {
     private static Map<String, Object> getPayload(AccountIssuanceRequestDto request) {
         Map<String, Object> UserData = Map.of(
             "fullName", request.accountName(),
-            "email", request.referenceId() + "@atlaspay.internal" // Fallback email since we only have referenceId
+            "email", request.referenceId() + "@atlashub.internal" // Fallback email since we only have referenceId
         );
 
         Map<String, Object> attributes = Map.of(

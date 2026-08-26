@@ -2,11 +2,11 @@ spring:
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:local}
   application:
-    name: atlaspay
+    name: atlashub
   datasource:
-    url: ${ATLASPAY_DB_URL:jdbc:mysql://localhost:3306/atlaspay?createDatabaseIfNotExist=true&serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true}
-    username: ${ATLASPAY_DB_USERNAME:atlaspay}
-    password: ${ATLASPAY_DB_PASSWORD:atlaspay}
+    url: ${atlashub_DB_URL:jdbc:mysql://localhost:3306/atlashub?createDatabaseIfNotExist=true&serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true}
+    username: ${atlashub_DB_USERNAME:atlashub}
+    password: ${atlashub_DB_PASSWORD:atlashub}
     hikari:
       maximum-pool-size: 20
       minimum-idle: 5
@@ -66,7 +66,7 @@ management:
   metrics:
     tags:
       application: ${spring.application.name}
-      environment: ${ATLASPAY_ENV:local}
+      environment: ${atlashub_ENV:local}
     distribution:
       percentiles-histogram:
         http.server.requests: true
@@ -74,15 +74,15 @@ management:
         http.server.requests: 50ms,100ms,200ms,500ms,1s
   tracing:
     sampling:
-      probability: ${ATLASPAY_TRACE_SAMPLING:1.0}
+      probability: ${atlashub_TRACE_SAMPLING:1.0}
 
 # ── JWT ────────────────────────────────────────────────────────────────────────
-atlaspay:
+atlashub:
   jwt:
-    secret: ${ATLASPAY_JWT_SECRET:changeme-in-production-must-be-at-least-256-bits-long}
-    expiry-minutes: ${ATLASPAY_JWT_EXPIRY_MINUTES:60}
+    secret: ${atlashub_JWT_SECRET:changeme-in-production-must-be-at-least-256-bits-long}
+    expiry-minutes: ${atlashub_JWT_EXPIRY_MINUTES:60}
   api-key:
-    hmac-secret: ${ATLASPAY_APIKEY_HMAC_SECRET:changeme-in-production}
+    hmac-secret: ${atlashub_APIKEY_HMAC_SECRET:changeme-in-production}
   anchor:
     base-url: ${ANCHOR_BASE_URL:https://api.getanchor.co}
     api-key: ${ANCHOR_API_KEY:}

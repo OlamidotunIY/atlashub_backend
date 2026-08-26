@@ -1,6 +1,6 @@
-package com.atlaspay.shared.port.out;
+package com.atlashub.shared.port.out;
 
-import com.atlaspay.shared.money.CurrencyCode;
+import com.atlashub.shared.money.CurrencyCode;
 
 public record AccountDetailsDto(
         Long accountId,

@@ -8,7 +8,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @Configuration
-@ConfigurationProperties(prefix = "atlaspay.auth.jwt")
+@ConfigurationProperties(prefix = "atlashub.auth.jwt")
 public class JwtProperties {
     private String secret = "defaultSecretKeyWithAtLeast32CharactersForHmacSha256";
     private long accessTokenExpirationMs = 900000; // 15 minutes

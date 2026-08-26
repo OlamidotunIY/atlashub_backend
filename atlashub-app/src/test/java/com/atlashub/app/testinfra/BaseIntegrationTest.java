@@ -12,7 +12,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
 /**
- * Base class for all Spring Boot integration tests in AtlasPay.
+ * Base class for all Spring Boot integration tests in AtlasHub.
  *
  * <p>Starts a single shared MySQL Testcontainer (reused across the entire test suite via
  * {@code @Testcontainers(disabledWithoutDocker = true)} + static container field) and wires its
@@ -42,9 +42,9 @@ public abstract class BaseIntegrationTest {
     @Container
     static final MySQLContainer<?> MYSQL = new MySQLContainer<>(
             DockerImageName.parse("mysql:8.0"))
-            .withDatabaseName("atlaspay_test")
-            .withUsername("atlaspay_test")
-            .withPassword("atlaspay_test")
+            .withDatabaseName("atlashub_test")
+            .withUsername("atlashub_test")
+            .withPassword("atlashub_test")
             .withReuse(true);
 
     @DynamicPropertySource

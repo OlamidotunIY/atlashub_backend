@@ -43,9 +43,9 @@ public class BootstrapMasterAdminUseCase extends BaseUseCase<BootstrapMasterAdmi
         }
 
         EmployeeCode code = EmployeeCode.generate();
-        EmailAddress email = new EmailAddress(username + "@atlaspay.name.ng");
+        EmailAddress email = new EmailAddress(username + "@atlashub.name.ng");
 
-        cloudflareEmailPort.createEmailRoutingRule(email.value(), "dotun@atlaspay.name.ng");
+        cloudflareEmailPort.createEmailRoutingRule(email.value(), "dotun@atlashub.name.ng");
 
         Admin admin = Admin.create(
             adminRepository.nextIdentity(),

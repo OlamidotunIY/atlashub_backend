@@ -49,7 +49,7 @@ public class CreateAdminUseCase extends BaseUseCase<CreateAdminCommand, AdminCre
         }
 
         EmployeeCode code = EmployeeCode.generate();
-        EmailAddress email = new EmailAddress(username + "@atlaspay.name.ng");
+        EmailAddress email = new EmailAddress(username + "@atlashub.name.ng");
 
         cloudflareEmailPort.createEmailRoutingRule(email.value(), command.destinationEmail());
 

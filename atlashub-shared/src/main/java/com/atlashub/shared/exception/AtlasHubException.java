@@ -1,7 +1,7 @@
 package com.atlashub.shared.exception;
 
 /**
- * Base sealed class for all AtlasPay domain and application exceptions.
+ * Base sealed class for all AtlasHub domain and application exceptions.
  *
  * <p>Every concrete exception must carry a machine-readable {@code ErrorCode}
  * so that a single {@code @ControllerAdvice} can map the hierarchy to HTTP responses.</p>

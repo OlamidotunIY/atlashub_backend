@@ -1,4 +1,4 @@
-# AtlasPay Architecture & Coding Rules
+# atlashub Architecture & Coding Rules
 
 This project uses Hexagonal Architecture (Ports and Adapters) combined with Domain-Driven Design (DDD) and CQRS. You MUST follow these rules strictly.
 
@@ -6,7 +6,7 @@ This project uses Hexagonal Architecture (Ports and Adapters) combined with Doma
 - **Commands**: DTOs that mutate state MUST be suffixed with `Command` (e.g., `CreateCustomerCommand`) and placed in `application/command`.
 - **Queries**: DTOs that read state MUST be suffixed with `Query` (e.g., `GetCustomerQuery`) and placed in `application/query`.
 - **Responses**: DTOs returned by use cases MUST be placed in `application/dto`.
-- **Use Cases**: All handlers MUST be placed in `application/usecase` and MUST extend `BaseUseCase<Input, Output>` from `atlaspay-shared-kernel`.
+- **Use Cases**: All handlers MUST be placed in `application/usecase` and MUST extend `BaseUseCase<Input, Output>` from `atlashub-shared-kernel`.
   - For commands that do not return a result, extend `BaseUseCase<Input, Void>` and return `null`. Do NOT create or use a separate `BaseCommandUseCase`.
 
 ## 2. Hexagonal Architecture (Ports and Adapters)

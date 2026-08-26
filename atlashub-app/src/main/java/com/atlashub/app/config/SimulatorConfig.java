@@ -8,7 +8,7 @@ import org.springframework.web.client.RestClient;
 @Configuration
 public class SimulatorConfig {
 
-    @Value("${atlaspay.simulator.base-url:http://localhost:8080}")
+    @Value("${atlashub.simulator.base-url:http://localhost:8080}")
     private String simulatorBaseUrl;
 
     @Bean(name = "simulatorRestClient")

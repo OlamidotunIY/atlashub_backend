@@ -12,13 +12,13 @@ import org.junit.jupiter.api.Test;
 class ArchitectureRulesTest {
 
     private static final List<String> BOUNDED_CONTEXT_MODULES = List.of(
-            "atlaspay-auth",
-            "atlaspay-admin",
-            "atlaspay-identity",
-            "atlaspay-accounts",
-            "atlaspay-ledger",
-            "atlaspay-notifications",
-            "atlaspay-eventbus"
+            "atlashub-auth",
+            "atlashub-admin",
+            "atlashub-identity",
+            "atlashub-accounts",
+            "atlashub-ledger",
+            "atlashub-notifications",
+            "atlashub-eventbus"
     );
 
     private static final List<String> DOMAIN_FORBIDDEN_IMPORTS = List.of(

@@ -6,7 +6,7 @@ import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 /**
- * AtlasPay composition root.
+ * AtlasHub composition root.
  *
  * <p>The {@code @SpringBootApplication} scan is intentionally scoped to {@code com.atlashub}
  * to pick up all module components (use cases, adapters, controllers) registered as Spring beans.

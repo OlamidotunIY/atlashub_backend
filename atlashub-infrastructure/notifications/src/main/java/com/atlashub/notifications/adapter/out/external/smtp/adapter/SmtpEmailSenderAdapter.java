@@ -36,7 +36,7 @@ public class SmtpEmailSenderAdapter implements EmailSenderPort {
 
             helper.setFrom(fromEmail);
             helper.setTo(toEmail);
-            helper.setSubject("AtlasPay - Verify your email address");
+            helper.setSubject("AtlasHub - Verify your email address");
             
             String htmlContent = buildVerificationEmailHtml(verificationCode);
             helper.setText(htmlContent, true);
@@ -59,7 +59,7 @@ public class SmtpEmailSenderAdapter implements EmailSenderPort {
 
             helper.setFrom(fromEmail);
             helper.setTo(toEmail);
-            helper.setSubject("Welcome to AtlasPay - Admin Account Created");
+            helper.setSubject("Welcome to AtlasHub - Admin Account Created");
             
             String htmlContent = buildAdminWelcomeEmailHtml(temporaryPassword);
             helper.setText(htmlContent, true);
@@ -142,11 +142,11 @@ public class SmtpEmailSenderAdapter implements EmailSenderPort {
             <body>
                 <div class="container">
                     <div class="header">
-                        <h1>ATLASPAY</h1>
+                        <h1>ATLASHUB</h1>
                     </div>
                     <div class="content">
                         <h2>Verify Your Email Address</h2>
-                        <p>Welcome to AtlasPay! We're excited to have you on board.</p>
+                        <p>Welcome to AtlasHub! We're excited to have you on board.</p>
                         <p>To continue setting up your account, please enter the following verification code:</p>
                         
                         <div class="code-box">
@@ -157,7 +157,7 @@ public class SmtpEmailSenderAdapter implements EmailSenderPort {
                         <p>If you didn't request this email, you can safely ignore it.</p>
                     </div>
                     <div class="footer">
-                        <p>&copy; %d AtlasPay Inc. All rights reserved.</p>
+                        <p>&copy; %d AtlasHub Inc. All rights reserved.</p>
                         <p>This is an automated message, please do not reply.</p>
                     </div>
                 </div>
@@ -235,10 +235,10 @@ public class SmtpEmailSenderAdapter implements EmailSenderPort {
             <body>
                 <div class="container">
                     <div class="header">
-                        <h1>ATLASPAY</h1>
+                        <h1>ATLASHUB</h1>
                     </div>
                     <div class="content">
-                        <h2>Welcome to the AtlasPay Admin Team</h2>
+                        <h2>Welcome to the AtlasHub Admin Team</h2>
                         <p>An administrative account has been created for you.</p>
                         <p>Please use your employee code and the following temporary password to log in. You will be required to change this password upon your first login:</p>
                         
@@ -249,7 +249,7 @@ public class SmtpEmailSenderAdapter implements EmailSenderPort {
                         <p>Please keep this password secure and do not share it with anyone.</p>
                     </div>
                     <div class="footer">
-                        <p>&copy; %d AtlasPay Inc. All rights reserved.</p>
+                        <p>&copy; %d AtlasHub Inc. All rights reserved.</p>
                         <p>This is an automated message, please do not reply.</p>
                     </div>
                 </div>

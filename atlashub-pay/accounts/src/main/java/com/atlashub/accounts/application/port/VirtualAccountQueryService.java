@@ -1,7 +1,7 @@
-package com.atlaspay.accounts.application.port;
+package com.atlashub.accounts.application.port;
 
 import java.util.Optional;
-import com.atlaspay.shared.domain.valueobject.NUBAN;
+import com.atlashub.shared.domain.valueobject.NUBAN;
 
 public interface VirtualAccountQueryService {
     int countByIntegration(Long integration);

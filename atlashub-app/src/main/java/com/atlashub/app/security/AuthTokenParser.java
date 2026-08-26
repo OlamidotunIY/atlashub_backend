@@ -15,7 +15,7 @@ public class AuthTokenParser {
 
     private final SecretKey key;
 
-    public AuthTokenParser(@Value("${atlaspay.jwt.secret}") String secret) {
+    public AuthTokenParser(@Value("${atlashub.jwt.secret}") String secret) {
         this.key = Keys.hmacShaKeyFor(secret.getBytes());
     }
 

@@ -1,4 +1,4 @@
-package com.atlaspay.auth.application.port;
+package com.atlashub.auth.application.port;
 
 public interface TotpServicePort {
     String generateSecret();

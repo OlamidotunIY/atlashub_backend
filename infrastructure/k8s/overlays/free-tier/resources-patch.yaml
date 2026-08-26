@@ -1,12 +1,12 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: atlaspay-app
+  name: atlashub-app
 spec:
   template:
     spec:
       containers:
-      - name: atlaspay-app
+      - name: atlashub-app
         resources:
           requests:
             memory: "1Gi"

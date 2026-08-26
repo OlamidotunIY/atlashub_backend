@@ -16,11 +16,11 @@ jobs:
         image: mysql:8.0
         env:
           MYSQL_ROOT_PASSWORD: root
-          MYSQL_DATABASE: atlaspay_test
-          MYSQL_USER: atlaspay_test
-          MYSQL_PASSWORD: atlaspay_test
+          MYSQL_DATABASE: atlashub_test
+          MYSQL_USER: atlashub_test
+          MYSQL_PASSWORD: atlashub_test
         options: >-
-          --health-cmd="mysqladmin ping -h localhost -u atlaspay_test -patlaspay_test"
+          --health-cmd="mysqladmin ping -h localhost -u atlashub_test -patlashub_test"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
@@ -47,9 +47,9 @@ jobs:
       - name: Run unit tests
         run: ./gradlew test --no-daemon
         env:
-          ATLASPAY_DB_URL: jdbc:mysql://localhost:3306/atlaspay_test?serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true
-          ATLASPAY_DB_USERNAME: atlaspay_test
-          ATLASPAY_DB_PASSWORD: atlaspay_test
+          atlashub_DB_URL: jdbc:mysql://localhost:3306/atlashub_test?serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true
+          atlashub_DB_USERNAME: atlashub_test
+          atlashub_DB_PASSWORD: atlashub_test
 
       - name: Publish test results
         uses: dorny/test-reporter@v1

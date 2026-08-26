@@ -1,4 +1,4 @@
-package com.atlaspay.auth.application.port;
+package com.atlashub.auth.application.port;
 
 import java.time.ZonedDateTime;
 import java.util.Map;

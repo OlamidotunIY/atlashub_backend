@@ -1,4 +1,4 @@
-# AtlasPay Frontend API Context
+# atlashub Frontend API Context
 
 This document outlines the current state of the backend APIs across all modules. It is designed to serve as the context for frontend integration.
 
@@ -74,7 +74,7 @@ Handles authentication for both Merchants and Admins.
 
 ## 2. Admin Module (/api/v1/admins)
 
-Manages internal AtlasPay administrators.
+Manages internal atlashub administrators.
 
 - **POST /api/v1/admins/auth/bootstrap**
   - **Request:** { "username": "string" }
@@ -152,7 +152,7 @@ Financial tracking and history.
 
 ## 6. WebSockets / Real-Time Events (Notifications Module)
 
-AtlasPay uses an Enterprise Ticket-based Handshake for WebSockets to secure the connection and avoid placing JWTs in the query params.
+atlashub uses an Enterprise Ticket-based Handshake for WebSockets to secure the connection and avoid placing JWTs in the query params.
 
 ### How to Connect (Frontend WebSocket Flow)
 

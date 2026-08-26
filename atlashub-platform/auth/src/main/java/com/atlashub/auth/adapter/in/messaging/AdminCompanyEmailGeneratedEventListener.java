@@ -27,7 +27,7 @@ public class AdminCompanyEmailGeneratedEventListener {
         String companyEmail
     ) {}
 
-    @KafkaListener(topics = "atlaspay.admin.AdminCompanyEmailGenerated", groupId = "auth-group")
+    @KafkaListener(topics = "atlashub.admin.AdminCompanyEmailGenerated", groupId = "auth-group")
     public void handle(EnvelopedDomainEvent<AdminEmailPayload> envelopedEvent) {
         AdminEmailPayload payload = envelopedEvent.event().payload();
         log.info("Received AdminCompanyEmailGenerated event for employeeCode: {}", payload.employeeCode());

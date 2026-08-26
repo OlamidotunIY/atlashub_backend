@@ -16,7 +16,7 @@
             <includeMdcKeyName>correlationId</includeMdcKeyName>
             <includeMdcKeyName>OrganizationId</includeMdcKeyName>
             <includeMdcKeyName>requestId</includeMdcKeyName>
-            <customFields>{"service":"atlaspay","version":"${APP_VERSION:-local}"}</customFields>
+            <customFields>{"service":"atlashub","version":"${APP_VERSION:-local}"}</customFields>
             <fieldNames>
                 <timestamp>@timestamp</timestamp>
                 <message>message</message>

@@ -33,7 +33,7 @@ public class TotpAdapter implements TotpServicePort {
         QrData data = new QrData.Builder()
                 .label(accountName)
                 .secret(secret)
-                .issuer("AtlasPay")
+                .issuer("AtlasHub")
                 .build();
         return data.getUri();
     }
