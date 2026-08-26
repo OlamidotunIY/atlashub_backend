@@ -46,7 +46,7 @@ class ArchitectureRulesTest {
         Path root = repositoryRoot();
         List<Path> violations = javaFiles(root)
                 .filter(path -> isInLayer(path, "application"))
-                .filter(path -> contains(path, ".infrastructure."))
+                .filter(path -> contains(path, ".adapter.out.external."))
                 .toList();
 
         assertTrue(violations.isEmpty(), () -> "Application files import infrastructure packages: " + violations);

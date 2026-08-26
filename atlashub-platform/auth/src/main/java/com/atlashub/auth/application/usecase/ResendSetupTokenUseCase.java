@@ -1,8 +1,8 @@
 package com.atlashub.auth.application.usecase;
 
 import com.atlashub.auth.application.command.ResendSetupTokenCommand;
-import com.atlashub.auth.application.port.out.SetupTokenStorePort;
-import com.atlashub.auth.application.port.out.TokenGeneratorPort;
+import com.atlashub.auth.application.port.SetupTokenStorePort;
+import com.atlashub.auth.application.port.TokenGeneratorPort;
 import com.atlashub.auth.domain.event.PasswordSetupInitiatedEvent;
 import com.atlashub.auth.domain.exception.AuthErrorCode;
 import com.atlashub.auth.domain.model.AuthAccount;

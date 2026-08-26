@@ -1,7 +1,7 @@
 package com.atlashub.accounts.application.usecase;
 
 import com.atlashub.accounts.application.command.IssueVirtualAccountCommand;
-import com.atlashub.accounts.application.port.out.VirtualAccountQueryService;
+import com.atlashub.accounts.application.port.VirtualAccountQueryService;
 import com.atlashub.accounts.domain.model.VirtualAccount;
 import com.atlashub.accounts.domain.repository.VirtualAccountDomainRepository;
 import com.atlashub.shared.event.DomainEventPublisher;

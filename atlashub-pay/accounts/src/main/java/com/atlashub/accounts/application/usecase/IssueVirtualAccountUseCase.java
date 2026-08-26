@@ -9,7 +9,7 @@ import com.atlashub.shared.event.DomainEventPublisher;
 import com.atlashub.shared.usecase.BaseUseCase;
 import lombok.RequiredArgsConstructor;
 
-import com.atlashub.accounts.application.port.out.VirtualAccountQueryService;
+import com.atlashub.accounts.application.port.VirtualAccountQueryService;
 import com.atlashub.shared.exception.BusinessRuleException;
 import com.atlashub.accounts.domain.exception.AccountsErrorCode;
 

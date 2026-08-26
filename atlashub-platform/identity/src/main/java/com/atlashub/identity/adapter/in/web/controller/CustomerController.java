@@ -1,0 +1,78 @@
+package com.atlashub.identity.adapter.in.web.controller;
+
+import com.atlashub.identity.application.command.CreateCustomerCommand;
+import com.atlashub.identity.application.dto.CustomerDto;
+import com.atlashub.identity.application.dto.CreateCustomerResult;
+import com.atlashub.identity.application.query.GetCustomerQuery;
+import com.atlashub.identity.application.query.ListCustomersQuery;
+import com.atlashub.identity.application.usecase.CreateCustomerUseCase;
+import com.atlashub.identity.application.usecase.GetCustomerUseCase;
+import com.atlashub.identity.application.usecase.ListCustomersUseCase;
+import com.atlashub.identity.adapter.in.web.request.CreateCustomerRequest;
+import com.atlashub.shared.util.PageResult;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.security.Principal;
+import java.util.List;
+import com.atlashub.shared.dto.ApiResponse;
+
+@RestController
+@RequestMapping("/api/v1/customers")
+@Tag(name = "Customers", description = "Customer management")
+public class CustomerController {
+
+    private final CreateCustomerUseCase createCustomerUseCase;
+    private final GetCustomerUseCase getCustomerUseCase;
+    private final ListCustomersUseCase listCustomersUseCase;
+
+    public CustomerController(CreateCustomerUseCase createCustomerUseCase, 
+                              GetCustomerUseCase getCustomerUseCase,
+                              ListCustomersUseCase listCustomersUseCase) {
+        this.createCustomerUseCase = createCustomerUseCase;
+        this.getCustomerUseCase = getCustomerUseCase;
+        this.listCustomersUseCase = listCustomersUseCase;
+    }
+
+    @PostMapping
+    @Operation(summary = "Create a customer", description = "Creates a new customer for a merchant")
+    public ResponseEntity<ApiResponse<CreateCustomerResult>> create(@Valid @RequestBody CreateCustomerRequest request, Principal principal) {
+        String merchantIdStr = principal != null ? principal.getName() : "anonymous";
+        
+        CreateCustomerCommand command = new CreateCustomerCommand(
+                Long.valueOf(merchantIdStr),
+                request.firstName(),
+                request.lastName(),
+                request.email(),
+                request.phone(),
+                request.metadata()
+        );
+        CreateCustomerResult result = createCustomerUseCase.execute(command);
+        return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse<>(true, "Customer created successfully", result, null));
+    }
+
+    @GetMapping("/{customerId}")
+    @Operation(summary = "Get a customer", description = "Retrieves a customer by ID")
+    public ResponseEntity<ApiResponse<CustomerDto>> get(@PathVariable String customerId, Principal principal) {
+        String merchantIdStr = principal != null ? principal.getName() : "anonymous";
+        GetCustomerQuery query = new GetCustomerQuery(Long.valueOf(merchantIdStr), Long.valueOf(customerId));
+        CustomerDto result = getCustomerUseCase.execute(query);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Customer retrieved successfully", result, null));
+    }
+    
+    @GetMapping
+    @Operation(summary = "List customers", description = "Retrieves a paginated list of customers")
+    public ResponseEntity<ApiResponse<List<CustomerDto>>> list(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int size,
+            Principal principal) {
+        String merchantIdStr = principal != null ? principal.getName() : "anonymous";
+        ListCustomersQuery query = new ListCustomersQuery(Long.valueOf(merchantIdStr), page, size, null);
+        PageResult<CustomerDto> result = listCustomersUseCase.execute(query);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Customers retrieved successfully", result.content(), new ApiResponse.Meta(result.totalElements(), 0, result.pageSize(), result.pageNumber(), result.totalPages())));
+    }
+}

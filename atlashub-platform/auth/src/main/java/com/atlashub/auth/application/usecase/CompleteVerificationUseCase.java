@@ -2,8 +2,8 @@ package com.atlashub.auth.application.usecase;
 
 import com.atlashub.auth.application.command.CompleteVerificationCommand;
 import com.atlashub.auth.application.dto.VerificationResponseDto;
-import com.atlashub.auth.application.port.out.SetupTokenStorePort;
-import com.atlashub.auth.application.port.out.TokenGeneratorPort;
+import com.atlashub.auth.application.port.SetupTokenStorePort;
+import com.atlashub.auth.application.port.TokenGeneratorPort;
 import com.atlashub.auth.domain.exception.AuthErrorCode;
 import com.atlashub.auth.domain.model.AuthAccount;
 import com.atlashub.auth.domain.model.AuthStatus;

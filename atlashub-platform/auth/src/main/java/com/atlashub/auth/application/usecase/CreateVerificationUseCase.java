@@ -1,8 +1,8 @@
 package com.atlashub.auth.application.usecase;
 
 import com.atlashub.auth.application.command.CreateVerificationCommand;
-import com.atlashub.auth.application.port.out.OtpGeneratorPort;
-import com.atlashub.auth.application.port.out.PasswordEncoderPort;
+import com.atlashub.auth.application.port.OtpGeneratorPort;
+import com.atlashub.auth.application.port.PasswordEncoderPort;
 import com.atlashub.auth.domain.model.Verification;
 import com.atlashub.auth.domain.repository.VerificationRepository;
 import com.atlashub.shared.dto.ApiResponse;

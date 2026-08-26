@@ -1,7 +1,7 @@
 package com.atlashub.auth.application.usecase;
 
 import com.atlashub.auth.application.command.UpdateCredentialCommand;
-import com.atlashub.auth.application.port.out.PasswordEncoderPort;
+import com.atlashub.auth.application.port.PasswordEncoderPort;
 import com.atlashub.auth.domain.exception.AuthErrorCode;
 import com.atlashub.auth.domain.model.AuthAccount;
 import com.atlashub.auth.domain.repository.AuthAccountRepository;

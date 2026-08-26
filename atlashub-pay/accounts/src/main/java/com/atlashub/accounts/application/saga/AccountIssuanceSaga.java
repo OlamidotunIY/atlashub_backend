@@ -1,7 +1,7 @@
 package com.atlashub.accounts.application.saga;
 
 import com.atlashub.accounts.application.dto.AccountIssuanceRequestDto;
-import com.atlashub.accounts.application.port.out.AccountIssuancePort;
+import com.atlashub.accounts.application.port.AccountIssuancePort;
 import com.atlashub.accounts.domain.event.VirtualAccountCreatedEvent;
 import com.atlashub.accounts.domain.repository.VirtualAccountDomainRepository;
 import lombok.RequiredArgsConstructor;

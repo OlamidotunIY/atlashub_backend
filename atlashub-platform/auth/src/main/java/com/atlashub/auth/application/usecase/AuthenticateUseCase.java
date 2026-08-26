@@ -2,9 +2,9 @@ package com.atlashub.auth.application.usecase;
 
 import com.atlashub.auth.application.command.AuthenticateCommand;
 import com.atlashub.auth.application.dto.AuthResponseDto;
-import com.atlashub.auth.application.port.out.PasswordEncoderPort;
-import com.atlashub.auth.application.port.out.PreAuthTokenStorePort;
-import com.atlashub.auth.application.port.out.TokenGeneratorPort;
+import com.atlashub.auth.application.port.PasswordEncoderPort;
+import com.atlashub.auth.application.port.PreAuthTokenStorePort;
+import com.atlashub.auth.application.port.TokenGeneratorPort;
 import com.atlashub.auth.application.service.TokenIssuanceService;
 import com.atlashub.auth.domain.exception.AuthErrorCode;
 import com.atlashub.auth.domain.model.AuthAccount;
