@@ -8,7 +8,7 @@ import java.util.Collections;
 
 public class AtlasHubAuthenticationToken extends AbstractAuthenticationToken {
 
-    private final String merchantId;
+    private final String OrganizationId;
     private final Object credentials;
     @Getter
     private final AuthType authType;
@@ -17,9 +17,9 @@ public class AtlasHubAuthenticationToken extends AbstractAuthenticationToken {
         JWT, API_KEY
     }
 
-    public AtlasHubAuthenticationToken(String merchantId, Object credentials, AuthType authType) {
-        super(Collections.singletonList(new SimpleGrantedAuthority("ROLE_MERCHANT")));
-        this.merchantId = merchantId;
+    public AtlasHubAuthenticationToken(String OrganizationId, Object credentials, AuthType authType) {
+        super(Collections.singletonList(new SimpleGrantedAuthority("ROLE_Organization")));
+        this.OrganizationId = OrganizationId;
         this.credentials = credentials;
         this.authType = authType;
         setAuthenticated(true);
@@ -32,7 +32,7 @@ public class AtlasHubAuthenticationToken extends AbstractAuthenticationToken {
 
     @Override
     public Object getPrincipal() {
-        return merchantId;
+        return OrganizationId;
     }
 
 }

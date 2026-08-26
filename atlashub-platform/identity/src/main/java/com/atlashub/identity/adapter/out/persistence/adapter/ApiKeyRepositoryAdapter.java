@@ -44,13 +44,13 @@ public class ApiKeyRepositoryAdapter implements ApiKeyRepository {
     }
 
     @Override
-    public Optional<ApiKey> findByMerchantIdAndKeyTypeAndEnvironmentAndActiveTrue(Long merchantId, KeyType keyType, ApiEnvironment environment) {
-        return jpaRepository.findByIntegrationAndKeyTypeAndEnvironmentAndActiveTrue(merchantId, keyType, environment).map(mapper::toDomain);
+    public Optional<ApiKey> findByOrganizationIdAndKeyTypeAndEnvironmentAndActiveTrue(Long OrganizationId, KeyType keyType, ApiEnvironment environment) {
+        return jpaRepository.findByIntegrationAndKeyTypeAndEnvironmentAndActiveTrue(OrganizationId, keyType, environment).map(mapper::toDomain);
     }
 
     @Override
-    public List<ApiKey> findAllByMerchantId(Long merchantId) {
-        return jpaRepository.findAllByIntegration(merchantId).stream()
+    public List<ApiKey> findAllByOrganizationId(Long OrganizationId) {
+        return jpaRepository.findAllByIntegration(OrganizationId).stream()
                 .map(mapper::toDomain)
                 .collect(Collectors.toList());
     }

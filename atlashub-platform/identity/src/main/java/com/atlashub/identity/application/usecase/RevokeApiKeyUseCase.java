@@ -36,7 +36,7 @@ public class RevokeApiKeyUseCase extends BaseUseCase<RevokeApiKeyCommand, Void> 
         ApiKey apiKey = apiKeyRepository.findById(command.keyId())
                 .orElseThrow(() -> new NotFoundException(IdentityErrorCode.API_KEY_NOT_FOUND, "API Key not found"));
 
-        if (!apiKey.getMerchantId().equals(command.authenticatedMerchantId())) {
+        if (!apiKey.getOrganizationId().equals(command.authenticatedOrganizationId())) {
             throw new NotFoundException(IdentityErrorCode.API_KEY_NOT_FOUND, "API Key not found");
         }
 

@@ -4,7 +4,7 @@ import com.atlashub.identity.domain.model.ApiEnvironment;
 import com.atlashub.identity.domain.model.KeyType;
 
 public record RegenerateApiKeyCommand(
-    Long authenticatedMerchantId,
+    Long authenticatedOrganizationId,
     KeyType keyType,
     ApiEnvironment environment
 ) {}

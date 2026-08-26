@@ -22,7 +22,7 @@ import jakarta.persistence.GenerationType;
 @Table(name = "virtual_accounts", 
     indexes = {
         @Index(name = "idx_va_integration", columnList = "integration"),
-        @Index(name = "idx_va_customer", columnList = "customer_code"),
+        @Index(name = "idx_va_User", columnList = "User_code"),
         @Index(name = "idx_va_nuban", columnList = "nuban")
     },
     uniqueConstraints = {
@@ -40,8 +40,8 @@ public class VirtualAccountEntity {
     @Column(nullable = false)
     private Long integration;
     
-    @Column(name = "customer_code", nullable = false, length = 50)
-    private String customerCode;
+    @Column(name = "User_code", nullable = false, length = 50)
+    private String UserCode;
     
     @Column(nullable = false, length = 100)
     private String accountName;
@@ -74,10 +74,10 @@ public class VirtualAccountEntity {
     @Column(nullable = false)
     private ZonedDateTime updatedAt;
 
-    public VirtualAccountEntity(Long id, Long integration, String customerCode, String accountName, String bankName, String nuban, String status, String idempotencyKey, String currency, Integer version, ZonedDateTime createdAt, ZonedDateTime updatedAt) {
+    public VirtualAccountEntity(Long id, Long integration, String UserCode, String accountName, String bankName, String nuban, String status, String idempotencyKey, String currency, Integer version, ZonedDateTime createdAt, ZonedDateTime updatedAt) {
         this.id = id;
         this.integration = integration;
-        this.customerCode = customerCode;
+        this.UserCode = UserCode;
         this.accountName = accountName;
         this.bankName = bankName;
         this.nuban = nuban;

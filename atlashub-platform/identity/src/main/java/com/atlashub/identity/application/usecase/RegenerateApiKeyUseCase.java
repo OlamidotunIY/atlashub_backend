@@ -13,9 +13,9 @@ import com.atlashub.identity.domain.exception.IdentityErrorCode;
 import com.atlashub.identity.domain.model.ApiEnvironment;
 import com.atlashub.identity.domain.model.ApiKey;
 import com.atlashub.identity.domain.model.KeyType;
-import com.atlashub.identity.domain.model.Merchant;
+import com.atlashub.identity.domain.model.Organization;
 import com.atlashub.identity.domain.repository.ApiKeyRepository;
-import com.atlashub.identity.domain.repository.MerchantRepository;
+import com.atlashub.identity.domain.repository.OrganizationRepository;
 import com.atlashub.shared.event.DomainEventPublisher;
 import com.atlashub.shared.exception.BusinessRuleException;
 import com.atlashub.shared.exception.NotFoundException;
@@ -27,15 +27,15 @@ public class RegenerateApiKeyUseCase extends BaseUseCase<RegenerateApiKeyCommand
     private static final Logger log = LoggerFactory.getLogger(RegenerateApiKeyUseCase.class);
 
 
-    private final MerchantRepository merchantRepository;
+    private final OrganizationRepository OrganizationRepository;
     private final ApiKeyRepository apiKeyRepository;
     private final DomainEventPublisher eventPublisher;
 
     public RegenerateApiKeyUseCase(
-            MerchantRepository merchantRepository,
+            OrganizationRepository OrganizationRepository,
             ApiKeyRepository apiKeyRepository,
             DomainEventPublisher eventPublisher) {
-        this.merchantRepository = merchantRepository;
+        this.OrganizationRepository = OrganizationRepository;
         this.apiKeyRepository = apiKeyRepository;
                 this.eventPublisher = eventPublisher;
     }
@@ -46,16 +46,16 @@ public class RegenerateApiKeyUseCase extends BaseUseCase<RegenerateApiKeyCommand
         log.info("Executing RegenerateApiKeyUseCase");
 
         if (command.environment() == ApiEnvironment.LIVE) {
-            Merchant merchant = merchantRepository.findById(command.authenticatedMerchantId())
-                    .orElseThrow(() -> new NotFoundException(IdentityErrorCode.MERCHANT_NOT_FOUND, "Merchant not found"));
+            Organization Organization = OrganizationRepository.findById(command.authenticatedOrganizationId())
+                    .orElseThrow(() -> new NotFoundException(IdentityErrorCode.Organization_NOT_FOUND, "Organization not found"));
             
-            if (merchant.getComplianceStatus() != com.atlashub.identity.domain.model.ComplianceStatus.APPROVED) {
+            if (Organization.getComplianceStatus() != com.atlashub.identity.domain.model.ComplianceStatus.APPROVED) {
                 throw new BusinessRuleException(IdentityErrorCode.LIVE_KEYS_REQUIRE_COMPLIANCE_APPROVED, "Live keys require compliance to be approved");
             }
         }
 
-        apiKeyRepository.findByMerchantIdAndKeyTypeAndEnvironmentAndActiveTrue(
-                command.authenticatedMerchantId(), command.keyType(), command.environment()
+        apiKeyRepository.findByOrganizationIdAndKeyTypeAndEnvironmentAndActiveTrue(
+                command.authenticatedOrganizationId(), command.keyType(), command.environment()
         ).ifPresent(existingKey -> {
             existingKey.revoke();
             apiKeyRepository.save(existingKey);
@@ -80,7 +80,7 @@ public class RegenerateApiKeyUseCase extends BaseUseCase<RegenerateApiKeyCommand
         }
 
         ApiKey newKey = new ApiKey(apiKeyRepository.nextIdentity(),
-                command.authenticatedMerchantId(),
+                command.authenticatedOrganizationId(),
                 command.keyType(),
                 command.environment(),
                 keyHash,

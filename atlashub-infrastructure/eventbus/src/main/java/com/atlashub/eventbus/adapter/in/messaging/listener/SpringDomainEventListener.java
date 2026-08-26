@@ -22,11 +22,11 @@ public class SpringDomainEventListener {
     }
 
     private String getTopicForEvent(String eventClassName) {
-        if (eventClassName.startsWith("Merchant") || eventClassName.startsWith("ApiKey")) {
-            return "merchant-events";
-        } else if (eventClassName.startsWith("Customer")) {
-            return "customer-events";
-        } else if (eventClassName.startsWith("Account") || eventClassName.startsWith("SubAccount")) {
+        if (eventClassName.startsWith("Organization") || eventClassName.startsWith("ApiKey")) {
+            return "Organization-events";
+        } else if (eventClassName.startsWith("User")) {
+            return "User-events";
+        } else if (eventClassName.startsWith("Account") || eventClassName.startsWith("SplitRecipient")) {
             return "account-events";
         } else if (eventClassName.startsWith("Transaction") || eventClassName.startsWith("Transfer")) {
             return "transaction-events";

@@ -19,7 +19,7 @@ public abstract class BaseKafkaEventListener {
      * and if so, invokes the provided handler with the parsed JsonNode.
      *
      * @param messagePayload The raw JSON string from Kafka
-     * @param expectedEventType The class name or event type string to match (e.g. "MerchantComplianceApproved")
+     * @param expectedEventType The class name or event type string to match (e.g. "OrganizationComplianceApproved")
      * @param log The logger of the concrete subclass
      * @param action The action to execute with the parsed root JsonNode
      */

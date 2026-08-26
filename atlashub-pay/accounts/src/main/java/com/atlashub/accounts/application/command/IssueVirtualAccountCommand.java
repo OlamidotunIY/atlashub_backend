@@ -5,7 +5,7 @@ import com.atlashub.shared.usecase.Command;
 
 public record IssueVirtualAccountCommand(
         Long integration,
-        String customerCode,
+        String UserCode,
         String accountName,
         String bankName,
         com.atlashub.shared.money.CurrencyCode currency,

@@ -25,7 +25,7 @@ import com.atlashub.shared.dto.ApiResponse;
 
 @RestController
 @RequestMapping("/api/v1/keys")
-@Tag(name = "API Keys", description = "Merchant API key management")
+@Tag(name = "API Keys", description = "Organization API key management")
 public class ApiKeyController {
 
     private final ListApiKeysUseCase listApiKeysUseCase;
@@ -41,10 +41,10 @@ public class ApiKeyController {
     }
 
     @GetMapping
-    @Operation(summary = "List all API keys", description = "Retrieves all active and revoked API keys for the authenticated merchant")
+    @Operation(summary = "List all API keys", description = "Retrieves all active and revoked API keys for the authenticated Organization")
     public ResponseEntity<ApiResponse<ListApiKeysResponseDto>> listKeys(Principal principal) {
-        String merchantIdStr = principal != null ? principal.getName() : "anonymous";
-        ListApiKeysQuery query = new ListApiKeysQuery(Long.valueOf(merchantIdStr));
+        String OrganizationIdStr = principal != null ? principal.getName() : "anonymous";
+        ListApiKeysQuery query = new ListApiKeysQuery(Long.valueOf(OrganizationIdStr));
         List<ApiKeyDto> keys = listApiKeysUseCase.execute(query);
         return ResponseEntity.ok(new ApiResponse<>(true, "Keys retrieved successfully", new ListApiKeysResponseDto(keys), null));
     }
@@ -52,9 +52,9 @@ public class ApiKeyController {
     @PostMapping("/regenerate")
     @Operation(summary = "Regenerate an API key", description = "Revokes the active key of the specified type and generates a new one")
     public ResponseEntity<ApiResponse<RegenerateApiKeyResponseDto>> regenerateKey(@Valid @RequestBody RegenerateApiKeyRequest request, Principal principal) {
-        String merchantIdStr = principal != null ? principal.getName() : "anonymous";
+        String OrganizationIdStr = principal != null ? principal.getName() : "anonymous";
         RegenerateApiKeyCommand command = new RegenerateApiKeyCommand(
-                Long.valueOf(merchantIdStr),
+                Long.valueOf(OrganizationIdStr),
                 KeyType.valueOf(request.keyType()),
                 ApiEnvironment.valueOf(request.environment())
         );
@@ -65,9 +65,9 @@ public class ApiKeyController {
     @DeleteMapping("/{keyId}")
     @Operation(summary = "Revoke an API key", description = "Revokes a specific API key")
     public ResponseEntity<ApiResponse<RevokeApiKeyResponseDto>> revokeKey(@PathVariable String keyId, Principal principal) {
-        String merchantIdStr = principal != null ? principal.getName() : "anonymous";
+        String OrganizationIdStr = principal != null ? principal.getName() : "anonymous";
         RevokeApiKeyCommand command = new RevokeApiKeyCommand(
-                Long.valueOf(merchantIdStr),
+                Long.valueOf(OrganizationIdStr),
                 Long.valueOf(keyId)
         );
         revokeApiKeyUseCase.execute(command);

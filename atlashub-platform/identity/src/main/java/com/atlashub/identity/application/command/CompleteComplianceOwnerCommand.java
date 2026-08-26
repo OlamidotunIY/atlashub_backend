@@ -4,7 +4,7 @@ import com.atlashub.identity.domain.model.GovernmentIdType;
 import java.time.LocalDate;
 
 public record CompleteComplianceOwnerCommand(
-    Long merchantId,
+    Long OrganizationId,
     String ownerBvn,
     String ownerNin,
     LocalDate ownerDateOfBirth,

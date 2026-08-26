@@ -25,11 +25,11 @@ public class JwtChannelInterceptor implements ChannelInterceptor {
             String authHeader = accessor.getFirstNativeHeader("Authorization");
             if (authHeader != null && authHeader.startsWith("Bearer ")) {
                 String jwt = authHeader.substring(7);
-                String merchantId = authTokenParser.extractPrincipalId(jwt);
+                String OrganizationId = authTokenParser.extractPrincipalId(jwt);
                 
-                if (merchantId != null && authTokenParser.isTokenValid(jwt)) {
+                if (OrganizationId != null && authTokenParser.isTokenValid(jwt)) {
                     AtlasHubAuthenticationToken authToken = new AtlasHubAuthenticationToken(
-                            merchantId,
+                            OrganizationId,
                             jwt,
                             AtlasHubAuthenticationToken.AuthType.JWT
                     );

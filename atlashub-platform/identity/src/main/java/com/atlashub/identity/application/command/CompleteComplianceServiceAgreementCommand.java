@@ -2,6 +2,6 @@ package com.atlashub.identity.application.command;
 
 
 public record CompleteComplianceServiceAgreementCommand(
-    Long merchantId,
+    Long OrganizationId,
     boolean agreed
 ) {}

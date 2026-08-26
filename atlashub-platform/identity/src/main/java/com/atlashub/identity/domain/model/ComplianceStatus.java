@@ -1,7 +1,7 @@
 package com.atlashub.identity.domain.model;
 
 /**
- * The merchant's compliance verification status.
+ * The Organization's compliance verification status.
  * Transitions are strictly one-way and ordered.
  *
  * NOT_STARTED → IN_PROGRESS → SUBMITTED → UNDER_REVIEW → APPROVED

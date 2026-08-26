@@ -12,9 +12,9 @@
     <appender name="JSON_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder class="net.logstash.logback.encoder.LogstashEncoder">
             <includeCallerData>false</includeCallerData>
-            <!-- Always attach correlationId and merchantId from MDC -->
+            <!-- Always attach correlationId and OrganizationId from MDC -->
             <includeMdcKeyName>correlationId</includeMdcKeyName>
-            <includeMdcKeyName>merchantId</includeMdcKeyName>
+            <includeMdcKeyName>OrganizationId</includeMdcKeyName>
             <includeMdcKeyName>requestId</includeMdcKeyName>
             <customFields>{"service":"atlaspay","version":"${APP_VERSION:-local}"}</customFields>
             <fieldNames>

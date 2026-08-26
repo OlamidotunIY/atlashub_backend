@@ -25,7 +25,7 @@ public class GetVirtualAccountsUseCase extends BaseUseCase<GetVirtualAccountsQue
                 .map(account -> new VirtualAccountDto(
                         account.getId(),
                         account.getIntegration(),
-                        account.getCustomerCode(),
+                        account.getUserCode(),
                         account.getAccountName(),
                         account.getNuban() != null ? account.getNuban().value() : null,
                         account.getBankName(),

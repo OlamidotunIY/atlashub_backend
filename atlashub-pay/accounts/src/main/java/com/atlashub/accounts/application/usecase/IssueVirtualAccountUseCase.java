@@ -26,15 +26,15 @@ public class IssueVirtualAccountUseCase extends BaseUseCase<IssueVirtualAccountC
     public Long execute(IssueVirtualAccountCommand command) {
         
         if (queryService.countByIntegration(command.integration()) >= 2) {
-            throw new BusinessRuleException(AccountsErrorCode.INVALID_ACCOUNT_STATE, "Merchant can have at most 2 accounts");
+            throw new BusinessRuleException(AccountsErrorCode.INVALID_ACCOUNT_STATE, "Organization can have at most 2 accounts");
         }
         if (queryService.existsByIntegrationAndBankName(command.integration(), command.bankName())) {
-            throw new BusinessRuleException(AccountsErrorCode.INVALID_ACCOUNT_STATE, "Merchant already has an account with " + command.bankName());
+            throw new BusinessRuleException(AccountsErrorCode.INVALID_ACCOUNT_STATE, "Organization already has an account with " + command.bankName());
         }
 
         VirtualAccount account = VirtualAccount.create(repository.nextIdentity(), 
                 command.integration(), 
-                command.customerCode(), 
+                command.UserCode(), 
                 command.accountName(), 
                 command.bankName(),
                 command.idempotencyKey(),

@@ -31,7 +31,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     ) throws ServletException, IOException {
         final String authHeader = request.getHeader("Authorization");
         final String jwt;
-        final String merchantId;
+        final String OrganizationId;
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
@@ -40,12 +40,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         jwt = authHeader.substring(7);
         try {
-            merchantId = authTokenParser.extractPrincipalId(jwt);
+            OrganizationId = authTokenParser.extractPrincipalId(jwt);
             
-            if (merchantId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            if (OrganizationId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 if (authTokenParser.isTokenValid(jwt)) {
                     AtlasHubAuthenticationToken authToken = new AtlasHubAuthenticationToken(
-                            merchantId,
+                            OrganizationId,
                             jwt,
                             AtlasHubAuthenticationToken.AuthType.JWT
                     );

@@ -1,7 +1,7 @@
 package com.atlashub.identity.domain.model;
 
 /**
- * Staff size band selected by a Merchant during the compliance PROFILE step.
+ * Staff size band selected by a Organization during the compliance PROFILE step.
  */
 public enum StaffSize {
     ONE_TO_TEN,

@@ -10,8 +10,8 @@ import com.atlashub.identity.application.command.CompleteComplianceContactComman
 import com.atlashub.shared.usecase.BaseUseCase;
 
 import com.atlashub.identity.domain.exception.IdentityErrorCode;
-import com.atlashub.identity.domain.model.Merchant;
-import com.atlashub.identity.domain.repository.MerchantRepository;
+import com.atlashub.identity.domain.model.Organization;
+import com.atlashub.identity.domain.repository.OrganizationRepository;
 import com.atlashub.shared.domain.valueobject.EmailAddress;
 import com.atlashub.shared.domain.valueobject.PhoneNumber;
 import com.atlashub.shared.event.DomainEventPublisher;
@@ -22,11 +22,11 @@ public class CompleteComplianceContactUseCase extends BaseUseCase<CompleteCompli
     private static final Logger log = LoggerFactory.getLogger(CompleteComplianceContactUseCase.class);
 
 
-    private final MerchantRepository merchantRepository;
+    private final OrganizationRepository OrganizationRepository;
     private final DomainEventPublisher eventPublisher;
 
-    public CompleteComplianceContactUseCase(MerchantRepository merchantRepository, DomainEventPublisher eventPublisher) {
-        this.merchantRepository = merchantRepository;
+    public CompleteComplianceContactUseCase(OrganizationRepository OrganizationRepository, DomainEventPublisher eventPublisher) {
+        this.OrganizationRepository = OrganizationRepository;
         this.eventPublisher = eventPublisher;
     }
 
@@ -35,10 +35,10 @@ public class CompleteComplianceContactUseCase extends BaseUseCase<CompleteCompli
     public Void execute(CompleteComplianceContactCommand command) {
         log.info("Executing CompleteComplianceContactUseCase");
 
-        Merchant merchant = merchantRepository.findById(command.merchantId())
-                .orElseThrow(() -> new NotFoundException(IdentityErrorCode.MERCHANT_NOT_FOUND, "Merchant not found"));
+        Organization Organization = OrganizationRepository.findById(command.OrganizationId())
+                .orElseThrow(() -> new NotFoundException(IdentityErrorCode.Organization_NOT_FOUND, "Organization not found"));
 
-        merchant.updateComplianceContact(
+        Organization.updateComplianceContact(
             command.supportEmail() != null ? new EmailAddress(command.supportEmail()) : null,
             command.disputeEmail() != null ? new EmailAddress(command.disputeEmail()) : null,
             command.whatsappPhone() != null ? new PhoneNumber(command.whatsappPhone()) : null,
@@ -53,8 +53,8 @@ public class CompleteComplianceContactUseCase extends BaseUseCase<CompleteCompli
             command.businessStreet()
         );
 
-        merchantRepository.save(merchant);
-        publishEvents(merchant, eventPublisher);
+        OrganizationRepository.save(Organization);
+        publishEvents(Organization, eventPublisher);
     
         return null;
     }

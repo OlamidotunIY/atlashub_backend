@@ -1,7 +1,7 @@
 package com.atlashub.identity.domain.model;
 
 /**
- * The five ordered compliance steps a Merchant must complete to unlock LIVE mode.
+ * The five ordered compliance steps a Organization must complete to unlock LIVE mode.
  * Steps must be completed in the declared order:
  * PROFILE → CONTACT → OWNER → ACCOUNT → SERVICE_AGREEMENT
  */

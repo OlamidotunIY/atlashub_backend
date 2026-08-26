@@ -8,8 +8,8 @@ import org.slf4j.LoggerFactory;
 import com.atlashub.identity.application.command.CompleteComplianceAccountCommand;
 import com.atlashub.identity.application.port.AccountNameResolutionPort;
 import com.atlashub.identity.domain.model.ComplianceStatus;
-import com.atlashub.identity.domain.model.Merchant;
-import com.atlashub.identity.domain.repository.MerchantRepository;
+import com.atlashub.identity.domain.model.Organization;
+import com.atlashub.identity.domain.repository.OrganizationRepository;
 import com.atlashub.shared.event.DomainEventPublisher;
 import com.atlashub.shared.exception.NotFoundException;
 import com.atlashub.identity.domain.exception.IdentityErrorCode;
@@ -24,15 +24,15 @@ public class CompleteComplianceAccountUseCase extends BaseUseCase<CompleteCompli
     private static final Logger log = LoggerFactory.getLogger(CompleteComplianceAccountUseCase.class);
 
 
-    private final MerchantRepository merchantRepository;
+    private final OrganizationRepository OrganizationRepository;
     private final AccountNameResolutionPort accountNameResolutionPort;
     private final DomainEventPublisher eventPublisher;
 
     public CompleteComplianceAccountUseCase(
-            MerchantRepository merchantRepository,
+            OrganizationRepository OrganizationRepository,
             AccountNameResolutionPort accountNameResolutionPort,
             DomainEventPublisher eventPublisher) {
-        this.merchantRepository = merchantRepository;
+        this.OrganizationRepository = OrganizationRepository;
         this.accountNameResolutionPort = accountNameResolutionPort;
         this.eventPublisher = eventPublisher;
     }
@@ -42,21 +42,21 @@ public class CompleteComplianceAccountUseCase extends BaseUseCase<CompleteCompli
     public ComplianceStatus execute(CompleteComplianceAccountCommand command) {
         log.info("Executing CompleteComplianceAccountUseCase");
 
-        Merchant merchant = merchantRepository.findById(command.merchantId())
-                .orElseThrow(() -> new NotFoundException(IdentityErrorCode.MERCHANT_NOT_FOUND, "Merchant not found"));
+        Organization Organization = OrganizationRepository.findById(command.OrganizationId())
+                .orElseThrow(() -> new NotFoundException(IdentityErrorCode.Organization_NOT_FOUND, "Organization not found"));
 
         String accountName = accountNameResolutionPort.resolve(command.settlementBankCode(), command.settlementAccountNumber());
 
-        merchant.updateComplianceAccount(
+        Organization.updateComplianceAccount(
             command.settlementBankCode(),
             command.settlementAccountNumber(),
             accountName
         );
 
-        merchantRepository.save(merchant);
-        publishEvents(merchant, eventPublisher);
+        OrganizationRepository.save(Organization);
+        publishEvents(Organization, eventPublisher);
 
-        return merchant.getComplianceStatus();
+        return Organization.getComplianceStatus();
     }
 }
 

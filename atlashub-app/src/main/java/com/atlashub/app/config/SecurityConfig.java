@@ -39,7 +39,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
                     org.springframework.http.HttpMethod.POST,
-                    "/api/v1/merchants"
+                    "/api/v1/Organizations"
                 ).permitAll()
                 .requestMatchers(
                     "/api/v1/auth/login",

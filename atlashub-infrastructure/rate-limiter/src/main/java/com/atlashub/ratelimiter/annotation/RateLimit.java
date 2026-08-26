@@ -13,12 +13,12 @@ public @interface RateLimit {
     
     /**
      * The unique ID of the rule configured in the system/Redis.
-     * e.g., "strict_auth_sw", "merchant_creation_tb"
+     * e.g., "strict_auth_sw", "Organization_creation_tb"
      */
     String ruleId();
     
     /**
      * How to resolve the key for this limit.
      */
-    RateLimitKeyType keyType() default RateLimitKeyType.MERCHANT_ID;
+    RateLimitKeyType keyType() default RateLimitKeyType.Organization_ID;
 }

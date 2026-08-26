@@ -50,13 +50,13 @@ public class AccountEventListener extends BaseKafkaEventListener {
                         objectMapper.treeToValue(root, VirtualAccountActivatedNotificationEvent.class);
 
                 if (event != null && event.payload() != null && event.payload().integration() != null) {
-                    String merchantId = String.valueOf(event.payload().integration());
+                    String OrganizationId = String.valueOf(event.payload().integration());
                     messagingTemplate.convertAndSendToUser(
-                            merchantId,
+                            OrganizationId,
                             "/queue/notifications",
                             event
                     );
-                    log.info("Pushed VirtualAccountActivated notification to WebSocket for merchant: {}", merchantId);
+                    log.info("Pushed VirtualAccountActivated notification to WebSocket for Organization: {}", OrganizationId);
                 }
             } catch (JsonProcessingException e) {
                 log.error("Error parsing VirtualAccountActivatedEvent payload", e);

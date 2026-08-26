@@ -17,7 +17,7 @@ import java.util.UUID;
 public class ApiKey extends AggregateRoot<Long> {
 
     private final Long id;
-    private final Long merchantId;
+    private final Long OrganizationId;
     private final KeyType keyType;
     private final ApiEnvironment environment;
     private final String keyHash;
@@ -27,9 +27,9 @@ public class ApiKey extends AggregateRoot<Long> {
     private final ZonedDateTime createdAt;
     private ZonedDateTime revokedAt;
 
-    public ApiKey(Long id, Long merchantId, KeyType keyType, ApiEnvironment environment, 
+    public ApiKey(Long id, Long OrganizationId, KeyType keyType, ApiEnvironment environment, 
                   String keyHash, String displayValue, String prefix) {
-        if (merchantId == null) throw new ValidationException(SharedErrorCode.MISSING_REQUIRED_FIELD, "Merchant ID is required");
+        if (OrganizationId == null) throw new ValidationException(SharedErrorCode.MISSING_REQUIRED_FIELD, "Organization ID is required");
         if (keyType == null) throw new ValidationException(SharedErrorCode.MISSING_REQUIRED_FIELD, "KeyType is required");
         if (environment == null) throw new ValidationException(SharedErrorCode.MISSING_REQUIRED_FIELD, "Environment is required");
         if (keyHash == null || keyHash.isBlank()) throw new ValidationException(SharedErrorCode.MISSING_REQUIRED_FIELD, "Key Hash is required");
@@ -37,7 +37,7 @@ public class ApiKey extends AggregateRoot<Long> {
         if (prefix == null || prefix.isBlank()) throw new ValidationException(SharedErrorCode.MISSING_REQUIRED_FIELD, "Prefix is required");
 
         this.id = id;
-        this.merchantId = merchantId;
+        this.OrganizationId = OrganizationId;
         this.keyType = keyType;
         this.environment = environment;
         this.keyHash = keyHash;
@@ -51,7 +51,7 @@ public class ApiKey extends AggregateRoot<Long> {
             id != null ? String.valueOf(id) : null,
             this.createdAt,
             new ApiKeyGenerated.Payload(
-                String.valueOf(merchantId),
+                String.valueOf(OrganizationId),
                 this.keyType,
                 this.environment,
                 this.prefix
@@ -60,11 +60,11 @@ public class ApiKey extends AggregateRoot<Long> {
     }
 
     // Reconstitution constructor for Mappers
-    public ApiKey(Long id, Long merchantId, KeyType keyType, ApiEnvironment environment, 
+    public ApiKey(Long id, Long OrganizationId, KeyType keyType, ApiEnvironment environment, 
                   String keyHash, String displayValue, String prefix, boolean active, 
                   ZonedDateTime createdAt, ZonedDateTime revokedAt) {
         this.id = id;
-        this.merchantId = merchantId;
+        this.OrganizationId = OrganizationId;
         this.keyType = keyType;
         this.environment = environment;
         this.keyHash = keyHash;
@@ -88,15 +88,15 @@ public class ApiKey extends AggregateRoot<Long> {
             id != null ? String.valueOf(id) : null,
             this.revokedAt,
             new ApiKeyRevoked.Payload(
-                String.valueOf(merchantId),
+                String.valueOf(OrganizationId),
                 this.keyType,
                 this.environment
             )
         ));
     }
 
-    public Long getMerchantId() {
-        return merchantId;
+    public Long getOrganizationId() {
+        return OrganizationId;
     }
 
     public boolean isActive() {

@@ -40,7 +40,7 @@ public class GenerateTestApiKeyPairUseCase extends BaseUseCase<GenerateTestApiKe
         String rawSecretKey = "sk_test_" + UUID.randomUUID().toString().replace("-", "");
 
         ApiKey publicKey = new ApiKey(apiKeyRepository.nextIdentity(),
-            command.merchantId(),
+            command.OrganizationId(),
             KeyType.PUBLIC,
             ApiEnvironment.TEST,
             rawPublicKey,
@@ -52,7 +52,7 @@ public class GenerateTestApiKeyPairUseCase extends BaseUseCase<GenerateTestApiKe
         String secretDisplay = "sk_test_****" + rawSecretKey.substring(rawSecretKey.length() - 4);
 
         ApiKey secretKey = new ApiKey(apiKeyRepository.nextIdentity(),
-            command.merchantId(),
+            command.OrganizationId(),
             KeyType.SECRET,
             ApiEnvironment.TEST,
             secretKeyHash,

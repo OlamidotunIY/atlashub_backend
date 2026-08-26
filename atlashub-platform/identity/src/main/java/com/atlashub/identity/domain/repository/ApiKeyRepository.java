@@ -12,6 +12,6 @@ public interface ApiKeyRepository {
     ApiKey save(ApiKey key);
     Optional<ApiKey> findById(Long id);
     Optional<ApiKey> findByKeyHash(String keyHash);
-    Optional<ApiKey> findByMerchantIdAndKeyTypeAndEnvironmentAndActiveTrue(Long merchantId, KeyType keyType, ApiEnvironment environment);
-    List<ApiKey> findAllByMerchantId(Long merchantId);
+    Optional<ApiKey> findByOrganizationIdAndKeyTypeAndEnvironmentAndActiveTrue(Long OrganizationId, KeyType keyType, ApiEnvironment environment);
+    List<ApiKey> findAllByOrganizationId(Long OrganizationId);
 }

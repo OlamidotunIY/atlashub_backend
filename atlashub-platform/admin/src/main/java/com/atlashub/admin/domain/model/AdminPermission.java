@@ -6,6 +6,6 @@ public enum AdminPermission {
     REGENERATE_ADMIN_CODE,
     VIEW_FUNDING_RECORDS,
     VIEW_AUDIT_TRAIL,
-    MANAGE_MERCHANTS,
+    MANAGE_OrganizationS,
     MANAGE_SYSTEM_CONFIG
 }

@@ -15,7 +15,7 @@ class VirtualAccountTest {
                 1L,
                 100L,
                 "CUST-1",
-                "Test Merchant Account",
+                "Test Organization Account",
                 "Wema",
                 "idempotency_123",
                 com.atlashub.shared.money.CurrencyCode.NGN

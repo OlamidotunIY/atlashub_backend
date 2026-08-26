@@ -13,7 +13,7 @@ public record ApiKeyRevoked(
     Payload payload
 ) implements DomainEvent<ApiKeyRevoked.Payload> {
     public record Payload(
-        String merchantId,
+        String OrganizationId,
         KeyType keyType,
         ApiEnvironment environment
     ) {}

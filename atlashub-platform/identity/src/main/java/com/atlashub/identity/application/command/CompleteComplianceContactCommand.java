@@ -2,7 +2,7 @@ package com.atlashub.identity.application.command;
 
 
 public record CompleteComplianceContactCommand(
-    Long merchantId,
+    Long OrganizationId,
     String supportEmail,
     String disputeEmail,
     String whatsappPhone,

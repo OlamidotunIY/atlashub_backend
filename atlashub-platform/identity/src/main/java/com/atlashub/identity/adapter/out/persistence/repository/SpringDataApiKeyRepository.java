@@ -12,6 +12,6 @@ import java.util.Optional;
 @Repository
 public interface SpringDataApiKeyRepository extends JpaRepository<ApiKeyJpaEntity, Long> {
     Optional<ApiKeyJpaEntity> findByKeyHash(String keyHash);
-    Optional<ApiKeyJpaEntity> findByIntegrationAndKeyTypeAndEnvironmentAndActiveTrue(Long merchantId, KeyType keyType, ApiEnvironment environment);
-    List<ApiKeyJpaEntity> findAllByIntegration(Long merchantId);
+    Optional<ApiKeyJpaEntity> findByIntegrationAndKeyTypeAndEnvironmentAndActiveTrue(Long OrganizationId, KeyType keyType, ApiEnvironment environment);
+    List<ApiKeyJpaEntity> findAllByIntegration(Long OrganizationId);
 }

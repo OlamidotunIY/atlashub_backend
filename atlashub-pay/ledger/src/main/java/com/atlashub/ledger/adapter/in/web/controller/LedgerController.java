@@ -36,7 +36,7 @@ public class LedgerController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<BalanceDto>>> getBalances(@RequestHeader("X-Merchant-Id") String integrationStr) {
+    public ResponseEntity<ApiResponse<List<BalanceDto>>> getBalances(@RequestHeader("X-Organization-Id") String integrationStr) {
         Long integration = Long.valueOf(integrationStr);
         List<AccountDetailsDto> accounts = accountQueryPort.findAccountsByIntegration(integration);
         
@@ -50,7 +50,7 @@ public class LedgerController {
 
     @GetMapping("/ledger")
     public ResponseEntity<ApiResponse<List<LedgerHistoryDto>>> getLedgerHistory(
-            @RequestHeader("X-Merchant-Id") String integrationStr,
+            @RequestHeader("X-Organization-Id") String integrationStr,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "50") int perPage) {
         

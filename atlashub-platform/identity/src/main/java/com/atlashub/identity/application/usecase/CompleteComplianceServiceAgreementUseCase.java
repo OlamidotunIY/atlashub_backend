@@ -10,8 +10,8 @@ import com.atlashub.identity.application.command.CompleteComplianceServiceAgreem
 import com.atlashub.shared.usecase.BaseUseCase;
 
 import com.atlashub.identity.domain.exception.IdentityErrorCode;
-import com.atlashub.identity.domain.model.Merchant;
-import com.atlashub.identity.domain.repository.MerchantRepository;
+import com.atlashub.identity.domain.model.Organization;
+import com.atlashub.identity.domain.repository.OrganizationRepository;
 import com.atlashub.shared.event.DomainEventPublisher;
 import com.atlashub.shared.exception.BusinessRuleException;
 import com.atlashub.shared.exception.NotFoundException;
@@ -21,11 +21,11 @@ public class CompleteComplianceServiceAgreementUseCase extends BaseUseCase<Compl
     private static final Logger log = LoggerFactory.getLogger(CompleteComplianceServiceAgreementUseCase.class);
 
 
-    private final MerchantRepository merchantRepository;
+    private final OrganizationRepository OrganizationRepository;
     private final DomainEventPublisher eventPublisher;
 
-    public CompleteComplianceServiceAgreementUseCase(MerchantRepository merchantRepository, DomainEventPublisher eventPublisher) {
-        this.merchantRepository = merchantRepository;
+    public CompleteComplianceServiceAgreementUseCase(OrganizationRepository OrganizationRepository, DomainEventPublisher eventPublisher) {
+        this.OrganizationRepository = OrganizationRepository;
         this.eventPublisher = eventPublisher;
     }
 
@@ -38,13 +38,13 @@ public class CompleteComplianceServiceAgreementUseCase extends BaseUseCase<Compl
             throw new BusinessRuleException(IdentityErrorCode.COMPLIANCE_NOT_ALL_STEPS_COMPLETE, "Must agree to service agreement");
         }
 
-        Merchant merchant = merchantRepository.findById(command.merchantId())
-                .orElseThrow(() -> new NotFoundException(IdentityErrorCode.MERCHANT_NOT_FOUND, "Merchant not found"));
+        Organization Organization = OrganizationRepository.findById(command.OrganizationId())
+                .orElseThrow(() -> new NotFoundException(IdentityErrorCode.Organization_NOT_FOUND, "Organization not found"));
 
-        merchant.acceptServiceAgreement();
+        Organization.acceptServiceAgreement();
 
-        merchantRepository.save(merchant);
-        publishEvents(merchant, eventPublisher);
+        OrganizationRepository.save(Organization);
+        publishEvents(Organization, eventPublisher);
     
         return null;
     }

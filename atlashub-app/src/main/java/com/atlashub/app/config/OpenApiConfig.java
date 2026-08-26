@@ -36,7 +36,7 @@ public class OpenApiConfig {
                 .type(SecurityScheme.Type.HTTP)
                 .bearerFormat("JWT")
                 .scheme("bearer")
-                .description("Use a JWT for Merchant Dashboard authentication.");
+                .description("Use a JWT for Organization Dashboard authentication.");
     }
 
     private SecurityScheme createApiKeyScheme() {

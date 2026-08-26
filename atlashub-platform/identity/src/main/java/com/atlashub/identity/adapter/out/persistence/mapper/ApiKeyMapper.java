@@ -12,7 +12,7 @@ public class ApiKeyMapper {
 
         return new ApiKeyJpaEntity(
                 domain.getId(),
-                domain.getMerchantId(),
+                domain.getOrganizationId(),
                 domain.getKeyType(),
                 domain.getEnvironment(),
                 domain.getKeyHash(),

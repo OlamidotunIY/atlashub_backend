@@ -47,7 +47,7 @@ public class RateLimitAspect {
         
         return switch (keyType) {
             case IP -> getClientIp(request) + ":" + ruleId;
-            case MERCHANT_ID -> getPrincipalName(request) + ":" + ruleId;
+            case Organization_ID -> getPrincipalName(request) + ":" + ruleId;
             case API_KEY -> getApiKey(request) + ":" + ruleId;
             case GLOBAL -> "GLOBAL:" + ruleId;
         };

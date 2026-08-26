@@ -16,7 +16,7 @@ public class VirtualAccount extends AggregateRoot<Long> {
 
     private final Long id;
     private final Long integration;
-    private final String customerCode;
+    private final String UserCode;
     private final String accountName;
     private final String bankName;
     private final String idempotencyKey;
@@ -24,10 +24,10 @@ public class VirtualAccount extends AggregateRoot<Long> {
     private AccountStatus status;
     private NUBAN nuban;
 
-    public VirtualAccount(Long id, Long integration, String customerCode, String accountName, String bankName, String idempotencyKey, CurrencyCode currency, AccountStatus status, NUBAN nuban) {
+    public VirtualAccount(Long id, Long integration, String UserCode, String accountName, String bankName, String idempotencyKey, CurrencyCode currency, AccountStatus status, NUBAN nuban) {
         this.id = id;
         this.integration = integration;
-        this.customerCode = customerCode;
+        this.UserCode = UserCode;
         this.accountName = accountName;
         this.bankName = bankName;
         this.idempotencyKey = idempotencyKey;
@@ -36,8 +36,8 @@ public class VirtualAccount extends AggregateRoot<Long> {
         this.nuban = nuban;
     }
 
-    public static VirtualAccount create(Long id, Long integration, String customerCode, String accountName, String bankName, String idempotencyKey, CurrencyCode currency) {
-        VirtualAccount account = new VirtualAccount(id, integration, customerCode, accountName, bankName, idempotencyKey, currency, AccountStatus.PENDING_ISSUANCE, null);
+    public static VirtualAccount create(Long id, Long integration, String UserCode, String accountName, String bankName, String idempotencyKey, CurrencyCode currency) {
+        VirtualAccount account = new VirtualAccount(id, integration, UserCode, accountName, bankName, idempotencyKey, currency, AccountStatus.PENDING_ISSUANCE, null);
         account.registerEvent(new VirtualAccountCreatedEvent(
                 UUID.randomUUID().toString(),
                 String.valueOf(id),

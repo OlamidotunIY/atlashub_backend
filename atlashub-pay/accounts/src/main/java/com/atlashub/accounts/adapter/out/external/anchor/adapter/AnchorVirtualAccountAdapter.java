@@ -68,14 +68,14 @@ public class AnchorVirtualAccountAdapter implements AccountIssuancePort {
 
     @NonNull
     private static Map<String, Object> getPayload(AccountIssuanceRequestDto request) {
-        Map<String, Object> customerData = Map.of(
+        Map<String, Object> UserData = Map.of(
             "fullName", request.accountName(),
             "email", request.referenceId() + "@atlaspay.internal" // Fallback email since we only have referenceId
         );
 
         Map<String, Object> attributes = Map.of(
             "reference", request.referenceId(),
-            "customer", customerData,
+            "User", UserData,
             "expiryTime", 31536000 // 1 year approx for "permanent" dynamic
         );
 

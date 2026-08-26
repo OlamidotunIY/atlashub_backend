@@ -17,7 +17,7 @@ public class VirtualAccountMapper {
         return new VirtualAccountEntity(
                 domain.getId(),
                 domain.getIntegration(),
-                domain.getCustomerCode(),
+                domain.getUserCode(),
                 domain.getAccountName(),
                 domain.getBankName(),
                 domain.getNuban() != null ? domain.getNuban().value() : null,
@@ -36,7 +36,7 @@ public class VirtualAccountMapper {
         VirtualAccount account = new VirtualAccount(
                 entity.getId(),
                 entity.getIntegration(),
-                entity.getCustomerCode(),
+                entity.getUserCode(),
                 entity.getAccountName(),
                 entity.getBankName(),
                 entity.getIdempotencyKey(),

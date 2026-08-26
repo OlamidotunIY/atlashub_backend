@@ -29,7 +29,7 @@ class IssueVirtualAccountUseCaseTest {
     }
 
     @Test
-    void shouldThrowExceptionWhenMerchantHasTwoAccounts() {
+    void shouldThrowExceptionWhenOrganizationHasTwoAccounts() {
         when(queryService.countByIntegration(1L)).thenReturn(2);
         
         IssueVirtualAccountCommand cmd = new IssueVirtualAccountCommand(1L, "CUST-1", "Test Account", "Wema", com.atlashub.shared.money.CurrencyCode.NGN, "idem1");
@@ -39,7 +39,7 @@ class IssueVirtualAccountUseCaseTest {
     }
 
     @Test
-    void shouldThrowExceptionWhenMerchantHasDuplicateBank() {
+    void shouldThrowExceptionWhenOrganizationHasDuplicateBank() {
         when(queryService.countByIntegration(1L)).thenReturn(1);
         when(queryService.existsByIntegrationAndBankName(1L, "Wema")).thenReturn(true);
         

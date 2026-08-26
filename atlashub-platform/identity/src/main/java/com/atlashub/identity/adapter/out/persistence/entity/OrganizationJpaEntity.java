@@ -1,0 +1,70 @@
+package com.atlashub.identity.adapter.out.persistence.entity;
+
+import com.atlashub.identity.domain.model.BusinessType;
+import com.atlashub.identity.domain.model.ComplianceStatus;
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+
+import java.time.ZonedDateTime;
+
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
+
+@Entity
+@Table(name = "Organizations", 
+    indexes = {
+        @Index(name = "idx_Organization_email", columnList = "email")
+    },
+    uniqueConstraints = {
+        @UniqueConstraint(name = "uk_Organization_email", columnNames = {"email"})
+    }
+)
+@Getter
+@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class OrganizationJpaEntity {
+
+    @Id
+    @Column(name = "id", nullable = false)
+    private Long id;
+
+    @Column(name = "country", nullable = false)
+    private String country;
+
+    @Column(name = "business_name", nullable = false)
+    private String businessName;
+
+    @Column(name = "first_name", nullable = false)
+    private String firstName;
+
+    @Column(name = "last_name", nullable = false)
+    private String lastName;
+
+    @Column(name = "email", nullable = false, unique = true)
+    private String email;
+
+    @Column(name = "phone", nullable = false)
+    private String phone;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "business_type", nullable = false)
+    private BusinessType businessType;
+
+    @Setter
+    @Enumerated(EnumType.STRING)
+    @Column(name = "compliance_status", nullable = false)
+    private ComplianceStatus complianceStatus;
+
+    @Setter
+    @Column(name = "compliance_step")
+    private String complianceStep;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private ZonedDateTime createdAt;
+
+    @Setter
+    @Column(name = "updated_at", nullable = false)
+    private ZonedDateTime updatedAt;
+}
+

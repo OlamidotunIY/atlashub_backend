@@ -4,7 +4,7 @@ import com.atlashub.identity.domain.model.StaffSize;
 import java.math.BigDecimal;
 
 public record CompleteComplianceProfileCommand(
-    Long merchantId,
+    Long OrganizationId,
     String description,
     StaffSize staffSize,
     String industry,

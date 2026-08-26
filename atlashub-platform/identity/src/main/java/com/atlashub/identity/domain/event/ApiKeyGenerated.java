@@ -13,7 +13,7 @@ public record ApiKeyGenerated(
     Payload payload
 ) implements DomainEvent<ApiKeyGenerated.Payload> {
     public record Payload(
-        String merchantId,
+        String OrganizationId,
         KeyType keyType,
         ApiEnvironment environment,
         String prefix

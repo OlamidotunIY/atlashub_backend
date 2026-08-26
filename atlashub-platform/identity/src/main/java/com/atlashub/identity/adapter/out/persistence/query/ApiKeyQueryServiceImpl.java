@@ -18,8 +18,8 @@ public class ApiKeyQueryServiceImpl implements ApiKeyQueryService {
     }
 
     @Override
-    public List<ApiKeyDto> findAllByIntegration(Long merchantId) {
-        return repository.findAllByIntegration(merchantId)
+    public List<ApiKeyDto> findAllByIntegration(Long OrganizationId) {
+        return repository.findAllByIntegration(OrganizationId)
                 .stream()
                 .map(k -> new ApiKeyDto(
                         k.getId(),

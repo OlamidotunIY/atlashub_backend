@@ -21,7 +21,7 @@ import org.testcontainers.utility.DockerImageName;
  *
  * <p>Extend this class in any module integration test that needs a real database:
  * <pre>{@code
- * class RegisterMerchantIntegrationTest extends BaseIntegrationTest {
+ * class RegisterOrganizationIntegrationTest extends BaseIntegrationTest {
  *     // test methods here
  * }
  * }</pre>

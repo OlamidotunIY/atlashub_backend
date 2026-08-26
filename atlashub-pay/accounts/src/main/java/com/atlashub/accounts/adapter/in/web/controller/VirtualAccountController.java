@@ -22,13 +22,13 @@ public class VirtualAccountController {
     private final ForceCloseAccountsUseCase forceCloseAccountsUseCase;
 
     @PostMapping
-    public ResponseEntity<ApiResponse<String>> issueCustomerAccount(
-            @RequestHeader("X-Merchant-Id") String merchantId,
+    public ResponseEntity<ApiResponse<String>> issueUserAccount(
+            @RequestHeader("X-Organization-Id") String OrganizationId,
             @RequestBody IssueVirtualAccountCommand command) {
         
         var accountId = issueVirtualAccountUseCase.execute(new IssueVirtualAccountCommand(
-                Long.valueOf(merchantId),
-                command.customerCode(),
+                Long.valueOf(OrganizationId),
+                command.UserCode(),
                 command.accountName(),
                 command.bankName(),
                 command.currency(),
@@ -39,8 +39,8 @@ public class VirtualAccountController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<?>> listAccounts(@RequestHeader("X-Merchant-Id") String merchantId) {
-        var accounts = getVirtualAccountsUseCase.execute(new GetVirtualAccountsQuery(Long.valueOf(merchantId)));
+    public ResponseEntity<ApiResponse<?>> listAccounts(@RequestHeader("X-Organization-Id") String OrganizationId) {
+        var accounts = getVirtualAccountsUseCase.execute(new GetVirtualAccountsQuery(Long.valueOf(OrganizationId)));
         return ResponseEntity.ok(new ApiResponse<>(true, "Accounts retrieved successfully", accounts, null));
     }
 }

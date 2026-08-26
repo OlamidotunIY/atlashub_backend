@@ -14,9 +14,9 @@ import com.atlashub.identity.domain.exception.IdentityErrorCode;
 import com.atlashub.identity.domain.model.ApiEnvironment;
 import com.atlashub.identity.domain.model.ApiKey;
 import com.atlashub.identity.domain.model.KeyType;
-import com.atlashub.identity.domain.model.Merchant;
+import com.atlashub.identity.domain.model.Organization;
 import com.atlashub.identity.domain.repository.ApiKeyRepository;
-import com.atlashub.identity.domain.repository.MerchantRepository;
+import com.atlashub.identity.domain.repository.OrganizationRepository;
 import com.atlashub.shared.event.DomainEventPublisher;
 import com.atlashub.shared.exception.BusinessRuleException;
 import com.atlashub.shared.exception.NotFoundException;
@@ -28,15 +28,15 @@ public class GenerateLiveApiKeyPairUseCase extends BaseUseCase<GenerateLiveApiKe
     private static final Logger log = LoggerFactory.getLogger(GenerateLiveApiKeyPairUseCase.class);
 
 
-    private final MerchantRepository merchantRepository;
+    private final OrganizationRepository OrganizationRepository;
     private final ApiKeyRepository apiKeyRepository;
     private final DomainEventPublisher eventPublisher;
 
     public GenerateLiveApiKeyPairUseCase(
-            MerchantRepository merchantRepository,
+            OrganizationRepository OrganizationRepository,
             ApiKeyRepository apiKeyRepository,
             DomainEventPublisher eventPublisher) {
-        this.merchantRepository = merchantRepository;
+        this.OrganizationRepository = OrganizationRepository;
         this.apiKeyRepository = apiKeyRepository;
                 this.eventPublisher = eventPublisher;
     }
@@ -46,10 +46,10 @@ public class GenerateLiveApiKeyPairUseCase extends BaseUseCase<GenerateLiveApiKe
     public ApiKeyPairResult execute(GenerateLiveApiKeyPairCommand command) {
         log.info("Executing GenerateLiveApiKeyPairUseCase");
 
-        Merchant merchant = merchantRepository.findById(command.merchantId())
-                .orElseThrow(() -> new NotFoundException(IdentityErrorCode.MERCHANT_NOT_FOUND, "Merchant not found"));
+        Organization Organization = OrganizationRepository.findById(command.OrganizationId())
+                .orElseThrow(() -> new NotFoundException(IdentityErrorCode.Organization_NOT_FOUND, "Organization not found"));
 
-        if (merchant.getComplianceStatus() != com.atlashub.identity.domain.model.ComplianceStatus.APPROVED) {
+        if (Organization.getComplianceStatus() != com.atlashub.identity.domain.model.ComplianceStatus.APPROVED) {
             throw new BusinessRuleException(IdentityErrorCode.LIVE_KEYS_REQUIRE_COMPLIANCE_APPROVED, "Live keys require compliance to be approved");
         }
 
@@ -57,7 +57,7 @@ public class GenerateLiveApiKeyPairUseCase extends BaseUseCase<GenerateLiveApiKe
         String rawSecretKey = "sk_live_" + UUID.randomUUID().toString().replace("-", "");
 
         ApiKey publicKey = new ApiKey(apiKeyRepository.nextIdentity(),
-                command.merchantId(),
+                command.OrganizationId(),
                 KeyType.PUBLIC,
                 ApiEnvironment.LIVE,
                 rawPublicKey,
@@ -69,7 +69,7 @@ public class GenerateLiveApiKeyPairUseCase extends BaseUseCase<GenerateLiveApiKe
         String secretDisplay = "sk_live_****" + rawSecretKey.substring(rawSecretKey.length() - 4);
 
         ApiKey secretKey = new ApiKey(apiKeyRepository.nextIdentity(),
-                command.merchantId(),
+                command.OrganizationId(),
                 KeyType.SECRET,
                 ApiEnvironment.LIVE,
                 secretHash,
