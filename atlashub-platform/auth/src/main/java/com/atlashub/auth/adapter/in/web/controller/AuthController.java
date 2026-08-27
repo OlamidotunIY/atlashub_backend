@@ -37,6 +37,12 @@ import org.springframework.web.bind.annotation.RestController;
 import com.atlashub.auth.adapter.in.web.request.VerifyMfaRequestDto;
 import com.atlashub.auth.adapter.in.web.request.RefreshTokenRequestDto;
 import com.atlashub.auth.adapter.in.web.request.LogoutRequestDto;
+import com.atlashub.auth.application.query.GetAuthenticatedUserQuery;
+import com.atlashub.auth.application.result.AuthenticatedUserDto;
+import com.atlashub.auth.application.usecase.GetAuthenticatedUserUseCase;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.http.HttpStatus;
+import java.security.Principal;
 
 @RestController
 @io.swagger.v3.oas.annotations.tags.Tag(name = "Authentication", description = "Authentication and session management")
@@ -52,6 +58,22 @@ public class AuthController {
     private final CompleteVerificationUseCase completeVerificationUseCase;
     private final SetupPasswordUseCase setupPasswordUseCase;
     private final ResendSetupTokenUseCase resendSetupTokenUseCase;
+    private final GetAuthenticatedUserUseCase getAuthenticatedUserUseCase;
+
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<AuthenticatedUserDto>> getMe(Principal principal) {
+        if (principal == null || principal.getName() == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new ApiResponse<>(false, "Unauthorized", null, null));
+        }
+
+        Long userId = Long.valueOf(principal.getName());
+        GetAuthenticatedUserQuery query = new GetAuthenticatedUserQuery(userId);
+        
+        AuthenticatedUserDto result = getAuthenticatedUserUseCase.execute(query);
+
+        return ResponseEntity.ok(new ApiResponse<>(true, "Authenticated user retrieved successfully", result, null));
+    }
 
     @PostMapping("/setup-password/resend")
     public ResponseEntity<ApiResponse<Void>> resendSetupToken(
