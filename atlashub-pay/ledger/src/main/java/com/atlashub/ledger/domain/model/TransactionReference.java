@@ -1,5 +1,7 @@
 package com.atlashub.ledger.domain.model;
 
+import com.atlashub.ledger.domain.valueobject.SourceSystem;
+
 public record TransactionReference(
         String transactionId,
         SourceSystem sourceSystem

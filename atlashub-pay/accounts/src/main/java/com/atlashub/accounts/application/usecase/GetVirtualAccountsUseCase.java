@@ -2,7 +2,7 @@ package com.atlashub.accounts.application.usecase;
 
 import org.springframework.stereotype.Service;
 
-import com.atlashub.accounts.application.dto.VirtualAccountDto;
+import com.atlashub.accounts.application.result.VirtualAccountDto;
 import com.atlashub.accounts.application.query.GetVirtualAccountsQuery;
 import com.atlashub.accounts.domain.model.VirtualAccount;
 import com.atlashub.accounts.domain.repository.VirtualAccountDomainRepository;

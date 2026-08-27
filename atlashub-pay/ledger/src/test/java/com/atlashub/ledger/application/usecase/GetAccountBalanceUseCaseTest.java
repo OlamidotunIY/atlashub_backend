@@ -2,7 +2,7 @@ package com.atlashub.ledger.application.usecase;
 
 import com.atlashub.ledger.application.query.GetAccountBalanceQuery;
 import com.atlashub.ledger.domain.model.BalanceSnapshot;
-import com.atlashub.ledger.domain.model.EntryType;
+import com.atlashub.ledger.domain.valueobject.EntryType;
 import com.atlashub.ledger.domain.model.LedgerEntry;
 import com.atlashub.ledger.domain.model.TransactionReference;
 import com.atlashub.ledger.domain.repository.BalanceSnapshotRepository;

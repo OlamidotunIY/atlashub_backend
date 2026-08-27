@@ -1,4 +1,4 @@
-package com.atlashub.ledger.adapter.out.persistence.adapter;
+package com.atlashub.ledger.adapter.out.persistence;
 
 import com.atlashub.ledger.domain.model.BalanceSnapshot;
 import com.atlashub.ledger.domain.repository.BalanceSnapshotRepository;

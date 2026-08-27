@@ -1,5 +1,6 @@
 package com.atlashub.ledger.domain.model;
 
+import com.atlashub.ledger.domain.valueobject.EntryType;
 import com.atlashub.shared.domain.AggregateRoot;
 import com.atlashub.shared.exception.BusinessRuleException;
 import com.atlashub.ledger.domain.exception.LedgerErrorCode;

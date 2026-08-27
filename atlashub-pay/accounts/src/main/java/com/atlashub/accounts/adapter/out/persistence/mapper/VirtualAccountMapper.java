@@ -1,6 +1,6 @@
 package com.atlashub.accounts.adapter.out.persistence.mapper;
 
-import com.atlashub.accounts.domain.model.AccountStatus;
+import com.atlashub.accounts.domain.valueobject.AccountStatus;
 import com.atlashub.accounts.domain.model.VirtualAccount;
 import com.atlashub.accounts.adapter.out.persistence.entity.VirtualAccountEntity;
 import com.atlashub.shared.domain.valueobject.NUBAN;

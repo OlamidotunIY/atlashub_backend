@@ -2,9 +2,9 @@ package com.atlashub.ledger.application.usecase;
 
 import com.atlashub.ledger.application.command.PostLedgerTransactionCommand;
 import com.atlashub.ledger.application.command.PostLedgerTransactionCommand.EntryCommand;
-import com.atlashub.ledger.domain.model.EntryType;
+import com.atlashub.ledger.domain.valueobject.EntryType;
 import com.atlashub.ledger.domain.model.LedgerTransaction;
-import com.atlashub.ledger.domain.model.SourceSystem;
+import com.atlashub.ledger.domain.valueobject.SourceSystem;
 import com.atlashub.ledger.domain.repository.LedgerEntryRepository;
 import com.atlashub.ledger.domain.repository.LedgerTransactionRepository;
 import com.atlashub.ledger.domain.repository.BalanceSnapshotRepository;

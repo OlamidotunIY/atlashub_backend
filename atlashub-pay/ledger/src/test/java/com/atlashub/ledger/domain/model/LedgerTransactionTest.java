@@ -1,5 +1,7 @@
 package com.atlashub.ledger.domain.model;
 
+import com.atlashub.ledger.domain.valueobject.EntryType;
+import com.atlashub.ledger.domain.valueobject.SourceSystem;
 import com.atlashub.shared.exception.BusinessRuleException;
 import com.atlashub.shared.money.CurrencyCode;
 import com.atlashub.shared.money.Money;

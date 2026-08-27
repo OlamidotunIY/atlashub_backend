@@ -1,4 +1,4 @@
-package com.atlashub.accounts.application.dto;
+package com.atlashub.accounts.application.result;
 
 public record AccountIssuanceRequestDto(
         String referenceId,

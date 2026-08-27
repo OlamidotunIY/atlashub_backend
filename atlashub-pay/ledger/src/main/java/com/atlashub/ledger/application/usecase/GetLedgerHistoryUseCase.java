@@ -1,9 +1,9 @@
 package com.atlashub.ledger.application.usecase;
 
-import com.atlashub.ledger.application.dto.LedgerHistoryDto;
+import com.atlashub.ledger.application.result.LedgerHistoryDto;
 import com.atlashub.ledger.application.query.GetLedgerHistoryQuery;
 import com.atlashub.ledger.domain.model.LedgerEntry;
-import com.atlashub.ledger.domain.model.EntryType;
+import com.atlashub.ledger.domain.valueobject.EntryType;
 import com.atlashub.ledger.domain.repository.LedgerEntryRepository;
 import com.atlashub.shared.port.out.AccountQueryPort;
 import com.atlashub.shared.port.out.AccountDetailsDto;

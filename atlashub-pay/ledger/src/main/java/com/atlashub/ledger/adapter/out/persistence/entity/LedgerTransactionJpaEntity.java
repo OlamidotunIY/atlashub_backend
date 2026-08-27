@@ -1,4 +1,5 @@
 package com.atlashub.ledger.adapter.out.persistence.entity;
+import lombok.AllArgsConstructor;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -16,6 +17,7 @@ import java.util.List;
         @UniqueConstraint(columnNames = {"transaction_id", "source_system"})
 })
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
 public class LedgerTransactionJpaEntity {
 
     @Id
@@ -33,16 +35,5 @@ public class LedgerTransactionJpaEntity {
     @OneToMany(mappedBy = "transaction", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<LedgerEntryJpaEntity> entries = new ArrayList<>();
 
-    public LedgerTransactionJpaEntity(Long id, String transactionId, String sourceSystem, ZonedDateTime postedAt, List<LedgerEntryJpaEntity> entries) {
-        this.id = id;
-        this.transactionId = transactionId;
-        this.sourceSystem = sourceSystem;
-        this.postedAt = postedAt;
-        if (entries != null) {
-            this.entries = entries;
-            for (LedgerEntryJpaEntity entry : entries) {
-                entry.setTransaction(this);
-            }
-        }
-    }
 }
+

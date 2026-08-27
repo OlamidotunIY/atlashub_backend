@@ -1,4 +1,7 @@
 package com.atlashub.ledger.adapter.out.persistence.entity;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -48,3 +51,4 @@ public class LedgerEntryJpaEntity {
     @JoinColumn(name = "ledger_transaction_id", nullable = false)
     private LedgerTransactionJpaEntity transaction;
 }
+

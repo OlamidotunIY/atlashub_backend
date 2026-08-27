@@ -41,3 +41,4 @@ public class BalanceSnapshotJpaEntity {
     private ZonedDateTime createdAt;
 
 }
+

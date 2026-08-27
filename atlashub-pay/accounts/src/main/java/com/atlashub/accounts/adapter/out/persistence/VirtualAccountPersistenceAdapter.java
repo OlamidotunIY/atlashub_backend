@@ -1,6 +1,6 @@
-package com.atlashub.accounts.adapter.out.persistence.adapter;
+package com.atlashub.accounts.adapter.out.persistence;
 
-import com.atlashub.accounts.domain.model.AccountStatus;
+import com.atlashub.accounts.domain.valueobject.AccountStatus;
 import com.atlashub.accounts.domain.model.VirtualAccount;
 import com.atlashub.accounts.domain.repository.VirtualAccountDomainRepository;
 import com.atlashub.accounts.adapter.out.persistence.entity.VirtualAccountEntity;

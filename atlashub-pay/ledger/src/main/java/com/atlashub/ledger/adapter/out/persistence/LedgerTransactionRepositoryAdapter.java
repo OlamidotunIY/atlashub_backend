@@ -1,11 +1,11 @@
-package com.atlashub.ledger.adapter.out.persistence.adapter;
+package com.atlashub.ledger.adapter.out.persistence;
 
 import com.atlashub.ledger.domain.model.LedgerTransaction;
 import com.atlashub.ledger.domain.repository.LedgerTransactionRepository;
 import com.atlashub.ledger.adapter.out.persistence.entity.LedgerTransactionJpaEntity;
 import com.atlashub.ledger.adapter.out.persistence.mapper.LedgerTransactionMapper;
 import com.atlashub.ledger.adapter.out.persistence.repository.SpringDataLedgerTransactionRepository;
-import com.atlashub.ledger.domain.model.SourceSystem;
+import com.atlashub.ledger.domain.valueobject.SourceSystem;
 import com.atlashub.shared.adapter.out.external.DomainSequenceGenerator;
 import org.springframework.stereotype.Repository;
 

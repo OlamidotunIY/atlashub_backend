@@ -1,7 +1,7 @@
 package com.atlashub.ledger.adapter.in.web.controller;
 
-import com.atlashub.ledger.application.dto.BalanceDto;
-import com.atlashub.ledger.application.dto.LedgerHistoryDto;
+import com.atlashub.ledger.application.result.BalanceDto;
+import com.atlashub.ledger.application.result.LedgerHistoryDto;
 import com.atlashub.ledger.application.query.GetAccountBalanceQuery;
 import com.atlashub.ledger.application.query.GetLedgerHistoryQuery;
 import com.atlashub.ledger.application.usecase.GetAccountBalanceUseCase;
@@ -51,10 +51,11 @@ public class LedgerController {
     @GetMapping("/ledger")
     public ResponseEntity<ApiResponse<List<LedgerHistoryDto>>> getLedgerHistory(
             @RequestHeader("X-Organization-Id") String integrationStr,
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "50") int perPage) {
+            @org.springframework.web.bind.annotation.ModelAttribute com.atlashub.ledger.adapter.in.web.request.GetLedgerHistoryRequestDto request) {
         
         Long integration = Long.valueOf(integrationStr);
+        int page = request.page();
+        int perPage = request.perPage();
         PageResult<LedgerHistoryDto> result = getLedgerHistoryUseCase.execute(new GetLedgerHistoryQuery(integration, page, perPage));
         
         ApiResponse.Meta meta = new ApiResponse.Meta(

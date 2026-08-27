@@ -1,12 +1,12 @@
 package com.atlashub.ledger.application.command;
 
-import com.atlashub.ledger.domain.model.EntryType;
+import com.atlashub.ledger.domain.valueobject.EntryType;
 import com.atlashub.shared.money.CurrencyCode;
 
 import java.math.BigDecimal;
 import java.util.List;
 
-import com.atlashub.ledger.domain.model.SourceSystem;
+import com.atlashub.ledger.domain.valueobject.SourceSystem;
 
 public record PostLedgerTransactionCommand(
         String transactionId,

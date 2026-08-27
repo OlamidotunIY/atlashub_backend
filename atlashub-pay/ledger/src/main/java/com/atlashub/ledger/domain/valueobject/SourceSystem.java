@@ -1,4 +1,4 @@
-package com.atlashub.ledger.domain.model;
+package com.atlashub.ledger.domain.valueobject;
 
 public enum SourceSystem {
     TRANSFERS,

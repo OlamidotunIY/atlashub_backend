@@ -23,13 +23,19 @@ public class LedgerTransactionMapper {
                 .map(entryMapper::toEntity)
                 .toList();
 
-        return new LedgerTransactionJpaEntity(
+        LedgerTransactionJpaEntity transactionEntity = new LedgerTransactionJpaEntity(
                 domain.getId(),
                 domain.getTransactionReference().transactionId(),
                 domain.getTransactionReference().sourceSystem().name(),
                 domain.getPostedAt(),
                 entryEntities
         );
+
+        for (LedgerEntryJpaEntity entryEntity : entryEntities) {
+            entryEntity.setTransaction(transactionEntity);
+        }
+
+        return transactionEntity;
     }
 
     // toDomain not strictly required yet for ledger_transactions as it is append-only, 

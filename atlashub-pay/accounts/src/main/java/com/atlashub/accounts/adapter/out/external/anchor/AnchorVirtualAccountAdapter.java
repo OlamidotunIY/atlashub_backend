@@ -1,6 +1,6 @@
-package com.atlashub.accounts.adapter.out.external.anchor.adapter;
+package com.atlashub.accounts.adapter.out.external.anchor;
 
-import com.atlashub.accounts.application.dto.AccountIssuanceRequestDto;
+import com.atlashub.accounts.application.result.AccountIssuanceRequestDto;
 import com.atlashub.accounts.application.port.AccountIssuancePort;
 import com.atlashub.shared.domain.valueobject.NUBAN;
 import lombok.extern.slf4j.Slf4j;

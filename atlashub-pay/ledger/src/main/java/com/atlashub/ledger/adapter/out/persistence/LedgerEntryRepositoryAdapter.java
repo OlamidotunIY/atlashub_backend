@@ -1,6 +1,6 @@
-package com.atlashub.ledger.adapter.out.persistence.adapter;
+package com.atlashub.ledger.adapter.out.persistence;
 
-import com.atlashub.ledger.domain.model.EntryType;
+import com.atlashub.ledger.domain.valueobject.EntryType;
 import com.atlashub.ledger.domain.model.LedgerEntry;
 import com.atlashub.ledger.domain.model.TransactionReference;
 import com.atlashub.ledger.domain.repository.LedgerEntryRepository;
