@@ -5,7 +5,7 @@ This project uses Hexagonal Architecture (Ports and Adapters) combined with Doma
 ## 1. CQRS and Application Layer Structure
 - **Commands**: DTOs that mutate state MUST be suffixed with `Command` (e.g., `CreateCustomerCommand`) and placed in `application/command`.
 - **Queries**: DTOs that read state MUST be suffixed with `Query` (e.g., `GetCustomerQuery`) and placed in `application/query`.
-- **Responses**: DTOs returned by use cases MUST be placed in `application/dto`.
+- **Responses**: DTOs returned by use cases MUST be placed in `application/result`.
 - **Use Cases**: All handlers MUST be placed in `application/usecase` and MUST extend `BaseUseCase<Input, Output>` from `atlashub-shared-kernel`.
   - For commands that do not return a result, extend `BaseUseCase<Input, Void>` and return `null`. Do NOT create or use a separate `BaseCommandUseCase`.
 
@@ -40,8 +40,16 @@ This project uses Hexagonal Architecture (Ports and Adapters) combined with Doma
 
 ## 7. Code Style
 - **NO INLINE IMPORTS**: You must NEVER use inline imports in Java files (e.g., `java.util.Map<...>`). All imports MUST be placed at the top of the file. NEVER FORGET THIS RULE.
+- **NO INLINE REQUESTS/RESPONSES**: You must NEVER define request or response DTOs inline inside Controllers. All requests and responses MUST be defined in their individual packages (e.g., `adapter/in/web/request` and `adapter/in/web/response`).
 
 ## 8. Entities and Mappers
-- **JPA Entities**: MUST have their own explicit constructors (or Lombok `@AllArgsConstructor` / `@NoArgsConstructor` where strictly required by JPA). ONLY fields that can be legitimately updated should have a `@Setter`. Do NOT put `@Setter` at the class level unless every single field is mutable.
+- **JPA Entities**: MUST have `@AllArgsConstructor` and `@NoArgsConstructor(access = AccessLevel.PROTECTED)`. They MUST have explicit database indexes (`@Table(indexes = {...})`) for all queryable fields (e.g., `organizationId`, `userId`, `email`). ONLY fields that can be legitimately updated should have a `@Setter`. Do NOT put `@Setter` at the class level unless every single field is mutable.
 - **Mappers**: The `infrastructure` layer must contain a `mapper` package. For every Entity/Aggregate, you must define a specific Mapper class responsible for converting between Domain and JPA Entity. Adapters MUST use these mapper classes rather than mapping inline.
-- **Mappers & Domain Events**: Domain events must ONLY be pulled from the application layer (e.g. inside Use Cases). You MUST NEVER call `.pullDomainEvents()` inside the Mappers. Mappers should ONLY map data. To safely map database entities into Domain Aggregates without triggering business events, implement a "Reconstitution Constructor" or static factory in the aggregate specifically for the Mapper to use.
+- **Mappers & Domain Events**: Domain events must ONLY be pulled from the application layer (e.g. inside Use Cases). You MUST NEVER call `.pullDomainEvents()` inside the Mappers.
+
+## 9. Logging
+- **Loggers in Use Cases**: Loggers MUST be located in the `shared` module and used exclusively inside Use Cases (Application layer). Do NOT place loggers inside Controllers (Web layer).
+
+## 10. Audit & Event Listening
+- **No Generic Listeners**: Audit modules and similar event subscribers MUST NOT use a single generic listener for all events. Define dedicated, specific listeners for each context or major event type.
+- **No Mocks in Production Code**: When bridging modules in a modular monolith, do NOT use "dummy" or "mock" adapter implementations. You MUST build complete, functional bridges (e.g., shared interfaces in `shared` module implemented by the provider and injected into the consumer).

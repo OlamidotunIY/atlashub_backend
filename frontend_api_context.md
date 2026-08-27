@@ -92,23 +92,33 @@ Manages internal atlashub administrators.
 
 Manages Merchant onboarding, profiles, compliance, sub-accounts, and API keys.
 
-### Merchants (/api/v1/merchants)
-- **POST /api/v1/merchants**
-  - **Request:** { country, businessName, firstName, lastName, email, phone, businessType }
-  - **Response:** RegisterMerchantResult (contains merchantId)
-- **GET /api/v1/merchants/profile** -> MerchantProfileDto
-- **GET /api/v1/merchants/compliance** -> ComplianceStatus
-- **PUT /api/v1/merchants/compliance/profile** -> Void
-- **PUT /api/v1/merchants/compliance/contact** -> Void
-- **PUT /api/v1/merchants/compliance/owner** -> Void
-- **PUT /api/v1/merchants/compliance/account** -> Void
-- **PUT /api/v1/merchants/compliance/service-agreement** -> Void
-- **POST /api/v1/merchants/compliance/submit** -> Void
+### Users (/api/v1/users)
+- **POST /api/v1/users**
+  - **Request:** { firstName, lastName, email, phone, country }
+  - **Response:** CreateUserResult (contains userId)
+- **GET /api/v1/users/{userId}** -> UserDto
+- **GET /api/v1/users?page=1&size=20** -> Array of UserDto
 
-### Customers (/api/v1/customers)
-- **POST /api/v1/customers** -> CreateCustomerResult
-- **GET /api/v1/customers/{customerId}** -> CustomerDto
-- **GET /api/v1/customers?page=1&size=20** -> Array of CustomerDto
+### Organizations (/api/v1/Organizations)
+- **POST /api/v1/Organizations**
+  - **Request:** { businessName, businessType }
+  - **Response:** RegisterOrganizationResult (contains organizationId)
+- **GET /api/v1/Organizations/profile** -> OrganizationProfileDto
+- **GET /api/v1/Organizations/compliance** -> ComplianceStatus
+- **PUT /api/v1/Organizations/compliance/profile** -> Void
+- **PUT /api/v1/Organizations/compliance/contact** -> Void
+- **PUT /api/v1/Organizations/compliance/owner** -> Void
+- **PUT /api/v1/Organizations/compliance/account** -> Void
+- **PUT /api/v1/Organizations/compliance/service-agreement** -> Void
+- **POST /api/v1/Organizations/compliance/submit** -> Void
+
+### Invitations (/api/v1/invitations)
+- **POST /api/v1/organizations/{organizationId}/invitations**
+  - **Request:** { email, role }
+  - **Response:** Void
+- **GET /api/v1/invitations/{token}** -> InvitationDto
+- **POST /api/v1/invitations/{token}/accept** -> Void (For existing users)
+- **POST /api/v1/invitations/{token}/decline** -> Void
 
 ### Sub-Accounts (/api/v1/subaccounts)
 - **POST /api/v1/subaccounts** -> RegisterSubAccountResult
