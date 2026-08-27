@@ -2,13 +2,13 @@ package com.atlashub.identity.adapter.in.web.controller;
 
 import com.atlashub.identity.application.command.RegenerateApiKeyCommand;
 import com.atlashub.identity.application.command.RevokeApiKeyCommand;
-import com.atlashub.identity.application.dto.ApiKeyDto;
+import com.atlashub.identity.application.result.ApiKeyDto;
 import com.atlashub.identity.application.query.ListApiKeysQuery;
 import com.atlashub.identity.application.usecase.ListApiKeysUseCase;
 import com.atlashub.identity.application.usecase.RegenerateApiKeyUseCase;
 import com.atlashub.identity.application.usecase.RevokeApiKeyUseCase;
-import com.atlashub.identity.domain.model.ApiEnvironment;
-import com.atlashub.identity.domain.model.KeyType;
+import com.atlashub.identity.domain.valueobject.ApiEnvironment;
+import com.atlashub.identity.domain.valueobject.KeyType;
 import com.atlashub.identity.adapter.in.web.request.RegenerateApiKeyRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -74,5 +74,6 @@ public class ApiKeyController {
         return ResponseEntity.ok(new ApiResponse<>(true, "Key revoked successfully", new RevokeApiKeyResponseDto(keyId, false), null));
     }
 }
+
 
 

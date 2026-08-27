@@ -3,28 +3,31 @@ package com.atlashub.identity.domain.model;
 import com.atlashub.shared.domain.AggregateRoot;
 import java.time.ZonedDateTime;
 
+import com.atlashub.identity.domain.valueobject.OrganizationRole;
+import com.atlashub.identity.domain.valueobject.MemberStatus;
+
 public class OrganizationMember extends AggregateRoot<Long> {
     
     private Long id;
-    private String organizationId;
-    private String userId;
+    private Long organizationId;
+    private Long userId;
     private OrganizationRole role;
     private MemberStatus status;
     private ZonedDateTime joinedAt;
-
-    public enum OrganizationRole {
-        OWNER, ADMIN, MANAGER, VIEWER
-    }
-
-    public enum MemberStatus {
-        ACTIVE, INACTIVE, SUSPENDED
-    }
 
     protected OrganizationMember() {
         // JPA constructor
     }
 
-    public OrganizationMember(String organizationId, String userId, OrganizationRole role) {
+    public static OrganizationMember reconstitute(Long id, Long organizationId, Long userId, OrganizationRole role, MemberStatus status, ZonedDateTime joinedAt) {
+        OrganizationMember member = new OrganizationMember(organizationId, userId, role);
+        member.id = id;
+        member.status = status;
+        member.joinedAt = joinedAt;
+        return member;
+    }
+
+    public OrganizationMember(Long organizationId, Long userId, OrganizationRole role) {
         this.organizationId = organizationId;
         this.userId = userId;
         this.role = role;
@@ -37,11 +40,11 @@ public class OrganizationMember extends AggregateRoot<Long> {
         return id;
     }
 
-    public String getOrganizationId() {
+    public Long getOrganizationId() {
         return organizationId;
     }
 
-    public String getUserId() {
+    public Long getUserId() {
         return userId;
     }
 

@@ -1,6 +1,6 @@
 package com.atlashub.identity.application.port;
 
-import com.atlashub.identity.application.dto.ApiKeyDto;
+import com.atlashub.identity.application.result.ApiKeyDto;
 
 import java.util.List;
 

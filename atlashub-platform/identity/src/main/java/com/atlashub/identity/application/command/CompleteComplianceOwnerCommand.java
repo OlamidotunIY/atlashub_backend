@@ -1,6 +1,6 @@
 package com.atlashub.identity.application.command;
 
-import com.atlashub.identity.domain.model.GovernmentIdType;
+import com.atlashub.identity.domain.valueobject.GovernmentIdType;
 import java.time.LocalDate;
 
 public record CompleteComplianceOwnerCommand(
@@ -13,3 +13,4 @@ public record CompleteComplianceOwnerCommand(
     String ownerIdNumber,
     String rcNumber
 ) {}
+

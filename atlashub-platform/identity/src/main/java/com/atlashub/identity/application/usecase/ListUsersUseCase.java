@@ -5,7 +5,7 @@ import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.atlashub.identity.application.dto.UserDto;
+import com.atlashub.identity.application.result.UserDto;
 import com.atlashub.identity.application.port.UserQueryService;
 import com.atlashub.identity.application.query.ListUsersQuery;
 import com.atlashub.shared.usecase.BaseUseCase;

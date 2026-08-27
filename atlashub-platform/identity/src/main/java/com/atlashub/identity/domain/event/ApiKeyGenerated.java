@@ -1,7 +1,7 @@
 package com.atlashub.identity.domain.event;
 
-import com.atlashub.identity.domain.model.ApiEnvironment;
-import com.atlashub.identity.domain.model.KeyType;
+import com.atlashub.identity.domain.valueobject.ApiEnvironment;
+import com.atlashub.identity.domain.valueobject.KeyType;
 import com.atlashub.shared.event.DomainEvent;
 
 import java.time.ZonedDateTime;
@@ -19,3 +19,4 @@ public record ApiKeyGenerated(
         String prefix
     ) {}
 }
+

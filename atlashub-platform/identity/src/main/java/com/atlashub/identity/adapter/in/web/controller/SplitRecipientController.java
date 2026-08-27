@@ -1,8 +1,8 @@
 package com.atlashub.identity.adapter.in.web.controller;
 
 import com.atlashub.identity.application.command.RegisterSplitRecipientCommand;
-import com.atlashub.identity.application.dto.RegisterSplitRecipientResult;
-import com.atlashub.identity.application.dto.SplitRecipientDto;
+import com.atlashub.identity.application.result.RegisterSplitRecipientResult;
+import com.atlashub.identity.application.result.SplitRecipientDto;
 import com.atlashub.identity.application.query.GetSplitRecipientQuery;
 import com.atlashub.identity.application.query.ListSplitRecipientsQuery;
 import com.atlashub.identity.application.usecase.GetSplitRecipientUseCase;
@@ -64,11 +64,10 @@ public class SplitRecipientController {
     @GetMapping
     @Operation(summary = "List sub accounts", description = "Retrieves a paginated list of sub accounts")
     public ResponseEntity<ApiResponse<List<SplitRecipientDto>>> list(
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "20") int size,
+            @org.springframework.web.bind.annotation.ModelAttribute com.atlashub.identity.adapter.in.web.request.ListSplitRecipientsRequestDto request,
             Principal principal) {
         String OrganizationIdStr = principal != null ? principal.getName() : "anonymous";
-        ListSplitRecipientsQuery query = new ListSplitRecipientsQuery(Long.valueOf(OrganizationIdStr), page, size);
+        ListSplitRecipientsQuery query = new ListSplitRecipientsQuery(Long.valueOf(OrganizationIdStr), request.page(), request.size());
         PageResult<SplitRecipientDto> result = listSplitRecipientsUseCase.execute(query);
         return ResponseEntity.ok(new ApiResponse<>(true, "Sub accounts retrieved successfully", result.content(), new ApiResponse.Meta(result.totalElements(), 0, result.pageSize(), result.pageNumber(), result.totalPages())));
     }

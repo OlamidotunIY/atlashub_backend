@@ -1,6 +1,6 @@
 package com.atlashub.identity.adapter.in.web.request;
 
-import com.atlashub.identity.domain.model.GovernmentIdType;
+import com.atlashub.identity.domain.valueobject.GovernmentIdType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
@@ -23,3 +23,4 @@ public record CompleteComplianceOwnerRequest(
     
     String rcNumber
 ) {}
+

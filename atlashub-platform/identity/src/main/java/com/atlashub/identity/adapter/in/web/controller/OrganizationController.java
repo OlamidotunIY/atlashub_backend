@@ -1,11 +1,11 @@
 package com.atlashub.identity.adapter.in.web.controller;
 
 import com.atlashub.identity.application.command.*;
-import com.atlashub.identity.application.dto.OrganizationProfileDto;
-import com.atlashub.identity.application.dto.RegisterOrganizationResult;
+import com.atlashub.identity.application.result.OrganizationProfileDto;
+import com.atlashub.identity.application.result.RegisterOrganizationResult;
 import com.atlashub.identity.application.query.GetOrganizationProfileQuery;
 import com.atlashub.identity.application.usecase.*;
-import com.atlashub.identity.domain.model.ComplianceStatus;
+import com.atlashub.identity.domain.valueobject.ComplianceStatus;
 import com.atlashub.identity.adapter.in.web.request.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -57,19 +57,16 @@ public class OrganizationController {
 
     @PostMapping
     @Operation(summary = "Register a new Organization", description = "Creates a new Organization account")
-    public ResponseEntity<ApiResponse<RegisterOrganizationResult>> register(@Valid @RequestBody RegisterOrganizationRequest request) {
-        log.info("Received request to register Organization with email: {}", request.email());
+    public ResponseEntity<ApiResponse<RegisterOrganizationResult>> register(@Valid @RequestBody RegisterOrganizationRequest request, Principal principal) {
+        log.info("Received request to register Organization");
+        Long userId = Long.valueOf(principal.getName());
         RegisterOrganizationCommand command = new RegisterOrganizationCommand(
-                request.country(),
+                userId,
                 request.businessName(),
-                request.firstName(),
-                request.lastName(),
-                request.email(),
-                request.phone(),
                 request.businessType()
         );
         RegisterOrganizationResult result = registerOrganizationUseCase.execute(command);
-        log.info("Successfully processed registration for Organization ID: {}", result.OrganizationId());
+        log.info("Successfully processed registration for Organization ID: {}", result.organizationId());
         return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse<>(true, "Organization registered successfully", result, null));
     }
 
@@ -184,5 +181,6 @@ public class OrganizationController {
         return ResponseEntity.ok(new ApiResponse<>(true, "Operation successful", null, null));
     }
 }
+
 
 

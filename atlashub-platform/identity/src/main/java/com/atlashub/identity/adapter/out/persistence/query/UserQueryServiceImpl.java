@@ -1,6 +1,6 @@
 package com.atlashub.identity.adapter.out.persistence.query;
 
-import com.atlashub.identity.application.dto.UserDto;
+import com.atlashub.identity.application.result.UserDto;
 import com.atlashub.identity.application.port.UserQueryService;
 import com.atlashub.identity.adapter.out.persistence.repository.SpringDataUserRepository;
 import com.atlashub.shared.util.PageResult;
@@ -21,17 +21,14 @@ public class UserQueryServiceImpl implements UserQueryService {
     @Override
     public Optional<UserDto> findById(Long OrganizationId, Long UserId) {
         return repository.findById(UserId)
-                .filter(c -> c.getIntegration().equals(OrganizationId))
-                .map(c -> new UserDto(
-                        c.getId(),
-                        c.getCode(),
-                        c.getIntegration(),
-                        c.getFirstName(),
-                        c.getLastName(),
-                        c.getEmail(),
-                        c.getPhone(),
+                .map(user -> new UserDto(
+                        user.getId(),
+                        user.getFirstName(),
+                        user.getLastName(),
+                        user.getEmail(),
+                        user.getPhone(),
                         null,
-                        c.getCreatedAt()
+                        user.getCreatedAt()
                 ));
     }
 

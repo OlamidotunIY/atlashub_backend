@@ -1,18 +1,18 @@
 package com.atlashub.identity.application.usecase;
 
-import org.springframework.stereotype.Service;
-
 import com.atlashub.identity.application.command.RegisterOrganizationCommand;
-import com.atlashub.shared.usecase.BaseUseCase;
-import com.atlashub.identity.application.dto.RegisterOrganizationResult;
+import com.atlashub.identity.application.result.RegisterOrganizationResult;
 import com.atlashub.identity.domain.exception.IdentityErrorCode;
 import com.atlashub.identity.domain.model.Organization;
+import com.atlashub.identity.domain.model.OrganizationMember;
+import com.atlashub.identity.domain.model.User;
+import com.atlashub.identity.domain.repository.OrganizationMemberRepository;
 import com.atlashub.identity.domain.repository.OrganizationRepository;
-import com.atlashub.shared.domain.valueobject.Country;
-import com.atlashub.shared.domain.valueobject.EmailAddress;
-import com.atlashub.shared.domain.valueobject.PhoneNumber;
+import com.atlashub.identity.domain.repository.UserRepository;
+import com.atlashub.identity.domain.valueobject.OrganizationRole;
 import com.atlashub.shared.event.DomainEventPublisher;
-import com.atlashub.shared.exception.ConflictException;
+import com.atlashub.shared.exception.NotFoundException;
+import com.atlashub.shared.usecase.BaseUseCase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -23,45 +23,57 @@ public class RegisterOrganizationUseCase extends BaseUseCase<RegisterOrganizatio
 
     private static final Logger log = LoggerFactory.getLogger(RegisterOrganizationUseCase.class);
 
-    private final OrganizationRepository OrganizationRepository;
+    private final OrganizationRepository organizationRepository;
+    private final OrganizationMemberRepository memberRepository;
+    private final UserRepository userRepository;
     private final DomainEventPublisher eventPublisher;
 
     public RegisterOrganizationUseCase(
-            OrganizationRepository OrganizationRepository,
+            OrganizationRepository organizationRepository,
+            OrganizationMemberRepository memberRepository,
+            UserRepository userRepository,
             DomainEventPublisher eventPublisher) {
-        this.OrganizationRepository = OrganizationRepository;
+        this.organizationRepository = organizationRepository;
+        this.memberRepository = memberRepository;
+        this.userRepository = userRepository;
         this.eventPublisher = eventPublisher;
     }
 
     @Override
     @Transactional
     public RegisterOrganizationResult execute(RegisterOrganizationCommand command) {
-        log.info("Starting Organization registration for email: {}", command.email());
+        log.info("Starting organization registration for user id: {}", command.userId());
 
-        if (OrganizationRepository.findByEmail(command.email()).isPresent()) {
-            log.warn("Organization registration failed: email {} already exists", command.email());
-            throw new ConflictException(IdentityErrorCode.Organization_EMAIL_ALREADY_EXISTS, "Organization with this email already exists");
-        }
-
-        Organization Organization = new Organization(OrganizationRepository.nextIdentity(),
-            Country.fromString(command.country()),
+        Organization organization = new Organization(
+            organizationRepository.nextIdentity(),
             command.businessName(),
-            command.firstName(),
-            command.lastName(),
-            new EmailAddress(command.email()),
-            new PhoneNumber(command.phone()),
             command.businessType()
         );
 
-        OrganizationRepository.save(Organization);
-        log.debug("Organization saved with ID: {}", Organization.getId());
+        organizationRepository.save(organization);
+        log.debug("Organization saved with id: {}", organization.getId());
 
-        publishEvents(Organization, eventPublisher);
-        log.debug("Organization domain events published");
+        OrganizationMember ownerMembership = new OrganizationMember(
+            organization.getId(),
+            command.userId(),
+            OrganizationRole.OWNER
+        );
+        memberRepository.save(ownerMembership);
+        log.debug("Owner membership created for user {} in organization {}", command.userId(), organization.getId());
 
-        log.info("Successfully registered Organization with ID: {}", Organization.getId());
+        User user = userRepository.findById(command.userId())
+            .orElseThrow(() -> new NotFoundException(IdentityErrorCode.USER_NOT_FOUND, "User not found"));
 
-        return new RegisterOrganizationResult(Organization.getId());
+        if (user.getActiveOrganizationId() == null) {
+            user.switchActiveOrganization(organization.getId());
+            userRepository.save(user);
+            publishEvents(user, eventPublisher);
+            log.debug("Set activeOrganizationId={} for user {}", organization.getId(), command.userId());
+        }
+
+        publishEvents(organization, eventPublisher);
+        log.info("Successfully registered organization id: {}", organization.getId());
+
+        return new RegisterOrganizationResult(organization.getId());
     }
 }
-

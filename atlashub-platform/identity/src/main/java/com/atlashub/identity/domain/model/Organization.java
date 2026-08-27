@@ -2,13 +2,14 @@ package com.atlashub.identity.domain.model;
 
 import com.atlashub.identity.domain.event.*;
 import com.atlashub.identity.domain.exception.IdentityErrorCode;
+import com.atlashub.identity.domain.valueobject.*;
 import com.atlashub.shared.domain.AggregateRoot;
-import com.atlashub.shared.domain.valueobject.Country;
 import com.atlashub.shared.domain.valueobject.EmailAddress;
 import com.atlashub.shared.domain.valueobject.PhoneNumber;
 import com.atlashub.shared.exception.BusinessRuleException;
 import lombok.Getter;
-
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
@@ -16,41 +17,26 @@ import java.util.UUID;
 public class Organization extends AggregateRoot<Long> {
 
     private final Long id;
-    private final Country country;
     private String businessName;
-    private String firstName;
-    private String lastName;
-    private final EmailAddress email;
-    private PhoneNumber phone;
-    
     private final BusinessType businessType;
+    private String description;
+    private String logoUrl;
     private ComplianceStatus complianceStatus;
     private ComplianceStep complianceStep;
     private OrganizationCompliance compliance;
     private final ZonedDateTime createdAt;
     private ZonedDateTime updatedAt;
 
-    public Organization(Long id, Country country, String businessName, String firstName, String lastName,
-                    EmailAddress email, PhoneNumber phone, BusinessType businessType) {
-        
-        if (country != Country.NIGERIA) {
-            throw new BusinessRuleException(IdentityErrorCode.UNSUPPORTED_COUNTRY, "Currently, only Organizations in Nigeria (NG) are supported.");
-        }
-
+    /** Creation constructor — raises OrganizationRegistered event. */
+    public Organization(Long id, String businessName, BusinessType businessType) {
         this.id = id;
-        this.country = country;
         this.businessName = businessName;
-        this.firstName = firstName;
-        this.lastName = lastName;
-        this.email = email;
-        this.phone = phone;
-        
         this.businessType = businessType;
-        
+        this.description = null;
+        this.logoUrl = null;
         this.complianceStatus = ComplianceStatus.NOT_STARTED;
         this.complianceStep = null;
         this.compliance = new OrganizationCompliance();
-        
         this.createdAt = ZonedDateTime.now();
         this.updatedAt = this.createdAt;
 
@@ -60,47 +46,59 @@ public class Organization extends AggregateRoot<Long> {
             ZonedDateTime.now(),
             new OrganizationRegistered.Payload(
                 this.businessName,
-                this.email.value(),
-                this.country.name(),
                 this.businessType
             )
         ));
     }
 
-    // Reconstitution constructor for Mappers
-    public Organization(Long id, Country country, String businessName, String firstName, String lastName,
-                    EmailAddress email, PhoneNumber phone, BusinessType businessType,
-                    ComplianceStatus complianceStatus, ComplianceStep complianceStep,
-                    ZonedDateTime createdAt, ZonedDateTime updatedAt) {
+    /** Reconstitution constructor — used by mappers only. No events raised. */
+    public Organization(Long id, String businessName, BusinessType businessType,
+                        String description, String logoUrl,
+                        ComplianceStatus complianceStatus, ComplianceStep complianceStep,
+                        ZonedDateTime createdAt, ZonedDateTime updatedAt) {
         this.id = id;
-        this.country = country;
         this.businessName = businessName;
-        this.firstName = firstName;
-        this.lastName = lastName;
-        this.email = email;
-        this.phone = phone;
-        
         this.businessType = businessType;
+        this.description = description;
+        this.logoUrl = logoUrl;
         this.complianceStatus = complianceStatus;
         this.complianceStep = complianceStep;
         this.compliance = new OrganizationCompliance();
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
-    
+
+    public void updateOrganization(String businessName, String description, String logoUrl) {
+        this.businessName = businessName;
+        this.description = description;
+        this.logoUrl = logoUrl;
+        this.updatedAt = ZonedDateTime.now();
+
+        registerEvent(new OrganizationUpdated(
+            UUID.randomUUID().toString(),
+            String.valueOf(id),
+            this.updatedAt,
+            new OrganizationUpdated.Payload(
+                this.businessName,
+                this.description,
+                this.logoUrl
+            )
+        ));
+    }
+
     public void completeComplianceStep(ComplianceStep step) {
         if (this.complianceStatus == ComplianceStatus.NOT_STARTED) {
             this.complianceStatus = ComplianceStatus.IN_PROGRESS;
         }
-        
+
         if (this.complianceStep == null && step != ComplianceStep.PROFILE) {
             throw new BusinessRuleException(IdentityErrorCode.COMPLIANCE_STEP_OUT_OF_ORDER, "First step must be PROFILE");
         }
-        
+
         if (this.complianceStep != null && step != this.complianceStep.next() && step != this.complianceStep) {
             throw new BusinessRuleException(IdentityErrorCode.COMPLIANCE_STEP_OUT_OF_ORDER, "Steps must be completed in order");
         }
-        
+
         this.complianceStep = step;
         this.updatedAt = ZonedDateTime.now();
 
@@ -112,7 +110,7 @@ public class Organization extends AggregateRoot<Long> {
         ));
     }
 
-    public void updateComplianceProfile(String description, StaffSize staffSize, String industry, String category, java.math.BigDecimal annualProjectedSalesVolume, String annualProjectedSalesCurrency) {
+    public void updateComplianceProfile(String description, StaffSize staffSize, String industry, String category, BigDecimal annualProjectedSalesVolume, String annualProjectedSalesCurrency) {
         this.compliance.updateProfileStep(description, staffSize, industry, category, annualProjectedSalesVolume, annualProjectedSalesCurrency);
         this.completeComplianceStep(ComplianceStep.PROFILE);
     }
@@ -122,7 +120,7 @@ public class Organization extends AggregateRoot<Long> {
         this.completeComplianceStep(ComplianceStep.CONTACT);
     }
 
-    public void updateComplianceOwner(String ownerBvn, String ownerNin, java.time.LocalDate ownerDateOfBirth, String ownerAddress, GovernmentIdType ownerIdType, String ownerIdNumber, String rcNumber) {
+    public void updateComplianceOwner(String ownerBvn, String ownerNin, LocalDate ownerDateOfBirth, String ownerAddress, GovernmentIdType ownerIdType, String ownerIdNumber, String rcNumber) {
         this.compliance.updateOwnerStep(ownerBvn, ownerNin, ownerDateOfBirth, ownerAddress, ownerIdType, ownerIdNumber, rcNumber);
         this.completeComplianceStep(ComplianceStep.OWNER);
     }
@@ -141,10 +139,10 @@ public class Organization extends AggregateRoot<Long> {
         if (this.complianceStep != ComplianceStep.SERVICE_AGREEMENT || !this.compliance.isAgreedToTerms()) {
             throw new BusinessRuleException(IdentityErrorCode.COMPLIANCE_NOT_ALL_STEPS_COMPLETE, "All 5 compliance steps must be completed before submission");
         }
-        
+
         this.complianceStatus = ComplianceStatus.SUBMITTED;
         this.updatedAt = ZonedDateTime.now();
-        
+
         registerEvent(new OrganizationComplianceSubmitted(
             UUID.randomUUID().toString(),
             String.valueOf(id),
@@ -156,15 +154,15 @@ public class Organization extends AggregateRoot<Long> {
         if (this.complianceStatus != ComplianceStatus.SUBMITTED && this.complianceStatus != ComplianceStatus.UNDER_REVIEW) {
             throw new BusinessRuleException(IdentityErrorCode.COMPLIANCE_NOT_SUBMITTED, "Cannot approve compliance that hasn't been submitted");
         }
-        
+
         this.complianceStatus = ComplianceStatus.APPROVED;
         this.updatedAt = ZonedDateTime.now();
-        
+
         registerEvent(new OrganizationComplianceApproved(
             UUID.randomUUID().toString(),
             String.valueOf(id),
             ZonedDateTime.now(),
-            new OrganizationComplianceApproved.Payload(this.firstName + " " + this.lastName, this.country)
+            new OrganizationComplianceApproved.Payload(this.businessName)
         ));
     }
 
@@ -172,10 +170,10 @@ public class Organization extends AggregateRoot<Long> {
         if (this.complianceStatus != ComplianceStatus.SUBMITTED && this.complianceStatus != ComplianceStatus.UNDER_REVIEW) {
             throw new BusinessRuleException(IdentityErrorCode.COMPLIANCE_NOT_SUBMITTED, "Cannot reject compliance that hasn't been submitted");
         }
-        
+
         this.complianceStatus = ComplianceStatus.REJECTED;
         this.updatedAt = ZonedDateTime.now();
-        
+
         registerEvent(new OrganizationComplianceRejected(
             UUID.randomUUID().toString(),
             String.valueOf(id),
@@ -184,35 +182,14 @@ public class Organization extends AggregateRoot<Long> {
         ));
     }
 
-    public void updateProfile(String firstName, String lastName, String businessName, PhoneNumber phone) {
-        this.firstName = firstName;
-        this.lastName = lastName;
-        this.businessName = businessName;
-        this.phone = phone;
-        this.updatedAt = ZonedDateTime.now();
-        
-        registerEvent(new OrganizationProfileUpdated(
-            UUID.randomUUID().toString(),
-            String.valueOf(id),
-            ZonedDateTime.now(),
-            new OrganizationProfileUpdated.Payload(
-                this.firstName,
-                this.lastName,
-                this.businessName,
-                this.phone.value()
-            )
-        ));
-    }
-    
     public void ban(String reason) {
         if (this.complianceStatus == ComplianceStatus.REJECTED) {
             throw new BusinessRuleException(IdentityErrorCode.COMPLIANCE_NOT_SUBMITTED, "Organization is already rejected/banned");
         }
-        
-        // We will repurpose REJECTED for now or just emit the event
+
         this.complianceStatus = ComplianceStatus.REJECTED;
         this.updatedAt = ZonedDateTime.now();
-        
+
         registerEvent(new OrganizationBanned(
             UUID.randomUUID().toString(),
             String.valueOf(id),
@@ -225,6 +202,4 @@ public class Organization extends AggregateRoot<Long> {
     public Long getId() {
         return id;
     }
-
 }
-

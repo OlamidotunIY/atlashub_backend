@@ -9,10 +9,10 @@ import com.atlashub.identity.application.command.GenerateTestApiKeyPairCommand;
 
 import com.atlashub.shared.usecase.BaseUseCase;
 
-import com.atlashub.identity.application.dto.ApiKeyPairResult;
-import com.atlashub.identity.domain.model.ApiEnvironment;
+import com.atlashub.identity.application.result.ApiKeyPairResult;
+import com.atlashub.identity.domain.valueobject.ApiEnvironment;
 import com.atlashub.identity.domain.model.ApiKey;
-import com.atlashub.identity.domain.model.KeyType;
+import com.atlashub.identity.domain.valueobject.KeyType;
 import com.atlashub.identity.domain.repository.ApiKeyRepository;
 import com.atlashub.shared.event.DomainEventPublisher;
 
@@ -69,6 +69,7 @@ public class GenerateTestApiKeyPairUseCase extends BaseUseCase<GenerateTestApiKe
         return new ApiKeyPairResult(rawPublicKey, rawSecretKey);
     }
 }
+
 
 
 

@@ -1,7 +1,6 @@
 package com.atlashub.identity.domain.event;
 
 import com.atlashub.shared.event.DomainEvent;
-
 import java.time.ZonedDateTime;
 
 public record UserCreated(
@@ -11,9 +10,9 @@ public record UserCreated(
     Payload payload
 ) implements DomainEvent<UserCreated.Payload> {
     public record Payload(
-        Long integration,
         String email,
         String firstName,
-        String lastName
+        String lastName,
+        String country
     ) {}
 }

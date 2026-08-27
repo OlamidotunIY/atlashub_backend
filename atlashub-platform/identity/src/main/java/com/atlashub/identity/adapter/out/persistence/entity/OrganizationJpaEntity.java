@@ -1,24 +1,25 @@
 package com.atlashub.identity.adapter.out.persistence.entity;
 
-import com.atlashub.identity.domain.model.BusinessType;
-import com.atlashub.identity.domain.model.ComplianceStatus;
-import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
-
+import com.atlashub.identity.domain.valueobject.BusinessType;
+import com.atlashub.identity.domain.valueobject.ComplianceStatus;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
 import java.time.ZonedDateTime;
-
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
-@Table(name = "Organizations", 
+@Table(name = "organizations",
     indexes = {
-        @Index(name = "idx_Organization_email", columnList = "email")
-    },
-    uniqueConstraints = {
-        @UniqueConstraint(name = "uk_Organization_email", columnNames = {"email"})
+        @Index(name = "idx_organization_business_type", columnList = "business_type")
     }
 )
 @Getter
@@ -30,26 +31,21 @@ public class OrganizationJpaEntity {
     @Column(name = "id", nullable = false)
     private Long id;
 
-    @Column(name = "country", nullable = false)
-    private String country;
-
+    @Setter
     @Column(name = "business_name", nullable = false)
     private String businessName;
 
-    @Column(name = "first_name", nullable = false)
-    private String firstName;
-
-    @Column(name = "last_name", nullable = false)
-    private String lastName;
-
-    @Column(name = "email", nullable = false, unique = true)
-    private String email;
-
-    @Column(name = "phone", nullable = false)
-    private String phone;
     @Enumerated(EnumType.STRING)
     @Column(name = "business_type", nullable = false)
     private BusinessType businessType;
+
+    @Setter
+    @Column(name = "description")
+    private String description;
+
+    @Setter
+    @Column(name = "logo_url")
+    private String logoUrl;
 
     @Setter
     @Enumerated(EnumType.STRING)
@@ -67,4 +63,3 @@ public class OrganizationJpaEntity {
     @Column(name = "updated_at", nullable = false)
     private ZonedDateTime updatedAt;
 }
-

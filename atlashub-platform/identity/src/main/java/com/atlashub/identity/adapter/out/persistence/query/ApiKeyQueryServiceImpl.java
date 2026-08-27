@@ -1,6 +1,6 @@
 package com.atlashub.identity.adapter.out.persistence.query;
 
-import com.atlashub.identity.application.dto.ApiKeyDto;
+import com.atlashub.identity.application.result.ApiKeyDto;
 import com.atlashub.identity.application.port.ApiKeyQueryService;
 import com.atlashub.identity.adapter.out.persistence.repository.SpringDataApiKeyRepository;
 import org.springframework.stereotype.Service;

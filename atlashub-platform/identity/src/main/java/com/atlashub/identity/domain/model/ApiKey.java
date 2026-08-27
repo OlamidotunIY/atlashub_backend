@@ -3,11 +3,12 @@ package com.atlashub.identity.domain.model;
 import com.atlashub.identity.domain.event.ApiKeyGenerated;
 import com.atlashub.identity.domain.event.ApiKeyRevoked;
 import com.atlashub.identity.domain.exception.IdentityErrorCode;
+import com.atlashub.identity.domain.valueobject.ApiEnvironment;
+import com.atlashub.identity.domain.valueobject.KeyType;
 import com.atlashub.shared.domain.AggregateRoot;
 import com.atlashub.shared.exception.BusinessRuleException;
 import com.atlashub.shared.exception.SharedErrorCode;
 import com.atlashub.shared.exception.ValidationException;
-import lombok.AccessLevel;
 import lombok.Getter;
 
 import java.time.ZonedDateTime;
@@ -93,14 +94,6 @@ public class ApiKey extends AggregateRoot<Long> {
                 this.environment
             )
         ));
-    }
-
-    public Long getOrganizationId() {
-        return OrganizationId;
-    }
-
-    public boolean isActive() {
-        return active;
     }
 
     @Override

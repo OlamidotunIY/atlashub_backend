@@ -1,7 +1,7 @@
 package com.atlashub.identity.adapter.out.persistence.repository;
 
-import com.atlashub.identity.domain.model.ApiEnvironment;
-import com.atlashub.identity.domain.model.KeyType;
+import com.atlashub.identity.domain.valueobject.ApiEnvironment;
+import com.atlashub.identity.domain.valueobject.KeyType;
 import com.atlashub.identity.adapter.out.persistence.entity.ApiKeyJpaEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -15,3 +15,4 @@ public interface SpringDataApiKeyRepository extends JpaRepository<ApiKeyJpaEntit
     Optional<ApiKeyJpaEntity> findByIntegrationAndKeyTypeAndEnvironmentAndActiveTrue(Long OrganizationId, KeyType keyType, ApiEnvironment environment);
     List<ApiKeyJpaEntity> findAllByIntegration(Long OrganizationId);
 }
+

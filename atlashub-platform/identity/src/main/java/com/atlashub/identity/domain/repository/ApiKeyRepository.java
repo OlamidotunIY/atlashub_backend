@@ -1,8 +1,8 @@
 package com.atlashub.identity.domain.repository;
 
-import com.atlashub.identity.domain.model.ApiEnvironment;
+import com.atlashub.identity.domain.valueobject.ApiEnvironment;
 import com.atlashub.identity.domain.model.ApiKey;
-import com.atlashub.identity.domain.model.KeyType;
+import com.atlashub.identity.domain.valueobject.KeyType;
 
 import java.util.List;
 import java.util.Optional;

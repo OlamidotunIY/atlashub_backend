@@ -1,23 +1,26 @@
 package com.atlashub.identity.adapter.out.persistence.entity;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
+import java.time.ZonedDateTime;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.ZonedDateTime;
-
 @Entity
-@Table(name = "Users", 
+@Table(name = "users",
     indexes = {
-        @Index(name = "idx_User_integration", columnList = "integration"),
-        @Index(name = "idx_User_email", columnList = "email"),
-        @Index(name = "idx_User_code", columnList = "code")
+        @Index(name = "idx_user_email", columnList = "email"),
+        @Index(name = "idx_user_active_organization_id", columnList = "active_organization_id")
     },
     uniqueConstraints = {
-        @UniqueConstraint(name = "uk_User_integration_email", columnNames = {"integration", "email"})
+        @UniqueConstraint(name = "uk_user_email", columnNames = {"email"})
     }
 )
 @Getter
@@ -28,24 +31,28 @@ public class UserJpaEntity {
     @Id
     @Column(name = "id", nullable = false)
     private Long id;
-    
-    @Column(name = "code", nullable = false, unique = true)
-    private String code;
 
-    @Column(name = "integration", nullable = false)
-    private Long integration;
-
+    @Setter
     @Column(name = "first_name", nullable = false)
     private String firstName;
 
+    @Setter
     @Column(name = "last_name", nullable = false)
     private String lastName;
 
-    @Column(name = "email", nullable = false)
+    @Column(name = "email", nullable = false, unique = true)
     private String email;
 
+    @Setter
     @Column(name = "phone")
     private String phone;
+
+    @Column(name = "country", nullable = false)
+    private String country;
+
+    @Setter
+    @Column(name = "active_organization_id")
+    private Long activeOrganizationId;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private ZonedDateTime createdAt;

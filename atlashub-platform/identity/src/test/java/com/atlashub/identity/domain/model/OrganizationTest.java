@@ -1,25 +1,21 @@
 package com.atlashub.identity.domain.model;
 
-import com.atlashub.identity.domain.event.OrganizationComplianceStepCompleted;
 import com.atlashub.identity.domain.event.OrganizationComplianceSubmitted;
-import com.atlashub.identity.domain.event.OrganizationRegistered;
-import com.atlashub.identity.domain.model.BusinessType;
-import com.atlashub.identity.domain.model.ComplianceStatus;
-import com.atlashub.identity.domain.model.GovernmentIdType;
-import com.atlashub.identity.domain.model.Organization;
-import com.atlashub.identity.domain.model.StaffSize;
-import com.atlashub.shared.domain.valueobject.Country;
+import com.atlashub.identity.domain.valueobject.BusinessType;
+import com.atlashub.identity.domain.valueobject.ComplianceStatus;
+import com.atlashub.identity.domain.valueobject.GovernmentIdType;
+import com.atlashub.identity.domain.valueobject.StaffSize;
 import com.atlashub.shared.domain.valueobject.EmailAddress;
-import com.atlashub.shared.domain.valueobject.PhoneNumber;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class OrganizationTest {
 
     @Test
     void shouldRegisterSuccessfully() {
-        Organization Organization = new Organization(1L, Country.NIGERIA, "Test Inc", "John", "Doe", new EmailAddress("test@atlashub.com"), new PhoneNumber("+2348000000000"), BusinessType.REGISTERED);
+        Organization Organization = new Organization(1L, "Test Inc", BusinessType.REGISTERED);
         
         assertEquals(ComplianceStatus.NOT_STARTED, Organization.getComplianceStatus());
         assertEquals("Test Inc", Organization.getBusinessName());
@@ -28,7 +24,7 @@ class OrganizationTest {
 
     @Test
     void shouldCompleteComplianceStep() {
-        Organization Organization = new Organization(1L, Country.NIGERIA, "Test Inc", "John", "Doe", new EmailAddress("test@atlashub.com"), new PhoneNumber("+2348000000000"), BusinessType.REGISTERED);
+        Organization Organization = new Organization(1L, "Test Inc", BusinessType.REGISTERED);
         Organization.pullDomainEvents(); // clear initial events
         
         Organization.updateComplianceProfile("Desc", StaffSize.ONE_TO_TEN, "IT", "Tech", java.math.BigDecimal.valueOf(1000), "NGN");
@@ -48,4 +44,5 @@ class OrganizationTest {
         assertTrue(events.stream().anyMatch(e -> e instanceof OrganizationComplianceSubmitted));
     }
 }
+
 

@@ -10,9 +10,9 @@ import com.atlashub.identity.application.command.RegenerateApiKeyCommand;
 import com.atlashub.shared.usecase.BaseUseCase;
 
 import com.atlashub.identity.domain.exception.IdentityErrorCode;
-import com.atlashub.identity.domain.model.ApiEnvironment;
+import com.atlashub.identity.domain.valueobject.ApiEnvironment;
 import com.atlashub.identity.domain.model.ApiKey;
-import com.atlashub.identity.domain.model.KeyType;
+import com.atlashub.identity.domain.valueobject.KeyType;
 import com.atlashub.identity.domain.model.Organization;
 import com.atlashub.identity.domain.repository.ApiKeyRepository;
 import com.atlashub.identity.domain.repository.OrganizationRepository;
@@ -49,7 +49,7 @@ public class RegenerateApiKeyUseCase extends BaseUseCase<RegenerateApiKeyCommand
             Organization Organization = OrganizationRepository.findById(command.authenticatedOrganizationId())
                     .orElseThrow(() -> new NotFoundException(IdentityErrorCode.Organization_NOT_FOUND, "Organization not found"));
             
-            if (Organization.getComplianceStatus() != com.atlashub.identity.domain.model.ComplianceStatus.APPROVED) {
+            if (Organization.getComplianceStatus() != com.atlashub.identity.domain.valueobject.ComplianceStatus.APPROVED) {
                 throw new BusinessRuleException(IdentityErrorCode.LIVE_KEYS_REQUIRE_COMPLIANCE_APPROVED, "Live keys require compliance to be approved");
             }
         }
@@ -94,6 +94,7 @@ public class RegenerateApiKeyUseCase extends BaseUseCase<RegenerateApiKeyCommand
         return rawKey;
     }
 }
+
 
 
 

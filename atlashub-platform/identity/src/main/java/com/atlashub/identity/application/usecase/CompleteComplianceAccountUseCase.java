@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory;
 
 import com.atlashub.identity.application.command.CompleteComplianceAccountCommand;
 import com.atlashub.identity.application.port.AccountNameResolutionPort;
-import com.atlashub.identity.domain.model.ComplianceStatus;
+import com.atlashub.identity.domain.valueobject.ComplianceStatus;
 import com.atlashub.identity.domain.model.Organization;
 import com.atlashub.identity.domain.repository.OrganizationRepository;
 import com.atlashub.shared.event.DomainEventPublisher;
@@ -59,6 +59,7 @@ public class CompleteComplianceAccountUseCase extends BaseUseCase<CompleteCompli
         return Organization.getComplianceStatus();
     }
 }
+
 
 
 

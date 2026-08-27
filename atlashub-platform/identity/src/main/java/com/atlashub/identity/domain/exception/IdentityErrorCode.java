@@ -32,5 +32,6 @@ public enum IdentityErrorCode implements ErrorCode {
     SplitRecipient_ALREADY_INACTIVE,
     User_EMAIL_ALREADY_EXISTS,
     User_NOT_FOUND,
-    UNSUPPORTED_COUNTRY
+    UNSUPPORTED_COUNTRY,
+    INVITATION_NOT_FOUND
 }

@@ -1,6 +1,6 @@
 package com.atlashub.identity.adapter.out.persistence.query;
 
-import com.atlashub.identity.application.dto.OrganizationProfileDto;
+import com.atlashub.identity.application.result.OrganizationProfileDto;
 import com.atlashub.identity.application.port.OrganizationQueryService;
 import com.atlashub.identity.adapter.out.persistence.repository.SpringDataOrganizationRepository;
 import org.springframework.stereotype.Service;
@@ -22,8 +22,8 @@ public class OrganizationQueryServiceImpl implements OrganizationQueryService {
                 .map(entity -> new OrganizationProfileDto(
                         entity.getId(),
                         entity.getBusinessName(),
-                        entity.getEmail(),
-                        entity.getPhone(),
+                        entity.getDescription(),
+                        entity.getLogoUrl(),
                         entity.getComplianceStatus().name(),
                         entity.getCreatedAt()
                 ));

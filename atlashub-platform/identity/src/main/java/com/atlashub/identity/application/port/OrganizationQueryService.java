@@ -1,6 +1,6 @@
 package com.atlashub.identity.application.port;
 
-import com.atlashub.identity.application.dto.OrganizationProfileDto;
+import com.atlashub.identity.application.result.OrganizationProfileDto;
 
 import java.util.Optional;
 

@@ -1,5 +1,7 @@
 package com.atlashub.identity.domain.model;
 
+import com.atlashub.identity.domain.valueobject.GovernmentIdType;
+import com.atlashub.identity.domain.valueobject.StaffSize;
 import com.atlashub.shared.domain.valueobject.EmailAddress;
 import com.atlashub.shared.domain.valueobject.PhoneNumber;
 import lombok.AccessLevel;

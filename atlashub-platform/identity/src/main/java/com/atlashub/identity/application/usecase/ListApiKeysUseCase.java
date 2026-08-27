@@ -5,7 +5,7 @@ import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.atlashub.identity.application.dto.ApiKeyDto;
+import com.atlashub.identity.application.result.ApiKeyDto;
 import com.atlashub.identity.application.port.ApiKeyQueryService;
 import com.atlashub.identity.application.query.ListApiKeysQuery;
 import com.atlashub.shared.usecase.BaseUseCase;

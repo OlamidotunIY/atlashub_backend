@@ -1,7 +1,7 @@
 package com.atlashub.identity.adapter.out.persistence.entity;
 
-import com.atlashub.identity.domain.model.ApiEnvironment;
-import com.atlashub.identity.domain.model.KeyType;
+import com.atlashub.identity.domain.valueobject.ApiEnvironment;
+import com.atlashub.identity.domain.valueobject.KeyType;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -57,3 +57,5 @@ public class ApiKeyJpaEntity {
     @Column(name = "revoked_at")
     private ZonedDateTime revokedAt;
 }
+
+

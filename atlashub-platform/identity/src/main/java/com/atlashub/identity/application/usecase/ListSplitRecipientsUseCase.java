@@ -5,7 +5,7 @@ import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.atlashub.identity.application.dto.SplitRecipientDto;
+import com.atlashub.identity.application.result.SplitRecipientDto;
 import com.atlashub.identity.application.port.SplitRecipientQueryService;
 import com.atlashub.identity.application.query.ListSplitRecipientsQuery;
 import com.atlashub.shared.usecase.BaseUseCase;

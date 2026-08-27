@@ -8,5 +8,4 @@ import java.util.Optional;
 
 @Repository
 public interface SpringDataOrganizationRepository extends JpaRepository<OrganizationJpaEntity, Long> {
-    Optional<OrganizationJpaEntity> findByEmail(String email);
 }
