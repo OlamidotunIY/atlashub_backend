@@ -1,0 +1,15 @@
+package com.atlashub.audit.domain.valueobject;
+
+public enum ActivityAction {
+    USER_REGISTERED,
+    USER_LOGIN,
+    ORGANIZATION_CREATED,
+    MEMBER_JOINED,
+    MEMBER_REMOVED,
+    INVITATION_SENT,
+    INVITATION_ACCEPTED,
+    COMPLIANCE_SUBMITTED,
+    COMPLIANCE_APPROVED,
+    COMPLIANCE_REJECTED,
+    API_KEY_GENERATED
+}

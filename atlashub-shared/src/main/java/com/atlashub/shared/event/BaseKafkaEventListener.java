@@ -46,4 +46,27 @@ public abstract class BaseKafkaEventListener {
             log.error("Failed to parse or process event. Expected type: {}. Payload: {}", expectedEventType, messagePayload, e);
         }
     }
+
+    /**
+     * Typed overload of {@link #processEventIfMatches} that deserialises the inner event node
+     * directly into an instance of {@code payloadType}, so callers receive a strongly-typed
+     * object instead of a raw {@link JsonNode}.
+     *
+     * @param messagePayload    The raw JSON string from Kafka
+     * @param expectedEventType The event type string to match (e.g. "UserCreated")
+     * @param payloadType       The class to deserialise the event node into
+     * @param log               The logger of the concrete subclass
+     * @param action            The action to execute with the deserialised event object
+     * @param <T>               The type of the deserialised event
+     */
+    protected <T> void processEventIfMatches(String messagePayload, String expectedEventType, Class<T> payloadType, Logger log, Consumer<T> action) {
+        processEventIfMatches(messagePayload, expectedEventType, log, eventNode -> {
+            try {
+                T event = objectMapper.treeToValue(eventNode, payloadType);
+                action.accept(event);
+            } catch (Exception e) {
+                log.error("Failed to deserialise event node into {}. Expected type: {}. Payload: {}", payloadType.getSimpleName(), expectedEventType, messagePayload, e);
+            }
+        });
+    }
 }

@@ -1,4 +1,4 @@
-package com.atlashub.notifications.adapter.out.external.smtp.adapter;
+package com.atlashub.notifications.adapter.out.external.smtp;
 
 import com.atlashub.notifications.application.port.EmailSenderPort;
 import jakarta.mail.MessagingException;

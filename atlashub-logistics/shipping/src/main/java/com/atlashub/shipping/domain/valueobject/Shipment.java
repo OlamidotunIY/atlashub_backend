@@ -1,4 +1,4 @@
-package com.atlashub.shipping.domain.model;
+package com.atlashub.shipping.domain.valueobject;
 
 import com.atlashub.shared.domain.AggregateRoot;
 
