@@ -5,6 +5,8 @@ import com.atlashub.auth.domain.event.VerificationCreatedEvent;
 import com.atlashub.auth.domain.event.VerificationPayload;
 import com.atlashub.auth.domain.exception.AuthErrorCode;
 import com.atlashub.auth.domain.service.VerificationCodeHasher;
+import com.atlashub.auth.domain.valueobject.VerificationStatus;
+import com.atlashub.auth.domain.valueobject.VerificationType;
 import com.atlashub.shared.domain.AggregateRoot;
 import com.atlashub.shared.exception.BusinessRuleException;
 import lombok.Getter;

@@ -1,8 +1,9 @@
 package com.atlashub.auth.application.command;
 
-import com.atlashub.auth.domain.model.AuthProvider;
-import com.atlashub.auth.domain.model.AuthStatus;
-import com.atlashub.auth.domain.model.PrincipalType;
+
+import com.atlashub.auth.domain.valueobject.AuthProvider;
+import com.atlashub.auth.domain.valueobject.AuthStatus;
+import com.atlashub.auth.domain.valueobject.PrincipalType;
 
 public record CreateAuthAccountCommand(
         Long principalId,
@@ -14,3 +15,4 @@ public record CreateAuthAccountCommand(
         String scope,
         AuthStatus initialStatus
 ) {}
+

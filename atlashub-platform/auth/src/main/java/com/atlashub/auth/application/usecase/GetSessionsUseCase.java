@@ -1,6 +1,6 @@
 package com.atlashub.auth.application.usecase;
 
-import com.atlashub.auth.application.dto.SessionDto;
+import com.atlashub.auth.application.result.SessionDto;
 import com.atlashub.auth.application.query.GetSessionsQuery;
 import com.atlashub.auth.domain.model.Session;
 import com.atlashub.auth.domain.repository.SessionRepository;

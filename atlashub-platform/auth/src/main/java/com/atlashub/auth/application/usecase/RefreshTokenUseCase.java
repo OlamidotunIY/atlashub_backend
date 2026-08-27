@@ -1,12 +1,12 @@
 package com.atlashub.auth.application.usecase;
 
 import com.atlashub.auth.application.command.RefreshTokenCommand;
-import com.atlashub.auth.application.dto.AuthTokenDto;
+import com.atlashub.auth.application.result.AuthTokenDto;
 import com.atlashub.auth.application.service.TokenIssuanceService;
 import com.atlashub.auth.domain.exception.AuthErrorCode;
 import com.atlashub.auth.domain.model.AuthAccount;
 import com.atlashub.auth.domain.model.Session;
-import com.atlashub.auth.domain.model.SessionStatus;
+import com.atlashub.auth.domain.valueobject.SessionStatus;
 import com.atlashub.auth.domain.repository.AuthAccountRepository;
 import com.atlashub.auth.domain.repository.SessionRepository;
 import com.atlashub.shared.dto.ApiResponse;
@@ -62,3 +62,4 @@ public class RefreshTokenUseCase extends BaseUseCase<RefreshTokenCommand, ApiRes
         return new ApiResponse<>(true, "Token refresh successful", tokenDto, null);
     }
 }
+

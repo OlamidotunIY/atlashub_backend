@@ -1,7 +1,7 @@
 package com.atlashub.auth.adapter.out.persistence.entity;
 
-import com.atlashub.auth.domain.model.PrincipalType;
-import com.atlashub.auth.domain.model.SessionStatus;
+import com.atlashub.auth.domain.valueobject.PrincipalType;
+import com.atlashub.auth.domain.valueobject.SessionStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -60,4 +60,6 @@ public class SessionJpaEntity {
 
     private ZonedDateTime revokedAt;
 }
+
+
 

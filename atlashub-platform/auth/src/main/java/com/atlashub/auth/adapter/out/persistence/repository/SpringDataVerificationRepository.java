@@ -1,7 +1,7 @@
 package com.atlashub.auth.adapter.out.persistence.repository;
 
-import com.atlashub.auth.domain.model.VerificationStatus;
-import com.atlashub.auth.domain.model.VerificationType;
+import com.atlashub.auth.domain.valueobject.VerificationStatus;
+import com.atlashub.auth.domain.valueobject.VerificationType;
 import com.atlashub.auth.adapter.out.persistence.entity.VerificationJpaEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -21,3 +21,4 @@ public interface SpringDataVerificationRepository extends JpaRepository<Verifica
     @Query("UPDATE VerificationJpaEntity v SET v.status = 'EXPIRED' WHERE v.type = :type AND v.value = :value AND v.status = 'PENDING'")
     void invalidatePreviousVerifications(@Param("type") VerificationType type, @Param("value") String value);
 }
+

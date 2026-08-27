@@ -1,20 +1,10 @@
 package com.atlashub.auth.adapter.out.persistence.entity;
 
-import com.atlashub.auth.domain.model.AuthProvider;
-import com.atlashub.auth.domain.model.AuthStatus;
-import com.atlashub.auth.domain.model.PrincipalType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import jakarta.persistence.Index;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import com.atlashub.auth.domain.valueobject.AuthProvider;
+import com.atlashub.auth.domain.valueobject.AuthStatus;
+import com.atlashub.auth.domain.valueobject.PrincipalType;
+import jakarta.persistence.*;
+import lombok.*;
 
 import java.time.ZonedDateTime;
 
@@ -77,3 +67,5 @@ public class AuthAccountJpaEntity {
     @Column(nullable = false)
     private ZonedDateTime updatedAt;
 }
+
+

@@ -1,6 +1,6 @@
 package com.atlashub.auth.adapter.out.persistence.repository;
 
-import com.atlashub.auth.domain.model.SessionStatus;
+import com.atlashub.auth.domain.valueobject.SessionStatus;
 import com.atlashub.auth.adapter.out.persistence.entity.SessionJpaEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -14,3 +14,4 @@ public interface SpringDataSessionRepository extends JpaRepository<SessionJpaEnt
     List<SessionJpaEntity> findByAuthAccountIdAndStatus(Long authAccountId, SessionStatus status);
     List<SessionJpaEntity> findByAuthAccountId(Long authAccountId);
 }
+

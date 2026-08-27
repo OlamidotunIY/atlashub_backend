@@ -1,10 +1,10 @@
 package com.atlashub.auth.application.usecase;
 
 import com.atlashub.auth.application.command.CreateAuthAccountCommand;
-import com.atlashub.auth.application.port.PasswordEncoderPort;
+import com.atlashub.auth.application.port.in.PasswordEncoderPort;
 import com.atlashub.auth.domain.exception.AuthErrorCode;
 import com.atlashub.auth.domain.model.AuthAccount;
-import com.atlashub.auth.domain.model.AuthStatus;
+import com.atlashub.auth.domain.valueobject.AuthStatus;
 import com.atlashub.auth.domain.repository.AuthAccountRepository;
 import com.atlashub.shared.event.DomainEventPublisher;
 import com.atlashub.shared.exception.ConflictException;
@@ -60,3 +60,4 @@ public class CreateAuthAccountUseCase extends BaseUseCase<CreateAuthAccountComma
         return null;
     }
 }
+

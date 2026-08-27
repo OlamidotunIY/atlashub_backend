@@ -1,14 +1,14 @@
 package com.atlashub.auth.application.usecase;
 
 import com.atlashub.auth.application.command.AuthenticateCommand;
-import com.atlashub.auth.application.dto.AuthResponseDto;
-import com.atlashub.auth.application.port.PasswordEncoderPort;
-import com.atlashub.auth.application.port.PreAuthTokenStorePort;
-import com.atlashub.auth.application.port.TokenGeneratorPort;
+import com.atlashub.auth.application.result.AuthResponseDto;
+import com.atlashub.auth.application.port.in.PasswordEncoderPort;
+import com.atlashub.auth.application.port.in.PreAuthTokenStorePort;
+import com.atlashub.auth.application.port.in.TokenGeneratorPort;
 import com.atlashub.auth.application.service.TokenIssuanceService;
 import com.atlashub.auth.domain.exception.AuthErrorCode;
 import com.atlashub.auth.domain.model.AuthAccount;
-import com.atlashub.auth.domain.model.AuthStatus;
+import com.atlashub.auth.domain.valueobject.AuthStatus;
 import com.atlashub.auth.domain.repository.AuthAccountRepository;
 import com.atlashub.shared.dto.ApiResponse;
 import com.atlashub.shared.exception.BusinessRuleException;
@@ -70,3 +70,4 @@ public class AuthenticateUseCase extends BaseUseCase<AuthenticateCommand, ApiRes
         return new ApiResponse<>(true, "Authentication successful", responseDto, null);
     }
 }
+

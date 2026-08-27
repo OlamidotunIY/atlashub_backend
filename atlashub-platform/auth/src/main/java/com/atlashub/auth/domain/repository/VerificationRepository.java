@@ -1,8 +1,8 @@
 package com.atlashub.auth.domain.repository;
 
 import com.atlashub.auth.domain.model.Verification;
-import com.atlashub.auth.domain.model.VerificationStatus;
-import com.atlashub.auth.domain.model.VerificationType;
+import com.atlashub.auth.domain.valueobject.VerificationStatus;
+import com.atlashub.auth.domain.valueobject.VerificationType;
 
 import java.util.List;
 import java.util.Optional;
@@ -15,3 +15,4 @@ public interface VerificationRepository {
     List<Verification> findByStatus(VerificationStatus status);
     void invalidatePreviousVerifications(VerificationType type, String value);
 }
+

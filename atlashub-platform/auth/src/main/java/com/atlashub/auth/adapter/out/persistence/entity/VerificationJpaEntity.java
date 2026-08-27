@@ -1,7 +1,7 @@
 package com.atlashub.auth.adapter.out.persistence.entity;
 
-import com.atlashub.auth.domain.model.VerificationStatus;
-import com.atlashub.auth.domain.model.VerificationType;
+import com.atlashub.auth.domain.valueobject.VerificationStatus;
+import com.atlashub.auth.domain.valueobject.VerificationType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -63,4 +63,6 @@ public class VerificationJpaEntity {
     
     private ZonedDateTime verifiedAt;
 }
+
+
 

@@ -2,7 +2,7 @@ package com.atlashub.auth.application.usecase;
 
 import com.atlashub.auth.application.command.RevokeAllSessionsCommand;
 import com.atlashub.auth.domain.model.Session;
-import com.atlashub.auth.domain.model.SessionStatus;
+import com.atlashub.auth.domain.valueobject.SessionStatus;
 import com.atlashub.auth.domain.repository.SessionRepository;
 import com.atlashub.shared.dto.ApiResponse;
 import com.atlashub.shared.event.DomainEventPublisher;
@@ -38,3 +38,4 @@ public class RevokeAllSessionsUseCase extends BaseUseCase<RevokeAllSessionsComma
         return new ApiResponse<>(true, "All active sessions revoked successfully", null, null);
     }
 }
+

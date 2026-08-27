@@ -1,7 +1,7 @@
 package com.atlashub.auth.domain.repository;
 
 import com.atlashub.auth.domain.model.AuthAccount;
-import com.atlashub.auth.domain.model.PrincipalType;
+import com.atlashub.auth.domain.valueobject.PrincipalType;
 
 import java.util.Optional;
 
@@ -13,3 +13,4 @@ public interface AuthAccountRepository {
     Optional<AuthAccount> findByIdentifier(String identifier);
     boolean existsByPrincipalIdAndType(Long principalId, PrincipalType type);
 }
+

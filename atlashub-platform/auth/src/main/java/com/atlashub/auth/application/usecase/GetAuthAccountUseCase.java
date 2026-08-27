@@ -1,6 +1,6 @@
 package com.atlashub.auth.application.usecase;
 
-import com.atlashub.auth.application.dto.AuthAccountDto;
+import com.atlashub.auth.application.result.AuthAccountDto;
 import com.atlashub.auth.application.query.GetAuthAccountQuery;
 import com.atlashub.auth.domain.exception.AuthErrorCode;
 import com.atlashub.auth.domain.model.AuthAccount;

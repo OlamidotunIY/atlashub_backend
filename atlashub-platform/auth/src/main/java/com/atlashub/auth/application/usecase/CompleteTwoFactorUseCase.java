@@ -1,9 +1,9 @@
 package com.atlashub.auth.application.usecase;
 
 import com.atlashub.auth.application.command.CompleteTwoFactorCommand;
-import com.atlashub.auth.application.dto.AuthTokenDto;
-import com.atlashub.auth.application.port.PreAuthTokenStorePort;
-import com.atlashub.auth.application.port.TotpServicePort;
+import com.atlashub.auth.application.result.AuthTokenDto;
+import com.atlashub.auth.application.port.in.PreAuthTokenStorePort;
+import com.atlashub.auth.application.port.in.TotpServicePort;
 import com.atlashub.auth.application.service.TokenIssuanceService;
 import com.atlashub.auth.domain.exception.AuthErrorCode;
 import com.atlashub.auth.domain.model.AuthAccount;

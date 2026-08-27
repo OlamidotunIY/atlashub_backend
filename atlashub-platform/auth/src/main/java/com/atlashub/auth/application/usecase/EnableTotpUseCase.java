@@ -1,8 +1,8 @@
 package com.atlashub.auth.application.usecase;
 
 import com.atlashub.auth.application.command.EnableTotpCommand;
-import com.atlashub.auth.application.dto.TotpSetupDto;
-import com.atlashub.auth.application.port.TotpServicePort;
+import com.atlashub.auth.application.result.TotpSetupDto;
+import com.atlashub.auth.application.port.in.TotpServicePort;
 import com.atlashub.auth.domain.exception.AuthErrorCode;
 import com.atlashub.auth.domain.model.AuthAccount;
 import com.atlashub.auth.domain.repository.AuthAccountRepository;

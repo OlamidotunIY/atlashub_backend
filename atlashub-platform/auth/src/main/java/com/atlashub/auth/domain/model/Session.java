@@ -3,6 +3,8 @@ package com.atlashub.auth.domain.model;
 import com.atlashub.auth.domain.event.SessionCreatedEvent;
 import com.atlashub.auth.domain.event.SessionPayload;
 import com.atlashub.auth.domain.event.SessionRevokedEvent;
+import com.atlashub.auth.domain.valueobject.PrincipalType;
+import com.atlashub.auth.domain.valueobject.SessionStatus;
 import com.atlashub.shared.domain.AggregateRoot;
 import lombok.Getter;
 

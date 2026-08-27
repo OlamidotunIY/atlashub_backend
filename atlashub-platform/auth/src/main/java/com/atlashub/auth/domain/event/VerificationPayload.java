@@ -1,6 +1,6 @@
 package com.atlashub.auth.domain.event;
 
-import com.atlashub.auth.domain.model.VerificationType;
+import com.atlashub.auth.domain.valueobject.VerificationType;
 
 public record VerificationPayload(
         String identifier,
@@ -8,3 +8,4 @@ public record VerificationPayload(
         VerificationType type,
         String rawCode
 ) {}
+

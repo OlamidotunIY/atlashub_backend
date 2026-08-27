@@ -1,8 +1,9 @@
 package com.atlashub.auth.adapter.in.messaging;
 
-import com.atlashub.auth.application.port.TokenCachePort;
+import com.atlashub.auth.application.port.out.TokenCachePort;
 import com.atlashub.auth.domain.event.SessionCreatedEvent;
 import com.atlashub.auth.domain.event.SessionRevokedEvent;
+import com.atlashub.auth.domain.event.SessionPayload;
 import com.atlashub.shared.event.EnvelopedDomainEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
@@ -19,7 +20,7 @@ public class SessionCacheUpdateListener {
 
     @EventListener
     @Async
-    public void onSessionCreated(EnvelopedDomainEvent event) {
+    public void onSessionCreated(EnvelopedDomainEvent<SessionPayload> event) {
         if (event.event() instanceof SessionCreatedEvent sessionCreatedEvent) {
             tokenCachePort.cacheSession(
                     sessionCreatedEvent.payload().token(),
@@ -30,7 +31,7 @@ public class SessionCacheUpdateListener {
 
     @EventListener
     @Async
-    public void onSessionRevoked(EnvelopedDomainEvent event) {
+    public void onSessionRevoked(EnvelopedDomainEvent<SessionPayload> event) {
         if (event.event() instanceof SessionRevokedEvent sessionRevokedEvent) {
             tokenCachePort.blacklistToken(
                     sessionRevokedEvent.payload().token(),

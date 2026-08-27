@@ -1,7 +1,7 @@
 package com.atlashub.auth.application.service;
 
-import com.atlashub.auth.application.dto.AuthTokenDto;
-import com.atlashub.auth.application.port.TokenGeneratorPort;
+import com.atlashub.auth.application.result.AuthTokenDto;
+import com.atlashub.auth.application.port.in.TokenGeneratorPort;
 import com.atlashub.auth.domain.model.AuthAccount;
 import com.atlashub.auth.domain.model.Session;
 import com.atlashub.auth.domain.repository.AuthAccountRepository;
