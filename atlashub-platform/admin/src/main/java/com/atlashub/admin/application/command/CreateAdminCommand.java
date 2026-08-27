@@ -1,6 +1,6 @@
 package com.atlashub.admin.application.command;
 
-import com.atlashub.admin.domain.model.AdminPermission;
+import com.atlashub.admin.domain.valueobject.AdminPermission;
 import java.util.Set;
 
 public record CreateAdminCommand(

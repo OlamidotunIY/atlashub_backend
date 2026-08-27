@@ -1,4 +1,4 @@
-package com.atlashub.admin.domain.model;
+package com.atlashub.admin.domain.valueobject;
 
 public enum AdminPermission {
     MANAGE_ADMINS,

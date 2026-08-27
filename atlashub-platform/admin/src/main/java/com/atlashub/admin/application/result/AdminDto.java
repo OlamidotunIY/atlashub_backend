@@ -1,4 +1,4 @@
-package com.atlashub.admin.application.dto;
+package com.atlashub.admin.application.result;
 
 import java.util.Set;
 import java.util.stream.Collectors;

@@ -1,7 +1,7 @@
 package com.atlashub.admin.domain.repository;
 
 import com.atlashub.admin.domain.model.Admin;
-import com.atlashub.admin.domain.model.AdminRole;
+import com.atlashub.admin.domain.valueobject.AdminRole;
 import java.util.Optional;
 
 public interface AdminRepository {

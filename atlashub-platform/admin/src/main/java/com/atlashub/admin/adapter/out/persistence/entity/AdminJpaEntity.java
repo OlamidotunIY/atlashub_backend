@@ -1,8 +1,11 @@
 package com.atlashub.admin.adapter.out.persistence.entity;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 
-import com.atlashub.admin.domain.model.AdminRole;
-import com.atlashub.admin.domain.model.AdminStatus;
-import com.atlashub.admin.domain.model.AdminPermission;
+import com.atlashub.admin.domain.valueobject.AdminRole;
+import com.atlashub.admin.domain.valueobject.AdminStatus;
+import com.atlashub.admin.domain.valueobject.AdminPermission;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -17,6 +20,8 @@ import java.util.Set;
 @Table(name = "admin_users")
 @Getter
 @Setter
+@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class AdminJpaEntity {
     
     @Id
@@ -54,3 +59,4 @@ public class AdminJpaEntity {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 }
+

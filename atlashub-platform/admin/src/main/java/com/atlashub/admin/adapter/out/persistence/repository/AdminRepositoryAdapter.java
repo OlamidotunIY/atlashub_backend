@@ -1,7 +1,7 @@
 package com.atlashub.admin.adapter.out.persistence.repository;
 
 import com.atlashub.admin.domain.model.Admin;
-import com.atlashub.admin.domain.model.AdminRole;
+import com.atlashub.admin.domain.valueobject.AdminRole;
 import com.atlashub.admin.domain.repository.AdminRepository;
 import com.atlashub.admin.adapter.out.persistence.mapper.AdminMapper;
 import com.atlashub.shared.adapter.out.external.DomainSequenceGenerator;

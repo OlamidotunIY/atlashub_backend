@@ -1,4 +1,4 @@
-package com.atlashub.admin.adapter.out.external.cloudflare.adapter;
+package com.atlashub.admin.adapter.out.external.cloudflare;
 
 import com.atlashub.admin.application.port.CloudflareEmailPort;
 import org.slf4j.Logger;

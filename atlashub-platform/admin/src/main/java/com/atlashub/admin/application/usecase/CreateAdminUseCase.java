@@ -1,12 +1,12 @@
 package com.atlashub.admin.application.usecase;
 
 import com.atlashub.admin.application.command.CreateAdminCommand;
-import com.atlashub.admin.application.dto.AdminCreationResult;
+import com.atlashub.admin.application.result.AdminCreationResult;
 import com.atlashub.admin.application.port.CloudflareEmailPort;
 import com.atlashub.admin.domain.exception.AdminErrorCode;
 import com.atlashub.admin.domain.model.Admin;
-import com.atlashub.admin.domain.model.AdminPermission;
-import com.atlashub.admin.domain.model.AdminRole;
+import com.atlashub.admin.domain.valueobject.AdminPermission;
+import com.atlashub.admin.domain.valueobject.AdminRole;
 import com.atlashub.admin.domain.model.EmployeeCode;
 import com.atlashub.admin.domain.repository.AdminRepository;
 import com.atlashub.admin.application.service.AdminCreationService;

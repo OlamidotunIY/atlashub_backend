@@ -31,15 +31,16 @@ public class AdminMapper {
             return null;
         }
 
-        AdminJpaEntity entity = new AdminJpaEntity();
-        entity.setId(domain.getId());
-        entity.setUsername(domain.getUsername());
-        entity.setEmail(domain.getEmail().value());
-        entity.setRole(domain.getRole());
-        entity.setStatus(domain.getStatus());
-        entity.setCreatedBy(domain.getCreatedBy());
-        entity.setPermissions(domain.getPermissions() != null ? new HashSet<>(domain.getPermissions()) : new HashSet<>());
-        
-        return entity;
+        return new AdminJpaEntity(
+            domain.getId(),
+            domain.getUsername(),
+            domain.getEmail().value(),
+            domain.getRole(),
+            domain.getStatus(),
+            domain.getCreatedBy(),
+            domain.getPermissions() != null ? new HashSet<>(domain.getPermissions()) : new HashSet<>(),
+            null,
+            null
+        );
     }
 }

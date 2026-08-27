@@ -1,6 +1,6 @@
 package com.atlashub.admin.adapter.in.web.request;
 
-import com.atlashub.admin.domain.model.AdminPermission;
+import com.atlashub.admin.domain.valueobject.AdminPermission;
 import jakarta.validation.constraints.NotBlank;
 import java.util.Set;
 

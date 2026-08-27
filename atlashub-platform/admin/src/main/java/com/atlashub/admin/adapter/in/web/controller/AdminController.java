@@ -2,10 +2,10 @@ package com.atlashub.admin.adapter.in.web.controller;
 
 import com.atlashub.admin.application.command.BootstrapMasterAdminCommand;
 import com.atlashub.admin.application.command.CreateAdminCommand;
-import com.atlashub.admin.application.dto.AdminCreationResult;
+import com.atlashub.admin.application.result.AdminCreationResult;
 import com.atlashub.admin.application.usecase.BootstrapMasterAdminUseCase;
 import com.atlashub.admin.application.usecase.CreateAdminUseCase;
-import com.atlashub.admin.domain.model.AdminPermission;
+import com.atlashub.admin.domain.valueobject.AdminPermission;
 import com.atlashub.shared.dto.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
