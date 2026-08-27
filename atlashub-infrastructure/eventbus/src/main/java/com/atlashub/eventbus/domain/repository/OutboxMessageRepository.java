@@ -1,7 +1,7 @@
 package com.atlashub.eventbus.domain.repository;
 
 import com.atlashub.eventbus.domain.model.OutboxMessage;
-import com.atlashub.eventbus.domain.model.OutboxStatus;
+import com.atlashub.eventbus.domain.valueobject.OutboxStatus;
 import java.util.List;
 
 public interface OutboxMessageRepository {

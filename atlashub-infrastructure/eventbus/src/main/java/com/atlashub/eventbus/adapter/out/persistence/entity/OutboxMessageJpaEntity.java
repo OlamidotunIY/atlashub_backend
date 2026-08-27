@@ -1,6 +1,9 @@
 package com.atlashub.eventbus.adapter.out.persistence.entity;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 
-import com.atlashub.eventbus.domain.model.OutboxStatus;
+import com.atlashub.eventbus.domain.valueobject.OutboxStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
 
@@ -11,6 +14,8 @@ import java.time.ZonedDateTime;
 @Table(name = "outbox_messages", indexes = {
     @Index(name = "idx_outbox_status_created", columnList = "status, created_at")
 })
+@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class OutboxMessageJpaEntity {
 
     @Id
@@ -37,20 +42,10 @@ public class OutboxMessageJpaEntity {
     @Column(name = "version", nullable = false)
     private Integer version;
 
-    protected OutboxMessageJpaEntity() {}
-
-    public OutboxMessageJpaEntity(String id, String topic, String payload, OutboxStatus status, ZonedDateTime createdAt, ZonedDateTime processedAt) {
-        this.id = id;
-        this.topic = topic;
-        this.payload = payload;
-        this.status = status;
-        this.createdAt = createdAt;
-        this.processedAt = processedAt;
-    }
-
     public void updateStatus(OutboxStatus status, ZonedDateTime processedAt) {
         this.status = status;
         this.processedAt = processedAt;
     }
 
 }
+

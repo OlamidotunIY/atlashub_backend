@@ -1,7 +1,7 @@
-package com.atlashub.eventbus.adapter.out.persistence.adapter;
+package com.atlashub.eventbus.adapter.out.persistence.repository;
 
-import com.atlashub.eventbus.domain.model.OutboxStatus;
 import com.atlashub.eventbus.adapter.out.persistence.entity.OutboxMessageJpaEntity;
+import com.atlashub.eventbus.domain.valueobject.OutboxStatus;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;

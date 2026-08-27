@@ -1,5 +1,6 @@
 package com.atlashub.eventbus.domain.model;
 
+import com.atlashub.eventbus.domain.valueobject.OutboxStatus;
 import com.atlashub.shared.domain.AggregateRoot;
 import java.time.ZonedDateTime;
 

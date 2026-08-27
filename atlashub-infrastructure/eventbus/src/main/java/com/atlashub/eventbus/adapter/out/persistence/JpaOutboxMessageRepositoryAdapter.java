@@ -1,9 +1,10 @@
-package com.atlashub.eventbus.adapter.out.persistence.adapter;
+package com.atlashub.eventbus.adapter.out.persistence;
 
+import com.atlashub.eventbus.adapter.out.persistence.repository.SpringDataOutboxMessageRepository;
 import com.atlashub.eventbus.domain.model.OutboxMessage;
-import com.atlashub.eventbus.domain.model.OutboxStatus;
 import com.atlashub.eventbus.domain.repository.OutboxMessageRepository;
 import com.atlashub.eventbus.adapter.out.persistence.entity.OutboxMessageJpaEntity;
+import com.atlashub.eventbus.domain.valueobject.OutboxStatus;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 
@@ -59,7 +60,8 @@ public class JpaOutboxMessageRepositoryAdapter implements OutboxMessageRepositor
                 domain.getPayload(),
                 domain.getStatus(),
                 domain.getCreatedAt(),
-                domain.getProcessedAt()
+                domain.getProcessedAt(),
+                null
         );
     }
 
