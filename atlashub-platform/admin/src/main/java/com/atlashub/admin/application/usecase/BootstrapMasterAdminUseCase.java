@@ -2,7 +2,6 @@ package com.atlashub.admin.application.usecase;
 
 import com.atlashub.admin.application.command.BootstrapMasterAdminCommand;
 import com.atlashub.admin.application.result.AdminCreationResult;
-import com.atlashub.admin.application.port.CloudflareEmailPort;
 import com.atlashub.admin.domain.exception.AdminErrorCode;
 import com.atlashub.admin.domain.model.Admin;
 import com.atlashub.admin.domain.valueobject.AdminRole;
@@ -19,14 +18,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class BootstrapMasterAdminUseCase extends BaseUseCase<BootstrapMasterAdminCommand, AdminCreationResult> {
 
     private final AdminRepository adminRepository;
-    private final CloudflareEmailPort cloudflareEmailPort;
     private final AdminCreationService adminCreationService;
 
     public BootstrapMasterAdminUseCase(AdminRepository adminRepository, 
-                                       CloudflareEmailPort cloudflareEmailPort, 
                                        AdminCreationService adminCreationService) {
         this.adminRepository = adminRepository;
-        this.cloudflareEmailPort = cloudflareEmailPort;
         this.adminCreationService = adminCreationService;
     }
 
@@ -44,8 +40,6 @@ public class BootstrapMasterAdminUseCase extends BaseUseCase<BootstrapMasterAdmi
 
         EmployeeCode code = EmployeeCode.generate();
         EmailAddress email = new EmailAddress(username + "@atlashub.name.ng");
-
-        cloudflareEmailPort.createEmailRoutingRule(email.value(), "dotun@atlashub.name.ng");
 
         Admin admin = Admin.create(
             adminRepository.nextIdentity(),

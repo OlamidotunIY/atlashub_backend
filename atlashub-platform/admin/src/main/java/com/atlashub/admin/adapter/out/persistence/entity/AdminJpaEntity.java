@@ -25,7 +25,7 @@ import java.util.Set;
 public class AdminJpaEntity {
     
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", nullable = false)
     private Long id;
 
     @Column(name = "username", nullable = false, unique = true, length = 30)

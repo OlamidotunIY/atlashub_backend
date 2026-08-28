@@ -9,6 +9,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Component;
+import org.thymeleaf.TemplateEngine;
+import org.thymeleaf.context.Context;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Year;
@@ -19,243 +21,85 @@ public class SmtpEmailSenderAdapter implements EmailSenderPort {
     private static final Logger log = LoggerFactory.getLogger(SmtpEmailSenderAdapter.class);
 
     private final JavaMailSender javaMailSender;
+    private final TemplateEngine templateEngine;
 
-    @Value("")
+    @Value("${spring.mail.username:}")
     private String fromEmail;
 
-    public SmtpEmailSenderAdapter(JavaMailSender javaMailSender) {
+    public SmtpEmailSenderAdapter(JavaMailSender javaMailSender, TemplateEngine templateEngine) {
         this.javaMailSender = javaMailSender;
+        this.templateEngine = templateEngine;
+    }
+
+    private void sendHtmlEmail(String toEmail, String subject, String templateName, Context context) {
+        log.info("Preparing to send HTML email '{}' to {}", templateName, toEmail);
+        try {
+            // Provide common variables to all templates
+            context.setVariable("currentYear", Year.now().getValue());
+            
+            String htmlContent = templateEngine.process("emails/" + templateName, context);
+            
+            MimeMessage message = javaMailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED, StandardCharsets.UTF_8.name());
+
+            helper.setFrom(fromEmail);
+            helper.setTo(toEmail);
+            helper.setSubject(subject);
+            helper.setText(htmlContent, true);
+            
+            javaMailSender.send(message);
+            log.info("Successfully sent HTML email '{}' to {}", templateName, toEmail);
+        } catch (MessagingException e) {
+            log.error("MessagingException occurred while constructing/sending email '{}' to {}", templateName, toEmail, e);
+        } catch (Exception e) {
+            log.error("Unexpected error occurred while sending email '{}' to {}", templateName, toEmail, e);
+        }
     }
 
     @Override
     public void sendVerificationEmail(String toEmail, String verificationCode) {
-        log.info("Preparing to send HTML verification email to {}", toEmail);
-        try {
-            MimeMessage message = javaMailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED, StandardCharsets.UTF_8.name());
-
-            helper.setFrom(fromEmail);
-            helper.setTo(toEmail);
-            helper.setSubject("AtlasHub - Verify your email address");
-            
-            String htmlContent = buildVerificationEmailHtml(verificationCode);
-            helper.setText(htmlContent, true);
-            
-            javaMailSender.send(message);
-            log.info("Successfully sent HTML verification email to {}", toEmail);
-        } catch (MessagingException e) {
-            log.error("MessagingException occurred while constructing/sending verification email to {}", toEmail, e);
-        } catch (Exception e) {
-            log.error("Unexpected error occurred while sending verification email to {}", toEmail, e);
-        }
+        Context context = new Context();
+        context.setVariable("verificationCode", verificationCode);
+        sendHtmlEmail(toEmail, "AtlasHub - Verify your email address", "verification", context);
     }
 
     @Override
     public void sendAdminWelcomeEmail(String toEmail, String temporaryPassword) {
-        log.info("Preparing to send HTML admin welcome email to {}", toEmail);
-        try {
-            MimeMessage message = javaMailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED, StandardCharsets.UTF_8.name());
-
-            helper.setFrom(fromEmail);
-            helper.setTo(toEmail);
-            helper.setSubject("Welcome to AtlasHub - Admin Account Created");
-            
-            String htmlContent = buildAdminWelcomeEmailHtml(temporaryPassword);
-            helper.setText(htmlContent, true);
-            
-            javaMailSender.send(message);
-            log.info("Successfully sent HTML admin welcome email to {}", toEmail);
-        } catch (MessagingException e) {
-            log.error("MessagingException occurred while constructing/sending admin welcome email to {}", toEmail, e);
-        } catch (Exception e) {
-            log.error("Unexpected error occurred while sending admin welcome email to {}", toEmail, e);
-        }
+        Context context = new Context();
+        context.setVariable("temporaryPassword", temporaryPassword);
+        sendHtmlEmail(toEmail, "Welcome to AtlasHub - Admin Account Created", "admin-welcome", context);
     }
 
-    private String buildVerificationEmailHtml(String verificationCode) {
-        return """
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <style>
-                    body {
-                        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-                        background-color: #f4f7f6;
-                        margin: 0;
-                        padding: 0;
-                    }
-                    .container {
-                        max-width: 600px;
-                        margin: 40px auto;
-                        background-color: #ffffff;
-                        border-radius: 8px;
-                        overflow: hidden;
-                        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-                    }
-                    .header {
-                        background-color: #0d1117;
-                        padding: 30px 20px;
-                        text-align: center;
-                    }
-                    .header h1 {
-                        color: #ffffff;
-                        margin: 0;
-                        font-size: 24px;
-                        letter-spacing: 1px;
-                    }
-                    .content {
-                        padding: 40px 30px;
-                        color: #333333;
-                        line-height: 1.6;
-                    }
-                    .content h2 {
-                        font-size: 20px;
-                        color: #1a1a1a;
-                        margin-top: 0;
-                    }
-                    .code-box {
-                        background-color: #f8f9fa;
-                        border: 1px dashed #ced4da;
-                        border-radius: 6px;
-                        padding: 20px;
-                        text-align: center;
-                        margin: 30px 0;
-                    }
-                    .code {
-                        font-size: 32px;
-                        font-weight: bold;
-                        color: #0056b3;
-                        letter-spacing: 5px;
-                        margin: 0;
-                    }
-                    .footer {
-                        background-color: #f8f9fa;
-                        padding: 20px;
-                        text-align: center;
-                        font-size: 13px;
-                        color: #6c757d;
-                        border-top: 1px solid #eeeeee;
-                    }
-                </style>
-            </head>
-            <body>
-                <div class="container">
-                    <div class="header">
-                        <h1>ATLASHUB</h1>
-                    </div>
-                    <div class="content">
-                        <h2>Verify Your Email Address</h2>
-                        <p>Welcome to AtlasHub! We're excited to have you on board.</p>
-                        <p>To continue setting up your account, please enter the following verification code:</p>
-                        
-                        <div class="code-box">
-                            <p class="code">%s</p>
-                        </div>
-                        
-                        <p>This code will expire in 24 hours.</p>
-                        <p>If you didn't request this email, you can safely ignore it.</p>
-                    </div>
-                    <div class="footer">
-                        <p>&copy; %d AtlasHub Inc. All rights reserved.</p>
-                        <p>This is an automated message, please do not reply.</p>
-                    </div>
-                </div>
-            </body>
-            </html>
-            """.formatted(verificationCode, Year.now().getValue());
+    @Override
+    public void sendUserSetupPasswordEmail(String toEmail, String firstName, String token) {
+        Context context = new Context();
+        context.setVariable("firstName", firstName);
+        context.setVariable("setupLink", "https://atlashub.name.ng/auth/setup-password?token=" + token);
+        sendHtmlEmail(toEmail, "AtlasHub - Setup your password", "user-setup-password", context);
     }
 
-    private String buildAdminWelcomeEmailHtml(String temporaryPassword) {
-        return """
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <style>
-                    body {
-                        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-                        background-color: #f4f7f6;
-                        margin: 0;
-                        padding: 0;
-                    }
-                    .container {
-                        max-width: 600px;
-                        margin: 40px auto;
-                        background-color: #ffffff;
-                        border-radius: 8px;
-                        overflow: hidden;
-                        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-                    }
-                    .header {
-                        background-color: #0d1117;
-                        padding: 30px 20px;
-                        text-align: center;
-                    }
-                    .header h1 {
-                        color: #ffffff;
-                        margin: 0;
-                        font-size: 24px;
-                        letter-spacing: 1px;
-                    }
-                    .content {
-                        padding: 40px 30px;
-                        color: #333333;
-                        line-height: 1.6;
-                    }
-                    .content h2 {
-                        font-size: 20px;
-                        color: #1a1a1a;
-                        margin-top: 0;
-                    }
-                    .code-box {
-                        background-color: #f8f9fa;
-                        border: 1px dashed #ced4da;
-                        border-radius: 6px;
-                        padding: 20px;
-                        text-align: center;
-                        margin: 30px 0;
-                    }
-                    .code {
-                        font-size: 24px;
-                        font-weight: bold;
-                        color: #dc3545;
-                        letter-spacing: 2px;
-                        margin: 0;
-                    }
-                    .footer {
-                        background-color: #f8f9fa;
-                        padding: 20px;
-                        text-align: center;
-                        font-size: 13px;
-                        color: #6c757d;
-                        border-top: 1px solid #eeeeee;
-                    }
-                </style>
-            </head>
-            <body>
-                <div class="container">
-                    <div class="header">
-                        <h1>ATLASHUB</h1>
-                    </div>
-                    <div class="content">
-                        <h2>Welcome to the AtlasHub Admin Team</h2>
-                        <p>An administrative account has been created for you.</p>
-                        <p>Please use your employee code and the following temporary password to log in. You will be required to change this password upon your first login:</p>
-                        
-                        <div class="code-box">
-                            <p class="code">%s</p>
-                        </div>
-                        
-                        <p>Please keep this password secure and do not share it with anyone.</p>
-                    </div>
-                    <div class="footer">
-                        <p>&copy; %d AtlasHub Inc. All rights reserved.</p>
-                        <p>This is an automated message, please do not reply.</p>
-                    </div>
-                </div>
-            </body>
-            </html>
-            """.formatted(temporaryPassword, Year.now().getValue());
+    @Override
+    public void sendPasswordChangedEmail(String toEmail, String firstName) {
+        Context context = new Context();
+        context.setVariable("firstName", firstName);
+        sendHtmlEmail(toEmail, "AtlasHub - Your password was changed", "password-changed", context);
+    }
+
+    @Override
+    public void sendOrganizationJoinedEmail(String toEmail, String firstName, String organizationName) {
+        Context context = new Context();
+        context.setVariable("firstName", firstName);
+        context.setVariable("organizationName", organizationName);
+        sendHtmlEmail(toEmail, "AtlasHub - Welcome to " + organizationName, "organization-joined", context);
+    }
+
+    @Override
+    public void sendLoginNotificationEmail(String toEmail, String firstName, String ipAddress, String device, String loginTime) {
+        Context context = new Context();
+        context.setVariable("firstName", firstName);
+        context.setVariable("ipAddress", ipAddress);
+        context.setVariable("device", device);
+        context.setVariable("loginTime", loginTime);
+        sendHtmlEmail(toEmail, "AtlasHub - New Login Alert", "login-notification", context);
     }
 }
-
