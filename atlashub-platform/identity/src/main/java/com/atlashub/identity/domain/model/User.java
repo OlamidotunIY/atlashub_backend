@@ -29,7 +29,7 @@ public class User extends AggregateRoot<Long> {
 
     /** Creation constructor — raises UserCreated event. id must be non-null (assign nextIdentity() before calling). */
     public User(Long id, String firstName, String lastName, EmailAddress email,
-                PhoneNumber phone, Country country) {
+                PhoneNumber phone, Country country, Boolean isInvited) {
         if (id == null) throw new ValidationException(SharedErrorCode.MISSING_REQUIRED_FIELD, "User id is required");
         if (firstName == null || firstName.isBlank()) throw new ValidationException(SharedErrorCode.MISSING_REQUIRED_FIELD, "First name is required");
         if (lastName == null || lastName.isBlank()) throw new ValidationException(SharedErrorCode.MISSING_REQUIRED_FIELD, "Last name is required");
@@ -54,7 +54,8 @@ public class User extends AggregateRoot<Long> {
                 this.email.value(),
                 this.firstName,
                 this.lastName,
-                this.country.name()
+                this.country.name(),
+                isInvited
             )
         ));
     }

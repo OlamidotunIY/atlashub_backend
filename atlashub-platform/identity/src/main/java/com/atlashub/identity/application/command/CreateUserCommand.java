@@ -5,5 +5,6 @@ public record CreateUserCommand(
     String lastName,
     String email,
     String phone,
-    String country
+    String country,
+    String inviteToken
 ) {}

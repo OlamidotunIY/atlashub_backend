@@ -33,6 +33,17 @@ public class OrganizationMember extends AggregateRoot<Long> {
         this.role = role;
         this.status = MemberStatus.ACTIVE;
         this.joinedAt = ZonedDateTime.now();
+
+        this.registerEvent(new com.atlashub.identity.domain.event.OrganizationMemberAdded(
+            java.util.UUID.randomUUID().toString(),
+            String.valueOf(this.organizationId),
+            ZonedDateTime.now(),
+            new com.atlashub.identity.domain.event.OrganizationMemberAdded.Payload(
+                this.organizationId,
+                this.userId,
+                this.role.name()
+            )
+        ));
     }
 
     @Override

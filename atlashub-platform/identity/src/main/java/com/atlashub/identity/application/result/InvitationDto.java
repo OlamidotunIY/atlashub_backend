@@ -11,5 +11,6 @@ public record InvitationDto(
     String invitedEmail,
     OrganizationRole role,
     InvitationStatus status,
+    Boolean userExist,
     ZonedDateTime expiresAt
 ) {}

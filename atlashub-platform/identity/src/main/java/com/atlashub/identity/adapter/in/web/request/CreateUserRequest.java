@@ -17,5 +17,7 @@ public record CreateUserRequest(
     String phone,
 
     @NotBlank(message = "Country is required")
-    String country
+    String country,
+
+    String inviteToken
 ) {}

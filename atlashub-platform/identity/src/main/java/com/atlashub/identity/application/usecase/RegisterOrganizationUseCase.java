@@ -59,6 +59,7 @@ public class RegisterOrganizationUseCase extends BaseUseCase<RegisterOrganizatio
             OrganizationRole.OWNER
         );
         memberRepository.save(ownerMembership);
+        publishEvents(ownerMembership, eventPublisher);
         log.debug("Owner membership created for user {} in organization {}", command.userId(), organization.getId());
 
         User user = userRepository.findById(command.userId())

@@ -13,6 +13,7 @@ public record UserCreated(
         String email,
         String firstName,
         String lastName,
-        String country
+        String country,
+        Boolean isInvited
     ) {}
 }

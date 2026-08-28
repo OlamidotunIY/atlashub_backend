@@ -1,16 +1,14 @@
 package com.atlashub.auth.application.usecase;
 
 import com.atlashub.auth.application.command.SetupPasswordCommand;
-import com.atlashub.auth.application.result.AuthResponseDto;
 import com.atlashub.auth.application.port.in.PasswordEncoderPort;
 import com.atlashub.auth.application.port.in.SetupTokenStorePort;
-import com.atlashub.auth.application.port.in.TokenGeneratorPort;
-import com.atlashub.auth.application.port.in.PreAuthTokenStorePort;
+import com.atlashub.auth.application.result.AuthResponseDto;
 import com.atlashub.auth.application.service.TokenIssuanceService;
 import com.atlashub.auth.domain.exception.AuthErrorCode;
 import com.atlashub.auth.domain.model.AuthAccount;
-import com.atlashub.auth.domain.valueobject.AuthStatus;
 import com.atlashub.auth.domain.repository.AuthAccountRepository;
+import com.atlashub.auth.domain.valueobject.AuthStatus;
 import com.atlashub.shared.dto.ApiResponse;
 import com.atlashub.shared.exception.BusinessRuleException;
 import com.atlashub.shared.exception.NotFoundException;
@@ -24,22 +22,16 @@ public class SetupPasswordUseCase extends BaseUseCase<SetupPasswordCommand, ApiR
     private final AuthAccountRepository authAccountRepository;
     private final PasswordEncoderPort passwordEncoderPort;
     private final SetupTokenStorePort setupTokenStorePort;
-    private final TokenGeneratorPort tokenGeneratorPort;
-    private final PreAuthTokenStorePort preAuthTokenStorePort;
     private final TokenIssuanceService tokenIssuanceService;
 
     public SetupPasswordUseCase(
             AuthAccountRepository authAccountRepository,
             PasswordEncoderPort passwordEncoderPort,
             SetupTokenStorePort setupTokenStorePort,
-            TokenGeneratorPort tokenGeneratorPort,
-            PreAuthTokenStorePort preAuthTokenStorePort,
             TokenIssuanceService tokenIssuanceService) {
         this.authAccountRepository = authAccountRepository;
         this.passwordEncoderPort = passwordEncoderPort;
         this.setupTokenStorePort = setupTokenStorePort;
-        this.tokenGeneratorPort = tokenGeneratorPort;
-        this.preAuthTokenStorePort = preAuthTokenStorePort;
         this.tokenIssuanceService = tokenIssuanceService;
     }
 
@@ -61,14 +53,6 @@ public class SetupPasswordUseCase extends BaseUseCase<SetupPasswordCommand, ApiR
         authAccount.updateCredential(newHash);
         authAccountRepository.save(authAccount);
 
-        // Standard 2FA check after successful password setup
-        if (Boolean.TRUE.equals(authAccount.getTotpEnabled())) {
-            TokenGeneratorPort.TokenData preAuth = tokenGeneratorPort.generatePreAuthToken(authAccount.getPrincipalId(), authAccount.getPrincipalType().name());
-            preAuthTokenStorePort.store(preAuth.token(), authAccount.getId());
-            return new ApiResponse<>(true, "Password setup complete. 2FA Required", AuthResponseDto.forTwoFactor(preAuth.token()), null);
-        }
-
-        // Issue tokens immediately if no 2FA required
         AuthResponseDto responseDto = AuthResponseDto.forSuccess(tokenIssuanceService.issueTokensAndCreateSession(authAccount, input.ipAddress(), input.userAgent()));
         return new ApiResponse<>(true, "Password setup successfully", responseDto, null);
     }

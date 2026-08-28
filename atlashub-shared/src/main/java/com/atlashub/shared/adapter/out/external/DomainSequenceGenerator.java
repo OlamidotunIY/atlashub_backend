@@ -23,6 +23,7 @@ public class DomainSequenceGenerator {
         seedSequence("transaction_seq", 10000L);
         seedSequence("wallet_seq", 1000L);
         seedSequence("apikey_seq", 1000L);
+        seedSequence("admin_seq", 100L);
     }
 
     private void seedSequence(String sequenceName, Long initialValue) {
@@ -36,7 +37,14 @@ public class DomainSequenceGenerator {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public Long nextIdentity(String sequenceName) {
         String selectSql = "SELECT next_val FROM domain_sequences WHERE sequence_name = ? FOR UPDATE";
-        Long currentVal = jdbcTemplate.queryForObject(selectSql, Long.class, sequenceName);
+        Long currentVal;
+        try {
+            currentVal = jdbcTemplate.queryForObject(selectSql, Long.class, sequenceName);
+        } catch (org.springframework.dao.EmptyResultDataAccessException e) {
+            // Auto-seed if it doesn't exist
+            jdbcTemplate.update("INSERT INTO domain_sequences (sequence_name, next_val) VALUES (?, ?)", sequenceName, 1000L);
+            currentVal = 1000L;
+        }
         
         if (currentVal == null) {
             throw new IllegalStateException("Sequence not found: " + sequenceName);

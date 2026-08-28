@@ -60,7 +60,7 @@ class RegisterOrganizationUseCaseTest {
     void shouldRegisterOrganizationAndReturnId() {
         // Arrange
         when(organizationRepository.nextIdentity()).thenReturn(100L);
-        User user = new User(1L, "John", "Doe", new EmailAddress("john@example.com"), null, Country.NIGERIA);
+        User user = new User(1L, "John", "Doe", new EmailAddress("john@example.com"), null, Country.NIGERIA, false);
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         
         // Act

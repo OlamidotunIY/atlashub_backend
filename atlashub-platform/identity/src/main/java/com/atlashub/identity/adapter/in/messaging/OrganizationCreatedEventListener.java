@@ -21,7 +21,7 @@ public class OrganizationCreatedEventListener extends BaseKafkaEventListener {
 
     @KafkaListener(topics = "Organization-events", groupId = "identity-module-group")
     public void onOrganizationRegistered(String messagePayload) {
-        processEventIfMatches(messagePayload, "OrganizationRegistered", log, root -> {
+        processEventIfMatches(messagePayload, "OrganizationRegistered", log, "identity-module-group", root -> {
             String aggregateId = root.path("aggregateId").asText(null);
             if (aggregateId == null) return;
 

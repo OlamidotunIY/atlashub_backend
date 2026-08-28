@@ -1,5 +1,6 @@
 package com.atlashub.auth.adapter.in.messaging;
 
+import com.atlashub.admin.domain.event.AdminCreatedEvent;
 import com.atlashub.auth.application.command.CreateAuthAccountCommand;
 import com.atlashub.auth.application.usecase.CreateAuthAccountUseCase;
 import com.atlashub.auth.domain.valueobject.AuthProvider;
@@ -10,6 +11,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
+
+import org.springframework.kafka.annotation.RetryableTopic;
+import org.springframework.kafka.retrytopic.DltStrategy;
+import org.springframework.retry.annotation.Backoff;
 
 @Slf4j
 @Component
@@ -24,18 +29,27 @@ public class AdminCreatedEventListener extends BaseKafkaEventListener {
         this.createAuthAccountUseCase = createAuthAccountUseCase;
     }
 
+    @RetryableTopic(
+            attempts = "3",
+            backoff = @Backoff(delay = 1000, multiplier = 2.0),
+            dltStrategy = DltStrategy.FAIL_ON_ERROR
+    )
     @KafkaListener(topics = "admin-events", groupId = "auth-module-admin-group")
     public void onAdminCreated(String messagePayload) {
-        processEventIfMatches(messagePayload, "AdminCreatedEvent", log, root -> {
-            Long adminId = root.path("adminId").asLong();
-            String username = root.path("username").asText(null);
-            String email = root.path("email").asText(null);
-            String rawEmployeeCode = root.path("rawEmployeeCode").asText(null);
-            String role = root.path("role").asText(null);
+        processEventIfMatches(messagePayload, "AdminCreatedEvent", AdminCreatedEvent.class, log, "auth-module-admin-group", event -> {
+            Long adminId = Long.valueOf(event.aggregateId());
+            
+            String username = event.payload().username();
+            String email = event.payload().email();
+            String rawEmployeeCode = event.payload().rawEmployeeCode();
+            String role = event.payload().role();
 
-            if (adminId == null || email == null || rawEmployeeCode == null) return;
+            if (adminId == 0 || email == null || rawEmployeeCode == null) {
+                log.warn("Missing required fields in AdminCreatedEvent. aggregateId={}, email={}, rawEmployeeCode={}", adminId, email, rawEmployeeCode);
+                return;
+            }
 
-            log.info("Received AdminCreatedEvent for admin {}. Creating auth account...", adminId);
+            log.info("Received AdminCreatedEvent for admin {}. Creating auth account...", username);
 
             String scope = "MASTER".equals(role) ? "admin:all" : "admin:standard";
 

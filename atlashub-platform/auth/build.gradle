@@ -1,6 +1,8 @@
 dependencies {
     implementation 'io.swagger.core.v3:swagger-annotations:2.2.20'
     implementation project(':atlashub-shared')
+    implementation project(':atlashub-platform:admin')
+    implementation project(':atlashub-platform:identity')
 
     implementation 'org.springframework.boot:spring-boot-starter'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'

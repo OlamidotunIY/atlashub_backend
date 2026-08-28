@@ -47,7 +47,7 @@ public class Session extends AggregateRoot<Long> {
                         UUID.randomUUID().toString(),
                         String.valueOf(session.getId()),
                         ZonedDateTime.now(),
-                        new SessionPayload(jti, expiresAt)
+                        new SessionPayload(jti, expiresAt, principalId, principalType, ipAddress, userAgent)
                 ));
         return session;
     }
@@ -62,7 +62,7 @@ public class Session extends AggregateRoot<Long> {
                         UUID.randomUUID().toString(),
                         String.valueOf(this.getId()),
                         ZonedDateTime.now(),
-                        new SessionPayload(this.token, this.expiresAt)
+                        new SessionPayload(this.token, this.expiresAt, this.principalId, this.principalType, this.ipAddress, this.userAgent)
                 ));
         }
     }

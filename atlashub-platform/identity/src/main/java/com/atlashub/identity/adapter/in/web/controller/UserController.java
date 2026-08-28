@@ -47,7 +47,8 @@ public class UserController {
                 request.lastName(),
                 request.email(),
                 request.phone(),
-                request.country()
+                request.country(),
+                request.inviteToken()
         );
         CreateUserResult result = createUserUseCase.execute(command);
         return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse<>(true, "User created successfully", result, null));
