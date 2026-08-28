@@ -36,26 +36,44 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, PublicEndpointScanner scanner) throws Exception {
+        
+        List<PublicEndpointScanner.EndpointConfig> publicEndpoints = scanner.getPublicEndpoints();
+        
         http
             .csrf(AbstractHttpConfigurer::disable)
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers(
+            .authorizeHttpRequests(auth -> {
+                
+                // 1. Register dynamically scanned public endpoints
+                for (PublicEndpointScanner.EndpointConfig config : publicEndpoints) {
+                    if (config.method() != null) {
+                        auth.requestMatchers(config.method(), config.path()).permitAll();
+                    } else {
+                        auth.requestMatchers(config.path()).permitAll();
+                    }
+                }
+                
+                // 2. Register hardcoded default public endpoints
+                auth.requestMatchers(
                     org.springframework.http.HttpMethod.POST,
-                    "/api/v1/Organizations"
-                ).permitAll()
-                .requestMatchers(
+                    "/api/v1/Organizations",
+                    "/api/v1/users"
+                ).permitAll();
+                
+                auth.requestMatchers(
                     "/api/v1/auth/login",
                     "/api/v1/admins/auth/bootstrap",
                     "/v3/api-docs/**",
                     "/swagger-ui/**",
                     "/swagger-ui.html",
                     "/actuator/**"
-                ).permitAll()
-                .anyRequest().authenticated()
-            )
+                ).permitAll();
+                
+                // 3. Secure everything else
+                auth.anyRequest().authenticated();
+            })
             .formLogin(AbstractHttpConfigurer::disable)
             .httpBasic(AbstractHttpConfigurer::disable)
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
