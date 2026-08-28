@@ -44,7 +44,7 @@ public class AccountEventListener extends BaseKafkaEventListener {
     )
     @KafkaListener(topics = "account-events", groupId = "notifications-account-group")
     public void handleAccountEvent(String message) {
-        processEventIfMatches(message, "VirtualAccountActivatedEvent", log, root -> {
+        processEventIfMatches(message, "VirtualAccountActivatedEvent", log, "notifications-account-group", root -> {
             try {
                 VirtualAccountActivatedNotificationEvent event =
                         objectMapper.treeToValue(root, VirtualAccountActivatedNotificationEvent.class);

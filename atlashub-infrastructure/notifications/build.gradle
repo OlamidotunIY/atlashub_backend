@@ -3,12 +3,17 @@ dependencies {
     implementation project(':atlashub-shared')
     implementation project(':atlashub-infrastructure:rate-limiter')
     
-    // Spring Boot
     implementation 'org.springframework.boot:spring-boot-starter-mail'
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
     implementation 'org.springframework.boot:spring-boot-starter-websocket'
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
     implementation 'org.springframework.kafka:spring-kafka'
     implementation 'org.springframework.boot:spring-boot-starter-json'
+    
+    // Domain Events from Platform Modules
+    implementation project(':atlashub-platform:auth')
+    implementation project(':atlashub-platform:identity')
+    implementation project(':atlashub-platform:admin')
 }
 
 

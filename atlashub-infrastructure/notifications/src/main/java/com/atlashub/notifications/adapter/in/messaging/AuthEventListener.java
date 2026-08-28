@@ -1,22 +1,25 @@
 package com.atlashub.notifications.adapter.in.messaging;
 
+import com.atlashub.auth.domain.event.PasswordSetupInitiatedEvent;
+import com.atlashub.auth.domain.event.SessionCreatedEvent;
+import com.atlashub.auth.domain.event.VerificationCreatedEvent;
+import com.atlashub.notifications.application.port.EmailSenderPort;
 import com.atlashub.notifications.application.usecase.SendVerificationEmailUseCase;
+import com.atlashub.shared.adapter.out.external.dlq.DeadLetterRepository;
+import com.atlashub.shared.api.AdminQueryApi;
+import com.atlashub.shared.api.UserQueryApi;
 import com.atlashub.shared.event.BaseKafkaEventListener;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.atlashub.shared.adapter.out.external.dlq.DeadLetterRepository;
-import org.springframework.kafka.annotation.DltHandler;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.annotation.RetryableTopic;
 import org.springframework.kafka.retrytopic.DltStrategy;
-import org.springframework.kafka.support.KafkaHeaders;
-import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.stereotype.Component;
 
-import java.time.ZonedDateTime;
-import java.util.UUID;
+import java.time.format.DateTimeFormatter;
+import java.util.Optional;
 
 @Component
 public class AuthEventListener extends BaseKafkaEventListener {
@@ -24,15 +27,23 @@ public class AuthEventListener extends BaseKafkaEventListener {
     private static final Logger log = LoggerFactory.getLogger(AuthEventListener.class);
 
     private final SendVerificationEmailUseCase sendVerificationEmailUseCase;
-    private final DeadLetterRepository deadLetterRepository;
+    private final EmailSenderPort emailSenderPort;
+    private final UserQueryApi userQueryApi;
+    private final AdminQueryApi adminQueryApi;
 
     public AuthEventListener(
             SendVerificationEmailUseCase sendVerificationEmailUseCase,
+            EmailSenderPort emailSenderPort,
+            UserQueryApi userQueryApi,
+            AdminQueryApi adminQueryApi,
             ObjectMapper objectMapper,
             DeadLetterRepository deadLetterRepository
     ) {
         super(objectMapper);
         this.sendVerificationEmailUseCase = sendVerificationEmailUseCase;
+        this.emailSenderPort = emailSenderPort;
+        this.userQueryApi = userQueryApi;
+        this.adminQueryApi = adminQueryApi;
         this.deadLetterRepository = deadLetterRepository;
     }
 
@@ -43,9 +54,9 @@ public class AuthEventListener extends BaseKafkaEventListener {
     )
     @KafkaListener(topics = "auth-events", groupId = "notifications-auth-group")
     public void handleAuthEvent(String message) {
-        processEventIfMatches(message, "VerificationCreated", log, root -> {
-            String email = root.path("payload").path("identifier").asText(null);
-            String rawCode = root.path("payload").path("rawCode").asText(null);
+        processEventIfMatches(message, "VerificationCreated", VerificationCreatedEvent.class, log, "notifications-auth-group", event -> {
+            String email = event.payload().identifier();
+            String rawCode = event.payload().rawCode();
             
             if (email != null && rawCode != null) {
                 sendVerificationEmailUseCase.execute(new SendVerificationEmailUseCase.Input(email, rawCode));
@@ -53,26 +64,50 @@ public class AuthEventListener extends BaseKafkaEventListener {
             }
         });
 
-        processEventIfMatches(message, "PasswordSetupInitiated", log, root -> {
-            String email = root.path("payload").path("identifier").asText(null);
-            String setupToken = root.path("payload").path("setupToken").asText(null);
+        processEventIfMatches(message, "PasswordSetupInitiated", PasswordSetupInitiatedEvent.class, log, "notifications-auth-group", event -> {
+            String email = event.payload().identifier();
+            String setupToken = event.payload().setupToken();
             
             if (email != null && setupToken != null) {
-                // TODO: Call a usecase to send the password setup link email
+                emailSenderPort.sendUserSetupPasswordEmail(email, "User", setupToken);
                 log.info("Handled PasswordSetupInitiated event for {}. Setup link sent.", email);
             }
         });
-    }
 
-    @DltHandler
-    public void handleDeadLetter(String message, @Header(KafkaHeaders.EXCEPTION_MESSAGE) String error) {
-        log.error("AuthEvent permanently failed after all retries and is now in DLQ. Reason: {}", error);
-        deadLetterRepository.save(
-                UUID.randomUUID().toString(),
-                "auth-events",
-                message,
-                error,
-                ZonedDateTime.now()
-        );
+        processEventIfMatches(message, "SessionCreatedEvent", SessionCreatedEvent.class, log, "notifications-auth-group", event -> {
+            if (event.payload().principalId() == null) {
+                log.warn("SessionCreatedEvent missing principalId. Cannot send login email.");
+                return;
+            }
+            
+            String email = null;
+            String firstName = null;
+
+            if ("ADMIN".equals(event.payload().principalType().name())) {
+                Optional<AdminQueryApi.AdminSharedDto> adminOpt = adminQueryApi.getAdminById(event.payload().principalId());
+                if (adminOpt.isPresent()) {
+                    email = adminOpt.get().email();
+                    firstName = adminOpt.get().username(); // Admin has no firstName, fallback to username
+                }
+            } else {
+                Optional<UserQueryApi.UserSharedDto> userOpt = userQueryApi.getUserById(event.payload().principalId());
+                if (userOpt.isPresent()) {
+                    email = userOpt.get().email();
+                    firstName = userOpt.get().firstName();
+                }
+            }
+
+            if (email != null) {
+                String loginTime = event.occurredAt().format(DateTimeFormatter.RFC_1123_DATE_TIME);
+                emailSenderPort.sendLoginNotificationEmail(
+                        email,
+                        firstName,
+                        event.payload().ipAddress(),
+                        event.payload().userAgent(),
+                        loginTime
+                );
+                log.info("Handled SessionCreatedEvent for {}. Login notification email sent.", email);
+            }
+        });
     }
 }

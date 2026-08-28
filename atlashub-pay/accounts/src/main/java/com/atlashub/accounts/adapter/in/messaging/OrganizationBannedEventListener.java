@@ -21,7 +21,7 @@ public class OrganizationBannedEventListener extends BaseKafkaEventListener {
 
     @KafkaListener(topics = "Organization-events", groupId = "accounts-module-group")
     public void onOrganizationBanned(String messagePayload) {
-        processEventIfMatches(messagePayload, "OrganizationBanned", log, root -> {
+        processEventIfMatches(messagePayload, "OrganizationBanned", log, "accounts-module-group", root -> {
             String aggregateId = root.path("aggregateId").asText(null);
             if (aggregateId == null) {
                 return;

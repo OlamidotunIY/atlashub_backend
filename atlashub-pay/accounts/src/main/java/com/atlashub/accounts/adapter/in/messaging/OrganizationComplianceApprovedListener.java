@@ -26,7 +26,7 @@ public class OrganizationComplianceApprovedListener extends BaseKafkaEventListen
 
     @KafkaListener(topics = "Organization-events", groupId = "accounts-module-group")
     public void onOrganizationComplianceApproved(String messagePayload) {
-        processEventIfMatches(messagePayload, "OrganizationComplianceApproved", log, root -> {
+        processEventIfMatches(messagePayload, "OrganizationComplianceApproved", log, "accounts-module-group", root -> {
             String aggregateId = root.path("aggregateId").asText(null);
             if (aggregateId == null) {
                 return;

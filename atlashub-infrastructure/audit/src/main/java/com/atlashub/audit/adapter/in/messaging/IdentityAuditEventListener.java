@@ -3,6 +3,7 @@ package com.atlashub.audit.adapter.in.messaging;
 import com.atlashub.audit.application.command.LogActivityCommand;
 import com.atlashub.audit.application.usecase.LogActivityUseCase;
 import com.atlashub.audit.domain.valueobject.ActivityAction;
+import com.atlashub.shared.api.EventTrackerApi;
 import com.atlashub.shared.event.EnvelopedDomainEvent;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -17,14 +18,21 @@ public class IdentityAuditEventListener {
 
     private final LogActivityUseCase logActivityUseCase;
     private final ObjectMapper objectMapper;
+    private final EventTrackerApi eventTrackerApi;
 
-    public IdentityAuditEventListener(LogActivityUseCase logActivityUseCase, ObjectMapper objectMapper) {
+    public IdentityAuditEventListener(LogActivityUseCase logActivityUseCase, ObjectMapper objectMapper, EventTrackerApi eventTrackerApi) {
         this.logActivityUseCase = logActivityUseCase;
         this.objectMapper = objectMapper;
+        this.eventTrackerApi = eventTrackerApi;
     }
 
     @KafkaListener(topics = {"organization-events", "organization-member-events", "invitation-events", "user-events"}, groupId = "audit-group")
     public void onIdentityEvent(EnvelopedDomainEvent<?> envelopedEvent) {
+        String eventId = envelopedEvent.correlationId();
+        if (eventTrackerApi.isProcessed(eventId, "audit-group")) {
+            return;
+        }
+
         String eventType = envelopedEvent.eventType();
         
         ActivityAction action = switch (eventType) {
@@ -38,7 +46,10 @@ public class IdentityAuditEventListener {
             default -> null;
         };
 
-        if (action == null) return;
+        if (action == null) {
+            eventTrackerApi.markSuccess(eventId, "audit-group");
+            return;
+        }
 
         Map<String, Object> metadata = new HashMap<>();
         metadata.put("correlationId", envelopedEvent.correlationId());
@@ -78,5 +89,7 @@ public class IdentityAuditEventListener {
             metadata
         );
         logActivityUseCase.execute(command);
+        
+        eventTrackerApi.markSuccess(eventId, "audit-group");
     }
 }

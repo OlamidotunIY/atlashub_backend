@@ -43,7 +43,7 @@ public class AdminCredentialsCreatedEventListener extends BaseKafkaEventListener
     )
     @KafkaListener(topics = "auth-events", groupId = "notifications-admin-creds-group")
     public void handleAuthEvent(String message) {
-        processEventIfMatches(message, "AdminCredentialsCreated", log, root -> {
+        processEventIfMatches(message, "AdminCredentialsCreated", log, "notifications-admin-creds-group", root -> {
             String email = root.path("payload").path("personalEmail").asText(null);
             String tempPassword = root.path("payload").path("temporaryPassword").asText(null);
             

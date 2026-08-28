@@ -1,31 +1,66 @@
 package com.atlashub.shared.event;
 
+import com.atlashub.shared.adapter.out.external.dlq.DeadLetterRepository;
+import com.atlashub.shared.api.EventTrackerApi;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.kafka.annotation.DltHandler;
+import org.springframework.kafka.support.KafkaHeaders;
+import org.springframework.messaging.handler.annotation.Header;
 
+import java.time.ZonedDateTime;
+import java.util.UUID;
 import java.util.function.Consumer;
 
 public abstract class BaseKafkaEventListener {
 
     protected final ObjectMapper objectMapper;
     
+    @Autowired
+    protected DeadLetterRepository deadLetterRepository;
+
+    @Autowired
+    protected EventTrackerApi eventTrackerApi;
+    
     protected BaseKafkaEventListener(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
     }
 
-    /**
-     * Parses the raw Kafka message, checks if it matches the expected event type,
-     * and if so, invokes the provided handler with the parsed JsonNode.
-     *
-     * @param messagePayload The raw JSON string from Kafka
-     * @param expectedEventType The class name or event type string to match (e.g. "OrganizationComplianceApproved")
-     * @param log The logger of the concrete subclass
-     * @param action The action to execute with the parsed root JsonNode
-     */
-    protected void processEventIfMatches(String messagePayload, String expectedEventType, Logger log, Consumer<JsonNode> action) {
+    @DltHandler
+    public void handleDlt(String payload, 
+                          @Header(KafkaHeaders.RECEIVED_TOPIC) String topic,
+                          @Header(KafkaHeaders.GROUP_ID) String groupId,
+                          @Header(name = KafkaHeaders.EXCEPTION_MESSAGE, required = false) String exceptionMessage) {
+        
+        // Remove "-dlt" from topic name to get the original topic
+        String originalTopic = topic.endsWith("-dlt") ? topic.substring(0, topic.length() - 4) : topic;
+        
         try {
-            // Fast fail with string matching before parsing
+            JsonNode root = objectMapper.readTree(payload);
+            String eventId = root.path("correlationId").asText(null);
+            if (eventId == null && root.has("event")) {
+                eventId = root.get("event").path("eventId").asText(null);
+            }
+            if (eventId != null) {
+                eventTrackerApi.markDlq(eventId, groupId);
+            }
+        } catch (Exception e) {
+            // ignore JSON errors in DLT handler
+        }
+
+        deadLetterRepository.save(
+                UUID.randomUUID().toString(),
+                originalTopic,
+                payload,
+                exceptionMessage != null ? exceptionMessage : "Unknown error",
+                ZonedDateTime.now()
+        );
+    }
+
+    protected void processEventIfMatches(String messagePayload, String expectedEventType, Logger log, String groupId, Consumer<JsonNode> action) {
+        try {
             if (!messagePayload.contains("\"" + expectedEventType + "\"") && 
                 !messagePayload.contains("\"eventType\":\"" + expectedEventType + "\"")) {
                 return;
@@ -34,38 +69,40 @@ public abstract class BaseKafkaEventListener {
             JsonNode root = objectMapper.readTree(messagePayload);
             String actualType = root.path("eventType").asText(null);
 
-            // Double check post-parsing (if eventType field exists)
             if (actualType != null && !actualType.endsWith(expectedEventType)) {
                 return;
             }
 
-            // Pass the inner 'event' node so consumers don't have to deal with the Enveloped wrapper
+            String eventId = root.path("correlationId").asText(null);
+            if (eventId == null && root.has("event")) {
+                eventId = root.get("event").path("eventId").asText(null);
+            }
+
+            if (eventId != null && eventTrackerApi.isProcessed(eventId, groupId)) {
+                log.debug("Event {} already processed by {}, skipping.", eventId, groupId);
+                return;
+            }
+
             JsonNode eventNode = root.has("event") ? root.get("event") : root;
             action.accept(eventNode);
+
+            if (eventId != null) {
+                eventTrackerApi.markSuccess(eventId, groupId);
+            }
         } catch (Exception e) {
             log.error("Failed to parse or process event. Expected type: {}. Payload: {}", expectedEventType, messagePayload, e);
+            throw new RuntimeException("Error processing Kafka event", e);
         }
     }
 
-    /**
-     * Typed overload of {@link #processEventIfMatches} that deserialises the inner event node
-     * directly into an instance of {@code payloadType}, so callers receive a strongly-typed
-     * object instead of a raw {@link JsonNode}.
-     *
-     * @param messagePayload    The raw JSON string from Kafka
-     * @param expectedEventType The event type string to match (e.g. "UserCreated")
-     * @param payloadType       The class to deserialise the event node into
-     * @param log               The logger of the concrete subclass
-     * @param action            The action to execute with the deserialised event object
-     * @param <T>               The type of the deserialised event
-     */
-    protected <T> void processEventIfMatches(String messagePayload, String expectedEventType, Class<T> payloadType, Logger log, Consumer<T> action) {
-        processEventIfMatches(messagePayload, expectedEventType, log, eventNode -> {
+    protected <T> void processEventIfMatches(String messagePayload, String expectedEventType, Class<T> payloadType, Logger log, String groupId, Consumer<T> action) {
+        processEventIfMatches(messagePayload, expectedEventType, log, groupId, eventNode -> {
             try {
                 T event = objectMapper.treeToValue(eventNode, payloadType);
                 action.accept(event);
             } catch (Exception e) {
-                log.error("Failed to deserialise event node into {}. Expected type: {}. Payload: {}", payloadType.getSimpleName(), expectedEventType, messagePayload, e);
+                log.error("Failed to deserialise or process event {}. Expected type: {}. Payload: {}", payloadType.getSimpleName(), expectedEventType, messagePayload, e);
+                throw new RuntimeException("Error processing Kafka event: " + expectedEventType, e);
             }
         });
     }
