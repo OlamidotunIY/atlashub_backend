@@ -9,6 +9,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Component
@@ -51,6 +52,11 @@ public class JpaOutboxMessageRepositoryAdapter implements OutboxMessageRepositor
             }
         }).collect(Collectors.toList());
         repository.saveAll(entitiesToSave);
+    }
+
+    @Override
+    public Optional<OutboxMessage> findById(String id) {
+        return repository.findById(id).map(this::mapToDomain);
     }
 
     private OutboxMessageJpaEntity mapToEntity(OutboxMessage domain) {
