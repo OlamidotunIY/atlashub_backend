@@ -15,4 +15,7 @@ dependencies {
     
     // Jakarta Persistence API for DomainSequence entity
     implementation 'jakarta.persistence:jakarta.persistence-api'
+
+    // Kafka
+    implementation 'org.springframework.kafka:spring-kafka'
 }

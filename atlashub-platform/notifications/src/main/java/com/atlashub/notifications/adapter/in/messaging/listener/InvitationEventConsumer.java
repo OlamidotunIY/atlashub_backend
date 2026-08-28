@@ -2,6 +2,7 @@ package com.atlashub.notifications.adapter.in.messaging.listener;
 
 import com.atlashub.notifications.application.command.SendEmailCommand;
 import com.atlashub.notifications.application.usecase.SendEmailUseCase;
+import com.atlashub.shared.api.EventTrackerApi;
 import com.atlashub.shared.event.EnvelopedDomainEvent;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
@@ -10,13 +11,20 @@ import org.springframework.stereotype.Component;
 public class InvitationEventConsumer {
 
     private final SendEmailUseCase sendEmailUseCase;
+    private final EventTrackerApi eventTrackerApi;
 
-    public InvitationEventConsumer(SendEmailUseCase sendEmailUseCase) {
+    public InvitationEventConsumer(SendEmailUseCase sendEmailUseCase, EventTrackerApi eventTrackerApi) {
         this.sendEmailUseCase = sendEmailUseCase;
+        this.eventTrackerApi = eventTrackerApi;
     }
 
     @KafkaListener(topics = "invitation-events", groupId = "notification-group")
     public void consume(EnvelopedDomainEvent<?> event) {
+        String eventId = event.correlationId();
+        if (eventTrackerApi.isProcessed(eventId, "notification-group")) {
+            return;
+        }
+
         String eventType = event.event().getClass().getSimpleName();
         if ("InvitationCreated".equals(eventType)) {
             // Placeholder: Extract email and token from event payload
@@ -32,6 +40,10 @@ public class InvitationEventConsumer {
                 content
             );
             sendEmailUseCase.execute(command);
+            
+            eventTrackerApi.markSuccess(eventId, "notification-group");
+        } else {
+            eventTrackerApi.markSuccess(eventId, "notification-group");
         }
     }
 }
