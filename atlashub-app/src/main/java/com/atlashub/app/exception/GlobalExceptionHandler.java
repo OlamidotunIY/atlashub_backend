@@ -10,11 +10,14 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
-@ControllerAdvice
+@Slf4j
+@ControllerAdvice(basePackages = "com.atlashub")
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(ValidationException.class)
@@ -74,11 +77,20 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
+        log.error("Unhandled exception caught by GlobalExceptionHandler", ex);
+        
+        Map<String, String> details = new HashMap<>();
+        if (ex.getMessage() != null) {
+            details.put("error", ex.getMessage());
+        } else {
+            details.put("error", ex.toString());
+        }
+
         ErrorResponse response = new ErrorResponse(
                 "INTERNAL_SERVER_ERROR",
                 "An unexpected error occurred",
                 ZonedDateTime.now(),
-                null
+                details
         );
         return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
     }

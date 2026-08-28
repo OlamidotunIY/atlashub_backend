@@ -4,9 +4,9 @@ spring:
   application:
     name: atlashub
   datasource:
-    url: ${atlashub_DB_URL:jdbc:mysql://localhost:3306/atlashub?createDatabaseIfNotExist=true&serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true}
-    username: ${atlashub_DB_USERNAME:atlashub}
-    password: ${atlashub_DB_PASSWORD:atlashub}
+    url: ${ATLASHUB_DB_URL:jdbc:mysql://localhost:3306/atlashub?createDatabaseIfNotExist=true&serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true}
+    username: ${ATLASHUB_DB_USERNAME:atlashub}
+    password: ${ATLASHUB_DB_PASSWORD:atlashub}
     hikari:
       maximum-pool-size: 20
       minimum-idle: 5
@@ -66,7 +66,7 @@ management:
   metrics:
     tags:
       application: ${spring.application.name}
-      environment: ${atlashub_ENV:local}
+      environment: ${ATLASHUB_ENV:local}
     distribution:
       percentiles-histogram:
         http.server.requests: true
@@ -74,15 +74,15 @@ management:
         http.server.requests: 50ms,100ms,200ms,500ms,1s
   tracing:
     sampling:
-      probability: ${atlashub_TRACE_SAMPLING:1.0}
+      probability: ${ATLASHUB_TRACE_SAMPLING:1.0}
 
 # ── JWT ────────────────────────────────────────────────────────────────────────
 atlashub:
   jwt:
-    secret: ${atlashub_JWT_SECRET:changeme-in-production-must-be-at-least-256-bits-long}
-    expiry-minutes: ${atlashub_JWT_EXPIRY_MINUTES:60}
+    secret: ${ATLASHUB_JWT_SECRET:changeme-in-production-must-be-at-least-256-bits-long}
+    expiry-minutes: ${ATLASHUB_JWT_EXPIRY_MINUTES:60}
   api-key:
-    hmac-secret: ${atlashub_APIKEY_HMAC_SECRET:changeme-in-production}
+    hmac-secret: ${ATLASHUB_APIKEY_HMAC_SECRET:changeme-in-production}
   anchor:
     base-url: ${ANCHOR_BASE_URL:https://api.getanchor.co}
     api-key: ${ANCHOR_API_KEY:}
