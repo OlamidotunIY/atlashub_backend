@@ -39,7 +39,7 @@ public class AuthAccountJpaEntity {
     @Column(nullable = false, length = 20)
     private AuthProvider provider;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String credentialHash;
 
     private String scope;
