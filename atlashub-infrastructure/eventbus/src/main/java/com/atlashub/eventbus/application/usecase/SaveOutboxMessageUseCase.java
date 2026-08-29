@@ -12,6 +12,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.UUID;
+
 @Service
 public class SaveOutboxMessageUseCase extends BaseUseCase<SaveOutboxMessageCommand, Void> {
 
@@ -30,7 +32,7 @@ public class SaveOutboxMessageUseCase extends BaseUseCase<SaveOutboxMessageComma
         try {
             String payload = objectMapper.writeValueAsString(command.event());
             OutboxMessage message = new OutboxMessage(
-                java.util.UUID.randomUUID().toString(),
+                command.event().correlationId(),
                 command.topic(),
                 payload
             );

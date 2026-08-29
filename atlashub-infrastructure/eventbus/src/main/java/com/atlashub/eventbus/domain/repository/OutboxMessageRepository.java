@@ -10,4 +10,5 @@ public interface OutboxMessageRepository {
     List<OutboxMessage> findPendingMessagesBatch(int batchSize);
     void saveAll(List<OutboxMessage> messages);
     Optional<OutboxMessage> findById(String id);
+    Optional<OutboxMessage> findByEventId(String eventId);
 }

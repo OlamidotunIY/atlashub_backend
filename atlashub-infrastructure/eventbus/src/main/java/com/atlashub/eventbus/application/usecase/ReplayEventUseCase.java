@@ -2,6 +2,7 @@ package com.atlashub.eventbus.application.usecase;
 
 import com.atlashub.eventbus.application.command.ReplayEventCommand;
 import com.atlashub.eventbus.application.port.MessageBrokerPort;
+import com.atlashub.eventbus.domain.exception.EventbusErrorCode;
 import com.atlashub.eventbus.domain.model.OutboxMessage;
 import com.atlashub.eventbus.domain.repository.OutboxMessageRepository;
 import com.atlashub.shared.exception.NotFoundException;
@@ -22,8 +23,8 @@ public class ReplayEventUseCase extends BaseUseCase<ReplayEventCommand, Void> {
 
     @Override
     public Void execute(ReplayEventCommand input) {
-        OutboxMessage message = outboxMessageRepository.findById(input.eventId())
-                .orElseThrow(() -> new NotFoundException(com.atlashub.eventbus.domain.exception.EventbusErrorCode.EVENT_NOT_FOUND, "Event with ID " + input.eventId() + " not found in outbox"));
+        OutboxMessage message = outboxMessageRepository.findByEventId(input.eventId())
+                .orElseThrow(() -> new NotFoundException(EventbusErrorCode.EVENT_NOT_FOUND, "Event with ID " + input.eventId() + " not found in outbox"));
 
         // Simply re-publish the exact same payload to the original topic.
         // The eventbus subscribers will pick it up, and if they previously failed, 

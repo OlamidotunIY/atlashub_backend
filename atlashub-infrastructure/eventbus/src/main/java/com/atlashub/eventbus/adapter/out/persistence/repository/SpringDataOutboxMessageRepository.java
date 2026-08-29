@@ -14,4 +14,7 @@ public interface SpringDataOutboxMessageRepository extends JpaRepository<OutboxM
 
     @Query("SELECT o FROM OutboxMessageJpaEntity o WHERE o.status = :status ORDER BY o.createdAt ASC")
     List<OutboxMessageJpaEntity> findByStatusOrderByCreatedAtAsc(@org.springframework.data.repository.query.Param("status") OutboxStatus status, Pageable pageable);
+
+    @Query("SELECT o FROM OutboxMessageJpaEntity o WHERE o.payload LIKE %:eventId%")
+    List<OutboxMessageJpaEntity> findByPayloadContaining(@org.springframework.data.repository.query.Param("eventId") String eventId);
 }

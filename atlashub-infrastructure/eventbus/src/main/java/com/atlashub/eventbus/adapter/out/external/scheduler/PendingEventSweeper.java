@@ -56,7 +56,7 @@ public class PendingEventSweeper {
 
                 for (EventDeliveryTrackerJpaEntity tracker : pendingTrackers) {
                     // Fetch original outbox payload
-                    Optional<OutboxMessage> outboxMessageOpt = outboxMessageRepository.findById(tracker.getEventId());
+                    Optional<OutboxMessage> outboxMessageOpt = outboxMessageRepository.findByEventId(tracker.getEventId());
                     
                     if (outboxMessageOpt.isPresent()) {
                         OutboxMessage message = outboxMessageOpt.get();

@@ -59,6 +59,24 @@ public class JpaOutboxMessageRepositoryAdapter implements OutboxMessageRepositor
         return repository.findById(id).map(this::mapToDomain);
     }
 
+    @Override
+    public Optional<OutboxMessage> findByEventId(String eventId) {
+        // 1. Fast path: future events will have eventId as their primary key
+        Optional<OutboxMessageJpaEntity> entity = repository.findById(eventId);
+        if (entity.isPresent()) {
+            return entity.map(this::mapToDomain);
+        }
+
+        // 2. Backward compatibility fallback: old events have random UUIDs as PK,
+        // so we must search the JSON payload to find the eventId
+        List<OutboxMessageJpaEntity> fallbackEntities = repository.findByPayloadContaining(eventId);
+        if (!fallbackEntities.isEmpty()) {
+            return Optional.of(mapToDomain(fallbackEntities.get(0)));
+        }
+
+        return Optional.empty();
+    }
+
     private OutboxMessageJpaEntity mapToEntity(OutboxMessage domain) {
         return new OutboxMessageJpaEntity(
                 domain.getId(),
