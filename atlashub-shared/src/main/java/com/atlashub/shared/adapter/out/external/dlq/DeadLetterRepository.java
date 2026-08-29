@@ -19,4 +19,9 @@ public class DeadLetterRepository {
         String sql = "INSERT INTO dead_letter_messages (id, topic, payload, exception_message, occurred_at) VALUES (?, ?, ?, ?, ?)";
         jdbcTemplate.update(sql, id, topic, payload, exceptionMessage, Timestamp.from(occurredAt.toInstant()));
     }
+
+    public void deleteByPayloadContaining(String eventId) {
+        String sql = "DELETE FROM dead_letter_messages WHERE payload LIKE ?";
+        jdbcTemplate.update(sql, "%" + eventId + "%");
+    }
 }

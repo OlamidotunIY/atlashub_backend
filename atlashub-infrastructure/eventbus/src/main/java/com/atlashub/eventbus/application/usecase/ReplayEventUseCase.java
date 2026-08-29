@@ -9,16 +9,21 @@ import com.atlashub.shared.exception.NotFoundException;
 import com.atlashub.shared.usecase.BaseUseCase;
 import org.springframework.stereotype.Service;
 
+import com.atlashub.shared.adapter.out.external.dlq.DeadLetterRepository;
+
 @Service
 public class ReplayEventUseCase extends BaseUseCase<ReplayEventCommand, Void> {
 
     private final OutboxMessageRepository outboxMessageRepository;
     private final MessageBrokerPort messageBrokerPort;
+    private final DeadLetterRepository deadLetterRepository;
 
     public ReplayEventUseCase(OutboxMessageRepository outboxMessageRepository,
-                              MessageBrokerPort messageBrokerPort) {
+                              MessageBrokerPort messageBrokerPort,
+                              DeadLetterRepository deadLetterRepository) {
         this.outboxMessageRepository = outboxMessageRepository;
         this.messageBrokerPort = messageBrokerPort;
+        this.deadLetterRepository = deadLetterRepository;
     }
 
     @Override
@@ -31,6 +36,7 @@ public class ReplayEventUseCase extends BaseUseCase<ReplayEventCommand, Void> {
         // they will re-process it (because the event Tracker state for their consumer group is not SUCCESS).
         // If they already succeeded, the Idempotency check inside the listener will skip it.
         messageBrokerPort.send(message.getTopic(), message.getId(), message.getPayload());
+        deadLetterRepository.deleteByPayloadContaining(input.eventId());
         
         return null;
     }

@@ -60,7 +60,7 @@ public class EventTrackerApiImpl implements EventTrackerApi, EventTrackerPort {
     @Transactional(readOnly = true)
     public boolean isProcessed(String eventId, String consumerId) {
         return trackerRepository.findById(new EventDeliveryTrackerJpaEntity.TrackerId(eventId, consumerId))
-                .map(t -> "SUCCESS".equals(t.getStatus()) || "DLQ".equals(t.getStatus()))
+                .map(t -> "SUCCESS".equals(t.getStatus()))
                 .orElse(false);
     }
 
