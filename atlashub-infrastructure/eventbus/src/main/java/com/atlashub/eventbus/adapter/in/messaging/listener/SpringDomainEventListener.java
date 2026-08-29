@@ -26,6 +26,8 @@ public class SpringDomainEventListener {
             return "organization-events";
         } else if (eventClassName.startsWith("User")) {
             return "user-events";
+        } else if (eventClassName.startsWith("Auth") || eventClassName.startsWith("Verification")) {
+            return "auth-events";
         } else if (eventClassName.startsWith("Account") || eventClassName.startsWith("SplitRecipient")) {
             return "account-events";
         } else if (eventClassName.startsWith("Transaction") || eventClassName.startsWith("Transfer")) {

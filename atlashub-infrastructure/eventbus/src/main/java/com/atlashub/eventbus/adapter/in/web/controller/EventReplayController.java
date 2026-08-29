@@ -3,6 +3,7 @@ package com.atlashub.eventbus.adapter.in.web.controller;
 import com.atlashub.eventbus.application.command.ReplayEventCommand;
 import com.atlashub.eventbus.application.usecase.ReplayEventUseCase;
 import com.atlashub.shared.dto.ApiResponse;
+import com.atlashub.shared.security.PublicEndpoint;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,6 +20,7 @@ public class EventReplayController {
         this.replayEventUseCase = replayEventUseCase;
     }
 
+    @PublicEndpoint
     @PostMapping("/{eventId}/replay")
     public ResponseEntity<ApiResponse<Void>> replayEvent(@PathVariable String eventId) {
         replayEventUseCase.execute(new ReplayEventCommand(eventId));
