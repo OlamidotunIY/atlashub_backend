@@ -9,21 +9,24 @@ COPY gradle ./gradle
 COPY build.gradle settings.gradle ./
 
 # Copy all sub-module build files (for dependency resolution caching)
-COPY atlaspay-shared-kernel/build.gradle         atlaspay-shared-kernel/
-COPY atlaspay-identity/build.gradle              atlaspay-identity/
-COPY atlaspay-accounts/build.gradle              atlaspay-accounts/
-COPY atlaspay-ledger/build.gradle                atlaspay-ledger/
-COPY atlaspay-transfers/build.gradle             atlaspay-transfers/
-COPY atlaspay-charges/build.gradle               atlaspay-charges/
-COPY atlaspay-subscriptions/build.gradle         atlaspay-subscriptions/
-COPY atlaspay-escrow/build.gradle                atlaspay-escrow/
-COPY atlaspay-settlement/build.gradle            atlaspay-settlement/
-COPY atlaspay-transaction-splits/build.gradle    atlaspay-transaction-splits/
-COPY atlaspay-transactions-query/build.gradle    atlaspay-transactions-query/
-COPY atlaspay-notifications/build.gradle         atlaspay-notifications/
-COPY atlaspay-rate-limiter/build.gradle          atlaspay-rate-limiter/
-COPY atlaspay-eventbus/build.gradle              atlaspay-eventbus/
-COPY atlaspay-app/build.gradle                   atlaspay-app/
+COPY atlashub-shared-kernel/build.gradle         atlashub-shared-kernel/
+COPY atlashub-identity/build.gradle              atlashub-identity/
+COPY atlashub-accounts/build.gradle              atlashub-accounts/
+COPY atlashub-ledger/build.gradle                atlashub-ledger/
+COPY atlashub-transfers/build.gradle             atlashub-transfers/
+COPY atlashub-charges/build.gradle               atlashub-charges/
+COPY atlashub-subscriptions/build.gradle         atlashub-subscriptions/
+COPY atlashub-escrow/build.gradle                atlashub-escrow/
+COPY atlashub-settlement/build.gradle            atlashub-settlement/
+COPY atlashub-transaction-splits/build.gradle    atlashub-transaction-splits/
+COPY atlashub-transactions-query/build.gradle    atlashub-transactions-query/
+COPY atlashub-notifications/build.gradle         atlashub-notifications/
+COPY atlashub-rate-limiter/build.gradle          atlashub-rate-limiter/
+COPY atlashub-eventbus/build.gradle              atlashub-eventbus/
+COPY atlashub-app/build.gradle                   atlashub-app/
+COPY atlashub-admin/build.gradle               atlashub-admin/
+COPY atlashub-auth/build.gradle                atlashub-auth/
+COPY atlashub-audit/build.gradle               atlashub-audit/
 
 # Download dependencies (cached unless build files change)
 RUN chmod +x gradlew && ./gradlew dependencies --no-daemon --quiet || true
@@ -32,22 +35,22 @@ RUN chmod +x gradlew && ./gradlew dependencies --no-daemon --quiet || true
 COPY . .
 
 # Build the fat jar — skip tests in Docker build (tests run in CI separately)
-RUN ./gradlew :atlaspay-app:bootJar --no-daemon -x test
+RUN ./gradlew :atlashub-app:bootJar --no-daemon -x test
 
 # ── Stage 2: Extract layers for efficient layer caching ───────────────────────
 FROM eclipse-temurin:25-jre-jammy AS extractor
 
 WORKDIR /workspace
-COPY --from=builder /workspace/atlaspay-app/build/libs/atlaspay.jar atlaspay.jar
+COPY --from=builder /workspace/atlashub-app/build/libs/atlashub.jar atlashub.jar
 
 # Spring Boot layer extraction for optimal Docker caching
-RUN java -Djarmode=layertools -jar atlaspay.jar extract
+RUN java -Djarmode=layertools -jar atlashub.jar extract
 
 # ── Stage 3: Final minimal runtime image ──────────────────────────────────────
 FROM eclipse-temurin:25-jre-jammy AS runtime
 
 # Security: non-root user
-RUN groupadd -r atlaspay && useradd -r -g atlaspay atlaspay
+RUN groupadd -r atlashub && useradd -r -g atlashub atlashub
 
 WORKDIR /app
 
@@ -60,8 +63,8 @@ COPY --from=extractor /workspace/application/ ./
 # OpenTelemetry Java agent for distributed tracing (downloaded at build time)
 ADD https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/download/v2.12.0/opentelemetry-javaagent.jar /app/otel-agent.jar
 
-RUN chown -R atlaspay:atlaspay /app
-USER atlaspay
+RUN chown -R atlashub:atlashub /app
+USER atlashub
 
 EXPOSE 8080
 EXPOSE 8081
@@ -75,8 +78,9 @@ ENV JAVA_OPTS="-XX:+UseContainerSupport \
                -Djava.security.egd=file:/dev/./urandom"
 
 ENV OTEL_OPTS="-javaagent:/app/otel-agent.jar \
-               -Dotel.service.name=atlaspay \
+               -Dotel.service.name=atlashub \
                -Dotel.exporter.otlp.endpoint=${OTEL_EXPORTER_ENDPOINT:-http://tempo:4317} \
                -Dotel.traces.exporter=${OTEL_EXPORTER:-none}"
 
 ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS $OTEL_OPTS org.springframework.boot.loader.launch.JarLauncher"]
+

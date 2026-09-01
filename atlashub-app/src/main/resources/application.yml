@@ -1,0 +1,104 @@
+spring:
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:local}
+  application:
+    name: atlashub
+  datasource:
+    url: ${ATLASHUB_DB_URL:jdbc:mysql://localhost:3306/atlashub?createDatabaseIfNotExist=true&serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true}
+    username: ${ATLASHUB_DB_USERNAME:atlashub}
+    password: ${ATLASHUB_DB_PASSWORD:atlashub}
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: false
+        jdbc:
+          time_zone: UTC
+  flyway:
+    enabled: false
+    locations: classpath:db/migration
+    baseline-on-migrate: false
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+  kafka:
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+  threads:
+    virtual:
+      enabled: true   # Java 21 virtual threads for all Tomcat request threads
+  mail:
+    host: ${SPRING_MAIL_HOST:localhost}
+    port: ${SPRING_MAIL_PORT:1025}
+    username: ${SPRING_MAIL_USERNAME:}
+    password: ${SPRING_MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          ssl:
+            enable: true
+          starttls:
+            enable: false
+
+# ── Actuator ──────────────────────────────────────────────────────────────────
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,loggers,env
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always
+      show-components: always
+    prometheus:
+      enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+      environment: ${ATLASHUB_ENV:local}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+      slo:
+        http.server.requests: 50ms,100ms,200ms,500ms,1s
+  tracing:
+    sampling:
+      probability: ${ATLASHUB_TRACE_SAMPLING:1.0}
+
+# ── JWT ────────────────────────────────────────────────────────────────────────
+atlashub:
+  jwt:
+    secret: ${ATLASHUB_JWT_SECRET:changeme-in-production-must-be-at-least-256-bits-long}
+    expiry-minutes: ${ATLASHUB_JWT_EXPIRY_MINUTES:60}
+  api-key:
+    hmac-secret: ${ATLASHUB_APIKEY_HMAC_SECRET:changeme-in-production}
+  anchor:
+    base-url: ${ANCHOR_BASE_URL:https://api.getanchor.co}
+    api-key: ${ANCHOR_API_KEY:}
+  dojah:
+    base-url: ${DOJAH_BASE_URL:https://sandbox.dojah.io}
+    app-id: ${DOJAH_APP_ID:}
+    private-key: ${DOJAH_PRIVATE_KEY:}
+  simulator:
+    base-url: ${SIMULATOR_BASE_URL:http://localhost:8080}
+    callback-url: ${SIMULATOR_CALLBACK_URL:http://localhost:8080/api/v1/accounts/webhooks/simulator}
+
+# ── Logging ────────────────────────────────────────────────────────────────────
+logging:
+  level:
+    root: INFO
+    com.atlashub: DEBUG
+    org.hibernate.SQL: INFO
+    org.apache.kafka: WARN
+  config: classpath:logback-spring.xml

@@ -1,0 +1,69 @@
+package com.atlashub.notifications.adapter.in.messaging;
+
+import com.atlashub.identity.domain.event.OrganizationMemberAdded;
+import com.atlashub.shared.api.OrganizationQueryApi;
+import com.atlashub.shared.api.UserQueryApi;
+import com.atlashub.notifications.application.port.EmailSenderPort;
+import com.atlashub.shared.adapter.out.external.dlq.DeadLetterRepository;
+import com.atlashub.shared.event.BaseKafkaEventListener;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.annotation.RetryableTopic;
+import org.springframework.kafka.retrytopic.DltStrategy;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.stereotype.Component;
+
+import java.util.Optional;
+
+@Component
+public class IdentityEventListener extends BaseKafkaEventListener {
+
+    private static final Logger log = LoggerFactory.getLogger(IdentityEventListener.class);
+
+    private final EmailSenderPort emailSenderPort;
+    private final UserQueryApi userQueryApi;
+    private final OrganizationQueryApi organizationQueryApi;
+
+    public IdentityEventListener(
+            EmailSenderPort emailSenderPort,
+            UserQueryApi userQueryApi,
+            OrganizationQueryApi organizationQueryApi,
+            ObjectMapper objectMapper,
+            DeadLetterRepository deadLetterRepository
+    ) {
+        super(objectMapper);
+        this.emailSenderPort = emailSenderPort;
+        this.userQueryApi = userQueryApi;
+        this.organizationQueryApi = organizationQueryApi;
+        this.deadLetterRepository = deadLetterRepository;
+    }
+
+    @RetryableTopic(
+            attempts = "3",
+            backoff = @Backoff(delay = 5000, multiplier = 2.0),
+            dltStrategy = DltStrategy.FAIL_ON_ERROR
+    )
+    @KafkaListener(topics = "Organization-events", groupId = "notifications-identity-group")
+    public void handleIdentityEvent(String message) {
+        processEventIfMatches(message, "OrganizationMemberAdded", OrganizationMemberAdded.class, log, "notifications-identity-group", event -> {
+            Optional<UserQueryApi.UserSharedDto> userOpt = userQueryApi.getUserById(event.payload().userId());
+            Optional<OrganizationQueryApi.OrganizationSharedDto> orgOpt = organizationQueryApi.getOrganizationById(event.payload().organizationId());
+
+            if (userOpt.isPresent() && orgOpt.isPresent()) {
+                UserQueryApi.UserSharedDto user = userOpt.get();
+                OrganizationQueryApi.OrganizationSharedDto org = orgOpt.get();
+
+                emailSenderPort.sendOrganizationJoinedEmail(
+                        user.email(),
+                        user.firstName(),
+                        org.businessName()
+                );
+                log.info("Sent organization joined email to {} for organization {}", user.email(), org.businessName());
+            } else {
+                log.warn("Could not send organization joined email: User or Organization not found for event {}", event.eventId());
+            }
+        });
+    }
+}

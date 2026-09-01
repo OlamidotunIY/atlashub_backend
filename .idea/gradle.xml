@@ -9,25 +9,34 @@
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
-            <option value="$PROJECT_DIR$/atlaspay-accounts" />
-            <option value="$PROJECT_DIR$/atlaspay-admin" />
-            <option value="$PROJECT_DIR$/atlaspay-app" />
-            <option value="$PROJECT_DIR$/atlaspay-audit" />
-            <option value="$PROJECT_DIR$/atlaspay-auth" />
-            <option value="$PROJECT_DIR$/atlaspay-charges" />
-            <option value="$PROJECT_DIR$/atlaspay-escrow" />
-            <option value="$PROJECT_DIR$/atlaspay-eventbus" />
-            <option value="$PROJECT_DIR$/atlaspay-identity" />
-            <option value="$PROJECT_DIR$/atlaspay-ledger" />
-            <option value="$PROJECT_DIR$/atlaspay-notifications" />
-            <option value="$PROJECT_DIR$/atlaspay-rate-limiter" />
-            <option value="$PROJECT_DIR$/atlaspay-settlement" />
-            <option value="$PROJECT_DIR$/atlaspay-shared-kernel" />
-            <option value="$PROJECT_DIR$/atlaspay-simulator" />
-            <option value="$PROJECT_DIR$/atlaspay-subscriptions" />
-            <option value="$PROJECT_DIR$/atlaspay-transaction-splits" />
-            <option value="$PROJECT_DIR$/atlaspay-transactions-query" />
-            <option value="$PROJECT_DIR$/atlaspay-transfers" />
+            <option value="$PROJECT_DIR$/atlashub-app" />
+            <option value="$PROJECT_DIR$/atlashub-commerce" />
+            <option value="$PROJECT_DIR$/atlashub-commerce/inventory" />
+            <option value="$PROJECT_DIR$/atlashub-commerce/orders" />
+            <option value="$PROJECT_DIR$/atlashub-commerce/storefront" />
+            <option value="$PROJECT_DIR$/atlashub-infrastructure" />
+            <option value="$PROJECT_DIR$/atlashub-infrastructure/audit" />
+            <option value="$PROJECT_DIR$/atlashub-infrastructure/eventbus" />
+            <option value="$PROJECT_DIR$/atlashub-infrastructure/notifications" />
+            <option value="$PROJECT_DIR$/atlashub-infrastructure/rate-limiter" />
+            <option value="$PROJECT_DIR$/atlashub-logistics" />
+            <option value="$PROJECT_DIR$/atlashub-logistics/shipping" />
+            <option value="$PROJECT_DIR$/atlashub-pay" />
+            <option value="$PROJECT_DIR$/atlashub-pay/accounts" />
+            <option value="$PROJECT_DIR$/atlashub-pay/charges" />
+            <option value="$PROJECT_DIR$/atlashub-pay/escrow" />
+            <option value="$PROJECT_DIR$/atlashub-pay/ledger" />
+            <option value="$PROJECT_DIR$/atlashub-pay/settlement" />
+            <option value="$PROJECT_DIR$/atlashub-pay/splits" />
+            <option value="$PROJECT_DIR$/atlashub-pay/subscriptions" />
+            <option value="$PROJECT_DIR$/atlashub-pay/transactions-query" />
+            <option value="$PROJECT_DIR$/atlashub-pay/transfers" />
+            <option value="$PROJECT_DIR$/atlashub-platform" />
+            <option value="$PROJECT_DIR$/atlashub-platform/admin" />
+            <option value="$PROJECT_DIR$/atlashub-platform/auth" />
+            <option value="$PROJECT_DIR$/atlashub-platform/catalog" />
+            <option value="$PROJECT_DIR$/atlashub-platform/identity" />
+            <option value="$PROJECT_DIR$/atlashub-shared" />
           </set>
         </option>
       </GradleProjectSettings>

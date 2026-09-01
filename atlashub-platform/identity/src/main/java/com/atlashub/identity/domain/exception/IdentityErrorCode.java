@@ -1,0 +1,37 @@
+package com.atlashub.identity.domain.exception;
+
+import com.atlashub.shared.exception.ErrorCode;
+
+/**
+ * All error codes specific to the Identity bounded context.
+ */
+public enum IdentityErrorCode implements ErrorCode {
+    USER_NOT_FOUND,
+    INVALID_CREDENTIALS,
+    EMAIL_ALREADY_EXISTS,
+    USER_LOCKED,
+    Organization_SUSPENDED,
+    Organization_EMAIL_ALREADY_EXISTS,
+    EMAIL_ALREADY_VERIFIED,
+    EMAIL_CODE_NOT_FOUND,
+    EMAIL_CODE_INVALID_OR_EXPIRED,
+    EMAIL_VERIFICATION_REQUIRED,
+    RC_NUMBER_REQUIRED_FOR_REGISTERED_BUSINESS,
+    COMPLIANCE_STEP_OUT_OF_ORDER,
+    COMPLIANCE_NOT_ALL_STEPS_COMPLETE,
+    COMPLIANCE_NOT_SUBMITTED,
+    VERIFICATION_FAILED,
+    BANK_ACCOUNT_NOT_FOUND,
+    SplitRecipient_ALREADY_EXISTS,
+    SplitRecipient_NOT_FOUND,
+    ACCOUNT_RESOLUTION_PROVIDER_UNAVAILABLE,
+    API_KEY_NOT_FOUND,
+    API_KEY_ALREADY_REVOKED,
+    LIVE_KEYS_REQUIRE_COMPLIANCE_APPROVED,
+    Organization_NOT_FOUND,
+    SplitRecipient_ALREADY_INACTIVE,
+    User_EMAIL_ALREADY_EXISTS,
+    User_NOT_FOUND,
+    UNSUPPORTED_COUNTRY,
+    INVITATION_NOT_FOUND
+}

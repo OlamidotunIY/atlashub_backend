@@ -1,0 +1,30 @@
+global:
+  scrape_interval:     15s
+  evaluation_interval: 15s
+  external_labels:
+    environment: local
+
+scrape_configs:
+
+  # ── atlashub app running in Docker (uncomment the app service in compose) ──
+  - job_name: 'atlashub-docker'
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ['app:8080']   # 'app' is the service name on atlashub-net
+        labels:
+          instance: atlashub-docker
+
+  # ── atlashub app running in your IDE (most common during dev) ─────────────
+  # host.docker.internal resolves to your laptop from inside a container
+  - job_name: 'atlashub-local'
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ['host.docker.internal:8080']
+        labels:
+          instance: atlashub-local
+    scrape_interval: 5s
+
+  # ── Prometheus self-monitoring ─────────────────────────────────────────────
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']

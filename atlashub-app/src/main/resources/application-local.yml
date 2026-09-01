@@ -1,0 +1,13 @@
+# Local development profile (IDE / IntelliJ)
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+  flyway:
+    enabled: false
+
+logging:
+  level:
+    com.atlashub: DEBUG
+    org.hibernate.SQL: INFO

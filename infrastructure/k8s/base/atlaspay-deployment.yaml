@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: atlashub-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: atlashub-app
+  template:
+    metadata:
+      labels:
+        app: atlashub-app
+    spec:
+      containers:
+      - name: atlashub-app
+        image: atlashub/app:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8080
+        env:
+        - name: SPRING_PROFILES_ACTIVE
+          value: "prod"
+        - name: SPRING_REDIS_HOST
+          value: "redis"
+        - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
+          value: "kafka:9092"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: atlashub-app
+spec:
+  ports:
+  - port: 8080
+  selector:
+    app: atlashub-app
