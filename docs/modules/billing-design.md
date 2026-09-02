@@ -24,7 +24,7 @@ Represents an active subscription to a platform product.
 - **Fields**:
   - `id`: Long
   - `organizationProductId`: Long
-  - `amount`: BigDecimal
+  - `amount`: **`Money`** (amount + CurrencyCode matching the Organization's base currency)
   - `status`: `InvoiceStatus` (DRAFT, PAID, FAILED, VOID)
   - `dueDate`: LocalDate
   - `paidAt`: LocalDateTime
@@ -32,12 +32,14 @@ Represents an active subscription to a platform product.
   - `markAsPaid(LocalDateTime time)`
   - `markAsFailed()`
 
+> **Multi-Currency Note**: When an Organization subscribes, the `BillingInvoice.amount` is set in the Organization's base currency (determined from `User.country` at registration). The `billing` module resolves the correct `ProductPricing` row by matching `(productId, billingCycle, currencyCode)`.
+
 ## 2. Domain Events (Wrapped in `EnvelopedDomainEvent`)
 - `ProductSubscribedEvent(Long organizationId, Long productId, Long subscriptionId)`
 - `SubscriptionRenewedEvent(Long subscriptionId, LocalDateTime newEnd)`
 - `SubscriptionSuspendedEvent(Long subscriptionId, String reason)`
 - `SubscriptionCanceledEvent(Long subscriptionId, String reason)`
-- `BillingInvoiceGeneratedEvent(Long invoiceId, BigDecimal amount)`
+- `BillingInvoiceGeneratedEvent(Long invoiceId, Money amount)`
 - `BillingInvoicePaidEvent(Long invoiceId, Long subscriptionId)`
 
 ## 3. Exceptions & Errors
