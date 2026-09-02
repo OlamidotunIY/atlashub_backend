@@ -25,6 +25,7 @@ public class IdentityUserApiImpl implements UserQueryApi {
                         entity.getFirstName(),
                         entity.getLastName(),
                         entity.getEmail(),
+                        entity.getImageUrl(),
                         entity.getPhone(),
                         entity.getCountry()
                 ));

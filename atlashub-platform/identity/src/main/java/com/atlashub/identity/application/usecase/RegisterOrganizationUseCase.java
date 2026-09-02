@@ -45,25 +45,27 @@ public class RegisterOrganizationUseCase extends BaseUseCase<RegisterOrganizatio
         log.info("Starting organization registration for user id: {}", command.userId());
 
         Organization organization = new Organization(
-            organizationRepository.nextIdentity(),
-            command.businessName(),
-            command.businessType()
+                organizationRepository.nextIdentity(),
+                command.businessName(),
+                command.businessType(),
+                command.businessSize(),
+                command.logoUrl()
         );
 
         organizationRepository.save(organization);
         log.debug("Organization saved with id: {}", organization.getId());
 
         OrganizationMember ownerMembership = new OrganizationMember(
-            organization.getId(),
-            command.userId(),
-            OrganizationRole.OWNER
+                organization.getId(),
+                command.userId(),
+                OrganizationRole.OWNER
         );
         memberRepository.save(ownerMembership);
         publishEvents(ownerMembership, eventPublisher);
         log.debug("Owner membership created for user {} in organization {}", command.userId(), organization.getId());
 
         User user = userRepository.findById(command.userId())
-            .orElseThrow(() -> new NotFoundException(IdentityErrorCode.USER_NOT_FOUND, "User not found"));
+                .orElseThrow(() -> new NotFoundException(IdentityErrorCode.USER_NOT_FOUND, "User not found"));
 
         if (user.getActiveOrganizationId() == null) {
             user.switchActiveOrganization(organization.getId());

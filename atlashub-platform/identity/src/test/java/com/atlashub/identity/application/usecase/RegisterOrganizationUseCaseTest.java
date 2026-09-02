@@ -2,6 +2,7 @@ package com.atlashub.identity.application.usecase;
 
 import com.atlashub.identity.application.command.RegisterOrganizationCommand;
 import com.atlashub.identity.application.result.RegisterOrganizationResult;
+import com.atlashub.identity.domain.valueobject.BusinessSize;
 import com.atlashub.identity.domain.valueobject.BusinessType;
 import com.atlashub.identity.domain.model.Organization;
 import com.atlashub.identity.domain.model.OrganizationMember;
@@ -42,7 +43,9 @@ class RegisterOrganizationUseCaseTest {
     private static final RegisterOrganizationCommand VALID_COMMAND = new RegisterOrganizationCommand(
             1L,
             "Acme Corp",
-            BusinessType.STARTER
+            BusinessType.FINANCE,
+            BusinessSize.STARTER,
+            null
     );
 
     @BeforeEach
