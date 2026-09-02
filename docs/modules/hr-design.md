@@ -22,11 +22,13 @@
 
 ### `payroll` Submodule
 **`PayrollRun` (Aggregate Root)**
-- **Fields**: `id`, `organizationId`, `period`: String (e.g., "2026-09"), `totalGross`: BigDecimal, `totalDeductions`: BigDecimal, `totalNet`: BigDecimal, `status`: `PayrollStatus` (DRAFT, PENDING_APPROVAL, APPROVED, DISBURSED)
-- **Methods**: `addPayslip(Payslip payslip)`, `submitForApproval()`, `approve()`, `markDisbursed()`
+- **Fields**: `id`, `organizationId`, `period`: String (e.g., "2026-09"), `totalGross`: **`Money`**, `totalDeductions`: **`Money`**, `totalNet`: **`Money`**, `status`: `PayrollStatus` (DRAFT, PENDING_APPROVAL, APPROVED, PROCESSING, DISBURSED, FAILED)
+- **Methods**: `addPayslip(Payslip payslip)`, `submitForApproval()`, `approve()`, `markProcessing()`, `markDisbursed()`, `revertToApproved()`
+
+> **Multi-Currency Note**: `PayrollRun.totalNet` uses the Organization's base currency (`CurrencyCode`). Payouts are disbursed in the same currency. If an employee's bank account is denominated in a different currency, an explicit FX payout must be triggered.
 
 **`Payslip` (Entity)**
-- **Fields**: `id`, `payrollRunId`, `employeeId`, `grossPay`, `deductions`, `netPay`, `status`
+- **Fields**: `id`, `payrollRunId`, `employeeId`, `grossPay`: **`Money`**, `deductions`: **`Money`**, `netPay`: **`Money`**, `status`
 
 **`EmployeeBank` (Aggregate Root)**
 - **Fields**: `id`, `employeeId`, `bankCode`, `bankName`, `accountNumber`, `accountName`, `isVerified`: Boolean
