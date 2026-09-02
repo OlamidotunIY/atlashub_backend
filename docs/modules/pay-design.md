@@ -3,19 +3,21 @@
 ## 1. Domain Entities & Aggregates
 
 **`VirtualAccount` (`accounts`)**
-- **Fields**: `id`, `organizationId`, `customerId`, `accountNumber`, `bankName`, `accountName`, `balance`: BigDecimal, `status` (ACTIVE, INACTIVE)
-- **Methods**: `credit(BigDecimal amount)`, `debit(BigDecimal amount)`, `deactivate()`
+- **Fields**: `id`, `organizationId`, `customerId`, `accountNumber`, `bankName`, `accountName`, `balance`: **`Money`**, `status` (ACTIVE, INACTIVE)
+- **Methods**: `credit(Money amount)`, `debit(Money amount)`, `deactivate()`
 
 **`Wallet` & `WalletTransaction` (`ledger`)**
-- **Fields (Wallet)**: `id`, `organizationId`, `currency`, `balance`
-- **Fields (Transaction)**: `id`, `walletId`, `amount`, `type` (CREDIT, DEBIT), `reference`, `description`, `createdAt`
+- **Fields (Wallet)**: `id`, `organizationId`, `balance`: **`Money`** (currency embedded in Money object)
+- **Fields (Transaction)**: `id`, `walletId`, `amount`: **`Money`**, `type` (CREDIT, DEBIT), `reference`, `description`, `createdAt`
+
+> **Multi-Currency Note**: Each `Wallet` is denominated in a single `CurrencyCode`. An Organization operating in NGN will have a NGN `Wallet`. Cross-currency payouts (e.g., paying a foreign vendor in USD) require explicit FX conversion, which is handled as a separate `FxConversion` record before a `Payout` is initiated.
 
 **`PaymentTransaction` (`charges`)**
-- **Fields**: `id`, `organizationId`, `amount`: BigDecimal, `currency`, `channel` (CARD, BANK_TRANSFER, USSD, POS_TERMINAL), `status` (PENDING, SUCCESS, FAILED, REFUNDED), `reference`, `gatewayResponse`
+- **Fields**: `id`, `organizationId`, `amount`: **`Money`**, `channel` (CARD, BANK_TRANSFER, USSD, POS_TERMINAL), `status` (PENDING, SUCCESS, FAILED, REFUNDED), `reference`, `gatewayResponse`
 - **Methods**: `markSuccessful(String gatewayResponse)`, `markFailed(String reason)`, `refund()`
 
 **`Payout` (`transfers`)**
-- **Fields**: `id`, `organizationId`, `amount`, `destinationBankCode`, `destinationAccountNumber`, `status` (PENDING, PROCESSING, SUCCESS, FAILED), `reference`
+- **Fields**: `id`, `organizationId`, `amount`: **`Money`**, `destinationBankCode`, `destinationAccountNumber`, `status` (PENDING, PROCESSING, SUCCESS, FAILED), `reference`
 - **Methods**: `process()`, `complete()`, `fail(String reason)`
 
 **`PaymentSplit` (`splits`)**
@@ -26,12 +28,12 @@
 
 ## 2. Domain Events
 - `VirtualAccountCreatedEvent(Long accountId, String accountNumber)`
-- `PaymentSuccessfulEvent(Long transactionId, String reference, BigDecimal amount, String channel)`
+- `PaymentSuccessfulEvent(Long transactionId, String reference, Money amount, String channel)`
 - `PaymentFailedEvent(Long transactionId, String reason)`
 - `PayoutCompletedEvent(Long payoutId, String reference)`
 - `PayoutFailedEvent(Long payoutId, String reason)`
-- `WalletFundedEvent(Long walletId, BigDecimal amount)`
-- `WalletDebitedEvent(Long walletId, BigDecimal amount)`
+- `WalletFundedEvent(Long walletId, Money amount)`
+- `WalletDebitedEvent(Long walletId, Money amount)`
 
 ## 3. Exceptions & Errors
 **`PayErrorCode`**:
