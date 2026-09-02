@@ -4,31 +4,37 @@
 
 ### `gl` (General Ledger) Submodule
 **`Account` (Aggregate Root - Chart of Accounts)**
-- **Fields**: `id`, `organizationId`, `code` (e.g., "1001"), `name` (e.g., "Cash in Hand"), `type`: `AccountType` (ASSET, LIABILITY, EQUITY, REVENUE, EXPENSE), `balance`: BigDecimal, `isActive`: Boolean
-- **Methods**: `credit(BigDecimal amount)`, `debit(BigDecimal amount)`
+- **Fields**: `id`, `organizationId`, `code` (e.g., "1001"), `name` (e.g., "Cash in Hand"), `type`: `AccountType` (ASSET, LIABILITY, EQUITY, REVENUE, EXPENSE), `isActive`: Boolean
+- **Note**: `Account` does **NOT** have a mutable `balance` field or `credit()`/`debit()` methods. This deliberately avoids lock contention on high-volume accounts. The balance is always derived from `JournalLine` entries.
+- **Methods**: `deactivate()`
+
+**`BalanceSnapshot` (Entity)**
+Periodically computed and stored for fast balance queries, avoiding full `JournalLine` aggregation on every read.
+- **Fields**: `id`, `accountId`, `snapshotDate`: LocalDate, `balance`: **`Money`**, `createdAt`: ZonedDateTime
+- A balance query adds any `JournalLine`s created after the latest `BalanceSnapshot.createdAt` to produce the current balance.
 
 **`JournalEntry` (Aggregate Root)**
 - **Fields**: `id`, `organizationId`, `date`: LocalDate, `reference`: String, `description`: String, `lines`: `List<JournalLine>`, `status` (DRAFT, POSTED, VOIDED)
-- **Methods**: `addLine(Long accountId, BigDecimal amount, EntryType type)`, `post()` (Validates sum(DEBIT) == sum(CREDIT)), `voidEntry()`
+- **Methods**: `addLine(Long accountId, Money amount, EntryType type)`, `post()` (validates sum(DEBIT) == sum(CREDIT)), `voidEntry()`
 
 **`JournalLine` (Entity)**
-- **Fields**: `id`, `journalEntryId`, `accountId`, `amount`: BigDecimal, `type`: `EntryType` (DEBIT, CREDIT)
+- **Fields**: `id`, `journalEntryId`, `accountId`, `amount`: **`Money`**, `type`: `EntryType` (DEBIT, CREDIT)
 
 ### `ap` & `ar` (Payables & Receivables) Submodule
 **`Expense` (Aggregate Root)**
-- **Fields**: `id`, `organizationId`, `categoryId`, `amount`, `vendorName`, `date`, `description`, `status` (PENDING, APPROVED, PAID)
+- **Fields**: `id`, `organizationId`, `categoryId`, `amount`: **`Money`**, `vendorName`, `date`, `description`, `status` (PENDING, APPROVED, PAID)
 - **Methods**: `approve()`, `markPaid()`
 
 ### `assets` Submodule
 **`Asset` (Aggregate Root)**
-- **Fields**: `id`, `organizationId`, `name`, `tagNumber`, `purchaseDate`, `purchaseValue`, `salvageValue`, `usefulLifeMonths`, `accumulatedDepreciation`, `currentValue`, `status` (ACTIVE, DISPOSED)
-- **Methods**: `depreciate(BigDecimal amount)`, `dispose(BigDecimal saleValue)`
+- **Fields**: `id`, `organizationId`, `name`, `tagNumber`, `purchaseDate`, `purchaseValue`: **`Money`**, `salvageValue`: **`Money`**, `usefulLifeMonths`, `accumulatedDepreciation`: **`Money`**, `currentValue`: **`Money`**, `status` (ACTIVE, DISPOSED)
+- **Methods**: `depreciate(Money amount)`, `dispose(Money saleValue)`
 
 ### `cash` Submodule
 **`BankReconciliation` (Aggregate Root)**
-- **Fields**: `id`, `organizationId`, `bankAccountId`, `statementDate`, `statementBalance`, `bookBalance`, `difference`, `status` (DRAFT, RECONCILED)
+- **Fields**: `id`, `organizationId`, `bankAccountId`, `statementDate`, `statementBalance`: **`Money`**, `bookBalance`: **`Money`**, `difference`: **`Money`**, `status` (DRAFT, RECONCILED)
 **`CashEvacuation` (Aggregate Root)**
-- **Fields**: `id`, `organizationId`, `outletId`, `amount`, `date`, `evacuatedBy`, `status` (PENDING, CONFIRMED)
+- **Fields**: `id`, `organizationId`, `outletId`, `amount`: **`Money`**, `date`, `evacuatedBy`, `status` (PENDING, CONFIRMED)
 
 ## 2. Domain Events
 - `AccountCreatedEvent(Long accountId, String code)`
