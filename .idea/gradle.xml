@@ -34,6 +34,7 @@
             <option value="$PROJECT_DIR$/atlashub-platform" />
             <option value="$PROJECT_DIR$/atlashub-platform/admin" />
             <option value="$PROJECT_DIR$/atlashub-platform/auth" />
+            <option value="$PROJECT_DIR$/atlashub-platform/billing" />
             <option value="$PROJECT_DIR$/atlashub-platform/catalog" />
             <option value="$PROJECT_DIR$/atlashub-platform/identity" />
             <option value="$PROJECT_DIR$/atlashub-shared" />
