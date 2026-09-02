@@ -13,29 +13,29 @@
 
 ### `storefront` (POS) Submodule
 **`SalesOrder` (Aggregate Root)**
-- **Fields**: `id`, `organizationId`, `outletId`, `customerId`, `totalGross`, `totalDiscount`, `totalTax`, `totalNet`, `type` (RETAIL, WHOLESALE, HOSPITALITY), `status` (PENDING, COMPLETED, REFUNDED, LAYAWAY, PROFORMA)
-- **Methods**: `addItem(SalesOrderItem)`, `applyDiscount(BigDecimal)`, `complete()`, `refund()`, `convertToLayaway()`
+- **Fields**: `id`, `organizationId`, `outletId`, `customerId`, `totalGross`: **`Money`**, `totalDiscount`: **`Money`**, `totalTax`: **`Money`**, `totalNet`: **`Money`**, `type` (RETAIL, WHOLESALE, HOSPITALITY), `status` (PENDING, PAYMENT_PENDING, COMPLETED, REFUNDED, LAYAWAY, PROFORMA, FAILED)
+- **Methods**: `addItem(SalesOrderItem)`, `applyDiscount(Money amount)`, `complete()`, `refund()`, `convertToLayaway()`
 **`SalesOrderItem` (Entity)**
-- **Fields**: `id`, `salesOrderId`, `productId`, `quantity`, `unitPrice`, `taxAmount`, `subtotal`
+- **Fields**: `id`, `salesOrderId`, `productId`, `quantity`, `unitPrice`: **`Money`**, `taxAmount`: **`Money`**, `subtotal`: **`Money`**
 **`CustomerDeposit` / Layaway (Aggregate Root)**
-- **Fields**: `id`, `salesOrderId`, `amountPaid`, `balanceRemaining`, `status` (ACTIVE, RECALLED, FULFILLED)
+- **Fields**: `id`, `salesOrderId`, `amountPaid`: **`Money`**, `balanceRemaining`: **`Money`**, `status` (ACTIVE, RECALLED, FULFILLED)
 
 ### `inventory` Submodule
 **`Inventory` (Aggregate Root)**
 - **Fields**: `id`, `organizationId`, `outletId`, `productId`, `quantity`, `reorderLevel`, `safeStock`
-- **Methods**: `addStock(Integer qty)`, `deductStock(Integer qty)`
+- **Methods**: `addStock(Integer qty)`, `deductStock(Integer qty)`, `reserveStock(Integer qty)`, `releaseReservedStock(Integer qty)`
 **`StockAdjustment` (Aggregate Root)**
 - **Fields**: `id`, `inventoryId`, `adjustedBy`, `previousQty`, `newQty`, `reason`
 **`StockCount` (Aggregate Root)**
 - **Fields**: `id`, `outletId`, `status` (OPEN, RECONCILED), `countedItems` (List of count sheets)
 **`SupplyRefund` / Return Outwards (Aggregate Root)**
-- **Fields**: `id`, `supplierId`, `outletId`, `productId`, `quantity`, `refundValue`, `status`
+- **Fields**: `id`, `supplierId`, `outletId`, `productId`, `quantity`, `refundValue`: **`Money`**, `status`
 
 ## 2. Domain Events
 - `ProductCreatedEvent`, `ProductPriceUpdatedEvent`
-- `PosSaleCompletedEvent(Long salesOrderId, Long outletId, BigDecimal totalNet)`
+- `PosSaleCompletedEvent(Long salesOrderId, Long outletId, Money totalNet)`
 - `PosSaleRefundedEvent(Long salesOrderId)`
-- `LayawayCreatedEvent(Long depositId, BigDecimal amount)`
+- `LayawayCreatedEvent(Long depositId, Money amount)`
 - `StockAdjustedEvent(Long inventoryId, Integer difference, String reason)`
 - `StockCountReconciledEvent(Long countId)`
 - `SupplyRefundProcessedEvent(Long refundId)`
