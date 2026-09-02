@@ -8,8 +8,8 @@ import org.slf4j.LoggerFactory;
 import com.atlashub.identity.application.result.SplitRecipientDto;
 import com.atlashub.identity.application.port.SplitRecipientQueryService;
 import com.atlashub.identity.application.query.ListSplitRecipientsQuery;
-import com.atlashub.shared.usecase.BaseUseCase;
-import com.atlashub.shared.util.PageResult;
+import com.atlashub.shared.application.usecase.BaseUseCase;
+import com.atlashub.shared.application.util.PageResult;
 
 @Service
 public class ListSplitRecipientsUseCase extends BaseUseCase<ListSplitRecipientsQuery, PageResult<SplitRecipientDto>> {

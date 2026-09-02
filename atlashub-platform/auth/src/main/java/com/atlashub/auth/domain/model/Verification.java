@@ -8,7 +8,7 @@ import com.atlashub.auth.domain.service.VerificationCodeHasher;
 import com.atlashub.auth.domain.valueobject.VerificationStatus;
 import com.atlashub.auth.domain.valueobject.VerificationType;
 import com.atlashub.shared.domain.AggregateRoot;
-import com.atlashub.shared.exception.BusinessRuleException;
+import com.atlashub.shared.domain.exception.BusinessRuleException;
 import lombok.Getter;
 
 import java.time.ZonedDateTime;

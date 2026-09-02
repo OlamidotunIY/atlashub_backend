@@ -1,7 +1,7 @@
 package com.atlashub.shared.domain.valueobject;
 
-import com.atlashub.shared.exception.SharedErrorCode;
-import com.atlashub.shared.exception.ValidationException;
+import com.atlashub.shared.domain.exception.SharedErrorCode;
+import com.atlashub.shared.domain.exception.ValidationException;
 
 public record NUBAN(String value) {
     public NUBAN {

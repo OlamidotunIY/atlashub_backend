@@ -7,12 +7,12 @@ import com.atlashub.ledger.domain.model.LedgerEntry;
 import com.atlashub.ledger.domain.model.TransactionReference;
 import com.atlashub.ledger.domain.repository.BalanceSnapshotRepository;
 import com.atlashub.ledger.domain.repository.LedgerEntryRepository;
-import com.atlashub.shared.money.CurrencyCode;
-import com.atlashub.shared.money.Money;
+import com.atlashub.shared.domain.money.CurrencyCode;
+import com.atlashub.shared.domain.money.Money;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import com.atlashub.shared.port.out.AccountQueryPort;
-import com.atlashub.shared.port.out.AccountDetailsDto;
+import com.atlashub.shared.application.port.out.AccountQueryPort;
+import com.atlashub.shared.application.port.out.AccountDetailsDto;
 
 import java.time.ZonedDateTime;
 import java.util.List;

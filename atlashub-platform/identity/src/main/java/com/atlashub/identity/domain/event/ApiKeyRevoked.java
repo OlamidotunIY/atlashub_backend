@@ -2,7 +2,7 @@ package com.atlashub.identity.domain.event;
 
 import com.atlashub.identity.domain.valueobject.ApiEnvironment;
 import com.atlashub.identity.domain.valueobject.KeyType;
-import com.atlashub.shared.event.DomainEvent;
+import com.atlashub.shared.domain.event.DomainEvent;
 
 import java.time.ZonedDateTime;
 

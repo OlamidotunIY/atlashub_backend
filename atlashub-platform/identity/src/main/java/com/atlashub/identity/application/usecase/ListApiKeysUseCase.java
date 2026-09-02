@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 import com.atlashub.identity.application.result.ApiKeyDto;
 import com.atlashub.identity.application.port.ApiKeyQueryService;
 import com.atlashub.identity.application.query.ListApiKeysQuery;
-import com.atlashub.shared.usecase.BaseUseCase;
+import com.atlashub.shared.application.usecase.BaseUseCase;
 
 import java.util.List;
 

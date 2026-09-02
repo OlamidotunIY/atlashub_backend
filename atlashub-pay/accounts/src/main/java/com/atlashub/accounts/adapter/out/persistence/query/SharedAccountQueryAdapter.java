@@ -1,9 +1,9 @@
 package com.atlashub.accounts.adapter.out.persistence.query;
 
 import com.atlashub.accounts.adapter.out.persistence.repository.JpaVirtualAccountRepository;
-import com.atlashub.shared.money.CurrencyCode;
-import com.atlashub.shared.port.out.AccountDetailsDto;
-import com.atlashub.shared.port.out.AccountQueryPort;
+import com.atlashub.shared.domain.money.CurrencyCode;
+import com.atlashub.shared.application.port.out.AccountDetailsDto;
+import com.atlashub.shared.application.port.out.AccountQueryPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

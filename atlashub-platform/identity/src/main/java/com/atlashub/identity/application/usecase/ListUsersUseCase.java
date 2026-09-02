@@ -8,8 +8,8 @@ import org.slf4j.LoggerFactory;
 import com.atlashub.identity.application.result.UserDto;
 import com.atlashub.identity.application.port.UserQueryService;
 import com.atlashub.identity.application.query.ListUsersQuery;
-import com.atlashub.shared.usecase.BaseUseCase;
-import com.atlashub.shared.util.PageResult;
+import com.atlashub.shared.application.usecase.BaseUseCase;
+import com.atlashub.shared.application.util.PageResult;
 
 @Service
 public class ListUsersUseCase extends BaseUseCase<ListUsersQuery, PageResult<UserDto>> {

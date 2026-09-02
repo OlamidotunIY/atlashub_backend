@@ -5,11 +5,11 @@ import com.atlashub.auth.application.result.AuthenticatedUserDto;
 import com.atlashub.auth.domain.model.AuthAccount;
 import com.atlashub.auth.domain.repository.AuthAccountRepository;
 import com.atlashub.auth.domain.valueobject.PrincipalType;
-import com.atlashub.shared.api.UserQueryApi;
-import com.atlashub.shared.api.UserQueryApi.UserSharedDto;
-import com.atlashub.shared.exception.NotFoundException;
-import com.atlashub.shared.usecase.BaseUseCase;
-import com.atlashub.shared.api.OrganizationMemberQueryApi;
+import com.atlashub.shared.application.api.UserQueryApi;
+import com.atlashub.shared.application.api.UserQueryApi.UserSharedDto;
+import com.atlashub.shared.domain.exception.NotFoundException;
+import com.atlashub.shared.application.usecase.BaseUseCase;
+import com.atlashub.shared.application.api.OrganizationMemberQueryApi;
 import org.springframework.stereotype.Service;
 
 import com.atlashub.auth.domain.exception.AuthErrorCode;

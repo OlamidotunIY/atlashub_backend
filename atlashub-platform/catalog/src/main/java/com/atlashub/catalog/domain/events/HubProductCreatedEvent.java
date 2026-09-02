@@ -1,7 +1,7 @@
 package com.atlashub.catalog.domain.events;
 
 import com.atlashub.catalog.domain.valueobject.ProductKey;
-import com.atlashub.shared.event.DomainEvent;
+import com.atlashub.shared.domain.event.DomainEvent;
 
 import java.time.ZonedDateTime;
 

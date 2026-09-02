@@ -1,7 +1,7 @@
 package com.atlashub.ledger.application.command;
 
 import com.atlashub.ledger.domain.valueobject.EntryType;
-import com.atlashub.shared.money.CurrencyCode;
+import com.atlashub.shared.domain.money.CurrencyCode;
 
 import java.math.BigDecimal;
 import java.util.List;

@@ -4,7 +4,7 @@ import com.atlashub.catalog.application.query.ListHubProductsQuery;
 import com.atlashub.catalog.application.result.HubProductResult;
 import com.atlashub.catalog.domain.model.HubProduct;
 import com.atlashub.catalog.domain.repository.HubProductRepository;
-import com.atlashub.shared.usecase.BaseUseCase;
+import com.atlashub.shared.application.usecase.BaseUseCase;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;

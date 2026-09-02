@@ -2,7 +2,7 @@ package com.atlashub.catalog.domain.model;
 
 import com.atlashub.catalog.domain.valueobject.BillingCycle;
 import com.atlashub.shared.domain.AggregateRoot;
-import com.atlashub.shared.money.Money;
+import com.atlashub.shared.domain.money.Money;
 import lombok.Getter;
 
 import java.time.ZonedDateTime;

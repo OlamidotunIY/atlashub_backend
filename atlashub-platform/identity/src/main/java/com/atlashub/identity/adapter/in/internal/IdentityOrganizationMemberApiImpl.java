@@ -3,7 +3,7 @@ package com.atlashub.identity.adapter.in.internal;
 import com.atlashub.identity.domain.model.User;
 import com.atlashub.identity.domain.repository.OrganizationMemberRepository;
 import com.atlashub.identity.domain.repository.UserRepository;
-import com.atlashub.shared.api.OrganizationMemberQueryApi;
+import com.atlashub.shared.application.api.OrganizationMemberQueryApi;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;

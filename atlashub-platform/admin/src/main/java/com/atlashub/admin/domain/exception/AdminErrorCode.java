@@ -1,6 +1,6 @@
 package com.atlashub.admin.domain.exception;
 
-import com.atlashub.shared.exception.ErrorCode;
+import com.atlashub.shared.domain.exception.ErrorCode;
 
 public enum AdminErrorCode implements ErrorCode {
     ADMIN_NOT_FOUND("ADM_001", "Admin not found", 404),

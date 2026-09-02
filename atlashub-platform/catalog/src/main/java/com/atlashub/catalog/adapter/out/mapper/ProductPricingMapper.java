@@ -3,8 +3,8 @@ package com.atlashub.catalog.adapter.out.mapper;
 import com.atlashub.catalog.adapter.out.entity.ProductPricingJpaEntity;
 import com.atlashub.catalog.domain.model.ProductPricing;
 import com.atlashub.catalog.domain.valueobject.BillingCycle;
-import com.atlashub.shared.money.CurrencyCode;
-import com.atlashub.shared.money.Money;
+import com.atlashub.shared.domain.money.CurrencyCode;
+import com.atlashub.shared.domain.money.Money;
 import org.springframework.stereotype.Component;
 
 @Component

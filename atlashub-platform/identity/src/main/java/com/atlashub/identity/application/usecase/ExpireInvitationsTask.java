@@ -2,9 +2,9 @@ package com.atlashub.identity.application.usecase;
 
 import com.atlashub.identity.domain.model.Invitation;
 import com.atlashub.identity.domain.repository.InvitationRepository;
-import com.atlashub.shared.event.DomainEvent;
-import com.atlashub.shared.event.DomainEventPublisher;
-import com.atlashub.shared.event.EnvelopedDomainEvent;
+import com.atlashub.shared.domain.event.DomainEvent;
+import com.atlashub.shared.application.port.out.DomainEventPublisher;
+import com.atlashub.shared.domain.event.EnvelopedDomainEvent;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

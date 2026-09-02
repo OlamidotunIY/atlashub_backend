@@ -7,7 +7,7 @@ import com.atlashub.identity.application.result.OrganizationProfileDto;
 import com.atlashub.identity.application.result.RegisterOrganizationResult;
 import com.atlashub.identity.application.usecase.*;
 import com.atlashub.identity.domain.valueobject.ComplianceStatus;
-import com.atlashub.shared.dto.ApiResponse;
+import com.atlashub.shared.application.dto.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;

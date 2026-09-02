@@ -1,6 +1,6 @@
 package com.atlashub.notifications.adapter.in.messaging;
 
-import com.atlashub.shared.api.EventTrackerApi;
+import com.atlashub.shared.application.api.EventTrackerApi;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;

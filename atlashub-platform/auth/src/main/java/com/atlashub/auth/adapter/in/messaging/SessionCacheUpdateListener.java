@@ -4,7 +4,7 @@ import com.atlashub.auth.application.port.out.TokenCachePort;
 import com.atlashub.auth.domain.event.AuthSessionCreatedEvent;
 import com.atlashub.auth.domain.event.AuthSessionRevokedEvent;
 import com.atlashub.auth.domain.event.SessionPayload;
-import com.atlashub.shared.event.EnvelopedDomainEvent;
+import com.atlashub.shared.domain.event.EnvelopedDomainEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;

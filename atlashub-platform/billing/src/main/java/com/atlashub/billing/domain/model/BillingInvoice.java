@@ -1,9 +1,9 @@
 package com.atlashub.billing.domain.model;
 
 import com.atlashub.billing.domain.valueobject.InvoiceStatus;
-import com.atlashub.shared.money.Money;
+import com.atlashub.shared.domain.money.Money;
 import com.atlashub.shared.domain.AggregateRoot;
-import com.atlashub.shared.exception.BusinessRuleException;
+import com.atlashub.shared.domain.exception.BusinessRuleException;
 import com.atlashub.billing.domain.exception.BillingErrorCode;
 import com.atlashub.billing.domain.events.BillingInvoicePaidEvent;
 import lombok.Getter;

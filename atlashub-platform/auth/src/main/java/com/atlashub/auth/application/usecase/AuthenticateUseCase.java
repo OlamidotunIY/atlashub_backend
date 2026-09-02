@@ -10,14 +10,14 @@ import com.atlashub.auth.domain.exception.AuthErrorCode;
 import com.atlashub.auth.domain.model.AuthAccount;
 import com.atlashub.auth.domain.valueobject.AuthStatus;
 import com.atlashub.auth.domain.repository.AuthAccountRepository;
-import com.atlashub.shared.dto.ApiResponse;
-import com.atlashub.shared.exception.BusinessRuleException;
-import com.atlashub.shared.exception.NotFoundException;
-import com.atlashub.shared.usecase.BaseUseCase;
+import com.atlashub.shared.application.dto.ApiResponse;
+import com.atlashub.shared.domain.exception.BusinessRuleException;
+import com.atlashub.shared.domain.exception.NotFoundException;
+import com.atlashub.shared.application.usecase.BaseUseCase;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.atlashub.shared.api.OrganizationMemberQueryApi;
+import com.atlashub.shared.application.api.OrganizationMemberQueryApi;
 
 @Service
 public class AuthenticateUseCase extends BaseUseCase<AuthenticateCommand, ApiResponse<AuthResponseDto>> {

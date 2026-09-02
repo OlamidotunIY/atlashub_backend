@@ -7,8 +7,8 @@ import com.atlashub.identity.domain.model.Invitation;
 import com.atlashub.identity.domain.model.User;
 import com.atlashub.identity.domain.repository.InvitationRepository;
 import com.atlashub.identity.domain.repository.UserRepository;
-import com.atlashub.shared.exception.NotFoundException;
-import com.atlashub.shared.usecase.BaseUseCase;
+import com.atlashub.shared.domain.exception.NotFoundException;
+import com.atlashub.shared.application.usecase.BaseUseCase;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;

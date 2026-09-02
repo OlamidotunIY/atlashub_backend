@@ -1,6 +1,6 @@
 package com.atlashub.billing.domain.exception;
 
-import com.atlashub.shared.exception.ErrorCode;
+import com.atlashub.shared.domain.exception.ErrorCode;
 
 public enum BillingErrorCode implements ErrorCode {
     SUBSCRIPTION_ALREADY_EXISTS,

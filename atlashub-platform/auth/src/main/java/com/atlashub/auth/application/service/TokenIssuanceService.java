@@ -6,8 +6,8 @@ import com.atlashub.auth.domain.model.AuthAccount;
 import com.atlashub.auth.domain.model.Session;
 import com.atlashub.auth.domain.repository.AuthAccountRepository;
 import com.atlashub.auth.domain.repository.SessionRepository;
-import com.atlashub.shared.event.DomainEventPublisher;
-import com.atlashub.shared.event.EnvelopedDomainEvent;
+import com.atlashub.shared.application.port.out.DomainEventPublisher;
+import com.atlashub.shared.domain.event.EnvelopedDomainEvent;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

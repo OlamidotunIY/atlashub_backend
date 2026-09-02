@@ -7,11 +7,11 @@ import com.atlashub.auth.domain.exception.AuthErrorCode;
 import com.atlashub.auth.domain.model.AuthAccount;
 import com.atlashub.auth.domain.valueobject.AuthStatus;
 import com.atlashub.auth.domain.repository.AuthAccountRepository;
-import com.atlashub.shared.dto.ApiResponse;
-import com.atlashub.shared.event.DomainEventPublisher;
-import com.atlashub.shared.exception.BusinessRuleException;
-import com.atlashub.shared.exception.NotFoundException;
-import com.atlashub.shared.usecase.BaseUseCase;
+import com.atlashub.shared.application.dto.ApiResponse;
+import com.atlashub.shared.application.port.out.DomainEventPublisher;
+import com.atlashub.shared.domain.exception.BusinessRuleException;
+import com.atlashub.shared.domain.exception.NotFoundException;
+import com.atlashub.shared.application.usecase.BaseUseCase;
 import org.springframework.stereotype.Service;
 
 import java.time.ZonedDateTime;

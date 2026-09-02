@@ -7,8 +7,8 @@ import com.atlashub.catalog.domain.model.HubProduct;
 import com.atlashub.catalog.domain.model.ProductPricing;
 import com.atlashub.catalog.domain.repository.HubProductRepository;
 import com.atlashub.catalog.domain.repository.ProductPricingRepository;
-import com.atlashub.shared.exception.NotFoundException;
-import com.atlashub.shared.usecase.BaseUseCase;
+import com.atlashub.shared.domain.exception.NotFoundException;
+import com.atlashub.shared.application.usecase.BaseUseCase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,7 +42,7 @@ public class SetProductPricingUseCase extends BaseUseCase<SetProductPricingComma
                         "HubProduct not found with id: " + input.productId()));
 
         if (!product.getStatus().name().equals("ACTIVE")) {
-            throw new com.atlashub.shared.exception.BusinessRuleException(
+            throw new com.atlashub.shared.domain.exception.BusinessRuleException(
                     CatalogErrorCode.PRODUCT_NOT_ACTIVE,
                     "Pricing can only be set on an ACTIVE product");
         }

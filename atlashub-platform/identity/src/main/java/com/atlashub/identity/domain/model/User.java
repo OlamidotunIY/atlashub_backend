@@ -7,8 +7,8 @@ import com.atlashub.shared.domain.AggregateRoot;
 import com.atlashub.shared.domain.valueobject.Country;
 import com.atlashub.shared.domain.valueobject.EmailAddress;
 import com.atlashub.shared.domain.valueobject.PhoneNumber;
-import com.atlashub.shared.exception.SharedErrorCode;
-import com.atlashub.shared.exception.ValidationException;
+import com.atlashub.shared.domain.exception.SharedErrorCode;
+import com.atlashub.shared.domain.exception.ValidationException;
 import lombok.Getter;
 
 import java.time.ZonedDateTime;

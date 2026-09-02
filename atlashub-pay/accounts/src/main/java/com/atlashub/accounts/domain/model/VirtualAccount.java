@@ -2,11 +2,11 @@ package com.atlashub.accounts.domain.model;
 
 import com.atlashub.shared.domain.AggregateRoot;
 import com.atlashub.shared.domain.valueobject.NUBAN;
-import com.atlashub.shared.exception.BusinessRuleException;
+import com.atlashub.shared.domain.exception.BusinessRuleException;
 import com.atlashub.accounts.domain.exception.AccountsErrorCode;
 import com.atlashub.accounts.domain.valueobject.AccountStatus;
 import com.atlashub.accounts.domain.event.*;
-import com.atlashub.shared.money.CurrencyCode;
+import com.atlashub.shared.domain.money.CurrencyCode;
 import lombok.Getter;
 
 import java.time.ZonedDateTime;

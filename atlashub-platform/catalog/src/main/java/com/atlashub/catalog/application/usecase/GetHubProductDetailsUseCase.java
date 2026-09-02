@@ -7,8 +7,8 @@ import com.atlashub.catalog.domain.model.HubProduct;
 import com.atlashub.catalog.domain.model.ProductPricing;
 import com.atlashub.catalog.domain.repository.HubProductRepository;
 import com.atlashub.catalog.domain.repository.ProductPricingRepository;
-import com.atlashub.shared.exception.NotFoundException;
-import com.atlashub.shared.usecase.BaseUseCase;
+import com.atlashub.shared.domain.exception.NotFoundException;
+import com.atlashub.shared.application.usecase.BaseUseCase;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;

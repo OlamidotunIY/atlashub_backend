@@ -24,8 +24,8 @@ import com.atlashub.auth.adapter.in.web.request.ChangeTemporaryPasswordRequestDt
 import com.atlashub.auth.adapter.in.web.request.CompleteVerificationRequestDto;
 import com.atlashub.auth.adapter.in.web.request.LoginRequestDto;
 import com.atlashub.auth.adapter.in.web.request.SetupPasswordRequestDto;
-import com.atlashub.shared.dto.ApiResponse;
-import com.atlashub.shared.security.PublicEndpoint;
+import com.atlashub.shared.application.dto.ApiResponse;
+import com.atlashub.shared.adapter.security.PublicEndpoint;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

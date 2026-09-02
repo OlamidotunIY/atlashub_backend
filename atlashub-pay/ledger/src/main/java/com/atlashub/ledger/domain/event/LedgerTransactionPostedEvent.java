@@ -1,6 +1,6 @@
 package com.atlashub.ledger.domain.event;
 
-import com.atlashub.shared.event.DomainEvent;
+import com.atlashub.shared.domain.event.DomainEvent;
 
 import com.atlashub.ledger.domain.valueobject.SourceSystem;
 

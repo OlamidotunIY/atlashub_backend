@@ -4,7 +4,7 @@ import com.atlashub.accounts.domain.valueobject.AccountStatus;
 import com.atlashub.accounts.domain.model.VirtualAccount;
 import com.atlashub.accounts.adapter.out.persistence.entity.VirtualAccountEntity;
 import com.atlashub.shared.domain.valueobject.NUBAN;
-import com.atlashub.shared.money.CurrencyCode;
+import com.atlashub.shared.domain.money.CurrencyCode;
 import java.time.ZonedDateTime;
 import org.springframework.stereotype.Component;
 

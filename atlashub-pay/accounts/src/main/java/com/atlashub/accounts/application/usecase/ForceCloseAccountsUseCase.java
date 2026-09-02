@@ -5,8 +5,8 @@ import org.springframework.stereotype.Service;
 import com.atlashub.accounts.application.command.ForceCloseAccountsCommand;
 import com.atlashub.accounts.domain.model.VirtualAccount;
 import com.atlashub.accounts.domain.repository.VirtualAccountDomainRepository;
-import com.atlashub.shared.event.DomainEventPublisher;
-import com.atlashub.shared.usecase.BaseUseCase;
+import com.atlashub.shared.application.port.out.DomainEventPublisher;
+import com.atlashub.shared.application.usecase.BaseUseCase;
 import lombok.RequiredArgsConstructor;
 import java.util.List;
 

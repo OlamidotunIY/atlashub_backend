@@ -2,10 +2,10 @@ package com.atlashub.ledger.domain.model;
 
 import com.atlashub.ledger.domain.valueobject.EntryType;
 import com.atlashub.shared.domain.AggregateRoot;
-import com.atlashub.shared.exception.BusinessRuleException;
+import com.atlashub.shared.domain.exception.BusinessRuleException;
 import com.atlashub.ledger.domain.exception.LedgerErrorCode;
 import com.atlashub.ledger.domain.event.LedgerTransactionPostedEvent;
-import com.atlashub.shared.money.Money;
+import com.atlashub.shared.domain.money.Money;
 import lombok.Getter;
 
 import java.time.ZonedDateTime;

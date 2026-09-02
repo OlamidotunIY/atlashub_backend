@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory;
 
 import com.atlashub.identity.application.command.GenerateLiveApiKeyPairCommand;
 
-import com.atlashub.shared.usecase.BaseUseCase;
+import com.atlashub.shared.application.usecase.BaseUseCase;
 
 import com.atlashub.identity.application.result.ApiKeyPairResult;
 import com.atlashub.identity.domain.exception.IdentityErrorCode;
@@ -17,9 +17,9 @@ import com.atlashub.identity.domain.valueobject.KeyType;
 import com.atlashub.identity.domain.model.Organization;
 import com.atlashub.identity.domain.repository.ApiKeyRepository;
 import com.atlashub.identity.domain.repository.OrganizationRepository;
-import com.atlashub.shared.event.DomainEventPublisher;
-import com.atlashub.shared.exception.BusinessRuleException;
-import com.atlashub.shared.exception.NotFoundException;
+import com.atlashub.shared.application.port.out.DomainEventPublisher;
+import com.atlashub.shared.domain.exception.BusinessRuleException;
+import com.atlashub.shared.domain.exception.NotFoundException;
 
 import java.util.UUID;
 
@@ -65,7 +65,7 @@ public class GenerateLiveApiKeyPairUseCase extends BaseUseCase<GenerateLiveApiKe
                 "pk_live_"
         );
 
-        String secretHash = com.atlashub.shared.util.HashingUtils.sha256Hex(rawSecretKey);
+        String secretHash = com.atlashub.shared.application.util.HashingUtils.sha256Hex(rawSecretKey);
         String secretDisplay = "sk_live_****" + rawSecretKey.substring(rawSecretKey.length() - 4);
 
         ApiKey secretKey = new ApiKey(apiKeyRepository.nextIdentity(),

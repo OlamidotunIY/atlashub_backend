@@ -10,10 +10,10 @@ import com.atlashub.admin.domain.model.EmployeeCode;
 import com.atlashub.admin.domain.repository.AdminRepository;
 import com.atlashub.admin.application.service.AdminCreationService;
 import com.atlashub.shared.domain.valueobject.EmailAddress;
-import com.atlashub.shared.exception.BusinessRuleException;
-import com.atlashub.shared.exception.ConflictException;
-import com.atlashub.shared.exception.NotFoundException;
-import com.atlashub.shared.usecase.BaseUseCase;
+import com.atlashub.shared.domain.exception.BusinessRuleException;
+import com.atlashub.shared.domain.exception.ConflictException;
+import com.atlashub.shared.domain.exception.NotFoundException;
+import com.atlashub.shared.application.usecase.BaseUseCase;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

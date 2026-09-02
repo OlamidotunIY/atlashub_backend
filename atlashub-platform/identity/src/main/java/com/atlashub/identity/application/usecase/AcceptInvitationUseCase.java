@@ -6,9 +6,9 @@ import com.atlashub.identity.domain.model.Invitation;
 import com.atlashub.identity.domain.model.OrganizationMember;
 import com.atlashub.identity.domain.repository.InvitationRepository;
 import com.atlashub.identity.domain.repository.OrganizationMemberRepository;
-import com.atlashub.shared.event.DomainEventPublisher;
-import com.atlashub.shared.exception.NotFoundException;
-import com.atlashub.shared.usecase.BaseUseCase;
+import com.atlashub.shared.application.port.out.DomainEventPublisher;
+import com.atlashub.shared.domain.exception.NotFoundException;
+import com.atlashub.shared.application.usecase.BaseUseCase;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

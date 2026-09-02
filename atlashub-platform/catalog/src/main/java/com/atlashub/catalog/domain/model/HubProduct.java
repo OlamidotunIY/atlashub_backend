@@ -7,7 +7,7 @@ import com.atlashub.catalog.domain.exception.CatalogErrorCode;
 import com.atlashub.catalog.domain.valueobject.ProductKey;
 import com.atlashub.catalog.domain.valueobject.ProductStatus;
 import com.atlashub.shared.domain.AggregateRoot;
-import com.atlashub.shared.exception.BusinessRuleException;
+import com.atlashub.shared.domain.exception.BusinessRuleException;
 import lombok.Getter;
 
 import java.time.ZonedDateTime;

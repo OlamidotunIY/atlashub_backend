@@ -1,6 +1,6 @@
 package com.atlashub.identity.domain.exception;
 
-import com.atlashub.shared.exception.ErrorCode;
+import com.atlashub.shared.domain.exception.ErrorCode;
 
 /**
  * All error codes specific to the Identity bounded context.

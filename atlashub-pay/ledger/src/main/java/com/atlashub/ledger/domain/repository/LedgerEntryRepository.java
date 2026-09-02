@@ -2,7 +2,7 @@ package com.atlashub.ledger.domain.repository;
 
 import com.atlashub.ledger.domain.model.LedgerEntry;
 import java.util.List;
-import com.atlashub.shared.util.PageResult;
+import com.atlashub.shared.application.util.PageResult;
 
 public interface LedgerEntryRepository {
     Long nextIdentity();

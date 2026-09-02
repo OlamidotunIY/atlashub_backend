@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory;
 
 import com.atlashub.identity.application.command.RegenerateApiKeyCommand;
 
-import com.atlashub.shared.usecase.BaseUseCase;
+import com.atlashub.shared.application.usecase.BaseUseCase;
 
 import com.atlashub.identity.domain.exception.IdentityErrorCode;
 import com.atlashub.identity.domain.valueobject.ApiEnvironment;
@@ -16,9 +16,9 @@ import com.atlashub.identity.domain.valueobject.KeyType;
 import com.atlashub.identity.domain.model.Organization;
 import com.atlashub.identity.domain.repository.ApiKeyRepository;
 import com.atlashub.identity.domain.repository.OrganizationRepository;
-import com.atlashub.shared.event.DomainEventPublisher;
-import com.atlashub.shared.exception.BusinessRuleException;
-import com.atlashub.shared.exception.NotFoundException;
+import com.atlashub.shared.application.port.out.DomainEventPublisher;
+import com.atlashub.shared.domain.exception.BusinessRuleException;
+import com.atlashub.shared.domain.exception.NotFoundException;
 
 import java.util.UUID;
 
@@ -75,7 +75,7 @@ public class RegenerateApiKeyUseCase extends BaseUseCase<RegenerateApiKeyCommand
             keyHash = rawKey;
             displayValue = rawKey;
         } else {
-            keyHash = com.atlashub.shared.util.HashingUtils.sha256Hex(rawKey);
+            keyHash = com.atlashub.shared.application.util.HashingUtils.sha256Hex(rawKey);
             displayValue = prefix + "****" + rawKey.substring(rawKey.length() - 4);
         }
 

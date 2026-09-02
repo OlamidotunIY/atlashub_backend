@@ -2,8 +2,8 @@ package com.atlashub.notifications.adapter.in.messaging.listener;
 
 import com.atlashub.notifications.application.command.SendEmailCommand;
 import com.atlashub.notifications.application.usecase.SendEmailUseCase;
-import com.atlashub.shared.api.EventTrackerApi;
-import com.atlashub.shared.event.EnvelopedDomainEvent;
+import com.atlashub.shared.application.api.EventTrackerApi;
+import com.atlashub.shared.domain.event.EnvelopedDomainEvent;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 

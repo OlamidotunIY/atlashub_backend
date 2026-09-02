@@ -9,7 +9,7 @@ import com.atlashub.admin.domain.valueobject.AdminStatus;
 import com.atlashub.admin.domain.valueobject.AdminPermission;
 import com.atlashub.shared.domain.AggregateRoot;
 import com.atlashub.shared.domain.valueobject.EmailAddress;
-import com.atlashub.shared.exception.BusinessRuleException;
+import com.atlashub.shared.domain.exception.BusinessRuleException;
 import lombok.Getter;
 import lombok.Setter;
 

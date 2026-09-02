@@ -6,10 +6,10 @@ import com.atlashub.accounts.application.command.ActivateVirtualAccountCommand;
 import com.atlashub.accounts.domain.model.VirtualAccount;
 import com.atlashub.accounts.domain.repository.VirtualAccountDomainRepository;
 import com.atlashub.shared.domain.valueobject.NUBAN;
-import com.atlashub.shared.event.DomainEventPublisher;
-import com.atlashub.shared.exception.NotFoundException;
+import com.atlashub.shared.application.port.out.DomainEventPublisher;
+import com.atlashub.shared.domain.exception.NotFoundException;
 import com.atlashub.accounts.domain.exception.AccountsErrorCode;
-import com.atlashub.shared.usecase.BaseUseCase;
+import com.atlashub.shared.application.usecase.BaseUseCase;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor

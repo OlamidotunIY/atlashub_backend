@@ -9,13 +9,13 @@ import com.atlashub.ledger.domain.repository.LedgerEntryRepository;
 import com.atlashub.ledger.domain.repository.LedgerTransactionRepository;
 import com.atlashub.ledger.domain.repository.BalanceSnapshotRepository;
 import com.atlashub.ledger.domain.model.BalanceSnapshot;
-import com.atlashub.shared.exception.ConflictException;
-import com.atlashub.shared.money.CurrencyCode;
+import com.atlashub.shared.domain.exception.ConflictException;
+import com.atlashub.shared.domain.money.CurrencyCode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import com.atlashub.shared.port.out.AccountQueryPort;
-import com.atlashub.shared.port.out.AccountDetailsDto;
+import com.atlashub.shared.application.port.out.AccountQueryPort;
+import com.atlashub.shared.application.port.out.AccountDetailsDto;
 import java.util.Optional;
 
 import java.math.BigDecimal;

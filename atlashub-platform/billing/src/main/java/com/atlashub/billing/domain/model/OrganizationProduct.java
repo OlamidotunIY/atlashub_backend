@@ -8,7 +8,7 @@ import com.atlashub.billing.domain.exception.BillingErrorCode;
 import com.atlashub.billing.domain.valueobject.SubscriptionStatus;
 import com.atlashub.catalog.domain.valueobject.BillingCycle;
 import com.atlashub.shared.domain.AggregateRoot;
-import com.atlashub.shared.exception.BusinessRuleException;
+import com.atlashub.shared.domain.exception.BusinessRuleException;
 import lombok.Getter;
 
 import java.time.ZonedDateTime;

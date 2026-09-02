@@ -11,10 +11,10 @@ import com.atlashub.auth.domain.model.Verification;
 import com.atlashub.auth.domain.repository.AuthAccountRepository;
 import com.atlashub.auth.domain.repository.VerificationRepository;
 import com.atlashub.auth.domain.service.VerificationCodeHasher;
-import com.atlashub.shared.dto.ApiResponse;
-import com.atlashub.shared.event.DomainEventPublisher;
-import com.atlashub.shared.exception.NotFoundException;
-import com.atlashub.shared.usecase.BaseUseCase;
+import com.atlashub.shared.application.dto.ApiResponse;
+import com.atlashub.shared.application.port.out.DomainEventPublisher;
+import com.atlashub.shared.domain.exception.NotFoundException;
+import com.atlashub.shared.application.usecase.BaseUseCase;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

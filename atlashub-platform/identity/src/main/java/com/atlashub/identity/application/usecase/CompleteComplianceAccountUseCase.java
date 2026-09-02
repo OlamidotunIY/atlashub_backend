@@ -10,10 +10,10 @@ import com.atlashub.identity.application.port.AccountNameResolutionPort;
 import com.atlashub.identity.domain.valueobject.ComplianceStatus;
 import com.atlashub.identity.domain.model.Organization;
 import com.atlashub.identity.domain.repository.OrganizationRepository;
-import com.atlashub.shared.event.DomainEventPublisher;
-import com.atlashub.shared.exception.NotFoundException;
+import com.atlashub.shared.application.port.out.DomainEventPublisher;
+import com.atlashub.shared.domain.exception.NotFoundException;
 import com.atlashub.identity.domain.exception.IdentityErrorCode;
-import com.atlashub.shared.usecase.BaseUseCase;
+import com.atlashub.shared.application.usecase.BaseUseCase;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;

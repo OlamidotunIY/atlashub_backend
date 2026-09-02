@@ -6,7 +6,7 @@ import com.atlashub.admin.application.result.AdminCreationResult;
 import com.atlashub.admin.application.usecase.BootstrapMasterAdminUseCase;
 import com.atlashub.admin.application.usecase.CreateAdminUseCase;
 import com.atlashub.admin.domain.valueobject.AdminPermission;
-import com.atlashub.shared.dto.ApiResponse;
+import com.atlashub.shared.application.dto.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;

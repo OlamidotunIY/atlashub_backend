@@ -1,6 +1,6 @@
 package com.atlashub.ledger.domain.event;
 
-import com.atlashub.shared.event.DomainEvent;
+import com.atlashub.shared.domain.event.DomainEvent;
 
 public record FundsReservedEvent(
     String eventId,

@@ -3,7 +3,7 @@ package com.atlashub.eventbus.application.usecase;
 import com.atlashub.eventbus.application.command.SaveOutboxMessageCommand;
 import com.atlashub.eventbus.domain.model.OutboxMessage;
 import com.atlashub.eventbus.domain.repository.OutboxMessageRepository;
-import com.atlashub.shared.usecase.BaseUseCase;
+import com.atlashub.shared.application.usecase.BaseUseCase;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;

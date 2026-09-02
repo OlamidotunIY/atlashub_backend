@@ -1,6 +1,6 @@
 package com.atlashub.accounts.domain.exception;
 
-import com.atlashub.shared.exception.ErrorCode;
+import com.atlashub.shared.domain.exception.ErrorCode;
 
 public enum AccountsErrorCode implements ErrorCode {
     INVALID_ACCOUNT_STATE,

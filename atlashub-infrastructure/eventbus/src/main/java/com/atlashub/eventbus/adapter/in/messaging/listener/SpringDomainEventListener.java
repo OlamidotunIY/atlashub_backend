@@ -2,7 +2,7 @@ package com.atlashub.eventbus.adapter.in.messaging.listener;
 
 import com.atlashub.eventbus.application.command.SaveOutboxMessageCommand;
 import com.atlashub.eventbus.application.usecase.SaveOutboxMessageUseCase;
-import com.atlashub.shared.event.EnvelopedDomainEvent;
+import com.atlashub.shared.domain.event.EnvelopedDomainEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 

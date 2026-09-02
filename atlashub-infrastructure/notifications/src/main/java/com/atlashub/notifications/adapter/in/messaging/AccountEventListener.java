@@ -1,7 +1,7 @@
 package com.atlashub.notifications.adapter.in.messaging;
 
 import com.atlashub.notifications.adapter.out.external.dto.VirtualAccountActivatedNotificationEvent;
-import com.atlashub.shared.event.BaseKafkaEventListener;
+import com.atlashub.shared.adapter.in.messaging.BaseKafkaEventListener;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -3,7 +3,7 @@ package com.atlashub.catalog.domain.repository;
 import com.atlashub.catalog.domain.model.ProductPricing;
 
 import com.atlashub.catalog.domain.valueobject.BillingCycle;
-import com.atlashub.shared.money.CurrencyCode;
+import com.atlashub.shared.domain.money.CurrencyCode;
 
 import java.util.List;
 import java.util.Optional;

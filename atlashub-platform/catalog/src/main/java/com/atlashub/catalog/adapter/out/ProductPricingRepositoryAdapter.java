@@ -7,7 +7,7 @@ import com.atlashub.catalog.domain.model.ProductPricing;
 import com.atlashub.catalog.domain.repository.ProductPricingRepository;
 import com.atlashub.catalog.domain.valueobject.BillingCycle;
 import com.atlashub.shared.adapter.out.external.DomainSequenceGenerator;
-import com.atlashub.shared.money.CurrencyCode;
+import com.atlashub.shared.domain.money.CurrencyCode;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;

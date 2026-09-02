@@ -1,7 +1,7 @@
 package com.atlashub.identity.application.port;
 
 import com.atlashub.identity.application.result.UserDto;
-import com.atlashub.shared.util.PageResult;
+import com.atlashub.shared.application.util.PageResult;
 
 import java.util.Optional;
 

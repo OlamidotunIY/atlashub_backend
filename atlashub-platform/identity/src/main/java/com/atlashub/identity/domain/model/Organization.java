@@ -6,7 +6,7 @@ import com.atlashub.identity.domain.valueobject.*;
 import com.atlashub.shared.domain.AggregateRoot;
 import com.atlashub.shared.domain.valueobject.EmailAddress;
 import com.atlashub.shared.domain.valueobject.PhoneNumber;
-import com.atlashub.shared.exception.BusinessRuleException;
+import com.atlashub.shared.domain.exception.BusinessRuleException;
 import lombok.Getter;
 
 import java.math.BigDecimal;

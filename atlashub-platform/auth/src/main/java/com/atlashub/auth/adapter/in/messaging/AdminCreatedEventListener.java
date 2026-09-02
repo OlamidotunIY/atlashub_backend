@@ -6,7 +6,7 @@ import com.atlashub.auth.application.usecase.CreateAuthAccountUseCase;
 import com.atlashub.auth.domain.valueobject.AuthProvider;
 import com.atlashub.auth.domain.valueobject.AuthStatus;
 import com.atlashub.auth.domain.valueobject.PrincipalType;
-import com.atlashub.shared.event.BaseKafkaEventListener;
+import com.atlashub.shared.adapter.in.messaging.BaseKafkaEventListener;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;

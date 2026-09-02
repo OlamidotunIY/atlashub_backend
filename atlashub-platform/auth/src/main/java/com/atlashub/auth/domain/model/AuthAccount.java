@@ -8,8 +8,8 @@ import com.atlashub.auth.domain.valueobject.AuthProvider;
 import com.atlashub.auth.domain.valueobject.AuthStatus;
 import com.atlashub.auth.domain.valueobject.PrincipalType;
 import com.atlashub.shared.domain.AggregateRoot;
-import com.atlashub.shared.exception.BusinessRuleException;
-import com.atlashub.shared.exception.ConflictException;
+import com.atlashub.shared.domain.exception.BusinessRuleException;
+import com.atlashub.shared.domain.exception.ConflictException;
 import lombok.Getter;
 
 import java.time.ZonedDateTime;

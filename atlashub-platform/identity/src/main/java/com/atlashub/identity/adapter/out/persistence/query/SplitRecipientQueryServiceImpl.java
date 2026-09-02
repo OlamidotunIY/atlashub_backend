@@ -3,7 +3,7 @@ package com.atlashub.identity.adapter.out.persistence.query;
 import com.atlashub.identity.application.result.SplitRecipientDto;
 import com.atlashub.identity.application.port.SplitRecipientQueryService;
 import com.atlashub.identity.adapter.out.persistence.repository.SpringDataSplitRecipientRepository;
-import com.atlashub.shared.util.PageResult;
+import com.atlashub.shared.application.util.PageResult;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;

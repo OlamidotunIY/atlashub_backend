@@ -13,7 +13,7 @@ import com.atlashub.shared.adapter.out.external.DomainSequenceGenerator;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import com.atlashub.shared.util.PageResult;
+import com.atlashub.shared.application.util.PageResult;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 

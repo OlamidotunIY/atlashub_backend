@@ -1,7 +1,7 @@
 package com.atlashub.auth.application.result;
 
 import com.atlashub.auth.domain.valueobject.AuthStatus;
-import com.atlashub.shared.api.UserQueryApi.UserSharedDto;
+import com.atlashub.shared.application.api.UserQueryApi.UserSharedDto;
 import com.atlashub.auth.domain.model.AuthAccount;
 
 public record AuthenticatedUserDto(

@@ -1,7 +1,7 @@
 package com.atlashub.ledger.domain.model;
 
 import com.atlashub.shared.domain.AggregateRoot;
-import com.atlashub.shared.money.Money;
+import com.atlashub.shared.domain.money.Money;
 import lombok.Getter;
 
 import java.time.ZonedDateTime;

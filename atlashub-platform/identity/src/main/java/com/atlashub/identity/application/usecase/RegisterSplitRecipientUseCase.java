@@ -10,8 +10,8 @@ import com.atlashub.identity.application.result.SplitRecipientDto;
 import com.atlashub.identity.application.port.AccountNameResolutionPort;
 import com.atlashub.identity.domain.model.SplitRecipient;
 import com.atlashub.identity.domain.repository.SplitRecipientRepository;
-import com.atlashub.shared.event.DomainEventPublisher;
-import com.atlashub.shared.usecase.BaseUseCase;
+import com.atlashub.shared.application.port.out.DomainEventPublisher;
+import com.atlashub.shared.application.usecase.BaseUseCase;
 import org.springframework.stereotype.Component;
 
 import com.atlashub.identity.application.result.RegisterSplitRecipientResult;

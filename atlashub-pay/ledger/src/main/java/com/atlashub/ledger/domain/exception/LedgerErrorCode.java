@@ -1,6 +1,6 @@
 package com.atlashub.ledger.domain.exception;
 
-import com.atlashub.shared.exception.ErrorCode;
+import com.atlashub.shared.domain.exception.ErrorCode;
 
 public enum LedgerErrorCode implements ErrorCode {
     INVALID_TRANSACTION_STATE,

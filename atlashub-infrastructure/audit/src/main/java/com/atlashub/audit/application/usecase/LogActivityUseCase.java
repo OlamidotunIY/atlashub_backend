@@ -3,7 +3,7 @@ package com.atlashub.audit.application.usecase;
 import com.atlashub.audit.application.command.LogActivityCommand;
 import com.atlashub.audit.domain.model.ActivityLog;
 import com.atlashub.audit.domain.repository.ActivityLogRepository;
-import com.atlashub.shared.usecase.BaseUseCase;
+import com.atlashub.shared.application.usecase.BaseUseCase;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

@@ -7,13 +7,13 @@ import org.slf4j.LoggerFactory;
 
 import com.atlashub.identity.application.command.RevokeApiKeyCommand;
 
-import com.atlashub.shared.usecase.BaseUseCase;
+import com.atlashub.shared.application.usecase.BaseUseCase;
 
 import com.atlashub.identity.domain.exception.IdentityErrorCode;
 import com.atlashub.identity.domain.model.ApiKey;
 import com.atlashub.identity.domain.repository.ApiKeyRepository;
-import com.atlashub.shared.event.DomainEventPublisher;
-import com.atlashub.shared.exception.NotFoundException;
+import com.atlashub.shared.application.port.out.DomainEventPublisher;
+import com.atlashub.shared.domain.exception.NotFoundException;
 
 @Service
 public class RevokeApiKeyUseCase extends BaseUseCase<RevokeApiKeyCommand, Void> {
