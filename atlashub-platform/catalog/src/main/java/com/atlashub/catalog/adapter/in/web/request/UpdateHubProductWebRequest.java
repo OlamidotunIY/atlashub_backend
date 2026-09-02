@@ -1,7 +1,9 @@
 package com.atlashub.catalog.adapter.in.web.request;
 
+import jakarta.validation.constraints.NotBlank;
+
 public record UpdateHubProductWebRequest(
-        String name,
-        String description
+        @NotBlank String name,
+        @NotBlank String description
 ) {
 }
