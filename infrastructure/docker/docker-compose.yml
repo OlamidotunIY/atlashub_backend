@@ -90,22 +90,6 @@ services:
       retries: 5
       start_period: 30s
 
-  # ── Kafka UI (developer convenience) ──────────────────────────────────────
-  kafka-ui:
-    image: provectuslabs/kafka-ui:latest
-    container_name: atlashub-kafka-ui
-    restart: unless-stopped
-    networks:
-      - atlashub-net
-    depends_on:
-      kafka:
-        condition: service_healthy
-    ports:
-      - "8090:8080"
-    environment:
-      KAFKA_CLUSTERS_0_NAME: atlashub-local
-      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
-
   # ── Tempo (Distributed Tracing) ─────────────────────────────────────────────
   tempo:
     image: grafana/tempo:2.6.1

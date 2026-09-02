@@ -55,10 +55,12 @@ public class SecurityConfig {
                     }
                 }
                 
+                // 1.5. Permit Error dispatchers so 404s don't become 403s
+                auth.dispatcherTypeMatchers(jakarta.servlet.DispatcherType.ERROR).permitAll();
+
                 // 2. Register hardcoded default public endpoints
                 auth.requestMatchers(
                     org.springframework.http.HttpMethod.POST,
-                    "/api/v1/Organizations",
                     "/api/v1/users"
                 ).permitAll();
                 
