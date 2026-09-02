@@ -4,60 +4,62 @@
 
 **`HubProduct` (Aggregate Root)**
 Represents a standalone platform product offering (e.g., "Atlas Pay", "Atlas Commerce").
-- **Fields**: 
+- **Fields**:
   - `id`: Long
-  - `key`: String (e.g., `COMMERCE`, `PAY`, `LOGISTICS`)
+  - `key`: `ProductKey` enum (`PAY`, `COMMERCE`, `LOGISTICS`, `HR`, `ACCOUNTING`)
   - `name`: String
   - `description`: String
   - `status`: `ProductStatus` (ACTIVE, INACTIVE, DEPRECATED)
   - `createdAt`: ZonedDateTime
   - `updatedAt`: ZonedDateTime
 - **Methods**:
-  - `updateDetails(String name, String description)`
-  - `deactivate()`
+  - `create(Long id, ProductKey key, String name, String description)` — static factory, raises `HubProductCreatedEvent`
+  - `updateDetails(String name, String description)` — raises `HubProductUpdatedEvent`
+  - `deactivate()` — guards against non-ACTIVE status, raises `HubProductDeactivatedEvent`
 
 **`ProductPricing` (Entity)**
-Defines the subscription cost for a `HubProduct`.
+Defines the subscription cost for a `HubProduct` per billing cycle and currency.
 - **Fields**:
   - `id`: Long
   - `hubProductId`: Long
   - `billingCycle`: `BillingCycle` (MONTHLY, ANNUALLY)
-  - `amount`: BigDecimal
-  - `currency`: String
+  - `amount`: **`Money`** (carries both `BigDecimal` amount and `CurrencyCode`)
 - **Methods**:
-  - `updatePrice(BigDecimal newAmount)`
+  - `updatePrice(Money newAmount)`
+
+> **Multi-Currency Note**: `ProductPricing` may have multiple entries per `HubProduct` — one per (`BillingCycle`, `CurrencyCode`) combination. This allows the same product to be priced in NGN for Nigerian orgs and KES for Kenyan orgs. The Organization's base currency (derived from the `country` field on `User` at registration) determines which pricing row is selected at subscription time.
 
 ## 2. Domain Events (Wrapped in `EnvelopedDomainEvent`)
-- `HubProductCreatedEvent(Long productId, String key)`
-- `HubProductUpdatedEvent(Long productId)`
-- `HubProductDeactivatedEvent(Long productId)`
+- `HubProductCreatedEvent(String productId, ProductKey key)`
+- `HubProductUpdatedEvent(String productId)`
+- `HubProductDeactivatedEvent(String productId)`
 
 ## 3. Exceptions & Errors
 **`CatalogErrorCode`** (implements `ErrorCode`):
 - `PRODUCT_NOT_FOUND`
 - `DUPLICATE_PRODUCT_KEY`
 - `INVALID_PRICING_MODEL`
+- `PRODUCT_NOT_ACTIVE`
 
 ## 4. Commands & Use Cases
-- **Command**: `CreateHubProductCommand(String key, String name, String description)`
+- **Command**: `CreateHubProductCommand(Long adminId, ProductKey key, String name, String description)`
   - **UseCase**: `CreateHubProductUseCase`
-- **Command**: `UpdateHubProductCommand(Long productId, String name, String description)`
+  - **Security**: `@PreAuthorize("@adminAuth.hasPermission(#command.adminId, 'CATALOG_MANAGE')")`
+- **Command**: `UpdateHubProductCommand(Long adminId, Long productId, String name, String description)`
   - **UseCase**: `UpdateHubProductUseCase`
-- **Command**: `SetProductPricingCommand(Long productId, BillingCycle cycle, BigDecimal amount)`
+- **Command**: `SetProductPricingCommand(Long productId, BillingCycle cycle, Money amount)`
   - **UseCase**: `SetProductPricingUseCase`
 
 ## 5. Queries
-- **Query**: `ListHubProductsQuery(ProductStatus status)`
-  - **Returns**: `List<HubProductResult>`
-- **Query**: `GetHubProductDetailsQuery(Long productId)`
-  - **Returns**: `HubProductDetailsResult`
+- **Query**: `ListHubProductsQuery(ProductStatus status)` → `List<HubProductResult>`
+- **Query**: `GetHubProductDetailsQuery(Long productId)` → `HubProductDetailsResult`
 
 ## 6. Listeners
-- None. (Catalog is the source of truth for platform products and rarely reacts to other module events).
+None. Catalog is the source of truth for platform products and does not react to other module events.
 
 ## 7. Distributed Architecture & Transaction Guarantees
 ### Locking Strategy
-- **Optimistic Locking (`@Version`)**: Applied to `HubProduct` and `ProductPricing` to prevent concurrent admin overrides of product catalogs and pricing.
+- **Optimistic Locking (`@Version`)**: Applied to `HubProduct` and `ProductPricing` to prevent concurrent admin overrides.
 
 ### Inbox & Outbox Patterns
-- **Outbox**: Used to reliably publish `HubProductUpdatedEvent` so that billing mechanisms are notified of new capabilities or pricing adjustments.
+- **Outbox**: Reliably publishes `HubProductUpdatedEvent` so that billing mechanisms are notified of new pricing adjustments.
