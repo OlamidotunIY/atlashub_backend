@@ -7,7 +7,6 @@ import com.atlashub.catalog.domain.model.HubProduct;
 import com.atlashub.catalog.domain.model.ProductPricing;
 import com.atlashub.catalog.domain.repository.HubProductRepository;
 import com.atlashub.catalog.domain.repository.ProductPricingRepository;
-import com.atlashub.shared.event.DomainEventPublisher;
 import com.atlashub.shared.exception.NotFoundException;
 import com.atlashub.shared.usecase.BaseUseCase;
 import org.slf4j.Logger;
@@ -20,15 +19,12 @@ public class SetProductPricingUseCase extends BaseUseCase<SetProductPricingComma
 
     private static final Logger log = LoggerFactory.getLogger(SetProductPricingUseCase.class);
 
-    private final DomainEventPublisher eventPublisher;
     private final HubProductRepository hubProductRepository;
     private final ProductPricingRepository productPricingRepository;
 
     public SetProductPricingUseCase(
-            DomainEventPublisher eventPublisher,
             HubProductRepository hubProductRepository,
             ProductPricingRepository productPricingRepository) {
-        this.eventPublisher = eventPublisher;
         this.hubProductRepository = hubProductRepository;
         this.productPricingRepository = productPricingRepository;
     }
@@ -74,11 +70,12 @@ public class SetProductPricingUseCase extends BaseUseCase<SetProductPricingComma
             // --- CREATE path ---
             log.info("No existing pricing row found — creating new ProductPricing");
 
-            ProductPricing pricing = new ProductPricing(
+            ProductPricing pricing = ProductPricing.create(
                     productPricingRepository.nextIdentity(),
                     input.productId(),
                     input.cycle(),
-                    input.amount());
+                    input.amount()
+            );
 
             productPricingRepository.save(pricing);
 

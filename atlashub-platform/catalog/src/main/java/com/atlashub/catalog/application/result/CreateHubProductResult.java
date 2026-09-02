@@ -1,4 +1,6 @@
 package com.atlashub.catalog.application.result;
 
-public record CreateHubProductResult() {
+import com.atlashub.catalog.domain.model.HubProduct;
+
+public record CreateHubProductResult(HubProduct product) {
 }

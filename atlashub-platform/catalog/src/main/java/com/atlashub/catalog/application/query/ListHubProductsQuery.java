@@ -1,4 +1,6 @@
 package com.atlashub.catalog.application.query;
 
-public record ListHubProductsQuery() {
+import com.atlashub.catalog.domain.valueobject.ProductStatus;
+
+public record ListHubProductsQuery(ProductStatus status) {
 }

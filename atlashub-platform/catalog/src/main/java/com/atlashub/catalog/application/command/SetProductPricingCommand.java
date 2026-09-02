@@ -1,4 +1,7 @@
 package com.atlashub.catalog.application.command;
 
-public record SetProductPricingCommand() {
+import com.atlashub.catalog.domain.valueobject.BillingCycle;
+import com.atlashub.shared.money.Money;
+
+public record SetProductPricingCommand(Long productId, BillingCycle cycle, Money amount) {
 }

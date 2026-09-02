@@ -1,4 +1,4 @@
 package com.atlashub.catalog.application.query;
 
-public record GetHubProductDetailsQuery() {
+public record GetHubProductDetailsQuery(Long productId) {
 }

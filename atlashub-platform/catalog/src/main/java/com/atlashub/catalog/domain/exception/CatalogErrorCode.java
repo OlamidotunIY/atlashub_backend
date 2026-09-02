@@ -1,4 +1,7 @@
 package com.atlashub.catalog.domain.exception;
 
-public enum CatalogErrorCode {
+import com.atlashub.shared.exception.ErrorCode;
+
+public enum CatalogErrorCode implements ErrorCode {
+    PRODUCT_NOT_FOUND, DUPLICATE_PRODUCT_KEY, INVALID_PRICING_MODEL, PRODUCT_NOT_ACTIVE
 }

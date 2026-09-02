@@ -1,4 +1,6 @@
 package com.atlashub.catalog.application.command;
 
-public record CreateHubProductCommand() {
+import com.atlashub.catalog.domain.valueobject.ProductKey;
+
+public record CreateHubProductCommand(ProductKey key, String name, String description) {
 }

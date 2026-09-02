@@ -23,16 +23,6 @@ public class HubProduct extends AggregateRoot<Long> {
     private final ZonedDateTime createdAt;
     private ZonedDateTime updatedAt;
 
-    public HubProduct(Long id, ProductKey key, String name, String description, ProductStatus status) {
-        this.id = id;
-        this.key = key;
-        this.name = name;
-        this.description = description;
-        this.status = status;
-        this.updatedAt = ZonedDateTime.now();
-        this.createdAt = ZonedDateTime.now();
-    }
-
     public HubProduct(Long id, ProductKey key, String name, String description, ProductStatus status, ZonedDateTime createdAt, ZonedDateTime updatedAt) {
         this.id = id;
         this.key = key;
@@ -44,7 +34,7 @@ public class HubProduct extends AggregateRoot<Long> {
     }
 
     public static HubProduct create(Long id, ProductKey key, String name, String description) {
-        HubProduct product = new HubProduct(id, key, name, description, ProductStatus.ACTIVE);
+        HubProduct product = new HubProduct(id, key, name, description, ProductStatus.ACTIVE, ZonedDateTime.now(), ZonedDateTime.now());
 
         product.registerEvent(
                 new HubProductCreatedEvent(
