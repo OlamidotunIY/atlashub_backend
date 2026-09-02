@@ -3,11 +3,11 @@ package com.atlashub.auth.domain.event;
 import com.atlashub.shared.event.DomainEvent;
 import java.time.ZonedDateTime;
 
-public record AdminCredentialsCreatedEvent(
+public record AuthAdminCredentialsCreatedEvent(
         String eventId,
         String aggregateId,
         ZonedDateTime occurredAt,
         Payload payload
-) implements DomainEvent<AdminCredentialsCreatedEvent.Payload> {
+) implements DomainEvent<AuthAdminCredentialsCreatedEvent.Payload> {
     public record Payload(String personalEmail, String temporaryPassword) {}
 }

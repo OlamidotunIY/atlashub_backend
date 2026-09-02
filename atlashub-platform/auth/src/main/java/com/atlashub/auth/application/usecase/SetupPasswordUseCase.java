@@ -16,6 +16,8 @@ import com.atlashub.shared.usecase.BaseUseCase;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.atlashub.shared.api.OrganizationMemberQueryApi;
+
 @Service
 public class SetupPasswordUseCase extends BaseUseCase<SetupPasswordCommand, ApiResponse<AuthResponseDto>> {
 
@@ -23,16 +25,19 @@ public class SetupPasswordUseCase extends BaseUseCase<SetupPasswordCommand, ApiR
     private final PasswordEncoderPort passwordEncoderPort;
     private final SetupTokenStorePort setupTokenStorePort;
     private final TokenIssuanceService tokenIssuanceService;
+    private final OrganizationMemberQueryApi organizationMemberQueryApi;
 
     public SetupPasswordUseCase(
             AuthAccountRepository authAccountRepository,
             PasswordEncoderPort passwordEncoderPort,
             SetupTokenStorePort setupTokenStorePort,
-            TokenIssuanceService tokenIssuanceService) {
+            TokenIssuanceService tokenIssuanceService,
+            OrganizationMemberQueryApi organizationMemberQueryApi) {
         this.authAccountRepository = authAccountRepository;
         this.passwordEncoderPort = passwordEncoderPort;
         this.setupTokenStorePort = setupTokenStorePort;
         this.tokenIssuanceService = tokenIssuanceService;
+        this.organizationMemberQueryApi = organizationMemberQueryApi;
     }
 
     @Override
@@ -53,7 +58,11 @@ public class SetupPasswordUseCase extends BaseUseCase<SetupPasswordCommand, ApiR
         authAccount.updateCredential(newHash);
         authAccountRepository.save(authAccount);
 
-        AuthResponseDto responseDto = AuthResponseDto.forSuccess(tokenIssuanceService.issueTokensAndCreateSession(authAccount, input.ipAddress(), input.userAgent()));
+        String onboardingStatus = organizationMemberQueryApi.getOnboardingStatus(authAccount.getPrincipalId(), authAccount.getIdentifier());
+        AuthResponseDto responseDto = AuthResponseDto.forSuccess(
+                tokenIssuanceService.issueTokensAndCreateSession(authAccount, input.ipAddress(), input.userAgent()),
+                onboardingStatus
+        );
         return new ApiResponse<>(true, "Password setup successfully", responseDto, null);
     }
 }

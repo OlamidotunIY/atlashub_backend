@@ -9,6 +9,7 @@ import com.atlashub.shared.api.UserQueryApi;
 import com.atlashub.shared.api.UserQueryApi.UserSharedDto;
 import com.atlashub.shared.exception.NotFoundException;
 import com.atlashub.shared.usecase.BaseUseCase;
+import com.atlashub.shared.api.OrganizationMemberQueryApi;
 import org.springframework.stereotype.Service;
 
 import com.atlashub.auth.domain.exception.AuthErrorCode;
@@ -18,10 +19,12 @@ public class GetAuthenticatedUserUseCase extends BaseUseCase<GetAuthenticatedUse
 
     private final AuthAccountRepository authAccountRepository;
     private final UserQueryApi userQueryApi;
+    private final OrganizationMemberQueryApi organizationMemberQueryApi;
 
-    public GetAuthenticatedUserUseCase(AuthAccountRepository authAccountRepository, UserQueryApi userQueryApi) {
+    public GetAuthenticatedUserUseCase(AuthAccountRepository authAccountRepository, UserQueryApi userQueryApi, OrganizationMemberQueryApi organizationMemberQueryApi) {
         this.authAccountRepository = authAccountRepository;
         this.userQueryApi = userQueryApi;
+        this.organizationMemberQueryApi = organizationMemberQueryApi;
     }
 
     @Override
@@ -32,6 +35,8 @@ public class GetAuthenticatedUserUseCase extends BaseUseCase<GetAuthenticatedUse
         UserSharedDto userProfile = userQueryApi.getUserById(query.userId())
                 .orElseThrow(() -> new NotFoundException(AuthErrorCode.AUTH_ACCOUNT_NOT_FOUND, "User profile not found for ID: " + query.userId()));
 
-        return AuthenticatedUserDto.from(authAccount, userProfile);
+        String onboardingStatus = organizationMemberQueryApi.getOnboardingStatus(authAccount.getPrincipalId(), authAccount.getIdentifier());
+
+        return AuthenticatedUserDto.from(authAccount, userProfile, onboardingStatus);
     }
 }

@@ -2,6 +2,7 @@ package com.atlashub.auth.domain.model;
 
 import com.atlashub.auth.domain.event.AuthAccountCreatedEvent;
 import com.atlashub.auth.domain.event.AuthAccountSuspendedEvent;
+import com.atlashub.auth.domain.event.AuthPasswordSetupInitiatedEvent;
 import com.atlashub.auth.domain.exception.AuthErrorCode;
 import com.atlashub.auth.domain.valueobject.AuthProvider;
 import com.atlashub.auth.domain.valueobject.AuthStatus;
@@ -124,12 +125,21 @@ public class AuthAccount extends AggregateRoot<Long> {
         this.updatedAt = ZonedDateTime.now();
     }
 
-    public void requirePasswordSetup() {
-        if (this.status != AuthStatus.PENDING_EMAIL_VERIFICATION) {
-            throw new BusinessRuleException(AuthErrorCode.INVALID_REQUEST, "Account must be pending email verification to require password setup");
+    public void requirePasswordSetup(String setupToken) {
+        if (this.status != AuthStatus.PENDING_EMAIL_VERIFICATION && this.status != AuthStatus.REQUIRES_PASSWORD_SETUP) {
+            throw new BusinessRuleException(AuthErrorCode.INVALID_REQUEST, "Account must be pending email verification or already requiring password setup");
         }
         this.status = AuthStatus.REQUIRES_PASSWORD_SETUP;
         this.updatedAt = ZonedDateTime.now();
+
+        this.registerEvent(
+                new AuthPasswordSetupInitiatedEvent(
+                        UUID.randomUUID().toString(),
+                        String.valueOf(id),
+                        ZonedDateTime.now(),
+                        new AuthPasswordSetupInitiatedEvent.Payload(this.identifier, setupToken)
+                )
+        );
     }
 
     public void suspend() {

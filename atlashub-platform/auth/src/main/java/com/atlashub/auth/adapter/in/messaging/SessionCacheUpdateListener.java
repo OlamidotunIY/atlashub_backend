@@ -1,8 +1,8 @@
 package com.atlashub.auth.adapter.in.messaging;
 
 import com.atlashub.auth.application.port.out.TokenCachePort;
-import com.atlashub.auth.domain.event.SessionCreatedEvent;
-import com.atlashub.auth.domain.event.SessionRevokedEvent;
+import com.atlashub.auth.domain.event.AuthSessionCreatedEvent;
+import com.atlashub.auth.domain.event.AuthSessionRevokedEvent;
 import com.atlashub.auth.domain.event.SessionPayload;
 import com.atlashub.shared.event.EnvelopedDomainEvent;
 import org.springframework.context.event.EventListener;
@@ -21,10 +21,10 @@ public class SessionCacheUpdateListener {
     @EventListener
     @Async
     public void onSessionCreated(EnvelopedDomainEvent<SessionPayload> event) {
-        if (event.event() instanceof SessionCreatedEvent sessionCreatedEvent) {
+        if (event.event() instanceof AuthSessionCreatedEvent AuthSessionCreatedEvent) {
             tokenCachePort.cacheSession(
-                    sessionCreatedEvent.payload().token(),
-                    sessionCreatedEvent.payload().expiresAt()
+                    AuthSessionCreatedEvent.payload().token(),
+                    AuthSessionCreatedEvent.payload().expiresAt()
             );
         }
     }
@@ -32,10 +32,10 @@ public class SessionCacheUpdateListener {
     @EventListener
     @Async
     public void onSessionRevoked(EnvelopedDomainEvent<SessionPayload> event) {
-        if (event.event() instanceof SessionRevokedEvent sessionRevokedEvent) {
+        if (event.event() instanceof AuthSessionRevokedEvent AuthSessionRevokedEvent) {
             tokenCachePort.blacklistToken(
-                    sessionRevokedEvent.payload().token(),
-                    sessionRevokedEvent.payload().expiresAt()
+                    AuthSessionRevokedEvent.payload().token(),
+                    AuthSessionRevokedEvent.payload().expiresAt()
             );
         }
     }

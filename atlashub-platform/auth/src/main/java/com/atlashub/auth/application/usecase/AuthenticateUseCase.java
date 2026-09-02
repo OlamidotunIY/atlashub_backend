@@ -17,6 +17,8 @@ import com.atlashub.shared.usecase.BaseUseCase;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.atlashub.shared.api.OrganizationMemberQueryApi;
+
 @Service
 public class AuthenticateUseCase extends BaseUseCase<AuthenticateCommand, ApiResponse<AuthResponseDto>> {
 
@@ -25,18 +27,21 @@ public class AuthenticateUseCase extends BaseUseCase<AuthenticateCommand, ApiRes
     private final TokenGeneratorPort tokenGeneratorPort;
     private final PreAuthTokenStorePort preAuthTokenStorePort;
     private final TokenIssuanceService tokenIssuanceService;
+    private final OrganizationMemberQueryApi organizationMemberQueryApi;
 
     public AuthenticateUseCase(
             AuthAccountRepository authAccountRepository,
             PasswordEncoderPort passwordEncoderPort,
             TokenGeneratorPort tokenGeneratorPort,
             PreAuthTokenStorePort preAuthTokenStorePort,
-            TokenIssuanceService tokenIssuanceService) {
+            TokenIssuanceService tokenIssuanceService,
+            OrganizationMemberQueryApi organizationMemberQueryApi) {
         this.authAccountRepository = authAccountRepository;
         this.passwordEncoderPort = passwordEncoderPort;
         this.tokenGeneratorPort = tokenGeneratorPort;
         this.preAuthTokenStorePort = preAuthTokenStorePort;
         this.tokenIssuanceService = tokenIssuanceService;
+        this.organizationMemberQueryApi = organizationMemberQueryApi;
     }
 
     @Override
@@ -66,7 +71,11 @@ public class AuthenticateUseCase extends BaseUseCase<AuthenticateCommand, ApiRes
             return new ApiResponse<>(true, "2FA Required", AuthResponseDto.forTwoFactor(preAuth.token()), null);
         }
 
-        AuthResponseDto responseDto = AuthResponseDto.forSuccess(tokenIssuanceService.issueTokensAndCreateSession(authAccount, input.ipAddress(), input.userAgent()));
+        String onboardingStatus = organizationMemberQueryApi.getOnboardingStatus(authAccount.getPrincipalId(), authAccount.getIdentifier());
+        AuthResponseDto responseDto = AuthResponseDto.forSuccess(
+                tokenIssuanceService.issueTokensAndCreateSession(authAccount, input.ipAddress(), input.userAgent()),
+                onboardingStatus
+        );
         return new ApiResponse<>(true, "Authentication successful", responseDto, null);
     }
 }

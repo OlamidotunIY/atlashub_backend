@@ -42,6 +42,8 @@ public class TokenIssuanceService {
             eventPublisher.publish(EnvelopedDomainEvent.wrap(event))
         );
 
+        boolean isNewDevice = !sessionRepository.existsByAuthAccountIdAndIpAddressAndUserAgent(authAccount.getId(), ipAddress, userAgent);
+
         Session session = Session.create(
                 sessionRepository.nextIdentity(),
                 authAccount.getId(),
@@ -50,7 +52,8 @@ public class TokenIssuanceService {
                 access.jti(),
                 ipAddress,
                 userAgent,
-                refresh.expiresAt()
+                refresh.expiresAt(),
+                isNewDevice
         );
         
         sessionRepository.save(session);

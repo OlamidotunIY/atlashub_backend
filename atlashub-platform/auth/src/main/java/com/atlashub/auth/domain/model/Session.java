@@ -1,8 +1,9 @@
 package com.atlashub.auth.domain.model;
 
-import com.atlashub.auth.domain.event.SessionCreatedEvent;
+import com.atlashub.auth.domain.event.AuthNewDeviceLoginEvent;
+import com.atlashub.auth.domain.event.AuthSessionCreatedEvent;
 import com.atlashub.auth.domain.event.SessionPayload;
-import com.atlashub.auth.domain.event.SessionRevokedEvent;
+import com.atlashub.auth.domain.event.AuthSessionRevokedEvent;
 import com.atlashub.auth.domain.valueobject.PrincipalType;
 import com.atlashub.auth.domain.valueobject.SessionStatus;
 import com.atlashub.shared.domain.AggregateRoot;
@@ -39,16 +40,28 @@ public class Session extends AggregateRoot<Long> {
         this.createdAt = ZonedDateTime.now();
     }
 
-    public static Session create(Long id, Long authAccountId, Long principalId, PrincipalType principalType, String jti, String ipAddress, String userAgent, ZonedDateTime expiresAt) {
+    public static Session create(Long id, Long authAccountId, Long principalId, PrincipalType principalType, String jti, String ipAddress, String userAgent, ZonedDateTime expiresAt, boolean isNewDevice) {
         Session session = new Session(id, authAccountId, principalId, principalType, jti, ipAddress, userAgent, expiresAt, SessionStatus.ACTIVE);
         
+        SessionPayload payload = new SessionPayload(jti, expiresAt, principalId, principalType, ipAddress, userAgent);
+        
         session.registerEvent(
-                new SessionCreatedEvent(
+                new AuthSessionCreatedEvent(
                         UUID.randomUUID().toString(),
                         String.valueOf(session.getId()),
                         ZonedDateTime.now(),
-                        new SessionPayload(jti, expiresAt, principalId, principalType, ipAddress, userAgent)
+                        payload
                 ));
+                
+        if (isNewDevice) {
+            session.registerEvent(
+                    new AuthNewDeviceLoginEvent(
+                            UUID.randomUUID().toString(),
+                            String.valueOf(session.getId()),
+                            ZonedDateTime.now(),
+                            payload
+                    ));
+        }
         return session;
     }
 
@@ -58,7 +71,7 @@ public class Session extends AggregateRoot<Long> {
             this.revokedAt = ZonedDateTime.now();
             
             this.registerEvent(
-                new SessionRevokedEvent(
+                new AuthSessionRevokedEvent(
                         UUID.randomUUID().toString(),
                         String.valueOf(this.getId()),
                         ZonedDateTime.now(),

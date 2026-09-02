@@ -3,9 +3,9 @@ package com.atlashub.auth.domain.event;
 import com.atlashub.shared.event.DomainEvent;
 import java.time.ZonedDateTime;
 
-public record SessionCreatedEvent(
+public record AuthVerificationCompletedEvent(
         String eventId,
         String aggregateId,
         ZonedDateTime occurredAt,
-        SessionPayload payload
-) implements DomainEvent<SessionPayload> {}
+        VerificationPayload payload
+) implements DomainEvent<VerificationPayload> {}

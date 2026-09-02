@@ -57,11 +57,12 @@ public class CompleteVerificationUseCase extends BaseUseCase<CompleteVerificatio
                 .orElseThrow(() -> new NotFoundException(AuthErrorCode.AUTH_ACCOUNT_NOT_FOUND, "Auth account not found"));
 
         if (authAccount.getStatus() == AuthStatus.PENDING_EMAIL_VERIFICATION) {
-            authAccount.requirePasswordSetup();
-            authAccountRepository.save(authAccount);
-
             TokenGeneratorPort.TokenData setupToken = tokenGeneratorPort.generateSetupToken(authAccount.getPrincipalId(), authAccount.getPrincipalType().name());
             setupTokenStorePort.store(setupToken.token(), authAccount.getId());
+
+            authAccount.requirePasswordSetup(setupToken.token());
+            authAccountRepository.save(authAccount);
+            publishEvents(authAccount, eventPublisher);
 
             VerificationResponseDto responseDto = VerificationResponseDto.requiresPasswordSetup(setupToken.token());
             return new ApiResponse<>(true, "Verification completed. Password setup required.", responseDto, null);

@@ -17,6 +17,8 @@ import com.atlashub.shared.usecase.BaseUseCase;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.atlashub.shared.api.OrganizationMemberQueryApi;
+
 @Service
 public class ChangeTemporaryPasswordUseCase extends BaseUseCase<ChangeTemporaryPasswordCommand, ApiResponse<AuthResponseDto>> {
 
@@ -25,18 +27,21 @@ public class ChangeTemporaryPasswordUseCase extends BaseUseCase<ChangeTemporaryP
     private final TokenGeneratorPort tokenGeneratorPort;
     private final PreAuthTokenStorePort preAuthTokenStorePort;
     private final TokenIssuanceService tokenIssuanceService;
+    private final OrganizationMemberQueryApi organizationMemberQueryApi;
 
     public ChangeTemporaryPasswordUseCase(
             AuthAccountRepository authAccountRepository,
             PasswordEncoderPort passwordEncoderPort,
             TokenGeneratorPort tokenGeneratorPort,
             PreAuthTokenStorePort preAuthTokenStorePort,
-            TokenIssuanceService tokenIssuanceService) {
+            TokenIssuanceService tokenIssuanceService,
+            OrganizationMemberQueryApi organizationMemberQueryApi) {
         this.authAccountRepository = authAccountRepository;
         this.passwordEncoderPort = passwordEncoderPort;
         this.tokenGeneratorPort = tokenGeneratorPort;
         this.preAuthTokenStorePort = preAuthTokenStorePort;
         this.tokenIssuanceService = tokenIssuanceService;
+        this.organizationMemberQueryApi = organizationMemberQueryApi;
     }
 
     @Override
@@ -66,7 +71,8 @@ public class ChangeTemporaryPasswordUseCase extends BaseUseCase<ChangeTemporaryP
         }
 
         // Issue tokens immediately if no 2FA required
-        AuthResponseDto responseDto = AuthResponseDto.forSuccess(tokenIssuanceService.issueTokensAndCreateSession(authAccount, input.ipAddress(), input.userAgent()));
+        String onboardingStatus = organizationMemberQueryApi.getOnboardingStatus(authAccount.getPrincipalId(), authAccount.getIdentifier());
+        AuthResponseDto responseDto = AuthResponseDto.forSuccess(tokenIssuanceService.issueTokensAndCreateSession(authAccount, input.ipAddress(), input.userAgent()), onboardingStatus);
         return new ApiResponse<>(true, "Password changed successfully", responseDto, null);
     }
 }

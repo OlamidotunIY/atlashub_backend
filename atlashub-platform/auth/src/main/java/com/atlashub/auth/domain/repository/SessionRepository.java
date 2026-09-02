@@ -14,5 +14,6 @@ public interface SessionRepository {
     List<Session> findByAuthAccountIdAndStatus(Long authAccountId, SessionStatus status);
     List<Session> findByAuthAccountId(Long authAccountId);
     List<Session> saveAll(List<Session> sessions);
+    boolean existsByAuthAccountIdAndIpAddressAndUserAgent(Long authAccountId, String ipAddress, String userAgent);
 }
 

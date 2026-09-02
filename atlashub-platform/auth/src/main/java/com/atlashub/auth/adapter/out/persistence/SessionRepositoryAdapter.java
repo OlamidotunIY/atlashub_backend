@@ -70,4 +70,9 @@ public class SessionRepositoryAdapter implements SessionRepository {
         jpaRepository.saveAll(entities);
         return sessions;
     }
+
+    @Override
+    public boolean existsByAuthAccountIdAndIpAddressAndUserAgent(Long authAccountId, String ipAddress, String userAgent) {
+        return jpaRepository.existsByAuthAccountIdAndIpAddressAndUserAgent(authAccountId, ipAddress, userAgent);
+    }
 }

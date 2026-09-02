@@ -8,10 +8,10 @@ import lombok.Setter;
 @Getter
 @Setter
 @Configuration
-@ConfigurationProperties(prefix = "atlashub.auth.jwt")
+@ConfigurationProperties(prefix = "atlashub.jwt")
 public class JwtProperties {
-    private String secret = "defaultSecretKeyWithAtLeast32CharactersForHmacSha256";
-    private long accessTokenExpirationMs = 900000; // 15 minutes
+    private String secret;
+    private long accessTokenExpirationMs = 1800000; // 30 minutes
     private long refreshTokenExpirationMs = 604800000; // 7 days
     private long preAuthTokenExpirationMs = 300000; // 5 minutes
 }
