@@ -9,6 +9,7 @@ include 'atlashub-platform:identity'
 include 'atlashub-platform:auth'
 include 'atlashub-platform:catalog'
 include 'atlashub-platform:admin'
+include 'atlashub-platform:billing'
 
 // Payments
 include 'atlashub-pay'
