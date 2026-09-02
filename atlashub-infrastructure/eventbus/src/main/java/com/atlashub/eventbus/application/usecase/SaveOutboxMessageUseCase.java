@@ -30,7 +30,7 @@ public class SaveOutboxMessageUseCase extends BaseUseCase<SaveOutboxMessageComma
         try {
             String payload = objectMapper.writeValueAsString(command.event());
             OutboxMessage message = new OutboxMessage(
-                command.event().correlationId(),
+                command.event().event().eventId(),
                 command.topic(),
                 payload
             );

@@ -1,8 +1,8 @@
 package com.atlashub.notifications.adapter.in.messaging;
 
-import com.atlashub.auth.domain.event.PasswordSetupInitiatedEvent;
-import com.atlashub.auth.domain.event.SessionCreatedEvent;
-import com.atlashub.auth.domain.event.VerificationCreatedEvent;
+import com.atlashub.auth.domain.event.AuthPasswordSetupInitiatedEvent;
+import com.atlashub.auth.domain.event.AuthNewDeviceLoginEvent;
+import com.atlashub.auth.domain.event.AuthVerificationCreatedEvent;
 import com.atlashub.notifications.application.port.EmailSenderPort;
 import com.atlashub.notifications.application.usecase.SendVerificationEmailUseCase;
 import com.atlashub.shared.adapter.out.external.dlq.DeadLetterRepository;
@@ -54,7 +54,7 @@ public class AuthEventListener extends BaseKafkaEventListener {
     )
     @KafkaListener(topics = "auth-events", groupId = "notifications-auth-group")
     public void handleAuthEvent(String message) {
-        processEventIfMatches(message, "VerificationCreated", VerificationCreatedEvent.class, log, "notifications-auth-group", event -> {
+        processEventIfMatches(message, "AuthVerificationCreatedEvent", AuthVerificationCreatedEvent.class, log, "notifications-auth-group", event -> {
             String email = event.payload().identifier();
             String rawCode = event.payload().rawCode();
             
@@ -64,7 +64,7 @@ public class AuthEventListener extends BaseKafkaEventListener {
             }
         });
 
-        processEventIfMatches(message, "PasswordSetupInitiated", PasswordSetupInitiatedEvent.class, log, "notifications-auth-group", event -> {
+        processEventIfMatches(message, "AuthPasswordSetupInitiatedEvent", AuthPasswordSetupInitiatedEvent.class, log, "notifications-auth-group", event -> {
             String email = event.payload().identifier();
             String setupToken = event.payload().setupToken();
             
@@ -74,9 +74,9 @@ public class AuthEventListener extends BaseKafkaEventListener {
             }
         });
 
-        processEventIfMatches(message, "SessionCreatedEvent", SessionCreatedEvent.class, log, "notifications-auth-group", event -> {
+        processEventIfMatches(message, "AuthNewDeviceLoginEvent", AuthNewDeviceLoginEvent.class, log, "notifications-auth-group", event -> {
             if (event.payload().principalId() == null) {
-                log.warn("SessionCreatedEvent missing principalId. Cannot send login email.");
+                log.warn("AuthNewDeviceLoginEvent missing principalId. Cannot send login email.");
                 return;
             }
             
@@ -106,7 +106,7 @@ public class AuthEventListener extends BaseKafkaEventListener {
                         event.payload().userAgent(),
                         loginTime
                 );
-                log.info("Handled SessionCreatedEvent for {}. Login notification email sent.", email);
+                log.info("Handled AuthNewDeviceLoginEvent for {}. Login notification email sent.", email);
             }
         });
     }

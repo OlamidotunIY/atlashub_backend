@@ -17,8 +17,7 @@
 <body>
     <div class="container">
         <div class="header"><h1>ATLASHUB</h1></div>
-        <div class="content" 
-            <h2>New Login Alert</h2>
+        <div class="content"><h2>New Login Alert</h2>
             <p>Hi <span th:text="${firstName}"></span>,</p>
             <p>We detected a new login to your AtlasHub account.</p>
             <div style="background-color: #f8f9fa; padding: 15px; border-left: 4px solid #0d1117; margin: 20px 0;">
@@ -27,11 +26,12 @@
                 <p style="margin: 5px 0;"><strong>Device:</strong> <span th:text="${device}"></span></p>
             </div>
             <p>If this was you, you can safely ignore this email.</p>
-            <p>If you don't recognize this activity, please change your password immediately.</p>></div>
+            <p>If you don't recognize this activity, please change your password immediately.</p></div>
         <div class="footer">
-            <p>&copy; <span th:text=""></span> AtlasHub Inc. All rights reserved.</p>
+            <p>&copy; <span th:text="${#dates.year(#dates.createNow())}"></span> AtlasHub Inc. All rights reserved.</p>
             <p>This is an automated message, please do not reply.</p>
         </div>
     </div>
 </body>
 </html>
+

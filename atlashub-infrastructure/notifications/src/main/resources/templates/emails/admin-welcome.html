@@ -17,16 +17,16 @@
 <body>
     <div class="container">
         <div class="header"><h1>ATLASHUB</h1></div>
-        <div class="content" 
-            <h2>Welcome to the AtlasHub Admin Team</h2>
+        <div class="content"><h2>Welcome to the AtlasHub Admin Team</h2>
             <p>An administrative account has been created for you.</p>
             <p>Please use your employee code and the following temporary password to log in. You will be required to change this password upon your first login:</p>
             <div class="code-box"><p class="code" style="color: #dc3545; letter-spacing: 2px; font-size: 24px;" th:text="${temporaryPassword}"></p></div>
-            <p>Please keep this password secure and do not share it with anyone.</p>></div>
+            <p>Please keep this password secure and do not share it with anyone.</p></div>
         <div class="footer">
-            <p>&copy; <span th:text=""></span> AtlasHub Inc. All rights reserved.</p>
+            <p>&copy; <span th:text="${#dates.year(#dates.createNow())}"></span> AtlasHub Inc. All rights reserved.</p>
             <p>This is an automated message, please do not reply.</p>
         </div>
     </div>
 </body>
 </html>
+

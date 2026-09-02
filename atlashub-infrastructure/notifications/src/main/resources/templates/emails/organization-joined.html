@@ -17,15 +17,15 @@
 <body>
     <div class="container">
         <div class="header"><h1>ATLASHUB</h1></div>
-        <div class="content" 
-            <h2>Welcome to <span th:text="${organizationName}"></span></h2>
+        <div class="content"><h2>Welcome to <span th:text="${organizationName}"></span></h2>
             <p>Hi <span th:text="${firstName}"></span>,</p>
             <p>You have successfully been added to <strong><span th:text="${organizationName}"></span></strong> on AtlasHub.</p>
-            <p>You can now access the organization's dashboard and resources based on your role.</p>></div>
+            <p>You can now access the organization's dashboard and resources based on your role.</p></div>
         <div class="footer">
-            <p>&copy; <span th:text=""></span> AtlasHub Inc. All rights reserved.</p>
+            <p>&copy; <span th:text="${#dates.year(#dates.createNow())}"></span> AtlasHub Inc. All rights reserved.</p>
             <p>This is an automated message, please do not reply.</p>
         </div>
     </div>
 </body>
 </html>
+

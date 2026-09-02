@@ -19,7 +19,7 @@ public class NotificationSubscriptionRegistrar implements ApplicationRunner {
         // Auth events
         eventTrackerApi.registerSubscription("VerificationCreated", "notifications-auth-group");
         eventTrackerApi.registerSubscription("PasswordSetupInitiated", "notifications-auth-group");
-        eventTrackerApi.registerSubscription("SessionCreatedEvent", "notifications-auth-group");
+        eventTrackerApi.registerSubscription("AuthNewDeviceLoginEvent", "notifications-auth-group");
         eventTrackerApi.registerSubscription("AdminCredentialsCreated", "notifications-admin-creds-group");
         
         // Identity events
