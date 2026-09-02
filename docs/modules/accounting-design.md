@@ -36,14 +36,26 @@ Periodically computed and stored for fast balance queries, avoiding full `Journa
 **`CashEvacuation` (Aggregate Root)**
 - **Fields**: `id`, `organizationId`, `outletId`, `amount`: **`Money`**, `date`, `evacuatedBy`, `status` (PENDING, CONFIRMED)
 
+### `budget` Submodule
+
+**`Budget` (Aggregate Root)**
+An approved spending plan for a given account and period.
+- **Fields**: `id`, `organizationId`, `accountId`, `name`, `period` (e.g., "2026-Q3"), `budgetedAmount`: **`Money`**, `status` (DRAFT, APPROVED, CLOSED)
+- **Methods**: `approve()`, `close()`
+
+**`BudgetVariance` (Entity — read-only projection)**
+Computed on-demand by comparing `Budget.budgetedAmount` against `JournalLine` totals for the account in the period.
+- **Fields**: `budgetId`, `accountId`, `period`, `budgetedAmount`: **`Money`**, `actualAmount`: **`Money`**, `variance`: **`Money`**, `variancePercent`: BigDecimal
+
 ## 2. Domain Events
 - `AccountCreatedEvent(Long accountId, String code)`
 - `JournalEntryPostedEvent(Long entryId, String reference)`
-- `ExpenseRecordedEvent(Long expenseId, BigDecimal amount)`
+- `ExpenseRecordedEvent(Long expenseId, Money amount)`
 - `ExpenseApprovedEvent(Long expenseId)`
 - `AssetRegisteredEvent(Long assetId)`
-- `AssetDepreciatedEvent(Long assetId, BigDecimal amount)`
-- `CashEvacuatedEvent(Long evacuationId, BigDecimal amount)`
+- `AssetDepreciatedEvent(Long assetId, Money amount)`
+- `CashEvacuatedEvent(Long evacuationId, Money amount)`
+- `BudgetApprovedEvent(Long budgetId, Long accountId, Money budgetedAmount)`
 
 ## 3. Exceptions & Errors
 **`AccountingErrorCode`**:
@@ -51,26 +63,32 @@ Periodically computed and stored for fast balance queries, avoiding full `Journa
 - `JOURNAL_UNBALANCED` (Debits do not equal Credits)
 - `INVALID_ENTRY_STATE`, `ASSET_NOT_FOUND`
 - `EXPENSE_NOT_FOUND`, `INVALID_RECONCILIATION`
+- `BUDGET_NOT_FOUND`, `BUDGET_ALREADY_APPROVED`
 
 ## 4. Commands & Use Cases
-- `CreateAccountCommand(orgId, code, name, type)` -> `CreateAccountUseCase`
-- `RecordJournalEntryCommand(orgId, date, ref, desc, lines)` -> `RecordJournalEntryUseCase` (Creates entry, calls `post()`, updates `Account` balances).
-- `RecordExpenseCommand(orgId, categoryId, amount, vendor, date, desc)` -> `RecordExpenseUseCase`
-- `ApproveExpenseCommand(expenseId)` -> `ApproveExpenseUseCase`
-- `RegisterAssetCommand(name, tag, purchaseDate, value, salvage, usefulLife)` -> `RegisterAssetUseCase`
-- `RunDepreciationCommand(orgId, date)` -> `RunDepreciationUseCase` (Calculates monthly depreciation for all active assets, records Journal Entry).
-- `ReconcileBankStatementCommand(...)` -> `ReconcileBankStatementUseCase`
-- `EvacuateCashCommand(outletId, amount)` -> `EvacuateCashUseCase`
+- `CreateAccountCommand(orgId, code, name, type)` → `CreateAccountUseCase`
+- `RecordJournalEntryCommand(orgId, date, ref, desc, lines)` → `RecordJournalEntryUseCase` (Creates entry, calls `post()`. Does NOT modify `Account` balance — balance is derived from lines.)
+- `RecordExpenseCommand(orgId, categoryId, amount, vendor, date, desc)` → `RecordExpenseUseCase`
+- `ApproveExpenseCommand(expenseId)` → `ApproveExpenseUseCase`
+- `RegisterAssetCommand(name, tag, purchaseDate, value, salvage, usefulLife)` → `RegisterAssetUseCase`
+- `RunDepreciationCommand(orgId, date)` → `RunDepreciationUseCase` (Calculates monthly depreciation for all active assets, records `JournalEntry`.)
+- `ReconcileBankStatementCommand(...)` → `ReconcileBankStatementUseCase`
+- `EvacuateCashCommand(outletId, amount)` → `EvacuateCashUseCase`
+- `CreateBudgetCommand(orgId, accountId, name, period, budgetedAmount)` → `CreateBudgetUseCase`
+- `ApproveBudgetCommand(budgetId)` → `ApproveBudgetUseCase`
 
 ## 5. Queries
-- `GetChartOfAccountsQuery(orgId)` -> `List<AccountResult>`
-- `GetLedgerQuery(orgId, accountId, dateFrom, dateTo)` -> `List<JournalLineResult>`
-- `GetTrialBalanceQuery(orgId, date)` -> `TrialBalanceReport` (Lists all accounts and their debit/credit balances).
-- `GetIncomeStatementQuery(orgId, dateFrom, dateTo)` -> `IncomeStatementReport` (Revenue - Expenses).
-- `GetBalanceSheetQuery(orgId, date)` -> `BalanceSheetReport` (Assets = Liabilities + Equity).
-- `GetCashFlowStatementQuery(orgId, dateFrom, dateTo)` -> `CashFlowReport`
+- `GetChartOfAccountsQuery(orgId)` → `List<AccountResult>`
+- `GetLedgerQuery(orgId, accountId, dateFrom, dateTo)` → `List<JournalLineResult>`
+- `GetAccountBalanceQuery(orgId, accountId, asOf)` → `Money` (Uses latest `BalanceSnapshot` + delta `JournalLine`s.)
+- `GetTrialBalanceQuery(orgId, date)` → `TrialBalanceReport` (Lists all accounts and their debit/credit balances.)
+- `GetIncomeStatementQuery(orgId, dateFrom, dateTo)` → `IncomeStatementReport` (Revenue - Expenses.)
+- `GetBalanceSheetQuery(orgId, date)` → `BalanceSheetReport` (Assets = Liabilities + Equity.)
+- `GetCashFlowStatementQuery(orgId, dateFrom, dateTo)` → `CashFlowReport`
 - `ListExpensesQuery(orgId, status, dateFrom, dateTo)`
 - `ListAssetsQuery(orgId, status)`
+- `GetBudgetVarianceQuery(budgetId)` → `BudgetVariance` (Compares budgeted vs actual spend from `JournalLine` totals.)
+- `ListBudgetsQuery(orgId, period, status)` → `List<BudgetResult>`
 
 ## 6. Listeners
 - `PosSaleCompletedListener`: Listens to Commerce module. Triggers `RecordJournalEntryCommand` (Debit Cash/Receivable, Credit Sales Revenue).
