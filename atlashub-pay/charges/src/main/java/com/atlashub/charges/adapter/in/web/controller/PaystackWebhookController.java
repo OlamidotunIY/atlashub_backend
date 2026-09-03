@@ -1,4 +1,4 @@
-package com.atlashub.charges.adapter.in.web;
+package com.atlashub.charges.adapter.in.web.controller;
 
 import com.atlashub.charges.adapter.in.web.request.PaystackWebhookRequest;
 import com.atlashub.charges.application.command.HandlePaystackWebhookCommand;

@@ -1,17 +1,18 @@
 package com.atlashub.charges.domain.event;
 
 import com.atlashub.shared.domain.event.DomainEvent;
+import com.atlashub.charges.domain.valueobject.ChargePurpose;
 import java.time.ZonedDateTime;
 
-public record ExternalChargeInitiatedEvent(
+public record ExternalChargeFailedEvent(
         String eventId,
         String aggregateId,
         ZonedDateTime occurredAt,
         Payload payload
-) implements DomainEvent<ExternalChargeInitiatedEvent.Payload> {
+) implements DomainEvent<ExternalChargeFailedEvent.Payload> {
     public record Payload(
-            Long purposeId,
             String reference,
-            String checkoutUrl
+            ChargePurpose purpose,
+            String metadata
     ) {}
 }

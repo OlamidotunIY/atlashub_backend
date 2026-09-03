@@ -8,7 +8,6 @@ public interface PaymentGatewayPort {
             String currency,
             String email,
             String reference,
-            String purpose,
             String metadata,
             String redirectUrl
     );

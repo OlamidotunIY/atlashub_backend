@@ -2,37 +2,48 @@ package com.atlashub.charges.adapter.in.messaging;
 
 import com.atlashub.charges.application.command.InitiateExternalChargeCommand;
 import com.atlashub.charges.application.usecase.InitiateExternalChargeUseCase;
+import com.atlashub.charges.domain.event.ExternalChargeRequestedEvent;
 import com.atlashub.shared.adapter.in.messaging.BaseKafkaEventListener;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.annotation.RetryableTopic;
+import org.springframework.kafka.retrytopic.DltStrategy;
+import org.springframework.retry.annotation.Backoff;
 import org.springframework.stereotype.Component;
 
-import java.math.BigDecimal;
-
-@Slf4j
 @Component
 public class ExternalChargeRequestedListener extends BaseKafkaEventListener {
 
+    private static final Logger log = LoggerFactory.getLogger(ExternalChargeRequestedListener.class);
+    private static final String GROUP_ID = "charges-module-external-group";
+
     private final InitiateExternalChargeUseCase useCase;
 
-    public ExternalChargeRequestedListener(InitiateExternalChargeUseCase useCase, ObjectMapper objectMapper) {
+    public ExternalChargeRequestedListener(
+            InitiateExternalChargeUseCase useCase,
+            ObjectMapper objectMapper) {
         super(objectMapper);
         this.useCase = useCase;
     }
 
-    @KafkaListener(topics = "Billing-events", groupId = "charges-module-group")
+    @RetryableTopic(attempts = "3", backoff = @Backoff(delay = 1000, multiplier = 2.0), dltStrategy = DltStrategy.FAIL_ON_ERROR)
+    @KafkaListener(topics = "Billing-events", groupId = GROUP_ID)
     public void onExternalChargeRequested(String messagePayload) {
-        processEventIfMatches(messagePayload, "ExternalChargeRequestedEvent", log, "charges-module-group", root -> {
-            Long invoiceId = root.path("payload").path("invoiceId").asLong();
-            Long organizationId = root.path("payload").path("organizationId").asLong();
-            BigDecimal amount = new BigDecimal(root.path("payload").path("amount").asText());
-            String currency = root.path("payload").path("currency").asText();
-            String customerEmail = root.path("payload").path("customerEmail").asText();
-            String redirectUrl = root.path("payload").path("redirectUrl").asText();
+        processEventIfMatches(messagePayload, "ExternalChargeRequestedEvent", ExternalChargeRequestedEvent.class, log, GROUP_ID, event -> {
+            var payload = event.payload();
+            log.info("Received ExternalChargeRequestedEvent for invoice {}. Initiating Paystack charge...", payload.invoiceId());
 
-            log.info("Received ExternalChargeRequestedEvent for invoice {}. Initiating Paystack charge...", invoiceId);
-            useCase.execute(new InitiateExternalChargeCommand(invoiceId, organizationId, amount, currency, customerEmail, redirectUrl));
+            InitiateExternalChargeCommand command = new InitiateExternalChargeCommand(
+                    payload.invoiceId(),
+                    payload.organizationId(),
+                    payload.amount(),
+                    payload.customerEmail(),
+                    payload.redirectUrl()
+            );
+
+            useCase.execute(command);
         });
     }
 }

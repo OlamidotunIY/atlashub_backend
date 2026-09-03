@@ -1,19 +1,26 @@
 package com.atlashub.charges.adapter.out.external;
 
 import com.atlashub.charges.application.port.out.PaymentGatewayPort;
-import lombok.extern.slf4j.Slf4j;
+import com.atlashub.charges.domain.valueobject.ChargePurpose;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 
-@Slf4j
 @Component
 public class PaymentGatewayAdapter implements PaymentGatewayPort {
 
+    private static final Logger log = LoggerFactory.getLogger(PaymentGatewayAdapter.class);
+
+    private final String paystackSecretKey;
+
+    public PaymentGatewayAdapter() {
+        this.paystackSecretKey = "dummy_secret_key";
+    }
+
     @Override
-    public String initializeCharge(BigDecimal amount, String currency, String email, String reference, String purpose, String metadata, String redirectUrl) {
-        log.info("Initializing Paystack charge for amount {} {} reference {}", amount, currency, reference);
-        // Normally calls Paystack API and returns authorization_url
-        return "https://checkout.paystack.com/" + reference;
+    public String initializeCharge(BigDecimal amount, String currency, String email, String reference, String metadata, String redirectUrl) {
+        return "";
     }
 }
