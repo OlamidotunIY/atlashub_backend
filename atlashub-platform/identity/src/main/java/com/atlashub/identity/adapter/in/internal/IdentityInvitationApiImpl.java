@@ -3,7 +3,7 @@ package com.atlashub.identity.adapter.in.internal;
 import com.atlashub.identity.application.query.GetInvitationByTokenQuery;
 import com.atlashub.identity.application.result.InvitationDto;
 import com.atlashub.identity.application.usecase.GetInvitationByTokenUseCase;
-import com.atlashub.shared.api.InvitationQueryApi;
+import com.atlashub.shared.application.api.InvitationQueryApi;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;

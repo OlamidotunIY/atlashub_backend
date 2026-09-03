@@ -4,8 +4,8 @@ import com.atlashub.auth.application.result.SessionDto;
 import com.atlashub.auth.application.query.GetSessionsQuery;
 import com.atlashub.auth.domain.model.Session;
 import com.atlashub.auth.domain.repository.SessionRepository;
-import com.atlashub.shared.dto.ApiResponse;
-import com.atlashub.shared.usecase.BaseUseCase;
+import com.atlashub.shared.application.dto.ApiResponse;
+import com.atlashub.shared.application.usecase.BaseUseCase;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

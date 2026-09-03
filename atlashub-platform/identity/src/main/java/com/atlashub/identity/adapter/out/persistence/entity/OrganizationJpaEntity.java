@@ -1,20 +1,13 @@
 package com.atlashub.identity.adapter.out.persistence.entity;
 
+import com.atlashub.identity.domain.valueobject.BusinessSize;
 import com.atlashub.identity.domain.valueobject.BusinessType;
 import com.atlashub.identity.domain.valueobject.ComplianceStatus;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.Id;
-import jakarta.persistence.Index;
-import jakarta.persistence.Table;
+import com.atlashub.shared.domain.money.CurrencyCode;
+import jakarta.persistence.*;
+import lombok.*;
+
 import java.time.ZonedDateTime;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @Entity
 @Table(name = "organizations",
@@ -38,6 +31,13 @@ public class OrganizationJpaEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "business_type", nullable = false)
     private BusinessType businessType;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "business_size", nullable = false)
+    private BusinessSize businessSize;
+
+    @Column(name = "currency")
+    private CurrencyCode currency;
 
     @Setter
     @Column(name = "description")

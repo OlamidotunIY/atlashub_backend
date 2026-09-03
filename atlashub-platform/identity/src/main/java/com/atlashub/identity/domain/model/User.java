@@ -7,8 +7,8 @@ import com.atlashub.shared.domain.AggregateRoot;
 import com.atlashub.shared.domain.valueobject.Country;
 import com.atlashub.shared.domain.valueobject.EmailAddress;
 import com.atlashub.shared.domain.valueobject.PhoneNumber;
-import com.atlashub.shared.exception.SharedErrorCode;
-import com.atlashub.shared.exception.ValidationException;
+import com.atlashub.shared.domain.exception.SharedErrorCode;
+import com.atlashub.shared.domain.exception.ValidationException;
 import lombok.Getter;
 
 import java.time.ZonedDateTime;
@@ -21,6 +21,7 @@ public class User extends AggregateRoot<Long> {
     private String firstName;
     private String lastName;
     private final EmailAddress email;
+    private String imageUrl;
     private PhoneNumber phone;
     private final Country country;
     private Long activeOrganizationId;
@@ -61,18 +62,24 @@ public class User extends AggregateRoot<Long> {
     }
 
     /** Reconstitution constructor — used by mappers only. No events raised. */
-    public User(Long id, String firstName, String lastName, EmailAddress email,
+    public User(Long id, String firstName, String lastName, EmailAddress email, String imageUrl,
                 PhoneNumber phone, Country country, Long activeOrganizationId,
                 ZonedDateTime createdAt, ZonedDateTime updatedAt) {
         this.id = id;
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
+        this.imageUrl = imageUrl;
         this.phone = phone;
         this.country = country;
         this.activeOrganizationId = activeOrganizationId;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
+    }
+
+    public void updateImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+        this.updatedAt = ZonedDateTime.now();
     }
 
     public void updateProfile(String firstName, String lastName, PhoneNumber phone) {

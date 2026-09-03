@@ -1,7 +1,7 @@
 package com.atlashub.notifications.application.usecase;
 
 import com.atlashub.notifications.application.port.EmailSenderPort;
-import com.atlashub.shared.usecase.BaseUseCase;
+import com.atlashub.shared.application.usecase.BaseUseCase;
 import org.springframework.stereotype.Service;
 
 @Service

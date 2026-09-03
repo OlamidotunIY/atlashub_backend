@@ -9,7 +9,7 @@ import com.atlashub.accounts.application.usecase.ForceCloseAccountsUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import com.atlashub.shared.dto.ApiResponse;
+import com.atlashub.shared.application.dto.ApiResponse;
 
 @RestController
 @RequestMapping("/api/v1/dedicated_account")

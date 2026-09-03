@@ -1,0 +1,17 @@
+package com.atlashub.shared.application.api;
+
+import java.util.Optional;
+
+public interface UserQueryApi {
+    Optional<UserSharedDto> getUserById(Long userId);
+
+    record UserSharedDto(
+        Long id,
+        String firstName,
+        String lastName,
+        String email,
+        String imageUrl,
+        String phone,
+        String country
+    ) {}
+}

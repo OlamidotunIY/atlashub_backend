@@ -1,7 +1,7 @@
 package com.atlashub.notifications.adapter.in.web.controller;
 
 import com.atlashub.notifications.application.service.WsTicketService;
-import com.atlashub.shared.dto.ApiResponse;
+import com.atlashub.shared.application.dto.ApiResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;

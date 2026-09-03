@@ -3,7 +3,7 @@ package com.atlashub.auth.adapter.out.external.identity;
 import com.atlashub.auth.application.port.out.OrganizationMemberQueryPort;
 import org.springframework.stereotype.Component;
 
-import com.atlashub.shared.api.OrganizationMemberQueryApi;
+import com.atlashub.shared.application.api.OrganizationMemberQueryApi;
 
 @Component
 public class IdentityOrganizationMemberAdapter implements OrganizationMemberQueryPort {

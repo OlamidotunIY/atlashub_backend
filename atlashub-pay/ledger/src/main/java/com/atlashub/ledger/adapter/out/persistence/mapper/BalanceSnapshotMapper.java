@@ -2,8 +2,8 @@ package com.atlashub.ledger.adapter.out.persistence.mapper;
 
 import com.atlashub.ledger.domain.model.BalanceSnapshot;
 import com.atlashub.ledger.adapter.out.persistence.entity.BalanceSnapshotJpaEntity;
-import com.atlashub.shared.money.CurrencyCode;
-import com.atlashub.shared.money.Money;
+import com.atlashub.shared.domain.money.CurrencyCode;
+import com.atlashub.shared.domain.money.Money;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -18,7 +18,8 @@ public class BalanceSnapshotMapper {
                 domain.getBalance().amount(),
                 domain.getBalance().currency().name(),
                 domain.getLastLedgerEntryId(),
-                domain.getSnapshotAt()
+                domain.getSnapshotAt(),
+                null
         );
     }
 

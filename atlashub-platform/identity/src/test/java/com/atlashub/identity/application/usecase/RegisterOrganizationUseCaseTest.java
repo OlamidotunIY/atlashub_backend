@@ -2,6 +2,7 @@ package com.atlashub.identity.application.usecase;
 
 import com.atlashub.identity.application.command.RegisterOrganizationCommand;
 import com.atlashub.identity.application.result.RegisterOrganizationResult;
+import com.atlashub.identity.domain.valueobject.BusinessSize;
 import com.atlashub.identity.domain.valueobject.BusinessType;
 import com.atlashub.identity.domain.model.Organization;
 import com.atlashub.identity.domain.model.OrganizationMember;
@@ -11,8 +12,8 @@ import com.atlashub.identity.domain.repository.OrganizationMemberRepository;
 import com.atlashub.identity.domain.repository.UserRepository;
 import com.atlashub.shared.domain.valueobject.Country;
 import com.atlashub.shared.domain.valueobject.EmailAddress;
-import com.atlashub.shared.event.DomainEventPublisher;
-import com.atlashub.shared.exception.NotFoundException;
+import com.atlashub.shared.application.port.out.DomainEventPublisher;
+import com.atlashub.shared.domain.exception.NotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -42,7 +43,9 @@ class RegisterOrganizationUseCaseTest {
     private static final RegisterOrganizationCommand VALID_COMMAND = new RegisterOrganizationCommand(
             1L,
             "Acme Corp",
-            BusinessType.STARTER
+            BusinessType.FINANCE,
+            BusinessSize.STARTER,
+            null
     );
 
     @BeforeEach

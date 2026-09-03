@@ -17,7 +17,7 @@ class VirtualAccountTest {
                 "Test Organization Account",
                 "Wema",
                 "idempotency_123",
-                com.atlashub.shared.money.CurrencyCode.NGN
+                com.atlashub.shared.domain.money.CurrencyCode.NGN
         );
         
         assertEquals(AccountStatus.PENDING_ISSUANCE, account.getStatus());

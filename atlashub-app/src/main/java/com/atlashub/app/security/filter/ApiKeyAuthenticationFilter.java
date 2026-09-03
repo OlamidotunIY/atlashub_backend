@@ -43,7 +43,7 @@ public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
         if (token.startsWith("pk_") || token.startsWith("sk_")) {
             String hashToLookup = token;
             if (token.startsWith("sk_")) {
-                hashToLookup = com.atlashub.shared.util.HashingUtils.sha256Hex(token);
+                hashToLookup = com.atlashub.shared.application.util.HashingUtils.sha256Hex(token);
             }
 
             Optional<ApiKey> apiKeyOpt = apiKeyRepository.findByKeyHash(hashToLookup);

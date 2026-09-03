@@ -1,11 +1,11 @@
 package com.atlashub.notifications.adapter.in.messaging;
 
 import com.atlashub.identity.domain.event.OrganizationMemberAdded;
-import com.atlashub.shared.api.OrganizationQueryApi;
-import com.atlashub.shared.api.UserQueryApi;
+import com.atlashub.shared.application.api.OrganizationQueryApi;
+import com.atlashub.shared.application.api.UserQueryApi;
 import com.atlashub.notifications.application.port.EmailSenderPort;
 import com.atlashub.shared.adapter.out.external.dlq.DeadLetterRepository;
-import com.atlashub.shared.event.BaseKafkaEventListener;
+import com.atlashub.shared.adapter.in.messaging.BaseKafkaEventListener;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -2,11 +2,10 @@ package com.atlashub.ledger.domain.model;
 
 import com.atlashub.ledger.domain.valueobject.EntryType;
 import com.atlashub.shared.domain.AggregateRoot;
-import com.atlashub.shared.exception.BusinessRuleException;
+import com.atlashub.shared.domain.exception.BusinessRuleException;
 import com.atlashub.ledger.domain.exception.LedgerErrorCode;
 import com.atlashub.ledger.domain.event.LedgerTransactionPostedEvent;
-import com.atlashub.shared.money.Money;
-import lombok.Getter;
+import com.atlashub.shared.domain.money.Money;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -16,7 +15,6 @@ import java.util.UUID;
 
 public class LedgerTransaction extends AggregateRoot<Long> {
     private final Long id;
-    @Getter
     private final TransactionReference transactionReference;
     private final List<LedgerEntry> entries;
     private final ZonedDateTime postedAt;
@@ -83,6 +81,10 @@ public class LedgerTransaction extends AggregateRoot<Long> {
     @Override
     public Long getId() {
         return id;
+    }
+
+    public TransactionReference getTransactionReference() {
+        return transactionReference;
     }
 
     public List<LedgerEntry> getEntries() {

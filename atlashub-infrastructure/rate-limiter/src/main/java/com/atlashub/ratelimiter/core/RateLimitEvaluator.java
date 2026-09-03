@@ -3,7 +3,7 @@ package com.atlashub.ratelimiter.core;
 import com.atlashub.ratelimiter.exception.RateLimiterErrorCode;
 import com.atlashub.ratelimiter.redis.RedisSlidingWindowRateLimiter;
 import com.atlashub.ratelimiter.redis.RedisTokenBucketRateLimiter;
-import com.atlashub.shared.exception.RateLimitExceededException;
+import com.atlashub.shared.domain.exception.RateLimitExceededException;
 import org.springframework.stereotype.Service;
 
 @Service

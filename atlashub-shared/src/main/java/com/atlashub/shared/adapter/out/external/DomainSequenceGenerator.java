@@ -24,6 +24,8 @@ public class DomainSequenceGenerator {
         seedSequence("wallet_seq", 1000L);
         seedSequence("apikey_seq", 1000L);
         seedSequence("admin_seq", 100L);
+        seedSequence("HubProduct_seq", 1L);
+        seedSequence("ProductPricing_seq", 1L);
     }
 
     private void seedSequence(String sequenceName, Long initialValue) {

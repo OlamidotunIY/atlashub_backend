@@ -48,6 +48,11 @@ public class AdminRepositoryAdapter implements AdminRepository {
     }
 
     @Override
+    public Optional<Admin> findByRole(AdminRole role) {
+        return jpaRepository.findByRole(role).map(mapper::toDomain);
+    }
+
+    @Override
     public Long nextIdentity() {
         return sequenceGenerator.nextIdentity("admin_seq");
     }

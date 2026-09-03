@@ -24,7 +24,8 @@ import com.atlashub.auth.adapter.in.web.request.ChangeTemporaryPasswordRequestDt
 import com.atlashub.auth.adapter.in.web.request.CompleteVerificationRequestDto;
 import com.atlashub.auth.adapter.in.web.request.LoginRequestDto;
 import com.atlashub.auth.adapter.in.web.request.SetupPasswordRequestDto;
-import com.atlashub.shared.dto.ApiResponse;
+import com.atlashub.shared.application.dto.ApiResponse;
+import com.atlashub.shared.adapter.security.PublicEndpoint;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -75,6 +76,7 @@ public class AuthController {
         return ResponseEntity.ok(new ApiResponse<>(true, "Authenticated user retrieved successfully", result, null));
     }
 
+    @PublicEndpoint
     @PostMapping("/setup-password/resend")
     public ResponseEntity<ApiResponse<Void>> resendSetupToken(
             @Valid @RequestBody ResendSetupTokenRequestDto request) {
@@ -116,6 +118,7 @@ public class AuthController {
         return ResponseEntity.ok(changeTemporaryPasswordUseCase.execute(command));
     }
     
+    @PublicEndpoint
     @PostMapping("/setup-password")
     public ResponseEntity<ApiResponse<AuthResponseDto>> setupPassword(
             @Valid @RequestBody SetupPasswordRequestDto request,
@@ -130,7 +133,8 @@ public class AuthController {
         
         return ResponseEntity.ok(setupPasswordUseCase.execute(command));
     }
-    
+
+    @PublicEndpoint
     @PostMapping("/verify-email")
     public ResponseEntity<ApiResponse<VerificationResponseDto>> verifyEmail(
             @Valid @RequestBody CompleteVerificationRequestDto request) {

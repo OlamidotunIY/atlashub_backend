@@ -4,10 +4,12 @@ import com.atlashub.identity.domain.event.*;
 import com.atlashub.identity.domain.exception.IdentityErrorCode;
 import com.atlashub.identity.domain.valueobject.*;
 import com.atlashub.shared.domain.AggregateRoot;
+import com.atlashub.shared.domain.money.CurrencyCode;
 import com.atlashub.shared.domain.valueobject.EmailAddress;
 import com.atlashub.shared.domain.valueobject.PhoneNumber;
-import com.atlashub.shared.exception.BusinessRuleException;
+import com.atlashub.shared.domain.exception.BusinessRuleException;
 import lombok.Getter;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
@@ -19,7 +21,9 @@ public class Organization extends AggregateRoot<Long> {
     private final Long id;
     private String businessName;
     private final BusinessType businessType;
+    private final BusinessSize businessSize;
     private String description;
+    private final CurrencyCode currency;
     private String logoUrl;
     private ComplianceStatus complianceStatus;
     private ComplianceStep complianceStep;
@@ -27,13 +31,17 @@ public class Organization extends AggregateRoot<Long> {
     private final ZonedDateTime createdAt;
     private ZonedDateTime updatedAt;
 
-    /** Creation constructor — raises OrganizationRegistered event. */
-    public Organization(Long id, String businessName, BusinessType businessType) {
+    /**
+     * Creation constructor — raises OrganizationRegistered event.
+     */
+    public Organization(Long id, String businessName, BusinessType businessType, BusinessSize businessSize, CurrencyCode currency, String logoUrl) {
         this.id = id;
         this.businessName = businessName;
         this.businessType = businessType;
+        this.businessSize = businessSize;
+        this.currency = currency;
         this.description = null;
-        this.logoUrl = null;
+        this.logoUrl = logoUrl;
         this.complianceStatus = ComplianceStatus.NOT_STARTED;
         this.complianceStep = null;
         this.compliance = new OrganizationCompliance();
@@ -41,25 +49,31 @@ public class Organization extends AggregateRoot<Long> {
         this.updatedAt = this.createdAt;
 
         registerEvent(new OrganizationRegistered(
-            UUID.randomUUID().toString(),
-            String.valueOf(id),
-            ZonedDateTime.now(),
-            new OrganizationRegistered.Payload(
-                this.businessName,
-                this.businessType
-            )
+                UUID.randomUUID().toString(),
+                String.valueOf(id),
+                ZonedDateTime.now(),
+                new OrganizationRegistered.Payload(
+                        this.businessName,
+                        this.businessType,
+                        this.businessSize,
+                        this.currency
+                )
         ));
     }
 
-    /** Reconstitution constructor — used by mappers only. No events raised. */
-    public Organization(Long id, String businessName, BusinessType businessType,
-                        String description, String logoUrl,
+    /**
+     * Reconstitution constructor — used by mappers only. No events raised.
+     */
+    public Organization(Long id, String businessName, BusinessType businessType, BusinessSize businessSize,
+                        String description, CurrencyCode currency, String logoUrl,
                         ComplianceStatus complianceStatus, ComplianceStep complianceStep,
                         ZonedDateTime createdAt, ZonedDateTime updatedAt) {
         this.id = id;
         this.businessName = businessName;
         this.businessType = businessType;
+        this.businessSize = businessSize;
         this.description = description;
+        this.currency = currency;
         this.logoUrl = logoUrl;
         this.complianceStatus = complianceStatus;
         this.complianceStep = complianceStep;
@@ -75,14 +89,14 @@ public class Organization extends AggregateRoot<Long> {
         this.updatedAt = ZonedDateTime.now();
 
         registerEvent(new OrganizationUpdated(
-            UUID.randomUUID().toString(),
-            String.valueOf(id),
-            this.updatedAt,
-            new OrganizationUpdated.Payload(
-                this.businessName,
-                this.description,
-                this.logoUrl
-            )
+                UUID.randomUUID().toString(),
+                String.valueOf(id),
+                this.updatedAt,
+                new OrganizationUpdated.Payload(
+                        this.businessName,
+                        this.description,
+                        this.logoUrl
+                )
         ));
     }
 
@@ -103,10 +117,10 @@ public class Organization extends AggregateRoot<Long> {
         this.updatedAt = ZonedDateTime.now();
 
         registerEvent(new OrganizationComplianceStepCompleted(
-            UUID.randomUUID().toString(),
-            String.valueOf(id),
-            ZonedDateTime.now(),
-            new OrganizationComplianceStepCompleted.Payload(step)
+                UUID.randomUUID().toString(),
+                String.valueOf(id),
+                ZonedDateTime.now(),
+                new OrganizationComplianceStepCompleted.Payload(step)
         ));
     }
 
@@ -144,9 +158,9 @@ public class Organization extends AggregateRoot<Long> {
         this.updatedAt = ZonedDateTime.now();
 
         registerEvent(new OrganizationComplianceSubmitted(
-            UUID.randomUUID().toString(),
-            String.valueOf(id),
-            ZonedDateTime.now()
+                UUID.randomUUID().toString(),
+                String.valueOf(id),
+                ZonedDateTime.now()
         ));
     }
 
@@ -159,10 +173,10 @@ public class Organization extends AggregateRoot<Long> {
         this.updatedAt = ZonedDateTime.now();
 
         registerEvent(new OrganizationComplianceApproved(
-            UUID.randomUUID().toString(),
-            String.valueOf(id),
-            ZonedDateTime.now(),
-            new OrganizationComplianceApproved.Payload(this.businessName)
+                UUID.randomUUID().toString(),
+                String.valueOf(id),
+                ZonedDateTime.now(),
+                new OrganizationComplianceApproved.Payload(this.businessName)
         ));
     }
 
@@ -175,10 +189,10 @@ public class Organization extends AggregateRoot<Long> {
         this.updatedAt = ZonedDateTime.now();
 
         registerEvent(new OrganizationComplianceRejected(
-            UUID.randomUUID().toString(),
-            String.valueOf(id),
-            ZonedDateTime.now(),
-            new OrganizationComplianceRejected.Payload(reason)
+                UUID.randomUUID().toString(),
+                String.valueOf(id),
+                ZonedDateTime.now(),
+                new OrganizationComplianceRejected.Payload(reason)
         ));
     }
 
@@ -191,10 +205,10 @@ public class Organization extends AggregateRoot<Long> {
         this.updatedAt = ZonedDateTime.now();
 
         registerEvent(new OrganizationBanned(
-            UUID.randomUUID().toString(),
-            String.valueOf(id),
-            ZonedDateTime.now(),
-            new OrganizationBanned.Payload(reason)
+                UUID.randomUUID().toString(),
+                String.valueOf(id),
+                ZonedDateTime.now(),
+                new OrganizationBanned.Payload(reason)
         ));
     }
 

@@ -8,13 +8,13 @@ import com.atlashub.ledger.domain.repository.BalanceSnapshotRepository;
 import com.atlashub.ledger.domain.repository.LedgerEntryRepository;
 import com.atlashub.ledger.domain.repository.LedgerTransactionRepository;
 import com.atlashub.ledger.domain.valueobject.EntryType;
-import com.atlashub.shared.exception.BusinessRuleException;
-import com.atlashub.shared.exception.ConflictException;
-import com.atlashub.shared.exception.NotFoundException;
-import com.atlashub.shared.money.Money;
-import com.atlashub.shared.port.out.AccountDetailsDto;
-import com.atlashub.shared.port.out.AccountQueryPort;
-import com.atlashub.shared.usecase.BaseUseCase;
+import com.atlashub.shared.domain.exception.BusinessRuleException;
+import com.atlashub.shared.domain.exception.ConflictException;
+import com.atlashub.shared.domain.exception.NotFoundException;
+import com.atlashub.shared.domain.money.Money;
+import com.atlashub.shared.application.port.out.AccountDetailsDto;
+import com.atlashub.shared.application.port.out.AccountQueryPort;
+import com.atlashub.shared.application.usecase.BaseUseCase;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -103,7 +103,7 @@ public class PostLedgerTransactionUseCase extends BaseUseCase<PostLedgerTransact
             Long entryId = ledgerEntryRepository.nextIdentity();
             
             // Update snapshot in memory
-            snapshot.updateBalance(newBalance, entryId);
+            snapshot = snapshot.update(newBalance, entryId);
 
             return new LedgerEntry(
                 entryId,

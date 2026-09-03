@@ -8,10 +8,10 @@ import com.atlashub.auth.domain.model.AuthAccount;
 import com.atlashub.auth.domain.repository.AuthAccountRepository;
 import com.atlashub.auth.domain.valueobject.AuthStatus;
 import com.atlashub.auth.domain.valueobject.PrincipalType;
-import com.atlashub.shared.event.DomainEventPublisher;
-import com.atlashub.shared.exception.ConflictException;
-import com.atlashub.shared.exception.NotFoundException;
-import com.atlashub.shared.usecase.BaseUseCase;
+import com.atlashub.shared.application.port.out.DomainEventPublisher;
+import com.atlashub.shared.domain.exception.ConflictException;
+import com.atlashub.shared.domain.exception.NotFoundException;
+import com.atlashub.shared.application.usecase.BaseUseCase;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

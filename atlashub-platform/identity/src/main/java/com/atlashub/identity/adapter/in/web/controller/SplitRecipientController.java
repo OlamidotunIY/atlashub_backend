@@ -9,7 +9,7 @@ import com.atlashub.identity.application.usecase.GetSplitRecipientUseCase;
 import com.atlashub.identity.application.usecase.ListSplitRecipientsUseCase;
 import com.atlashub.identity.application.usecase.RegisterSplitRecipientUseCase;
 import com.atlashub.identity.adapter.in.web.request.RegisterSplitRecipientRequest;
-import com.atlashub.shared.util.PageResult;
+import com.atlashub.shared.application.util.PageResult;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
 import java.util.List;
-import com.atlashub.shared.dto.ApiResponse;
+import com.atlashub.shared.application.dto.ApiResponse;
 
 @RestController
 @RequestMapping("/api/v1/SplitRecipients")

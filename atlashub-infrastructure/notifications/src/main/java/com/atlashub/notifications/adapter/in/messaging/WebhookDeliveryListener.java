@@ -1,8 +1,8 @@
 package com.atlashub.notifications.adapter.in.messaging;
 
-import com.atlashub.shared.event.WebhookDeliveryRequestedEvent;
-import com.atlashub.shared.event.EnvelopedDomainEvent;
-import com.atlashub.shared.event.DomainEvent;
+import com.atlashub.shared.domain.event.WebhookDeliveryRequestedEvent;
+import com.atlashub.shared.domain.event.EnvelopedDomainEvent;
+import com.atlashub.shared.domain.event.DomainEvent;
 import com.atlashub.shared.adapter.out.external.dlq.DeadLetterRepository;
 import lombok.extern.slf4j.Slf4j;
 import java.util.UUID;

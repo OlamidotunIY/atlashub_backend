@@ -1,24 +1,23 @@
 package com.atlashub.identity.adapter.in.web.controller;
 
+import com.atlashub.identity.adapter.in.web.request.*;
 import com.atlashub.identity.application.command.*;
+import com.atlashub.identity.application.query.GetOrganizationProfileQuery;
 import com.atlashub.identity.application.result.OrganizationProfileDto;
 import com.atlashub.identity.application.result.RegisterOrganizationResult;
-import com.atlashub.identity.application.query.GetOrganizationProfileQuery;
 import com.atlashub.identity.application.usecase.*;
 import com.atlashub.identity.domain.valueobject.ComplianceStatus;
-import com.atlashub.identity.adapter.in.web.request.*;
+import com.atlashub.shared.application.dto.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import com.atlashub.shared.dto.ApiResponse;
-import java.security.Principal;
-import java.util.Map;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.security.Principal;
 
 @RestController
 @RequestMapping("/api/v1/Organizations")
@@ -37,7 +36,7 @@ public class OrganizationController {
     private final SubmitComplianceUseCase submitComplianceUseCase;
 
     public OrganizationController(
-            RegisterOrganizationUseCase registerOrganizationUseCase, 
+            RegisterOrganizationUseCase registerOrganizationUseCase,
             GetOrganizationProfileUseCase getOrganizationProfileUseCase,
             CompleteComplianceProfileUseCase completeComplianceProfileUseCase,
             CompleteComplianceContactUseCase completeComplianceContactUseCase,
@@ -63,7 +62,9 @@ public class OrganizationController {
         RegisterOrganizationCommand command = new RegisterOrganizationCommand(
                 userId,
                 request.businessName(),
-                request.businessType()
+                request.businessType(),
+                request.businessSize(),
+                request.logoUrl()
         );
         RegisterOrganizationResult result = registerOrganizationUseCase.execute(command);
         log.info("Successfully processed registration for Organization ID: {}", result.organizationId());
@@ -79,7 +80,7 @@ public class OrganizationController {
         OrganizationProfileDto result = getOrganizationProfileUseCase.execute(query);
         return ResponseEntity.ok(new ApiResponse<>(true, "Profile retrieved successfully", result, null));
     }
-    
+
     @GetMapping("/compliance")
     @Operation(summary = "Get compliance status")
     public ResponseEntity<ApiResponse<ComplianceStatus>> getComplianceStatus(Principal principal) {
@@ -94,13 +95,13 @@ public class OrganizationController {
     public ResponseEntity<ApiResponse<Void>> completeProfile(@Valid @RequestBody CompleteComplianceProfileRequest request, Principal principal) {
         String OrganizationIdStr = principal != null ? principal.getName() : "anonymous";
         CompleteComplianceProfileCommand command = new CompleteComplianceProfileCommand(
-            Long.valueOf(OrganizationIdStr),
-            request.description(),
-            request.staffSize(),
-            request.industry(),
-            request.category(),
-            request.annualProjectedSalesVolume() != null ? request.annualProjectedSalesVolume().amount() : null,
-            request.annualProjectedSalesVolume() != null ? request.annualProjectedSalesVolume().currency() : null
+                Long.valueOf(OrganizationIdStr),
+                request.description(),
+                request.staffSize(),
+                request.industry(),
+                request.category(),
+                request.annualProjectedSalesVolume() != null ? request.annualProjectedSalesVolume().amount() : null,
+                request.annualProjectedSalesVolume() != null ? request.annualProjectedSalesVolume().currency() : null
         );
         completeComplianceProfileUseCase.execute(command);
         return ResponseEntity.ok(new ApiResponse<>(true, "Operation successful", null, null));
@@ -111,19 +112,19 @@ public class OrganizationController {
     public ResponseEntity<ApiResponse<Void>> completeContact(@Valid @RequestBody CompleteComplianceContactRequest request, Principal principal) {
         String OrganizationIdStr = principal != null ? principal.getName() : "anonymous";
         CompleteComplianceContactCommand command = new CompleteComplianceContactCommand(
-            Long.valueOf(OrganizationIdStr),
-            request.supportEmail(),
-            request.disputeEmail(),
-            request.whatsappPhone(),
-            request.whatsappName(),
-            request.websiteUrl(),
-            request.twitterHandle(),
-            request.facebookUsername(),
-            request.instagramHandle(),
-            request.businessState(),
-            request.businessLga(),
-            request.businessCity(),
-            request.businessStreet()
+                Long.valueOf(OrganizationIdStr),
+                request.supportEmail(),
+                request.disputeEmail(),
+                request.whatsappPhone(),
+                request.whatsappName(),
+                request.websiteUrl(),
+                request.twitterHandle(),
+                request.facebookUsername(),
+                request.instagramHandle(),
+                request.businessState(),
+                request.businessLga(),
+                request.businessCity(),
+                request.businessStreet()
         );
         completeComplianceContactUseCase.execute(command);
         return ResponseEntity.ok(new ApiResponse<>(true, "Operation successful", null, null));
@@ -134,14 +135,14 @@ public class OrganizationController {
     public ResponseEntity<ApiResponse<Void>> completeOwner(@Valid @RequestBody CompleteComplianceOwnerRequest request, Principal principal) {
         String OrganizationIdStr = principal != null ? principal.getName() : "anonymous";
         CompleteComplianceOwnerCommand command = new CompleteComplianceOwnerCommand(
-            Long.valueOf(OrganizationIdStr),
-            request.bvn(),
-            request.nin(),
-            request.dateOfBirth(),
-            request.address(),
-            request.idType(),
-            request.idNumber(),
-            request.rcNumber()
+                Long.valueOf(OrganizationIdStr),
+                request.bvn(),
+                request.nin(),
+                request.dateOfBirth(),
+                request.address(),
+                request.idType(),
+                request.idNumber(),
+                request.rcNumber()
         );
         completeComplianceOwnerUseCase.execute(command);
         return ResponseEntity.ok(new ApiResponse<>(true, "Operation successful", null, null));
@@ -152,9 +153,9 @@ public class OrganizationController {
     public ResponseEntity<ApiResponse<Void>> completeAccount(@Valid @RequestBody CompleteComplianceAccountRequest request, Principal principal) {
         String OrganizationIdStr = principal != null ? principal.getName() : "anonymous";
         CompleteComplianceAccountCommand command = new CompleteComplianceAccountCommand(
-            Long.valueOf(OrganizationIdStr),
-            request.bankCode(),
-            request.accountNumber()
+                Long.valueOf(OrganizationIdStr),
+                request.bankCode(),
+                request.accountNumber()
         );
         completeComplianceAccountUseCase.execute(command);
         return ResponseEntity.ok(new ApiResponse<>(true, "Operation successful", null, null));
@@ -165,8 +166,8 @@ public class OrganizationController {
     public ResponseEntity<ApiResponse<Void>> completeServiceAgreement(@Valid @RequestBody CompleteComplianceServiceAgreementRequest request, Principal principal) {
         String OrganizationIdStr = principal != null ? principal.getName() : "anonymous";
         CompleteComplianceServiceAgreementCommand command = new CompleteComplianceServiceAgreementCommand(
-            Long.valueOf(OrganizationIdStr),
-            request.agreed()
+                Long.valueOf(OrganizationIdStr),
+                request.agreed()
         );
         completeComplianceServiceAgreementUseCase.execute(command);
         return ResponseEntity.ok(new ApiResponse<>(true, "Operation successful", null, null));

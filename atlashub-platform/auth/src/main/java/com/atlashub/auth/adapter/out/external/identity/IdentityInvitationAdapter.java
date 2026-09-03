@@ -1,7 +1,7 @@
 package com.atlashub.auth.adapter.out.external.identity;
 
 import com.atlashub.auth.application.port.out.InvitationQueryPort;
-import com.atlashub.shared.api.InvitationQueryApi;
+import com.atlashub.shared.application.api.InvitationQueryApi;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;

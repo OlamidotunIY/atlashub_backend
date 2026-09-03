@@ -4,7 +4,7 @@ import com.atlashub.notifications.application.service.WsTicketService;
 import com.atlashub.ratelimiter.core.EvaluateRateLimitUseCase;
 import com.atlashub.ratelimiter.core.RateLimitRule;
 import com.atlashub.ratelimiter.core.RateLimitRuleProvider;
-import com.atlashub.shared.exception.RateLimitExceededException;
+import com.atlashub.shared.domain.exception.RateLimitExceededException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;

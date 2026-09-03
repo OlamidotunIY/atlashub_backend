@@ -1,6 +1,6 @@
 package com.atlashub.ratelimiter.exception;
 
-import com.atlashub.shared.exception.ErrorCode;
+import com.atlashub.shared.domain.exception.ErrorCode;
 
 public enum RateLimiterErrorCode implements ErrorCode {
     RATE_LIMIT_EXCEEDED("RTL_001", "Too many requests. Please try again later.");

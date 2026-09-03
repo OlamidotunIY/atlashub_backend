@@ -6,7 +6,7 @@ import com.atlashub.accounts.application.result.VirtualAccountDto;
 import com.atlashub.accounts.application.query.GetVirtualAccountsQuery;
 import com.atlashub.accounts.domain.model.VirtualAccount;
 import com.atlashub.accounts.domain.repository.VirtualAccountDomainRepository;
-import com.atlashub.shared.usecase.BaseUseCase;
+import com.atlashub.shared.application.usecase.BaseUseCase;
 import lombok.RequiredArgsConstructor;
 import java.util.List;
 import java.util.stream.Collectors;

@@ -3,11 +3,13 @@ package com.atlashub.admin.domain.model;
 import com.atlashub.admin.domain.event.AdminPermissionGrantedEvent;
 import com.atlashub.admin.domain.event.AdminPermissionRevokedEvent;
 import com.atlashub.admin.domain.event.AdminSuspendedEvent;
+import com.atlashub.admin.domain.exception.AdminErrorCode;
 import com.atlashub.admin.domain.valueobject.AdminRole;
 import com.atlashub.admin.domain.valueobject.AdminStatus;
 import com.atlashub.admin.domain.valueobject.AdminPermission;
 import com.atlashub.shared.domain.AggregateRoot;
 import com.atlashub.shared.domain.valueobject.EmailAddress;
+import com.atlashub.shared.domain.exception.BusinessRuleException;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -47,13 +49,19 @@ public class Admin extends AggregateRoot<Long> {
     
     public void suspend() {
         if (this.role == AdminRole.MASTER) {
-            throw new IllegalStateException("MASTER admin cannot be suspended");
+            throw new BusinessRuleException(AdminErrorCode.CANNOT_SUSPEND_MASTER_ADMIN, "Master admin cannot be suspended");
+        }
+        if (this.status == AdminStatus.SUSPENDED) {
+            throw new BusinessRuleException(AdminErrorCode.ADMIN_ALREADY_SUSPENDED, "Admin is already suspended");
         }
         this.status = AdminStatus.SUSPENDED;
         this.registerEvent(new AdminSuspendedEvent(this.id, this.username));
     }
     
     public void activate() {
+        if (this.status == AdminStatus.ACTIVE) {
+            throw new BusinessRuleException(AdminErrorCode.ADMIN_ALREADY_ACTIVE, "Admin is already active");
+        }
         this.status = AdminStatus.ACTIVE;
     }
 

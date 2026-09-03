@@ -3,7 +3,7 @@ package com.atlashub.eventbus.adapter.in.internal;
 import com.atlashub.eventbus.adapter.out.persistence.entity.EventDeliveryTrackerJpaEntity;
 import com.atlashub.eventbus.adapter.out.persistence.repository.JpaEventDeliveryTrackerRepository;
 import com.atlashub.eventbus.application.port.EventTrackerPort;
-import com.atlashub.shared.api.EventTrackerApi;
+import com.atlashub.shared.application.api.EventTrackerApi;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

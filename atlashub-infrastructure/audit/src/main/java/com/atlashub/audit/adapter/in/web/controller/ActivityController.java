@@ -4,7 +4,7 @@ import com.atlashub.audit.adapter.in.web.request.GetActivitiesRequestDto;
 import com.atlashub.audit.application.query.ListOrgActivityQuery;
 import com.atlashub.audit.application.result.ActivityLogDto;
 import com.atlashub.audit.application.usecase.ListOrgActivityUseCase;
-import com.atlashub.shared.dto.ApiResponse;
+import com.atlashub.shared.application.dto.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;

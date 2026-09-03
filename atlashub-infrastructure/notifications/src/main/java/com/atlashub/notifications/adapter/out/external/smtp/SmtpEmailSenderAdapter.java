@@ -23,8 +23,10 @@ public class SmtpEmailSenderAdapter implements EmailSenderPort {
     private final JavaMailSender javaMailSender;
     private final TemplateEngine templateEngine;
 
-    @Value("${spring.mail.username:}")
-    private String fromEmail;
+    private String fromEmail = "no-reply@atlaspay.name.ng";
+
+    @Value("${atlashub.frontend.url:http://localhost:4000}")
+    private String frontendUrl;
 
     public SmtpEmailSenderAdapter(JavaMailSender javaMailSender, TemplateEngine templateEngine) {
         this.javaMailSender = javaMailSender;
@@ -51,8 +53,10 @@ public class SmtpEmailSenderAdapter implements EmailSenderPort {
             log.info("Successfully sent HTML email '{}' to {}", templateName, toEmail);
         } catch (MessagingException e) {
             log.error("MessagingException occurred while constructing/sending email '{}' to {}", templateName, toEmail, e);
+            throw new RuntimeException("Failed to construct or send email", e);
         } catch (Exception e) {
             log.error("Unexpected error occurred while sending email '{}' to {}", templateName, toEmail, e);
+            throw new RuntimeException("Unexpected error while sending email", e);
         }
     }
 
@@ -74,7 +78,7 @@ public class SmtpEmailSenderAdapter implements EmailSenderPort {
     public void sendUserSetupPasswordEmail(String toEmail, String firstName, String token) {
         Context context = new Context();
         context.setVariable("firstName", firstName);
-        context.setVariable("setupLink", "https://atlashub.name.ng/auth/setup-password?token=" + token);
+        context.setVariable("setupLink", frontendUrl + "/auth/setup-password?token=" + token);
         sendHtmlEmail(toEmail, "AtlasHub - Setup your password", "user-setup-password", context);
     }
 

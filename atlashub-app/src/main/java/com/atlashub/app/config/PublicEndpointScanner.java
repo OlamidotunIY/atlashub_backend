@@ -1,6 +1,6 @@
 package com.atlashub.app.config;
 
-import com.atlashub.shared.security.PublicEndpoint;
+import com.atlashub.shared.adapter.security.PublicEndpoint;
 import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;

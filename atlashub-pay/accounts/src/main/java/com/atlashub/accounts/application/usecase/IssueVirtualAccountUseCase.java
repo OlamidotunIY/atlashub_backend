@@ -5,12 +5,12 @@ import org.springframework.stereotype.Service;
 import com.atlashub.accounts.application.command.IssueVirtualAccountCommand;
 import com.atlashub.accounts.domain.model.VirtualAccount;
 import com.atlashub.accounts.domain.repository.VirtualAccountDomainRepository;
-import com.atlashub.shared.event.DomainEventPublisher;
-import com.atlashub.shared.usecase.BaseUseCase;
+import com.atlashub.shared.application.port.out.DomainEventPublisher;
+import com.atlashub.shared.application.usecase.BaseUseCase;
 import lombok.RequiredArgsConstructor;
 
 import com.atlashub.accounts.application.port.VirtualAccountQueryService;
-import com.atlashub.shared.exception.BusinessRuleException;
+import com.atlashub.shared.domain.exception.BusinessRuleException;
 import com.atlashub.accounts.domain.exception.AccountsErrorCode;
 
 @RequiredArgsConstructor

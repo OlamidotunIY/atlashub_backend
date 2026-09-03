@@ -4,7 +4,7 @@ import com.atlashub.audit.application.query.ListOrgActivityQuery;
 import com.atlashub.audit.application.result.ActivityLogDto;
 import com.atlashub.audit.domain.model.ActivityLog;
 import com.atlashub.audit.domain.repository.ActivityLogRepository;
-import com.atlashub.shared.usecase.BaseUseCase;
+import com.atlashub.shared.application.usecase.BaseUseCase;
 import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.stream.Collectors;

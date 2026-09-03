@@ -7,13 +7,13 @@ import org.slf4j.LoggerFactory;
 
 import com.atlashub.identity.application.command.CompleteComplianceProfileCommand;
 
-import com.atlashub.shared.usecase.BaseUseCase;
+import com.atlashub.shared.application.usecase.BaseUseCase;
 
 import com.atlashub.identity.domain.exception.IdentityErrorCode;
 import com.atlashub.identity.domain.model.Organization;
 import com.atlashub.identity.domain.repository.OrganizationRepository;
-import com.atlashub.shared.event.DomainEventPublisher;
-import com.atlashub.shared.exception.NotFoundException;
+import com.atlashub.shared.application.port.out.DomainEventPublisher;
+import com.atlashub.shared.domain.exception.NotFoundException;
 
 @Service
 public class CompleteComplianceProfileUseCase extends BaseUseCase<CompleteComplianceProfileCommand, Void> {

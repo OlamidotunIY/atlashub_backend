@@ -1,6 +1,6 @@
 package com.atlashub.shared.domain.valueobject;
 
-import com.atlashub.shared.money.CurrencyCode;
+import com.atlashub.shared.domain.money.CurrencyCode;
 import lombok.Getter;
 
 @Getter

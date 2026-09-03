@@ -2,8 +2,8 @@ package com.atlashub.eventbus.adapter.in.web.controller;
 
 import com.atlashub.eventbus.application.command.ReplayEventCommand;
 import com.atlashub.eventbus.application.usecase.ReplayEventUseCase;
-import com.atlashub.shared.dto.ApiResponse;
-import com.atlashub.shared.security.PublicEndpoint;
+import com.atlashub.shared.application.dto.ApiResponse;
+import com.atlashub.shared.adapter.security.PublicEndpoint;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;

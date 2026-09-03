@@ -5,8 +5,8 @@ import com.atlashub.eventbus.application.port.MessageBrokerPort;
 import com.atlashub.eventbus.domain.exception.EventbusErrorCode;
 import com.atlashub.eventbus.domain.model.OutboxMessage;
 import com.atlashub.eventbus.domain.repository.OutboxMessageRepository;
-import com.atlashub.shared.exception.NotFoundException;
-import com.atlashub.shared.usecase.BaseUseCase;
+import com.atlashub.shared.domain.exception.NotFoundException;
+import com.atlashub.shared.application.usecase.BaseUseCase;
 import org.springframework.stereotype.Service;
 
 import com.atlashub.shared.adapter.out.external.dlq.DeadLetterRepository;

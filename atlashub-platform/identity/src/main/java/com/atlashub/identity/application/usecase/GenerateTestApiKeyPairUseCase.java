@@ -7,14 +7,14 @@ import org.slf4j.LoggerFactory;
 
 import com.atlashub.identity.application.command.GenerateTestApiKeyPairCommand;
 
-import com.atlashub.shared.usecase.BaseUseCase;
+import com.atlashub.shared.application.usecase.BaseUseCase;
 
 import com.atlashub.identity.application.result.ApiKeyPairResult;
 import com.atlashub.identity.domain.valueobject.ApiEnvironment;
 import com.atlashub.identity.domain.model.ApiKey;
 import com.atlashub.identity.domain.valueobject.KeyType;
 import com.atlashub.identity.domain.repository.ApiKeyRepository;
-import com.atlashub.shared.event.DomainEventPublisher;
+import com.atlashub.shared.application.port.out.DomainEventPublisher;
 
 import java.util.UUID;
 
@@ -48,7 +48,7 @@ public class GenerateTestApiKeyPairUseCase extends BaseUseCase<GenerateTestApiKe
             "pk_test_"
         );
 
-        String secretKeyHash = com.atlashub.shared.util.HashingUtils.sha256Hex(rawSecretKey);
+        String secretKeyHash = com.atlashub.shared.application.util.HashingUtils.sha256Hex(rawSecretKey);
         String secretDisplay = "sk_test_****" + rawSecretKey.substring(rawSecretKey.length() - 4);
 
         ApiKey secretKey = new ApiKey(apiKeyRepository.nextIdentity(),

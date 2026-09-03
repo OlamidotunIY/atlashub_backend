@@ -21,7 +21,7 @@ import java.util.List;
 import com.atlashub.identity.adapter.in.web.response.ListApiKeysResponseDto;
 import com.atlashub.identity.adapter.in.web.response.RegenerateApiKeyResponseDto;
 import com.atlashub.identity.adapter.in.web.response.RevokeApiKeyResponseDto;
-import com.atlashub.shared.dto.ApiResponse;
+import com.atlashub.shared.application.dto.ApiResponse;
 
 @RestController
 @RequestMapping("/api/v1/keys")

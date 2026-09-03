@@ -1,7 +1,7 @@
 package com.atlashub.identity.adapter.out.external.anchor;
 
 import com.atlashub.identity.application.port.AccountNameResolutionPort;
-import com.atlashub.shared.exception.NotFoundException;
+import com.atlashub.shared.domain.exception.NotFoundException;
 import com.atlashub.identity.domain.exception.IdentityErrorCode;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;

@@ -44,8 +44,10 @@ public class AuthAccountJpaEntity {
 
     private String scope;
 
+    @Column(length = 2048)
     private String accessToken;
 
+    @Column(length = 2048)
     private String refreshToken;
 
     private ZonedDateTime accessTokenExpiresAt;

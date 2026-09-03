@@ -1,6 +1,6 @@
 package com.atlashub.notifications.adapter.in.messaging;
 
-import com.atlashub.shared.api.EventTrackerApi;
+import com.atlashub.shared.application.api.EventTrackerApi;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
@@ -19,7 +19,7 @@ public class NotificationSubscriptionRegistrar implements ApplicationRunner {
         // Auth events
         eventTrackerApi.registerSubscription("VerificationCreated", "notifications-auth-group");
         eventTrackerApi.registerSubscription("PasswordSetupInitiated", "notifications-auth-group");
-        eventTrackerApi.registerSubscription("SessionCreatedEvent", "notifications-auth-group");
+        eventTrackerApi.registerSubscription("AuthNewDeviceLoginEvent", "notifications-auth-group");
         eventTrackerApi.registerSubscription("AdminCredentialsCreated", "notifications-admin-creds-group");
         
         // Identity events

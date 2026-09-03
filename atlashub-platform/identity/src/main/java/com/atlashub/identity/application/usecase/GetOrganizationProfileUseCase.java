@@ -9,8 +9,8 @@ import com.atlashub.identity.application.result.OrganizationProfileDto;
 import com.atlashub.identity.application.port.OrganizationQueryService;
 import com.atlashub.identity.application.query.GetOrganizationProfileQuery;
 import com.atlashub.identity.domain.exception.IdentityErrorCode;
-import com.atlashub.shared.exception.NotFoundException;
-import com.atlashub.shared.usecase.BaseUseCase;
+import com.atlashub.shared.domain.exception.NotFoundException;
+import com.atlashub.shared.application.usecase.BaseUseCase;
 
 @Service
 public class GetOrganizationProfileUseCase extends BaseUseCase<GetOrganizationProfileQuery, OrganizationProfileDto> {

@@ -1,7 +1,10 @@
 package com.atlashub.identity.domain.event;
 
+import com.atlashub.identity.domain.valueobject.BusinessSize;
 import com.atlashub.identity.domain.valueobject.BusinessType;
-import com.atlashub.shared.event.DomainEvent;
+import com.atlashub.shared.domain.event.DomainEvent;
+import com.atlashub.shared.domain.money.CurrencyCode;
+
 import java.time.ZonedDateTime;
 
 public record OrganizationRegistered(
@@ -12,6 +15,8 @@ public record OrganizationRegistered(
 ) implements DomainEvent<OrganizationRegistered.Payload> {
     public record Payload(
         String businessName,
-        BusinessType businessType
+        BusinessType businessType,
+        BusinessSize businessSize,
+        CurrencyCode currency
     ) {}
 }

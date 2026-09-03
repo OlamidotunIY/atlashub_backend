@@ -4,10 +4,10 @@ import com.atlashub.identity.domain.event.SplitRecipientDeactivated;
 import com.atlashub.identity.domain.event.SplitRecipientRegistered;
 import com.atlashub.shared.domain.AggregateRoot;
 import com.atlashub.identity.domain.exception.IdentityErrorCode;
-import com.atlashub.shared.exception.BusinessRuleException;
-import com.atlashub.shared.exception.SharedErrorCode;
-import com.atlashub.shared.exception.ValidationException;
-import com.atlashub.shared.exception.ErrorCode;
+import com.atlashub.shared.domain.exception.BusinessRuleException;
+import com.atlashub.shared.domain.exception.SharedErrorCode;
+import com.atlashub.shared.domain.exception.ValidationException;
+import com.atlashub.shared.domain.exception.ErrorCode;
 import lombok.AccessLevel;
 import lombok.Getter;
 

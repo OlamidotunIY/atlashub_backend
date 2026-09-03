@@ -1,4 +1,4 @@
-package com.atlashub.shared.money;
+package com.atlashub.shared.domain.money;
 
 import org.junit.jupiter.api.Test;
 import java.math.BigDecimal;

@@ -11,10 +11,10 @@ import com.atlashub.auth.domain.model.Verification;
 import com.atlashub.auth.domain.repository.AuthAccountRepository;
 import com.atlashub.auth.domain.repository.VerificationRepository;
 import com.atlashub.auth.domain.service.VerificationCodeHasher;
-import com.atlashub.shared.dto.ApiResponse;
-import com.atlashub.shared.event.DomainEventPublisher;
-import com.atlashub.shared.exception.NotFoundException;
-import com.atlashub.shared.usecase.BaseUseCase;
+import com.atlashub.shared.application.dto.ApiResponse;
+import com.atlashub.shared.application.port.out.DomainEventPublisher;
+import com.atlashub.shared.domain.exception.NotFoundException;
+import com.atlashub.shared.application.usecase.BaseUseCase;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -57,11 +57,12 @@ public class CompleteVerificationUseCase extends BaseUseCase<CompleteVerificatio
                 .orElseThrow(() -> new NotFoundException(AuthErrorCode.AUTH_ACCOUNT_NOT_FOUND, "Auth account not found"));
 
         if (authAccount.getStatus() == AuthStatus.PENDING_EMAIL_VERIFICATION) {
-            authAccount.requirePasswordSetup();
-            authAccountRepository.save(authAccount);
-
             TokenGeneratorPort.TokenData setupToken = tokenGeneratorPort.generateSetupToken(authAccount.getPrincipalId(), authAccount.getPrincipalType().name());
             setupTokenStorePort.store(setupToken.token(), authAccount.getId());
+
+            authAccount.requirePasswordSetup(setupToken.token());
+            authAccountRepository.save(authAccount);
+            publishEvents(authAccount, eventPublisher);
 
             VerificationResponseDto responseDto = VerificationResponseDto.requiresPasswordSetup(setupToken.token());
             return new ApiResponse<>(true, "Verification completed. Password setup required.", responseDto, null);

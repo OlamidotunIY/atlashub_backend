@@ -1,23 +1,15 @@
 package com.atlashub.ledger.adapter.out.persistence.entity;
-import lombok.AllArgsConstructor;
 
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-
-@Getter
 @Entity
 @Table(name = "ledger_transactions", uniqueConstraints = {
         @UniqueConstraint(columnNames = {"transaction_id", "source_system"})
 })
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
 public class LedgerTransactionJpaEntity {
 
     @Id
@@ -35,5 +27,19 @@ public class LedgerTransactionJpaEntity {
     @OneToMany(mappedBy = "transaction", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<LedgerEntryJpaEntity> entries = new ArrayList<>();
 
-}
+    protected LedgerTransactionJpaEntity() {}
 
+    public LedgerTransactionJpaEntity(Long id, String transactionId, String sourceSystem, ZonedDateTime postedAt, List<LedgerEntryJpaEntity> entries) {
+        this.id = id;
+        this.transactionId = transactionId;
+        this.sourceSystem = sourceSystem;
+        this.postedAt = postedAt;
+        this.entries = entries != null ? entries : new ArrayList<>();
+    }
+
+    public Long getId() { return id; }
+    public String getTransactionId() { return transactionId; }
+    public String getSourceSystem() { return sourceSystem; }
+    public ZonedDateTime getPostedAt() { return postedAt; }
+    public List<LedgerEntryJpaEntity> getEntries() { return entries; }
+}

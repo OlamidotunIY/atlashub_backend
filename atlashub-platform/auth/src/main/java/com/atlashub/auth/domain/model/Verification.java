@@ -1,14 +1,14 @@
 package com.atlashub.auth.domain.model;
 
-import com.atlashub.auth.domain.event.VerificationCompletedEvent;
-import com.atlashub.auth.domain.event.VerificationCreatedEvent;
+import com.atlashub.auth.domain.event.AuthVerificationCompletedEvent;
+import com.atlashub.auth.domain.event.AuthVerificationCreatedEvent;
 import com.atlashub.auth.domain.event.VerificationPayload;
 import com.atlashub.auth.domain.exception.AuthErrorCode;
 import com.atlashub.auth.domain.service.VerificationCodeHasher;
 import com.atlashub.auth.domain.valueobject.VerificationStatus;
 import com.atlashub.auth.domain.valueobject.VerificationType;
 import com.atlashub.shared.domain.AggregateRoot;
-import com.atlashub.shared.exception.BusinessRuleException;
+import com.atlashub.shared.domain.exception.BusinessRuleException;
 import lombok.Getter;
 
 import java.time.ZonedDateTime;
@@ -48,7 +48,7 @@ public class Verification extends AggregateRoot<Long> {
         Verification verification = new Verification(id, authAccountId, identifier, value, code, type, VerificationStatus.PENDING, expiresAt, 0, maxAttempts);
 
         verification.registerEvent(
-                new VerificationCreatedEvent(
+                new AuthVerificationCreatedEvent(
                         UUID.randomUUID().toString(),
                         String.valueOf(id),
                         ZonedDateTime.now(),
@@ -85,7 +85,7 @@ public class Verification extends AggregateRoot<Long> {
         this.verifiedAt = ZonedDateTime.now();
 
         this.registerEvent(
-                new VerificationCompletedEvent(
+                new AuthVerificationCompletedEvent(
                         UUID.randomUUID().toString(),
                         String.valueOf(id),
                         ZonedDateTime.now(),

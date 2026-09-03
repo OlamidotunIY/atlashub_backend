@@ -10,5 +10,6 @@ public interface AdminRepository {
     Optional<Admin> findByUsername(String username);
     boolean existsByUsername(String username);
     boolean existsByRole(AdminRole role);
+    Optional<Admin> findByRole(AdminRole role);
     Long nextIdentity();
 }

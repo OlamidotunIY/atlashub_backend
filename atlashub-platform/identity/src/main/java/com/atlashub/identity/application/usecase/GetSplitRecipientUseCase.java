@@ -9,8 +9,8 @@ import com.atlashub.identity.application.result.SplitRecipientDto;
 import com.atlashub.identity.application.port.SplitRecipientQueryService;
 import com.atlashub.identity.application.query.GetSplitRecipientQuery;
 import com.atlashub.identity.domain.exception.IdentityErrorCode;
-import com.atlashub.shared.exception.NotFoundException;
-import com.atlashub.shared.usecase.BaseUseCase;
+import com.atlashub.shared.domain.exception.NotFoundException;
+import com.atlashub.shared.application.usecase.BaseUseCase;
 
 @Service
 public class GetSplitRecipientUseCase extends BaseUseCase<GetSplitRecipientQuery, SplitRecipientDto> {

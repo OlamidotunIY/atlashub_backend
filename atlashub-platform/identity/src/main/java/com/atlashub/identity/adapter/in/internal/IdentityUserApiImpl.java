@@ -1,7 +1,7 @@
 package com.atlashub.identity.adapter.in.internal;
 
 import com.atlashub.identity.adapter.out.persistence.repository.SpringDataUserRepository;
-import com.atlashub.shared.api.UserQueryApi;
+import com.atlashub.shared.application.api.UserQueryApi;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +25,7 @@ public class IdentityUserApiImpl implements UserQueryApi {
                         entity.getFirstName(),
                         entity.getLastName(),
                         entity.getEmail(),
+                        entity.getImageUrl(),
                         entity.getPhone(),
                         entity.getCountry()
                 ));

@@ -10,7 +10,7 @@ import com.atlashub.identity.application.usecase.DeclineInvitationUseCase;
 import com.atlashub.identity.application.usecase.GetInvitationByTokenUseCase;
 import com.atlashub.identity.application.usecase.SendInvitationUseCase;
 import com.atlashub.identity.domain.valueobject.OrganizationRole;
-import com.atlashub.shared.dto.ApiResponse;
+import com.atlashub.shared.application.dto.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;

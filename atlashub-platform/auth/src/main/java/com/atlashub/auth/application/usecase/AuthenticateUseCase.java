@@ -10,12 +10,14 @@ import com.atlashub.auth.domain.exception.AuthErrorCode;
 import com.atlashub.auth.domain.model.AuthAccount;
 import com.atlashub.auth.domain.valueobject.AuthStatus;
 import com.atlashub.auth.domain.repository.AuthAccountRepository;
-import com.atlashub.shared.dto.ApiResponse;
-import com.atlashub.shared.exception.BusinessRuleException;
-import com.atlashub.shared.exception.NotFoundException;
-import com.atlashub.shared.usecase.BaseUseCase;
+import com.atlashub.shared.application.dto.ApiResponse;
+import com.atlashub.shared.domain.exception.BusinessRuleException;
+import com.atlashub.shared.domain.exception.NotFoundException;
+import com.atlashub.shared.application.usecase.BaseUseCase;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.atlashub.shared.application.api.OrganizationMemberQueryApi;
 
 @Service
 public class AuthenticateUseCase extends BaseUseCase<AuthenticateCommand, ApiResponse<AuthResponseDto>> {
@@ -25,18 +27,21 @@ public class AuthenticateUseCase extends BaseUseCase<AuthenticateCommand, ApiRes
     private final TokenGeneratorPort tokenGeneratorPort;
     private final PreAuthTokenStorePort preAuthTokenStorePort;
     private final TokenIssuanceService tokenIssuanceService;
+    private final OrganizationMemberQueryApi organizationMemberQueryApi;
 
     public AuthenticateUseCase(
             AuthAccountRepository authAccountRepository,
             PasswordEncoderPort passwordEncoderPort,
             TokenGeneratorPort tokenGeneratorPort,
             PreAuthTokenStorePort preAuthTokenStorePort,
-            TokenIssuanceService tokenIssuanceService) {
+            TokenIssuanceService tokenIssuanceService,
+            OrganizationMemberQueryApi organizationMemberQueryApi) {
         this.authAccountRepository = authAccountRepository;
         this.passwordEncoderPort = passwordEncoderPort;
         this.tokenGeneratorPort = tokenGeneratorPort;
         this.preAuthTokenStorePort = preAuthTokenStorePort;
         this.tokenIssuanceService = tokenIssuanceService;
+        this.organizationMemberQueryApi = organizationMemberQueryApi;
     }
 
     @Override
@@ -66,7 +71,11 @@ public class AuthenticateUseCase extends BaseUseCase<AuthenticateCommand, ApiRes
             return new ApiResponse<>(true, "2FA Required", AuthResponseDto.forTwoFactor(preAuth.token()), null);
         }
 
-        AuthResponseDto responseDto = AuthResponseDto.forSuccess(tokenIssuanceService.issueTokensAndCreateSession(authAccount, input.ipAddress(), input.userAgent()));
+        String onboardingStatus = organizationMemberQueryApi.getOnboardingStatus(authAccount.getPrincipalId(), authAccount.getIdentifier());
+        AuthResponseDto responseDto = AuthResponseDto.forSuccess(
+                tokenIssuanceService.issueTokensAndCreateSession(authAccount, input.ipAddress(), input.userAgent()),
+                onboardingStatus
+        );
         return new ApiResponse<>(true, "Authentication successful", responseDto, null);
     }
 }

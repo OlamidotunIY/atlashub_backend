@@ -44,6 +44,10 @@ public class UserJpaEntity {
     private String email;
 
     @Setter
+    @Column(name = "image_url")
+    private String imageUrl;
+
+    @Setter
     @Column(name = "phone")
     private String phone;
 

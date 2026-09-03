@@ -1,10 +1,7 @@
 package com.atlashub.identity.domain.model;
 
 import com.atlashub.identity.domain.event.OrganizationComplianceSubmitted;
-import com.atlashub.identity.domain.valueobject.BusinessType;
-import com.atlashub.identity.domain.valueobject.ComplianceStatus;
-import com.atlashub.identity.domain.valueobject.GovernmentIdType;
-import com.atlashub.identity.domain.valueobject.StaffSize;
+import com.atlashub.identity.domain.valueobject.*;
 import com.atlashub.shared.domain.valueobject.EmailAddress;
 import org.junit.jupiter.api.Test;
 
@@ -15,7 +12,7 @@ class OrganizationTest {
 
     @Test
     void shouldRegisterSuccessfully() {
-        Organization Organization = new Organization(1L, "Test Inc", BusinessType.REGISTERED);
+        Organization Organization = new Organization(1L, "Test Inc", BusinessType.FINANCE, BusinessSize.STARTER, null);
         
         assertEquals(ComplianceStatus.NOT_STARTED, Organization.getComplianceStatus());
         assertEquals("Test Inc", Organization.getBusinessName());
@@ -24,7 +21,7 @@ class OrganizationTest {
 
     @Test
     void shouldCompleteComplianceStep() {
-        Organization Organization = new Organization(1L, "Test Inc", BusinessType.REGISTERED);
+        Organization Organization = new Organization(1L, "Test Inc", BusinessType.FINANCE, BusinessSize.STARTER, null);
         Organization.pullDomainEvents(); // clear initial events
         
         Organization.updateComplianceProfile("Desc", StaffSize.ONE_TO_TEN, "IT", "Tech", java.math.BigDecimal.valueOf(1000), "NGN");

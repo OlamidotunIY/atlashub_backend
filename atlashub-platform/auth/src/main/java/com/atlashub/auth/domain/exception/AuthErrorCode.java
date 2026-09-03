@@ -1,6 +1,6 @@
 package com.atlashub.auth.domain.exception;
 
-import com.atlashub.shared.exception.ErrorCode;
+import com.atlashub.shared.domain.exception.ErrorCode;
 
 public enum AuthErrorCode implements ErrorCode {
     AUTH_ACCOUNT_NOT_FOUND, AUTH_ACCOUNT_ALREADY_EXISTS, ACCOUNT_NOT_ACTIVE,

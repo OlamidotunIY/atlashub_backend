@@ -1,6 +1,6 @@
 package com.atlashub.shared.domain;
 
-import com.atlashub.shared.event.DomainEvent;
+import com.atlashub.shared.domain.event.DomainEvent;
 
 import java.util.ArrayList;
 import java.util.Collections;

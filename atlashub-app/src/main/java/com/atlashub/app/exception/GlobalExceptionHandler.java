@@ -1,9 +1,9 @@
 package com.atlashub.app.exception;
 
-import com.atlashub.shared.exception.AtlasHubException;
-import com.atlashub.shared.exception.ConflictException;
-import com.atlashub.shared.exception.NotFoundException;
-import com.atlashub.shared.exception.ValidationException;
+import com.atlashub.shared.domain.exception.AtlasHubException;
+import com.atlashub.shared.domain.exception.ConflictException;
+import com.atlashub.shared.domain.exception.NotFoundException;
+import com.atlashub.shared.domain.exception.ValidationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -25,8 +25,8 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.BAD_REQUEST, ex);
     }
     
-    @ExceptionHandler(com.atlashub.shared.exception.RateLimitExceededException.class)
-    public ResponseEntity<ErrorResponse> handleRateLimitException(com.atlashub.shared.exception.RateLimitExceededException ex) {
+    @ExceptionHandler(com.atlashub.shared.domain.exception.RateLimitExceededException.class)
+    public ResponseEntity<ErrorResponse> handleRateLimitException(com.atlashub.shared.domain.exception.RateLimitExceededException ex) {
         ErrorResponse response = new ErrorResponse(
                 ex.getErrorCodeString(),
                 ex.getMessage(),
@@ -50,8 +50,8 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.CONFLICT, ex);
     }
 
-    @ExceptionHandler(com.atlashub.shared.exception.AuthorizationException.class)
-    public ResponseEntity<ErrorResponse> handleAuthorizationException(com.atlashub.shared.exception.AuthorizationException ex) {
+    @ExceptionHandler(com.atlashub.shared.domain.exception.AuthorizationException.class)
+    public ResponseEntity<ErrorResponse> handleAuthorizationException(com.atlashub.shared.domain.exception.AuthorizationException ex) {
         return buildResponse(HttpStatus.UNAUTHORIZED, ex);
     }
 

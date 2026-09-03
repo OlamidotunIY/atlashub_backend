@@ -6,9 +6,9 @@ import com.atlashub.identity.domain.exception.IdentityErrorCode;
 import com.atlashub.identity.domain.valueobject.ApiEnvironment;
 import com.atlashub.identity.domain.valueobject.KeyType;
 import com.atlashub.shared.domain.AggregateRoot;
-import com.atlashub.shared.exception.BusinessRuleException;
-import com.atlashub.shared.exception.SharedErrorCode;
-import com.atlashub.shared.exception.ValidationException;
+import com.atlashub.shared.domain.exception.BusinessRuleException;
+import com.atlashub.shared.domain.exception.SharedErrorCode;
+import com.atlashub.shared.domain.exception.ValidationException;
 import lombok.Getter;
 
 import java.time.ZonedDateTime;

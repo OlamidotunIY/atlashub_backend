@@ -9,8 +9,8 @@ import com.atlashub.identity.application.result.UserDto;
 import com.atlashub.identity.application.port.UserQueryService;
 import com.atlashub.identity.application.query.GetUserQuery;
 import com.atlashub.identity.domain.exception.IdentityErrorCode;
-import com.atlashub.shared.exception.NotFoundException;
-import com.atlashub.shared.usecase.BaseUseCase;
+import com.atlashub.shared.domain.exception.NotFoundException;
+import com.atlashub.shared.application.usecase.BaseUseCase;
 
 @Service
 public class GetUserUseCase extends BaseUseCase<GetUserQuery, UserDto> {

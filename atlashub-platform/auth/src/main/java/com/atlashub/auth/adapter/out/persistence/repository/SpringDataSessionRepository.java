@@ -13,5 +13,6 @@ public interface SpringDataSessionRepository extends JpaRepository<SessionJpaEnt
     Optional<SessionJpaEntity> findByToken(String token);
     List<SessionJpaEntity> findByAuthAccountIdAndStatus(Long authAccountId, SessionStatus status);
     List<SessionJpaEntity> findByAuthAccountId(Long authAccountId);
+    boolean existsByAuthAccountIdAndIpAddressAndUserAgent(Long authAccountId, String ipAddress, String userAgent);
 }
 

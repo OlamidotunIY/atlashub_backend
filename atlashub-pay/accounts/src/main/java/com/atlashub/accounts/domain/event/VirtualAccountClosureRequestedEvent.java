@@ -1,6 +1,6 @@
 package com.atlashub.accounts.domain.event;
 
-import com.atlashub.shared.event.DomainEvent;
+import com.atlashub.shared.domain.event.DomainEvent;
 import java.time.ZonedDateTime;
 
 public record VirtualAccountClosureRequestedEvent(
