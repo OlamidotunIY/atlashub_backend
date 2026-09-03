@@ -18,5 +18,6 @@ public class AccountsSubscriptionRegistrar implements ApplicationRunner {
     public void run(ApplicationArguments args) {
         eventTrackerApi.registerSubscription("OrganizationBanned", "accounts-module-group");
         eventTrackerApi.registerSubscription("OrganizationComplianceApproved", "accounts-module-group");
+        eventTrackerApi.registerSubscription("OrganizationRegistered", "accounts-module-bootstrap-group");
     }
 }
