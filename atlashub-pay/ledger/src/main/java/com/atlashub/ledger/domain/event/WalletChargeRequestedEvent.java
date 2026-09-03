@@ -1,16 +1,20 @@
 package com.atlashub.ledger.domain.event;
 
 import com.atlashub.shared.domain.event.DomainEvent;
+
+import java.math.BigDecimal;
 import java.time.ZonedDateTime;
 
-public record WalletChargeFailedEvent(
+public record WalletChargeRequestedEvent(
         String eventId,
         String aggregateId,
         ZonedDateTime occurredAt,
         Payload payload
-) implements DomainEvent<WalletChargeFailedEvent.Payload> {
+) implements DomainEvent<WalletChargeRequestedEvent.Payload> {
     public record Payload(
             Long invoiceId,
-            String reason
+            Long organizationId,
+            BigDecimal amount,
+            String currency
     ) {}
 }

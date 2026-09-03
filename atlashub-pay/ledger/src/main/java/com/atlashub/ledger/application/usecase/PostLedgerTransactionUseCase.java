@@ -103,7 +103,7 @@ public class PostLedgerTransactionUseCase extends BaseUseCase<PostLedgerTransact
             Long entryId = ledgerEntryRepository.nextIdentity();
             
             // Update snapshot in memory
-            snapshot.updateBalance(newBalance, entryId);
+            snapshot = snapshot.update(newBalance, entryId);
 
             return new LedgerEntry(
                 entryId,

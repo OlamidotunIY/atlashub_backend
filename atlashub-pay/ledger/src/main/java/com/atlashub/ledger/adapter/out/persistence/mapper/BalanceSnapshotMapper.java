@@ -18,7 +18,8 @@ public class BalanceSnapshotMapper {
                 domain.getBalance().amount(),
                 domain.getBalance().currency().name(),
                 domain.getLastLedgerEntryId(),
-                domain.getSnapshotAt()
+                domain.getSnapshotAt(),
+                null
         );
     }
 

@@ -1,36 +1,50 @@
 package com.atlashub.ledger.adapter.in.messaging;
 
-import com.atlashub.ledger.application.command.ProcessWalletChargeCommand;
-import com.atlashub.ledger.application.usecase.ProcessWalletChargeUseCase;
+import com.atlashub.ledger.application.command.HandleWalletChargeCommand;
+import com.atlashub.ledger.application.usecase.HandleWalletChargeUseCase;
+import com.atlashub.ledger.domain.event.WalletChargeRequestedEvent;
+import com.atlashub.shared.domain.money.CurrencyCode;
 import com.atlashub.shared.adapter.in.messaging.BaseKafkaEventListener;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.extern.slf4j.Slf4j;
+import org.springframework.kafka.retrytopic.DltStrategy;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.annotation.RetryableTopic;
+import org.springframework.retry.annotation.Backoff;
 import org.springframework.stereotype.Component;
 
-import java.math.BigDecimal;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-@Slf4j
 @Component
 public class WalletChargeRequestedListener extends BaseKafkaEventListener {
 
-    private final ProcessWalletChargeUseCase useCase;
+    private static final Logger log = LoggerFactory.getLogger(WalletChargeRequestedListener.class);
+    private static final String GROUP_ID = "ledger-module-wallet-group";
 
-    public WalletChargeRequestedListener(ProcessWalletChargeUseCase useCase, ObjectMapper objectMapper) {
+    private final HandleWalletChargeUseCase useCase;
+
+    public WalletChargeRequestedListener(
+            HandleWalletChargeUseCase useCase, 
+            ObjectMapper objectMapper) {
         super(objectMapper);
         this.useCase = useCase;
     }
 
-    @KafkaListener(topics = "Billing-events", groupId = "ledger-module-wallet-group")
+    @RetryableTopic(attempts = "3", backoff = @Backoff(delay = 1000, multiplier = 2.0), dltStrategy = DltStrategy.FAIL_ON_ERROR)
+    @KafkaListener(topics = "Billing-events", groupId = GROUP_ID)
     public void onWalletChargeRequested(String messagePayload) {
-        processEventIfMatches(messagePayload, "WalletChargeRequestedEvent", log, "ledger-module-wallet-group", root -> {
-            Long invoiceId = root.path("payload").path("invoiceId").asLong();
-            Long organizationId = root.path("payload").path("organizationId").asLong();
-            BigDecimal amount = new BigDecimal(root.path("payload").path("amount").asText());
-            String currency = root.path("payload").path("currency").asText();
+        processEventIfMatches(messagePayload, "WalletChargeRequestedEvent", WalletChargeRequestedEvent.class, log, GROUP_ID, event -> {
+            var payload = event.payload();
+            log.info("Received WalletChargeRequestedEvent for invoice {}. Processing wallet charge...", payload.invoiceId());
 
-            log.info("Received WalletChargeRequestedEvent for invoice {}. Processing wallet charge...", invoiceId);
-            useCase.execute(new ProcessWalletChargeCommand(invoiceId, organizationId, amount, currency));
+            HandleWalletChargeCommand command = new HandleWalletChargeCommand(
+                    payload.invoiceId(),
+                    payload.organizationId(),
+                    payload.amount(),
+                    CurrencyCode.valueOf(payload.currency())
+            );
+
+            useCase.execute(command);
         });
     }
 }

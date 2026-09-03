@@ -1,7 +1,6 @@
 package com.atlashub.ledger.domain.event;
 
 import com.atlashub.shared.domain.event.DomainEvent;
-
 import java.time.ZonedDateTime;
 
 public record WalletChargeSuccessfulEvent(
@@ -12,6 +11,6 @@ public record WalletChargeSuccessfulEvent(
 ) implements DomainEvent<WalletChargeSuccessfulEvent.Payload> {
     public record Payload(
             Long invoiceId,
-            String transactionReference
+            Long walletChargeId
     ) {}
 }

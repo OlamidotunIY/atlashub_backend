@@ -1,7 +1,4 @@
 package com.atlashub.ledger.adapter.out.persistence.entity;
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -10,16 +7,12 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.ZonedDateTime;
 
-@Getter
 @Entity
 @Table(name = "ledger_entries")
-@AllArgsConstructor()
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class LedgerEntryJpaEntity {
 
     @Id
@@ -46,9 +39,32 @@ public class LedgerEntryJpaEntity {
     @Column(name = "created_at", nullable = false)
     private ZonedDateTime createdAt;
 
-    @Setter
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ledger_transaction_id", nullable = false)
     private LedgerTransactionJpaEntity transaction;
-}
 
+    protected LedgerEntryJpaEntity() {}
+
+    public LedgerEntryJpaEntity(Long id, Long accountId, BigDecimal amount, String currency, String type, String description, BigDecimal runningBalance, ZonedDateTime createdAt, LedgerTransactionJpaEntity transaction) {
+        this.id = id;
+        this.accountId = accountId;
+        this.amount = amount;
+        this.currency = currency;
+        this.type = type;
+        this.description = description;
+        this.runningBalance = runningBalance;
+        this.createdAt = createdAt;
+        this.transaction = transaction;
+    }
+
+    public Long getId() { return id; }
+    public Long getAccountId() { return accountId; }
+    public BigDecimal getAmount() { return amount; }
+    public String getCurrency() { return currency; }
+    public String getType() { return type; }
+    public String getDescription() { return description; }
+    public BigDecimal getRunningBalance() { return runningBalance; }
+    public ZonedDateTime getCreatedAt() { return createdAt; }
+    public LedgerTransactionJpaEntity getTransaction() { return transaction; }
+    public void setTransaction(LedgerTransactionJpaEntity transaction) { this.transaction = transaction; }
+}

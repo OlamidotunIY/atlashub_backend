@@ -8,12 +8,11 @@ import java.time.ZonedDateTime;
 
 @Getter
 public class BalanceSnapshot extends AggregateRoot<Long> {
-    
     private final Long id;
     private final Long accountId;
-    private Money balance;
-    private Long lastLedgerEntryId;
-    private ZonedDateTime snapshotAt;
+    private final Money balance;
+    private final Long lastLedgerEntryId;
+    private final ZonedDateTime snapshotAt;
 
     public BalanceSnapshot(Long id, Long accountId, Money balance, Long lastLedgerEntryId, ZonedDateTime snapshotAt) {
         if (accountId == null) {
@@ -22,10 +21,7 @@ public class BalanceSnapshot extends AggregateRoot<Long> {
         if (balance == null) {
             throw new IllegalArgumentException("Balance cannot be null");
         }
-        if (lastLedgerEntryId == null) {
-            throw new IllegalArgumentException("Last ledger entry ID cannot be null");
-        }
-
+        
         this.id = id;
         this.accountId = accountId;
         this.balance = balance;
@@ -33,20 +29,14 @@ public class BalanceSnapshot extends AggregateRoot<Long> {
         this.snapshotAt = snapshotAt != null ? snapshotAt : ZonedDateTime.now();
     }
 
-    @Override
-    public Long getId() {
-        return id;
+    public static BalanceSnapshot initialize(Long id, Long accountId, Money initialBalance) {
+        return new BalanceSnapshot(id, accountId, initialBalance, null, ZonedDateTime.now());
     }
 
-    public void updateBalance(Money newBalance, Long entryId) {
-        if (newBalance == null) {
-            throw new IllegalArgumentException("Balance cannot be null");
-        }
-        if (entryId == null) {
-            throw new IllegalArgumentException("Entry ID cannot be null");
-        }
-        this.balance = newBalance;
-        this.lastLedgerEntryId = entryId;
-        this.snapshotAt = ZonedDateTime.now();
+    public BalanceSnapshot update(Money newBalance, Long ledgerEntryId) {
+        return new BalanceSnapshot(this.id, this.accountId, newBalance, ledgerEntryId, ZonedDateTime.now());
     }
+
+    @Override
+    public Long getId() { return id; }
 }
