@@ -56,6 +56,36 @@ public class BillingInvoice extends AggregateRoot<Long> {
         this.status = InvoiceStatus.FAILED;
     }
 
+    public void requestWalletCharge(Long organizationId) {
+        this.registerEvent(new com.atlashub.billing.domain.events.WalletChargeRequestedEvent(
+                UUID.randomUUID().toString(),
+                String.valueOf(this.id),
+                ZonedDateTime.now(),
+                new com.atlashub.billing.domain.events.WalletChargeRequestedEvent.Payload(
+                        this.id,
+                        organizationId,
+                        this.amount.amount(),
+                        this.amount.currency().name()
+                )
+        ));
+    }
+
+    public void requestExternalCharge(Long organizationId, String adminEmail, String redirectUrl) {
+        this.registerEvent(new com.atlashub.billing.domain.events.ExternalChargeRequestedEvent(
+                UUID.randomUUID().toString(),
+                String.valueOf(this.id),
+                ZonedDateTime.now(),
+                new com.atlashub.billing.domain.events.ExternalChargeRequestedEvent.Payload(
+                        this.id,
+                        organizationId,
+                        this.amount.amount(),
+                        this.amount.currency().name(),
+                        adminEmail,
+                        redirectUrl
+                )
+        ));
+    }
+
     @Override
     public Long getId() {
         return id;
