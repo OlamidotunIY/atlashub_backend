@@ -11,8 +11,9 @@ import com.atlashub.identity.domain.repository.OrganizationRepository;
 import com.atlashub.identity.domain.repository.UserRepository;
 import com.atlashub.identity.domain.valueobject.OrganizationRole;
 import com.atlashub.shared.application.port.out.DomainEventPublisher;
-import com.atlashub.shared.domain.exception.NotFoundException;
 import com.atlashub.shared.application.usecase.BaseUseCase;
+import com.atlashub.shared.domain.exception.NotFoundException;
+import com.atlashub.shared.domain.valueobject.Country;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -44,11 +45,15 @@ public class RegisterOrganizationUseCase extends BaseUseCase<RegisterOrganizatio
     public RegisterOrganizationResult execute(RegisterOrganizationCommand command) {
         log.info("Starting organization registration for user id: {}", command.userId());
 
+        User user = userRepository.findById(command.userId())
+                .orElseThrow(() -> new NotFoundException(IdentityErrorCode.USER_NOT_FOUND, "User not found"));
+
         Organization organization = new Organization(
                 organizationRepository.nextIdentity(),
                 command.businessName(),
                 command.businessType(),
                 command.businessSize(),
+                Country.valueOf(user.getCountry().name()).getDefaultCurrency(),
                 command.logoUrl()
         );
 
@@ -63,9 +68,6 @@ public class RegisterOrganizationUseCase extends BaseUseCase<RegisterOrganizatio
         memberRepository.save(ownerMembership);
         publishEvents(ownerMembership, eventPublisher);
         log.debug("Owner membership created for user {} in organization {}", command.userId(), organization.getId());
-
-        User user = userRepository.findById(command.userId())
-                .orElseThrow(() -> new NotFoundException(IdentityErrorCode.USER_NOT_FOUND, "User not found"));
 
         if (user.getActiveOrganizationId() == null) {
             user.switchActiveOrganization(organization.getId());

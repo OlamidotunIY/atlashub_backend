@@ -7,6 +7,7 @@ import java.util.Optional;
  * To be implemented by infrastructure adapters (e.g., Spring Data JPA).
  */
 public interface Repository<T> {
+    Long nextIdentity();
     T save(T entity);
     Optional<T> findById(Long id);
     void deleteById(Long id);

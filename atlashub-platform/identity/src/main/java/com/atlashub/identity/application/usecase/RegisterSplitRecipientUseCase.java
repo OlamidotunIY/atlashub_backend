@@ -1,20 +1,17 @@
 package com.atlashub.identity.application.usecase;
 
-import org.springframework.stereotype.Service;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.atlashub.identity.application.command.RegisterSplitRecipientCommand;
-import com.atlashub.identity.application.result.SplitRecipientDto;
 import com.atlashub.identity.application.port.AccountNameResolutionPort;
+import com.atlashub.identity.application.result.RegisterSplitRecipientResult;
 import com.atlashub.identity.domain.model.SplitRecipient;
 import com.atlashub.identity.domain.repository.SplitRecipientRepository;
 import com.atlashub.shared.application.port.out.DomainEventPublisher;
 import com.atlashub.shared.application.usecase.BaseUseCase;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-
-import com.atlashub.identity.application.result.RegisterSplitRecipientResult;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @Service
@@ -35,7 +32,7 @@ public class RegisterSplitRecipientUseCase extends BaseUseCase<RegisterSplitReci
     }
 
     @Override
-    @org.springframework.transaction.annotation.Transactional
+    @Transactional
     public RegisterSplitRecipientResult execute(RegisterSplitRecipientCommand input) {
         log.info("Executing RegisterSplitRecipientUseCase");
 

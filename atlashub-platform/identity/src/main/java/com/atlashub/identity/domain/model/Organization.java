@@ -4,6 +4,7 @@ import com.atlashub.identity.domain.event.*;
 import com.atlashub.identity.domain.exception.IdentityErrorCode;
 import com.atlashub.identity.domain.valueobject.*;
 import com.atlashub.shared.domain.AggregateRoot;
+import com.atlashub.shared.domain.money.CurrencyCode;
 import com.atlashub.shared.domain.valueobject.EmailAddress;
 import com.atlashub.shared.domain.valueobject.PhoneNumber;
 import com.atlashub.shared.domain.exception.BusinessRuleException;
@@ -22,6 +23,7 @@ public class Organization extends AggregateRoot<Long> {
     private final BusinessType businessType;
     private final BusinessSize businessSize;
     private String description;
+    private final CurrencyCode currency;
     private String logoUrl;
     private ComplianceStatus complianceStatus;
     private ComplianceStep complianceStep;
@@ -32,11 +34,12 @@ public class Organization extends AggregateRoot<Long> {
     /**
      * Creation constructor — raises OrganizationRegistered event.
      */
-    public Organization(Long id, String businessName, BusinessType businessType, BusinessSize businessSize,  String logoUrl) {
+    public Organization(Long id, String businessName, BusinessType businessType, BusinessSize businessSize, CurrencyCode currency, String logoUrl) {
         this.id = id;
         this.businessName = businessName;
         this.businessType = businessType;
         this.businessSize = businessSize;
+        this.currency = currency;
         this.description = null;
         this.logoUrl = logoUrl;
         this.complianceStatus = ComplianceStatus.NOT_STARTED;
@@ -52,7 +55,8 @@ public class Organization extends AggregateRoot<Long> {
                 new OrganizationRegistered.Payload(
                         this.businessName,
                         this.businessType,
-                        this.businessSize
+                        this.businessSize,
+                        this.currency
                 )
         ));
     }
@@ -61,7 +65,7 @@ public class Organization extends AggregateRoot<Long> {
      * Reconstitution constructor — used by mappers only. No events raised.
      */
     public Organization(Long id, String businessName, BusinessType businessType, BusinessSize businessSize,
-                        String description, String logoUrl,
+                        String description, CurrencyCode currency, String logoUrl,
                         ComplianceStatus complianceStatus, ComplianceStep complianceStep,
                         ZonedDateTime createdAt, ZonedDateTime updatedAt) {
         this.id = id;
@@ -69,6 +73,7 @@ public class Organization extends AggregateRoot<Long> {
         this.businessType = businessType;
         this.businessSize = businessSize;
         this.description = description;
+        this.currency = currency;
         this.logoUrl = logoUrl;
         this.complianceStatus = complianceStatus;
         this.complianceStep = complianceStep;

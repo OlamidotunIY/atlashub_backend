@@ -3,6 +3,7 @@ package com.atlashub.identity.adapter.out.persistence.entity;
 import com.atlashub.identity.domain.valueobject.BusinessSize;
 import com.atlashub.identity.domain.valueobject.BusinessType;
 import com.atlashub.identity.domain.valueobject.ComplianceStatus;
+import com.atlashub.shared.domain.money.CurrencyCode;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -34,6 +35,9 @@ public class OrganizationJpaEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "business_size", nullable = false)
     private BusinessSize businessSize;
+
+    @Column(name = "currency")
+    private CurrencyCode currency;
 
     @Setter
     @Column(name = "description")

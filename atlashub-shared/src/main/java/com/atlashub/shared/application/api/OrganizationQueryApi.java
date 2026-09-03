@@ -1,5 +1,7 @@
 package com.atlashub.shared.application.api;
 
+import com.atlashub.shared.domain.money.CurrencyCode;
+
 import java.util.Optional;
 
 public interface OrganizationQueryApi {
@@ -7,6 +9,7 @@ public interface OrganizationQueryApi {
 
     record OrganizationSharedDto(
         Long id,
-        String businessName
+        String businessName,
+        CurrencyCode currency
     ) {}
 }

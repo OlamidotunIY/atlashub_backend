@@ -1,6 +1,5 @@
 package com.atlashub.identity.adapter.in.internal;
 
-import com.atlashub.identity.domain.model.Organization;
 import com.atlashub.identity.domain.repository.OrganizationRepository;
 import com.atlashub.shared.application.api.OrganizationQueryApi;
 import org.springframework.stereotype.Component;
@@ -19,9 +18,10 @@ public class IdentityOrganizationApiImpl implements OrganizationQueryApi {
     @Override
     public Optional<OrganizationSharedDto> getOrganizationById(Long organizationId) {
         return organizationRepository.findById(organizationId)
-            .map(org -> new OrganizationSharedDto(
-                org.getId(),
-                org.getBusinessName()
-            ));
+                .map(org -> new OrganizationSharedDto(
+                        org.getId(),
+                        org.getBusinessName(),
+                        org.getCurrency()
+                ));
     }
 }
