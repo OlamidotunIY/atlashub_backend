@@ -4,14 +4,14 @@ import com.atlashub.catalog.domain.model.ProductPricing;
 
 import com.atlashub.catalog.domain.valueobject.BillingCycle;
 import com.atlashub.shared.domain.money.CurrencyCode;
+import com.atlashub.shared.domain.repository.Repository;
 
 import java.util.List;
 import java.util.Optional;
 
-public interface ProductPricingRepository {
+public interface ProductPricingRepository extends Repository<ProductPricing> {
     Long nextIdentity();
-    ProductPricing save(ProductPricing productPricing);
-    Optional<ProductPricing> findById(Long id);
     Optional<ProductPricing> findByProductIdAndCycleAndCurrency(Long productId, BillingCycle cycle, CurrencyCode currency);
+    Optional<ProductPricing> findByProductIdAndCurrency(Long productId, CurrencyCode currency);
     List<ProductPricing> findAllByProductId(Long productId);
 }

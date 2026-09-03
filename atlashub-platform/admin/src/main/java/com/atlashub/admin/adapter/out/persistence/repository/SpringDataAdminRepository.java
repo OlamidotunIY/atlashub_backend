@@ -12,4 +12,5 @@ public interface SpringDataAdminRepository extends JpaRepository<AdminJpaEntity,
     Optional<AdminJpaEntity> findByUsername(String username);
     boolean existsByUsername(String username);
     boolean existsByRole(AdminRole role);
+    Optional<AdminJpaEntity> findByRole(AdminRole role);
 }

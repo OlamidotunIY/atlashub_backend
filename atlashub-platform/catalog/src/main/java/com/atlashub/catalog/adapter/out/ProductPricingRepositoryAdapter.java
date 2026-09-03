@@ -48,9 +48,24 @@ public class ProductPricingRepositoryAdapter implements ProductPricingRepository
     }
 
     @Override
+    public void deleteById(Long id) {
+
+    }
+
+    @Override
+    public boolean existsById(Long id) {
+        return false;
+    }
+
+    @Override
     public Optional<ProductPricing> findByProductIdAndCycleAndCurrency(Long productId, BillingCycle cycle, CurrencyCode currency) {
         return repository.findByHubProductIdAndBillingCycleAndCurrencyCode(productId, cycle.name(), currency.name())
                 .map(mapper::toDomain);
+    }
+
+    @Override
+    public Optional<ProductPricing> findByProductIdAndCurrency(Long productId, CurrencyCode currency) {
+        return repository.findByProductIdAndCurrency(productId, currency.name()).map(mapper::toDomain);
     }
 
     @Override
