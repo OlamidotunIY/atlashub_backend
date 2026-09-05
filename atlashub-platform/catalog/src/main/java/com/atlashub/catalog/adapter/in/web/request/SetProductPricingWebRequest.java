@@ -1,12 +1,13 @@
 package com.atlashub.catalog.adapter.in.web.request;
 
-import jakarta.validation.constraints.NotBlank;
+import com.atlashub.catalog.domain.valueobject.BillingCycle;
+import com.atlashub.shared.domain.money.CurrencyCode;
 import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 
 public record SetProductPricingWebRequest(
-        @NotBlank String cycle,
+        @NotNull BillingCycle cycle,
         @NotNull BigDecimal amount,
-        @NotBlank String currency
+        @NotNull CurrencyCode currency
 ) {
 }

@@ -17,6 +17,7 @@ dependencies {
     // implementation project(':atlashub-pay:settlement')
     // implementation project(':atlashub-pay:splits')
     // implementation project(':atlashub-pay:transactions-query')
+    implementation project(':atlashub-pay:providers')
     implementation project(':atlashub-infrastructure:notifications')
     implementation project(':atlashub-infrastructure:rate-limiter')
     implementation project(':atlashub-infrastructure:eventbus')

@@ -17,7 +17,7 @@ import com.atlashub.shared.application.usecase.BaseUseCase;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.atlashub.shared.application.api.OrganizationMemberQueryApi;
+import com.atlashub.identity.application.port.OrganizationMemberQueryService;
 
 @Service
 public class AuthenticateUseCase extends BaseUseCase<AuthenticateCommand, ApiResponse<AuthResponseDto>> {
@@ -27,7 +27,7 @@ public class AuthenticateUseCase extends BaseUseCase<AuthenticateCommand, ApiRes
     private final TokenGeneratorPort tokenGeneratorPort;
     private final PreAuthTokenStorePort preAuthTokenStorePort;
     private final TokenIssuanceService tokenIssuanceService;
-    private final OrganizationMemberQueryApi organizationMemberQueryApi;
+    private final OrganizationMemberQueryService organizationMemberService;
 
     public AuthenticateUseCase(
             AuthAccountRepository authAccountRepository,
@@ -35,13 +35,13 @@ public class AuthenticateUseCase extends BaseUseCase<AuthenticateCommand, ApiRes
             TokenGeneratorPort tokenGeneratorPort,
             PreAuthTokenStorePort preAuthTokenStorePort,
             TokenIssuanceService tokenIssuanceService,
-            OrganizationMemberQueryApi organizationMemberQueryApi) {
+            OrganizationMemberQueryService organizationMemberService) {
         this.authAccountRepository = authAccountRepository;
         this.passwordEncoderPort = passwordEncoderPort;
         this.tokenGeneratorPort = tokenGeneratorPort;
         this.preAuthTokenStorePort = preAuthTokenStorePort;
         this.tokenIssuanceService = tokenIssuanceService;
-        this.organizationMemberQueryApi = organizationMemberQueryApi;
+        this.organizationMemberService = organizationMemberService;
     }
 
     @Override
@@ -71,7 +71,7 @@ public class AuthenticateUseCase extends BaseUseCase<AuthenticateCommand, ApiRes
             return new ApiResponse<>(true, "2FA Required", AuthResponseDto.forTwoFactor(preAuth.token()), null);
         }
 
-        String onboardingStatus = organizationMemberQueryApi.getOnboardingStatus(authAccount.getPrincipalId(), authAccount.getIdentifier());
+        String onboardingStatus = organizationMemberService.getOnboardingStatus(authAccount.getPrincipalId(), authAccount.getIdentifier());
         AuthResponseDto responseDto = AuthResponseDto.forSuccess(
                 tokenIssuanceService.issueTokensAndCreateSession(authAccount, input.ipAddress(), input.userAgent()),
                 onboardingStatus

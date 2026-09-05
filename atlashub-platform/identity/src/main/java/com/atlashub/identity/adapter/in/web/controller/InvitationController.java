@@ -7,7 +7,7 @@ import com.atlashub.identity.application.query.GetInvitationByTokenQuery;
 import com.atlashub.identity.application.result.InvitationDto;
 import com.atlashub.identity.application.usecase.AcceptInvitationUseCase;
 import com.atlashub.identity.application.usecase.DeclineInvitationUseCase;
-import com.atlashub.identity.application.usecase.GetInvitationByTokenUseCase;
+import com.atlashub.identity.application.port.InvitationQueryService;
 import com.atlashub.identity.application.usecase.SendInvitationUseCase;
 import com.atlashub.identity.domain.valueobject.OrganizationRole;
 import com.atlashub.shared.application.dto.ApiResponse;
@@ -25,17 +25,17 @@ public class InvitationController {
     private final SendInvitationUseCase sendInvitationUseCase;
     private final AcceptInvitationUseCase acceptInvitationUseCase;
     private final DeclineInvitationUseCase declineInvitationUseCase;
-    private final GetInvitationByTokenUseCase getInvitationByTokenUseCase;
+    private final InvitationQueryService queryService;
 
     public InvitationController(
             SendInvitationUseCase sendInvitationUseCase,
             AcceptInvitationUseCase acceptInvitationUseCase,
             DeclineInvitationUseCase declineInvitationUseCase,
-            GetInvitationByTokenUseCase getInvitationByTokenUseCase) {
+            InvitationQueryService queryService) {
         this.sendInvitationUseCase = sendInvitationUseCase;
         this.acceptInvitationUseCase = acceptInvitationUseCase;
         this.declineInvitationUseCase = declineInvitationUseCase;
-        this.getInvitationByTokenUseCase = getInvitationByTokenUseCase;
+        this.queryService = queryService;
     }
 
     @PostMapping("/organizations/{organizationId}/invitations")
@@ -52,7 +52,7 @@ public class InvitationController {
     @GetMapping("/invitations/{token}")
     @Operation(summary = "Get invitation details by token")
     public ResponseEntity<ApiResponse<InvitationDto>> getInvitation(@PathVariable String token) {
-        InvitationDto dto = getInvitationByTokenUseCase.execute(new GetInvitationByTokenQuery(token));
+        InvitationDto dto = queryService.getInvitationByToken(token).orElseThrow();
         return ResponseEntity.ok(new ApiResponse<>(true, "Invitation retrieved", dto, null));
     }
 

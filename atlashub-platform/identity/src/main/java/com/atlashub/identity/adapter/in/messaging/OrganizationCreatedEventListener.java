@@ -20,7 +20,7 @@ public class OrganizationCreatedEventListener extends BaseKafkaEventListener {
         this.generateTestApiKeyPairUseCase = generateTestApiKeyPairUseCase;
     }
 
-    @KafkaListener(topics = "Organization-events", groupId = "identity-module-group")
+    @KafkaListener(topics = "organization-events", groupId = "identity-module-group")
     public void onOrganizationRegistered(String messagePayload) {
         processEventIfMatches(messagePayload, "OrganizationRegistered", OrganizationRegistered.class, log, "identity-module-group", event -> {
             String aggregateId = event.aggregateId();

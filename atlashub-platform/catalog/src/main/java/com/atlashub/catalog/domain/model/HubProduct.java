@@ -41,7 +41,7 @@ public class HubProduct extends AggregateRoot<Long> {
                         UUID.randomUUID().toString(),
                         String.valueOf(id),
                         ZonedDateTime.now(),
-                        new HubProductCreatedEvent.Payload(key)
+                        new HubProductCreatedEvent.Payload(id, key, name, description, ProductStatus.ACTIVE)
                 )
         );
 
@@ -58,7 +58,7 @@ public class HubProduct extends AggregateRoot<Long> {
                         UUID.randomUUID().toString(),
                         String.valueOf(id),
                         ZonedDateTime.now(),
-                        null
+                        new HubProductUpdatedEvent.Payload(name, description)
                 )
         );
     }

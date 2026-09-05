@@ -1,5 +1,13 @@
 # atlashub Backend — Architecture & Coding Rules
 
+**CRITICAL AI INTERACTION RULE:**
+**NEVER EDIT THE CODEBASE DIRECTLY WITHOUT EXPLICIT PERMISSION FROM THE USER.**
+If the user asks a question, requests a bug fix, or asks to implement a feature, you MUST:
+1. Thoroughly research the codebase.
+2. Provide a detailed IMPLEMENTATION PLAN first.
+3. STOP and WAIT for the user to explicitly say "implement it" or give approval before making ANY file modifications.
+**NO EXCEPTIONS.**
+
 This project is a **modular monolith** using **Hexagonal Architecture** (Ports and Adapters), **Domain-Driven Design (DDD)**, and **CQRS**. Every rule below is mandatory. No exceptions.
 
 ---
@@ -264,8 +272,14 @@ public class InitiateExternalChargeUseCase extends BaseUseCase<InitiateExternalC
 ### 4.5 Outbound Ports (`application/port/out`)
 
 - Interfaces that the application layer needs but whose implementation lives in infrastructure.
-- Covers: external API integrations (e.g., `PaymentGatewayPort`), cross-module data queries (e.g., `ProductQueryPort`), and infrastructure services (e.g., `EmailSenderPort`).
-- Do NOT create inbound port interfaces (`port/in`). `BaseUseCase<I,O>` IS the inbound port.
+- Covers: external API integrations (e.g., `PaymentGatewayPort`), and infrastructure services (e.g., `EmailSenderPort`).
+- Also used for Consumer-Driven cross-module queries where strict decoupling is required.
+
+### 4.6 Inbound Ports for Cross-Module APIs (`application/port/in`)
+
+- Used for **Provider-Driven Cross-Module Contracts** (Open Host Service).
+- When a module (e.g., `identity`) needs to expose a stable public contract for other modules to query synchronously, it defines interfaces and DTOs in `application/port/in` (e.g., `OrganizationQueryPort`).
+- Other modules declare a dependency on this module and call the Inbound Port to fetch data without coupling to internal `BaseUseCase` implementations.
 
 ```java
 // Cross-module query port
@@ -502,7 +516,7 @@ public class WalletChargeResultListener extends BaseKafkaEventListener {
     }
 
     @RetryableTopic(attempts = "3", backoff = @Backoff(delay = 1000, multiplier = 2.0), dltStrategy = DltStrategy.FAIL_ON_ERROR)
-    @KafkaListener(topics = "Pay-events", groupId = GROUP_ID)
+    @KafkaListener(topics = "pay-events", groupId = GROUP_ID)
     public void onWalletChargeResult(String messagePayload) {
         processEventIfMatches(messagePayload, "WalletChargeSuccessfulEvent",
             WalletChargeSuccessfulEvent.class, log, GROUP_ID, event ->
@@ -541,6 +555,7 @@ public class WalletChargeResultListener extends BaseKafkaEventListener {
 
 ### 10.1 Async (Kafka) — the default
 - Modules MUST communicate via events published to Kafka topics (via the outbox).
+- Kafka topic names MUST use strictly **lowercase kebab-case** (e.g., `organization-events`, `billing-events`, `account-events`, `pay-events`). DO NOT use uppercase letters or camelCase.
 - Module B defines its own copy of any event record it consumes from Module A.
 
 ### 10.2 Sync (In-Process, Shared Interface)

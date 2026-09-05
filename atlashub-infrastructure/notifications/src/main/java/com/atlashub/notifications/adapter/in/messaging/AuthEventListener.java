@@ -1,13 +1,14 @@
 package com.atlashub.notifications.adapter.in.messaging;
 
+import com.atlashub.admin.application.port.AdminQueryService;
 import com.atlashub.auth.domain.event.AuthPasswordSetupInitiatedEvent;
 import com.atlashub.auth.domain.event.AuthNewDeviceLoginEvent;
 import com.atlashub.auth.domain.event.AuthVerificationCreatedEvent;
+import com.atlashub.identity.application.port.UserQueryService;
+import com.atlashub.identity.application.result.UserDto;
 import com.atlashub.notifications.application.port.EmailSenderPort;
 import com.atlashub.notifications.application.usecase.SendVerificationEmailUseCase;
 import com.atlashub.shared.adapter.out.external.dlq.DeadLetterRepository;
-import com.atlashub.shared.application.api.AdminQueryApi;
-import com.atlashub.shared.application.api.UserQueryApi;
 import com.atlashub.shared.adapter.in.messaging.BaseKafkaEventListener;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -28,22 +29,22 @@ public class AuthEventListener extends BaseKafkaEventListener {
 
     private final SendVerificationEmailUseCase sendVerificationEmailUseCase;
     private final EmailSenderPort emailSenderPort;
-    private final UserQueryApi userQueryApi;
-    private final AdminQueryApi adminQueryApi;
+    private final UserQueryService UserQueryPort;
+    private final AdminQueryService AdminQueryPort;
 
     public AuthEventListener(
             SendVerificationEmailUseCase sendVerificationEmailUseCase,
             EmailSenderPort emailSenderPort,
-            UserQueryApi userQueryApi,
-            AdminQueryApi adminQueryApi,
+            UserQueryService UserQueryPort,
+            AdminQueryService AdminQueryPort,
             ObjectMapper objectMapper,
             DeadLetterRepository deadLetterRepository
     ) {
         super(objectMapper);
         this.sendVerificationEmailUseCase = sendVerificationEmailUseCase;
         this.emailSenderPort = emailSenderPort;
-        this.userQueryApi = userQueryApi;
-        this.adminQueryApi = adminQueryApi;
+        this.UserQueryPort = UserQueryPort;
+        this.AdminQueryPort = AdminQueryPort;
         this.deadLetterRepository = deadLetterRepository;
     }
 
@@ -84,13 +85,13 @@ public class AuthEventListener extends BaseKafkaEventListener {
             String firstName = null;
 
             if ("ADMIN".equals(event.payload().principalType().name())) {
-                Optional<AdminQueryApi.AdminSharedDto> adminOpt = adminQueryApi.getAdminById(event.payload().principalId());
+                Optional<AdminQueryService.AdminDto> adminOpt = AdminQueryPort.getAdminById(event.payload().principalId());
                 if (adminOpt.isPresent()) {
                     email = adminOpt.get().email();
                     firstName = adminOpt.get().username(); // Admin has no firstName, fallback to username
                 }
             } else {
-                Optional<UserQueryApi.UserSharedDto> userOpt = userQueryApi.getUserById(event.payload().principalId());
+                Optional<UserDto> userOpt = UserQueryPort.getUserById(event.payload().principalId());
                 if (userOpt.isPresent()) {
                     email = userOpt.get().email();
                     firstName = userOpt.get().firstName();

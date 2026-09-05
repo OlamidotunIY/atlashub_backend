@@ -3,6 +3,11 @@ package com.atlashub.catalog.adapter.in.web.controller;
 import com.atlashub.catalog.adapter.in.web.request.CreateHubProductWebRequest;
 import com.atlashub.catalog.adapter.in.web.request.SetProductPricingWebRequest;
 import com.atlashub.catalog.adapter.in.web.request.UpdateHubProductWebRequest;
+import com.atlashub.catalog.adapter.in.web.response.CreateHubProductResponse;
+import com.atlashub.catalog.adapter.in.web.response.HubProductDetailsResponse;
+import com.atlashub.catalog.adapter.in.web.response.HubProductResponse;
+import com.atlashub.catalog.adapter.in.web.response.SetProductPricingResponse;
+import com.atlashub.catalog.adapter.in.web.response.UpdateHubProductResponse;
 import com.atlashub.catalog.application.command.CreateHubProductCommand;
 import com.atlashub.catalog.application.command.SetProductPricingCommand;
 import com.atlashub.catalog.application.command.UpdateHubProductCommand;
@@ -14,18 +19,16 @@ import com.atlashub.catalog.application.result.HubProductResult;
 import com.atlashub.catalog.application.result.SetProductPricingResult;
 import com.atlashub.catalog.application.result.UpdateHubProductResult;
 import com.atlashub.catalog.application.usecase.CreateHubProductUseCase;
-import com.atlashub.catalog.application.usecase.GetHubProductDetailsUseCase;
+import com.atlashub.catalog.application.port.HubProductQueryService;
 import com.atlashub.catalog.application.usecase.ListHubProductUseCase;
 import com.atlashub.catalog.application.usecase.SetProductPricingUseCase;
 import com.atlashub.catalog.application.usecase.UpdateHubProductUseCase;
-import com.atlashub.catalog.domain.valueobject.BillingCycle;
-import com.atlashub.catalog.domain.valueobject.ProductKey;
 import com.atlashub.catalog.domain.valueobject.ProductStatus;
 import com.atlashub.shared.application.dto.ApiResponse;
-import com.atlashub.shared.domain.money.CurrencyCode;
 import com.atlashub.shared.domain.money.Money;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -33,7 +36,6 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -46,36 +48,36 @@ public class HubProductController {
     private final UpdateHubProductUseCase updateHubProductUseCase;
     private final SetProductPricingUseCase setProductPricingUseCase;
     private final ListHubProductUseCase listHubProductUseCase;
-    private final GetHubProductDetailsUseCase getHubProductDetailsUseCase;
+    private final HubProductQueryService queryService;
 
     public HubProductController(
             CreateHubProductUseCase createHubProductUseCase,
             UpdateHubProductUseCase updateHubProductUseCase,
             SetProductPricingUseCase setProductPricingUseCase,
             ListHubProductUseCase listHubProductUseCase,
-            GetHubProductDetailsUseCase getHubProductDetailsUseCase) {
+            HubProductQueryService queryService) {
         this.createHubProductUseCase = createHubProductUseCase;
         this.updateHubProductUseCase = updateHubProductUseCase;
         this.setProductPricingUseCase = setProductPricingUseCase;
         this.listHubProductUseCase = listHubProductUseCase;
-        this.getHubProductDetailsUseCase = getHubProductDetailsUseCase;
+        this.queryService = queryService;
     }
 
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public ApiResponse<CreateHubProductResult> createProduct(
+    public ResponseEntity<ApiResponse<CreateHubProductResponse>> createProduct(
             @Valid @RequestBody CreateHubProductWebRequest request) {
         CreateHubProductCommand command = new CreateHubProductCommand(
-                ProductKey.valueOf(request.key().toUpperCase()),
+                request.key(),
                 request.name(),
                 request.description()
         );
         CreateHubProductResult result = createHubProductUseCase.execute(command);
-        return new ApiResponse<>(true, "Hub product created successfully", result, null);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(new ApiResponse<>(true, "Hub product created successfully", new CreateHubProductResponse(result.product().getId()), null));
     }
 
     @PutMapping("/{productId}")
-    public ApiResponse<UpdateHubProductResult> updateProduct(
+    public ResponseEntity<ApiResponse<UpdateHubProductResponse>> updateProduct(
             @PathVariable Long productId,
             @Valid @RequestBody UpdateHubProductWebRequest request) {
         UpdateHubProductCommand command = new UpdateHubProductCommand(
@@ -84,37 +86,52 @@ public class HubProductController {
                 request.description()
         );
         UpdateHubProductResult result = updateHubProductUseCase.execute(command);
-        return new ApiResponse<>(true, "Hub product updated successfully", result, null);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Hub product updated successfully", new UpdateHubProductResponse(result.id()), null));
     }
 
     @PutMapping("/{productId}/pricing")
-    public ApiResponse<SetProductPricingResult> setPricing(
+    public ResponseEntity<ApiResponse<SetProductPricingResponse>> setPricing(
             @PathVariable Long productId,
             @Valid @RequestBody SetProductPricingWebRequest request) {
         SetProductPricingCommand command = new SetProductPricingCommand(
                 productId,
-                BillingCycle.valueOf(request.cycle().toUpperCase()),
-                Money.of(request.amount(), CurrencyCode.valueOf(request.currency().toUpperCase()))
+                request.cycle(),
+                new Money(request.amount(), request.currency())
         );
         SetProductPricingResult result = setProductPricingUseCase.execute(command);
-        return new ApiResponse<>(true, "Product pricing updated successfully", result, null);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Product pricing updated successfully", new SetProductPricingResponse(result.pricingId()), null));
     }
 
     @GetMapping
-    public ApiResponse<List<HubProductResult>> listProducts(
-            @RequestParam(required = false) String status) {
-        ProductStatus productStatus = status != null ? ProductStatus.valueOf(status.toUpperCase()) : null;
-        ListHubProductsQuery query = new ListHubProductsQuery(productStatus);
+    public ResponseEntity<ApiResponse<List<HubProductResponse>>> listProducts(
+            @RequestParam(required = false) ProductStatus status) {
+        ListHubProductsQuery query = new ListHubProductsQuery(status);
         List<HubProductResult> appResults = listHubProductUseCase.execute(query);
                 
-        return new ApiResponse<>(true, "Hub products retrieved successfully", appResults, null);
+        List<HubProductResponse> webResponse = appResults.stream()
+                .map(r -> new HubProductResponse(r.id(), r.key(), r.name(), r.description(), r.status()))
+                .toList();
+
+        return ResponseEntity.ok(new ApiResponse<>(true, "Hub products retrieved successfully", webResponse, null));
     }
 
     @GetMapping("/{productId}")
-    public ApiResponse<HubProductDetailsResult> getProductDetails(
+    public ResponseEntity<ApiResponse<HubProductDetailsResponse>> getProductDetails(
             @PathVariable Long productId) {
         GetHubProductDetailsQuery query = new GetHubProductDetailsQuery(productId);
-        HubProductDetailsResult appResult = getHubProductDetailsUseCase.execute(query);
-        return new ApiResponse<>(true, "Product details retrieved successfully", appResult, null);
+        HubProductDetailsResult appResult = queryService.getHubProductDetails(query.productId());
+        
+        HubProductDetailsResponse webResponse = new HubProductDetailsResponse(
+                appResult.id(),
+                appResult.key(),
+                appResult.name(),
+                appResult.description(),
+                appResult.status(),
+                appResult.pricing().stream().map(p -> new HubProductDetailsResponse.Pricing(
+                        p.pricingId(), p.billingCycle(), p.amount().amount(), p.amount().currency()
+                )).toList()
+        );
+        
+        return ResponseEntity.ok(new ApiResponse<>(true, "Product details retrieved successfully", webResponse, null));
     }
 }

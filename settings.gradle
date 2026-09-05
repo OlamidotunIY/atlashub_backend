@@ -42,3 +42,4 @@ include 'atlashub-infrastructure:audit'
 
 // App
 include 'atlashub-app'
+include 'atlashub-pay:providers'

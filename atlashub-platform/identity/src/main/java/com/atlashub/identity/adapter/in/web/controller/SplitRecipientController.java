@@ -5,7 +5,7 @@ import com.atlashub.identity.application.result.RegisterSplitRecipientResult;
 import com.atlashub.identity.application.result.SplitRecipientDto;
 import com.atlashub.identity.application.query.GetSplitRecipientQuery;
 import com.atlashub.identity.application.query.ListSplitRecipientsQuery;
-import com.atlashub.identity.application.usecase.GetSplitRecipientUseCase;
+import com.atlashub.identity.application.port.SplitRecipientQueryService;
 import com.atlashub.identity.application.usecase.ListSplitRecipientsUseCase;
 import com.atlashub.identity.application.usecase.RegisterSplitRecipientUseCase;
 import com.atlashub.identity.adapter.in.web.request.RegisterSplitRecipientRequest;
@@ -27,14 +27,14 @@ import com.atlashub.shared.application.dto.ApiResponse;
 public class SplitRecipientController {
 
     private final RegisterSplitRecipientUseCase registerSplitRecipientUseCase;
-    private final GetSplitRecipientUseCase getSplitRecipientUseCase;
+    private final SplitRecipientQueryService queryService;
     private final ListSplitRecipientsUseCase listSplitRecipientsUseCase;
 
     public SplitRecipientController(RegisterSplitRecipientUseCase registerSplitRecipientUseCase,
-                                GetSplitRecipientUseCase getSplitRecipientUseCase,
+                                SplitRecipientQueryService queryService,
                                 ListSplitRecipientsUseCase listSplitRecipientsUseCase) {
         this.registerSplitRecipientUseCase = registerSplitRecipientUseCase;
-        this.getSplitRecipientUseCase = getSplitRecipientUseCase;
+        this.queryService = queryService;
         this.listSplitRecipientsUseCase = listSplitRecipientsUseCase;
     }
 
@@ -57,7 +57,7 @@ public class SplitRecipientController {
     public ResponseEntity<ApiResponse<SplitRecipientDto>> get(@PathVariable String SplitRecipientId, Principal principal) {
         String OrganizationIdStr = principal != null ? principal.getName() : "anonymous";
         GetSplitRecipientQuery query = new GetSplitRecipientQuery(Long.valueOf(OrganizationIdStr), Long.valueOf(SplitRecipientId));
-        SplitRecipientDto result = getSplitRecipientUseCase.execute(query);
+        SplitRecipientDto result = queryService.findById(Long.valueOf(OrganizationIdStr), Long.valueOf(SplitRecipientId)).orElseThrow();
         return ResponseEntity.ok(new ApiResponse<>(true, "Sub account retrieved successfully", result, null));
     }
     

@@ -40,6 +40,12 @@ public class SpringDomainEventListener {
             return "settlement-events";
         } else if (eventClassName.startsWith("Admin")) {
             return "admin-events";
+        } else if (eventClassName.endsWith("ChargeRequestedEvent")) {
+            return "billing-events";
+        } else if (eventClassName.endsWith("PaymentResultEvent") || eventClassName.endsWith("ChargeResultEvent") || eventClassName.endsWith("ChargeSuccessfulEvent") || eventClassName.endsWith("ChargeFailedEvent")) {
+            return "pay-events";
+        } else if (eventClassName.startsWith("HubProduct") || eventClassName.startsWith("ProductPricing")) {
+            return "catalog-events";
         }
         return "system-events";
     }

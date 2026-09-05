@@ -2,6 +2,7 @@ package com.atlashub.identity.adapter.in.web.controller;
 
 import com.atlashub.identity.adapter.in.web.request.*;
 import com.atlashub.identity.application.command.*;
+import com.atlashub.identity.application.port.OrganizationQueryService;
 import com.atlashub.identity.application.query.GetOrganizationProfileQuery;
 import com.atlashub.identity.application.result.OrganizationProfileDto;
 import com.atlashub.identity.application.result.RegisterOrganizationResult;
@@ -27,7 +28,7 @@ public class OrganizationController {
     private static final Logger log = LoggerFactory.getLogger(OrganizationController.class);
 
     private final RegisterOrganizationUseCase registerOrganizationUseCase;
-    private final GetOrganizationProfileUseCase getOrganizationProfileUseCase;
+    private final OrganizationQueryService queryService;
     private final CompleteComplianceProfileUseCase completeComplianceProfileUseCase;
     private final CompleteComplianceContactUseCase completeComplianceContactUseCase;
     private final CompleteComplianceOwnerUseCase completeComplianceOwnerUseCase;
@@ -37,7 +38,7 @@ public class OrganizationController {
 
     public OrganizationController(
             RegisterOrganizationUseCase registerOrganizationUseCase,
-            GetOrganizationProfileUseCase getOrganizationProfileUseCase,
+            OrganizationQueryService queryService,
             CompleteComplianceProfileUseCase completeComplianceProfileUseCase,
             CompleteComplianceContactUseCase completeComplianceContactUseCase,
             CompleteComplianceOwnerUseCase completeComplianceOwnerUseCase,
@@ -45,7 +46,7 @@ public class OrganizationController {
             CompleteComplianceServiceAgreementUseCase completeComplianceServiceAgreementUseCase,
             SubmitComplianceUseCase submitComplianceUseCase) {
         this.registerOrganizationUseCase = registerOrganizationUseCase;
-        this.getOrganizationProfileUseCase = getOrganizationProfileUseCase;
+        this.queryService = queryService;
         this.completeComplianceProfileUseCase = completeComplianceProfileUseCase;
         this.completeComplianceContactUseCase = completeComplianceContactUseCase;
         this.completeComplianceOwnerUseCase = completeComplianceOwnerUseCase;
@@ -77,7 +78,7 @@ public class OrganizationController {
         String OrganizationIdStr = principal != null ? principal.getName() : "anonymous";
         log.debug("Fetching profile for Organization ID: {}", OrganizationIdStr);
         GetOrganizationProfileQuery query = new GetOrganizationProfileQuery(Long.valueOf(OrganizationIdStr));
-        OrganizationProfileDto result = getOrganizationProfileUseCase.execute(query);
+        OrganizationProfileDto result = queryService.getProfile(query.OrganizationId()).orElseThrow();
         return ResponseEntity.ok(new ApiResponse<>(true, "Profile retrieved successfully", result, null));
     }
 
@@ -86,7 +87,7 @@ public class OrganizationController {
     public ResponseEntity<ApiResponse<ComplianceStatus>> getComplianceStatus(Principal principal) {
         String OrganizationIdStr = principal != null ? principal.getName() : "anonymous";
         GetOrganizationProfileQuery query = new GetOrganizationProfileQuery(Long.valueOf(OrganizationIdStr));
-        OrganizationProfileDto result = getOrganizationProfileUseCase.execute(query);
+        OrganizationProfileDto result = queryService.getProfile(query.OrganizationId()).orElseThrow();
         return ResponseEntity.ok(new ApiResponse<>(true, "Compliance status retrieved", ComplianceStatus.valueOf(result.kycStatus()), null));
     }
 

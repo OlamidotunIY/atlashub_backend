@@ -26,6 +26,7 @@
             <option value="$PROJECT_DIR$/atlashub-pay/charges" />
             <option value="$PROJECT_DIR$/atlashub-pay/escrow" />
             <option value="$PROJECT_DIR$/atlashub-pay/ledger" />
+            <option value="$PROJECT_DIR$/atlashub-pay/providers" />
             <option value="$PROJECT_DIR$/atlashub-pay/settlement" />
             <option value="$PROJECT_DIR$/atlashub-pay/splits" />
             <option value="$PROJECT_DIR$/atlashub-pay/subscriptions" />

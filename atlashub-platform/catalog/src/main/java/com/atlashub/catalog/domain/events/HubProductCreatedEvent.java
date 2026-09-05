@@ -11,6 +11,6 @@ public record HubProductCreatedEvent(
         ZonedDateTime occurredAt,
         Payload payload
 ) implements DomainEvent<HubProductCreatedEvent.Payload> {
-    public record Payload(ProductKey key) {
+    public record Payload(Long id, ProductKey key, String name, String description, com.atlashub.catalog.domain.valueobject.ProductStatus status) {
     }
 }

@@ -8,4 +8,6 @@ import java.util.Optional;
 public interface UserQueryService {
     Optional<UserDto> findById(Long OrganizationId, Long UserId);
     PageResult<UserDto> findAllByOrganizationId(Long OrganizationId, int page, int size, String emailFilter);
+    Optional<UserDto> getUserById(Long userId);
+    Optional<UserDto> getUserByEmail(String email);
 }

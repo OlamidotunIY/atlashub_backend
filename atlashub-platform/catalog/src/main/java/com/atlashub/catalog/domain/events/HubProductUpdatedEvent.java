@@ -8,6 +8,7 @@ public record HubProductUpdatedEvent(
         String eventId,
         String aggregateId,
         ZonedDateTime occurredAt,
-        Void payload
-) implements DomainEvent<Void> {
+        Payload payload
+) implements DomainEvent<HubProductUpdatedEvent.Payload> {
+    public record Payload(String name, String description) {}
 }

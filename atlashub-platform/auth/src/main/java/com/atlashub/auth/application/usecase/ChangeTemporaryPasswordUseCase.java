@@ -10,14 +10,13 @@ import com.atlashub.auth.domain.exception.AuthErrorCode;
 import com.atlashub.auth.domain.model.AuthAccount;
 import com.atlashub.auth.domain.valueobject.AuthStatus;
 import com.atlashub.auth.domain.repository.AuthAccountRepository;
+import com.atlashub.identity.application.port.OrganizationMemberQueryService;
 import com.atlashub.shared.application.dto.ApiResponse;
 import com.atlashub.shared.domain.exception.BusinessRuleException;
 import com.atlashub.shared.domain.exception.NotFoundException;
 import com.atlashub.shared.application.usecase.BaseUseCase;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import com.atlashub.shared.application.api.OrganizationMemberQueryApi;
 
 @Service
 public class ChangeTemporaryPasswordUseCase extends BaseUseCase<ChangeTemporaryPasswordCommand, ApiResponse<AuthResponseDto>> {
@@ -27,7 +26,7 @@ public class ChangeTemporaryPasswordUseCase extends BaseUseCase<ChangeTemporaryP
     private final TokenGeneratorPort tokenGeneratorPort;
     private final PreAuthTokenStorePort preAuthTokenStorePort;
     private final TokenIssuanceService tokenIssuanceService;
-    private final OrganizationMemberQueryApi organizationMemberQueryApi;
+    private final OrganizationMemberQueryService OrganizationMemberQueryPort;
 
     public ChangeTemporaryPasswordUseCase(
             AuthAccountRepository authAccountRepository,
@@ -35,13 +34,13 @@ public class ChangeTemporaryPasswordUseCase extends BaseUseCase<ChangeTemporaryP
             TokenGeneratorPort tokenGeneratorPort,
             PreAuthTokenStorePort preAuthTokenStorePort,
             TokenIssuanceService tokenIssuanceService,
-            OrganizationMemberQueryApi organizationMemberQueryApi) {
+            OrganizationMemberQueryService OrganizationMemberQueryPort) {
         this.authAccountRepository = authAccountRepository;
         this.passwordEncoderPort = passwordEncoderPort;
         this.tokenGeneratorPort = tokenGeneratorPort;
         this.preAuthTokenStorePort = preAuthTokenStorePort;
         this.tokenIssuanceService = tokenIssuanceService;
-        this.organizationMemberQueryApi = organizationMemberQueryApi;
+        this.OrganizationMemberQueryPort = OrganizationMemberQueryPort;
     }
 
     @Override
@@ -71,7 +70,7 @@ public class ChangeTemporaryPasswordUseCase extends BaseUseCase<ChangeTemporaryP
         }
 
         // Issue tokens immediately if no 2FA required
-        String onboardingStatus = organizationMemberQueryApi.getOnboardingStatus(authAccount.getPrincipalId(), authAccount.getIdentifier());
+        String onboardingStatus = OrganizationMemberQueryPort.getOnboardingStatus(authAccount.getPrincipalId(), authAccount.getIdentifier());
         AuthResponseDto responseDto = AuthResponseDto.forSuccess(tokenIssuanceService.issueTokensAndCreateSession(authAccount, input.ipAddress(), input.userAgent()), onboardingStatus);
         return new ApiResponse<>(true, "Password changed successfully", responseDto, null);
     }

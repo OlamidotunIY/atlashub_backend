@@ -8,7 +8,7 @@ import com.atlashub.identity.application.query.ListUsersQuery;
 import com.atlashub.identity.application.result.CreateUserResult;
 import com.atlashub.identity.application.result.UserDto;
 import com.atlashub.identity.application.usecase.CreateUserUseCase;
-import com.atlashub.identity.application.usecase.GetUserUseCase;
+import com.atlashub.identity.application.port.UserQueryService;
 import com.atlashub.identity.application.usecase.ListUsersUseCase;
 import com.atlashub.shared.application.dto.ApiResponse;
 import com.atlashub.shared.application.util.PageResult;
@@ -28,14 +28,14 @@ import java.util.List;
 public class UserController {
 
     private final CreateUserUseCase createUserUseCase;
-    private final GetUserUseCase getUserUseCase;
+    private final UserQueryService queryService;
     private final ListUsersUseCase listUsersUseCase;
 
     public UserController(CreateUserUseCase createUserUseCase,
-                          GetUserUseCase getUserUseCase,
+                          UserQueryService queryService,
                           ListUsersUseCase listUsersUseCase) {
         this.createUserUseCase = createUserUseCase;
-        this.getUserUseCase = getUserUseCase;
+        this.queryService = queryService;
         this.listUsersUseCase = listUsersUseCase;
     }
 
@@ -59,7 +59,7 @@ public class UserController {
     public ResponseEntity<ApiResponse<UserDto>> get(@PathVariable String userId, Principal principal) {
         String OrganizationIdStr = principal != null ? principal.getName() : "anonymous";
         GetUserQuery query = new GetUserQuery(Long.valueOf(OrganizationIdStr), Long.valueOf(userId));
-        UserDto result = getUserUseCase.execute(query);
+        UserDto result = queryService.getUserById(query.UserId()).orElseThrow();
         return ResponseEntity.ok(new ApiResponse<>(true, "User retrieved successfully", result, null));
     }
 

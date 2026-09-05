@@ -14,8 +14,8 @@ import com.atlashub.shared.domain.money.CurrencyCode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import com.atlashub.shared.application.port.out.AccountQueryPort;
-import com.atlashub.shared.application.port.out.AccountDetailsDto;
+import com.atlashub.accounts.application.port.in.AccountQueryPort;
+import com.atlashub.accounts.application.port.in.AccountDetailsDto;
 import java.util.Optional;
 
 import java.math.BigDecimal;

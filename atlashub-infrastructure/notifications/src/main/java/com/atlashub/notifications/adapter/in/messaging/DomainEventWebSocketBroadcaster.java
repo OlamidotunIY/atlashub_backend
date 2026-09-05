@@ -18,7 +18,11 @@ public class DomainEventWebSocketBroadcaster extends BaseKafkaEventListener {
         this.messagingTemplate = messagingTemplate;
     }
 
-    @KafkaListener(topics = {"accounts-events", "identity-events"}, groupId = "ws-notifications-group")
+    @KafkaListener(topics = {
+        "account-events", "identity-events", "organization-events", "organization-member-events",
+        "invitation-events", "user-events", "admin-events", "auth-events",
+        "billing-events", "pay-events", "catalog-events"
+    }, groupId = "ws-notifications-group")
     public void onDomainEvent(String payload) {
         try {
             var root = objectMapper.readTree(payload);

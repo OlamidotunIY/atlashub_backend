@@ -1,7 +1,7 @@
 package com.atlashub.shared.adapter.in.messaging;
 
 import com.atlashub.shared.adapter.out.external.dlq.DeadLetterRepository;
-import com.atlashub.shared.application.api.EventTrackerApi;
+import com.atlashub.shared.application.port.out.EventTrackerPort;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -22,7 +22,7 @@ public abstract class BaseKafkaEventListener {
     protected DeadLetterRepository deadLetterRepository;
 
     @Autowired
-    protected EventTrackerApi eventTrackerApi;
+    protected EventTrackerPort EventTrackerPort;
     
     protected BaseKafkaEventListener(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
@@ -44,7 +44,7 @@ public abstract class BaseKafkaEventListener {
                 eventId = root.get("event").path("eventId").asText(null);
             }
             if (eventId != null) {
-                eventTrackerApi.markDlq(eventId, groupId);
+                EventTrackerPort.markDlq(eventId, groupId);
             }
         } catch (Exception e) {
             // ignore JSON errors in DLT handler
@@ -78,7 +78,7 @@ public abstract class BaseKafkaEventListener {
                 eventId = root.get("event").path("eventId").asText(null);
             }
 
-            if (eventId != null && eventTrackerApi.isProcessed(eventId, groupId)) {
+            if (eventId != null && EventTrackerPort.isProcessed(eventId, groupId)) {
                 log.debug("Event {} already processed by {}, skipping.", eventId, groupId);
                 return;
             }
@@ -87,7 +87,7 @@ public abstract class BaseKafkaEventListener {
             action.accept(eventNode);
 
             if (eventId != null) {
-                eventTrackerApi.markSuccess(eventId, groupId);
+                EventTrackerPort.markSuccess(eventId, groupId);
             }
         } catch (Exception e) {
             log.error("Failed to parse or process event. Expected type: {}. Payload: {}", expectedEventType, messagePayload, e);

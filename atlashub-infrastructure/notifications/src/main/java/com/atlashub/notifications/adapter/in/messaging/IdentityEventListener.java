@@ -1,8 +1,9 @@
 package com.atlashub.notifications.adapter.in.messaging;
 
+import com.atlashub.identity.application.port.OrganizationQueryService;
+import com.atlashub.identity.application.port.UserQueryService;
+import com.atlashub.identity.application.result.UserDto;
 import com.atlashub.identity.domain.event.OrganizationMemberAdded;
-import com.atlashub.shared.application.api.OrganizationQueryApi;
-import com.atlashub.shared.application.api.UserQueryApi;
 import com.atlashub.notifications.application.port.EmailSenderPort;
 import com.atlashub.shared.adapter.out.external.dlq.DeadLetterRepository;
 import com.atlashub.shared.adapter.in.messaging.BaseKafkaEventListener;
@@ -23,20 +24,20 @@ public class IdentityEventListener extends BaseKafkaEventListener {
     private static final Logger log = LoggerFactory.getLogger(IdentityEventListener.class);
 
     private final EmailSenderPort emailSenderPort;
-    private final UserQueryApi userQueryApi;
-    private final OrganizationQueryApi organizationQueryApi;
+    private final UserQueryService userQuery;
+    private final OrganizationQueryService organizationQuery;
 
     public IdentityEventListener(
             EmailSenderPort emailSenderPort,
-            UserQueryApi userQueryApi,
-            OrganizationQueryApi organizationQueryApi,
+            UserQueryService UserQueryPort,
+            OrganizationQueryService OrganizationQueryPort,
             ObjectMapper objectMapper,
             DeadLetterRepository deadLetterRepository
     ) {
         super(objectMapper);
         this.emailSenderPort = emailSenderPort;
-        this.userQueryApi = userQueryApi;
-        this.organizationQueryApi = organizationQueryApi;
+        this.userQuery = UserQueryPort;
+        this.organizationQuery = OrganizationQueryPort;
         this.deadLetterRepository = deadLetterRepository;
     }
 
@@ -45,15 +46,15 @@ public class IdentityEventListener extends BaseKafkaEventListener {
             backoff = @Backoff(delay = 5000, multiplier = 2.0),
             dltStrategy = DltStrategy.FAIL_ON_ERROR
     )
-    @KafkaListener(topics = "Organization-events", groupId = "notifications-identity-group")
+    @KafkaListener(topics = "organization-events", groupId = "notifications-identity-group")
     public void handleIdentityEvent(String message) {
         processEventIfMatches(message, "OrganizationMemberAdded", OrganizationMemberAdded.class, log, "notifications-identity-group", event -> {
-            Optional<UserQueryApi.UserSharedDto> userOpt = userQueryApi.getUserById(event.payload().userId());
-            Optional<OrganizationQueryApi.OrganizationSharedDto> orgOpt = organizationQueryApi.getOrganizationById(event.payload().organizationId());
+            Optional<UserDto> userOpt = userQuery.getUserById(event.payload().userId());
+            Optional<OrganizationQueryService.OrganizationSharedDto> orgOpt = organizationQuery.getOrganizationById(event.payload().organizationId());
 
             if (userOpt.isPresent() && orgOpt.isPresent()) {
-                UserQueryApi.UserSharedDto user = userOpt.get();
-                OrganizationQueryApi.OrganizationSharedDto org = orgOpt.get();
+                UserDto user = userOpt.get();
+                OrganizationQueryService.OrganizationSharedDto org = orgOpt.get();
 
                 emailSenderPort.sendOrganizationJoinedEmail(
                         user.email(),

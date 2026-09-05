@@ -15,18 +15,23 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
+import com.atlashub.shared.application.port.out.DomainEventPublisher;
+
 public class SetProductPricingUseCase extends BaseUseCase<SetProductPricingCommand, SetProductPricingResult> {
 
     private static final Logger log = LoggerFactory.getLogger(SetProductPricingUseCase.class);
 
     private final HubProductRepository hubProductRepository;
     private final ProductPricingRepository productPricingRepository;
+    private final DomainEventPublisher eventPublisher;
 
     public SetProductPricingUseCase(
             HubProductRepository hubProductRepository,
-            ProductPricingRepository productPricingRepository) {
+            ProductPricingRepository productPricingRepository,
+            DomainEventPublisher eventPublisher) {
         this.hubProductRepository = hubProductRepository;
         this.productPricingRepository = productPricingRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     @Override
@@ -62,6 +67,8 @@ public class SetProductPricingUseCase extends BaseUseCase<SetProductPricingComma
 
             pricing.updatePrice(input.amount());
             productPricingRepository.save(pricing);
+            
+            publishEvents(pricing, eventPublisher);
 
             log.info("ProductPricing updated successfully");
             return SetProductPricingResult.updated(pricing);
@@ -78,6 +85,8 @@ public class SetProductPricingUseCase extends BaseUseCase<SetProductPricingComma
             );
 
             productPricingRepository.save(pricing);
+            
+            publishEvents(pricing, eventPublisher);
 
             log.info("ProductPricing created successfully with id: {}", pricing.getId());
             return SetProductPricingResult.created(pricing);

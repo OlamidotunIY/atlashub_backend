@@ -7,6 +7,9 @@ import lombok.Getter;
 
 import java.time.ZonedDateTime;
 
+import com.atlashub.catalog.domain.events.ProductPricingUpdatedEvent;
+import java.util.UUID;
+
 @Getter
 public class ProductPricing extends AggregateRoot<Long> {
     private final Long id;
@@ -26,12 +29,32 @@ public class ProductPricing extends AggregateRoot<Long> {
     }
 
     public static ProductPricing create(Long id, Long hubProductId, BillingCycle billingCycle, Money amount) {
-        return new ProductPricing(id, hubProductId, billingCycle, amount, ZonedDateTime.now(), ZonedDateTime.now());
+        ProductPricing pricing = new ProductPricing(id, hubProductId, billingCycle, amount, ZonedDateTime.now(), ZonedDateTime.now());
+        
+        pricing.registerEvent(
+                new ProductPricingUpdatedEvent(
+                        UUID.randomUUID().toString(),
+                        String.valueOf(id),
+                        ZonedDateTime.now(),
+                        new ProductPricingUpdatedEvent.Payload(hubProductId, billingCycle, amount)
+                )
+        );
+        
+        return pricing;
     }
 
     public void updatePrice(Money newAmount) {
         this.amount = newAmount;
         this.updatedAt = ZonedDateTime.now();
+        
+        this.registerEvent(
+                new ProductPricingUpdatedEvent(
+                        UUID.randomUUID().toString(),
+                        String.valueOf(id),
+                        ZonedDateTime.now(),
+                        new ProductPricingUpdatedEvent.Payload(hubProductId, billingCycle, newAmount)
+                )
+        );
     }
 
     @Override

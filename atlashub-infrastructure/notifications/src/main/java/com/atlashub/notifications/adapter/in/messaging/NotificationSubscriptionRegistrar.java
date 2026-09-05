@@ -1,6 +1,6 @@
 package com.atlashub.notifications.adapter.in.messaging;
 
-import com.atlashub.shared.application.api.EventTrackerApi;
+import com.atlashub.shared.application.port.out.EventTrackerPort;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
@@ -8,27 +8,27 @@ import org.springframework.stereotype.Component;
 @Component
 public class NotificationSubscriptionRegistrar implements ApplicationRunner {
 
-    private final EventTrackerApi eventTrackerApi;
+    private final EventTrackerPort EventTrackerPort;
 
-    public NotificationSubscriptionRegistrar(EventTrackerApi eventTrackerApi) {
-        this.eventTrackerApi = eventTrackerApi;
+    public NotificationSubscriptionRegistrar(EventTrackerPort EventTrackerPort) {
+        this.EventTrackerPort = EventTrackerPort;
     }
 
     @Override
     public void run(ApplicationArguments args) {
         // Auth events
-        eventTrackerApi.registerSubscription("VerificationCreated", "notifications-auth-group");
-        eventTrackerApi.registerSubscription("PasswordSetupInitiated", "notifications-auth-group");
-        eventTrackerApi.registerSubscription("AuthNewDeviceLoginEvent", "notifications-auth-group");
-        eventTrackerApi.registerSubscription("AdminCredentialsCreated", "notifications-admin-creds-group");
+        EventTrackerPort.registerSubscription("VerificationCreated", "notifications-auth-group");
+        EventTrackerPort.registerSubscription("PasswordSetupInitiated", "notifications-auth-group");
+        EventTrackerPort.registerSubscription("AuthNewDeviceLoginEvent", "notifications-auth-group");
+        EventTrackerPort.registerSubscription("AdminCredentialsCreated", "notifications-admin-creds-group");
         
         // Identity events
-        eventTrackerApi.registerSubscription("OrganizationMemberAdded", "notifications-identity-group");
+        EventTrackerPort.registerSubscription("OrganizationMemberAdded", "notifications-identity-group");
         
         // Account events
-        eventTrackerApi.registerSubscription("VirtualAccountActivatedEvent", "notifications-account-group");
+        EventTrackerPort.registerSubscription("VirtualAccountActivatedEvent", "notifications-account-group");
 
         // Webhook events
-        eventTrackerApi.registerSubscription("WebhookDeliveryRequested", "notifications-webhook-group");
+        EventTrackerPort.registerSubscription("WebhookDeliveryRequested", "notifications-webhook-group");
     }
 }

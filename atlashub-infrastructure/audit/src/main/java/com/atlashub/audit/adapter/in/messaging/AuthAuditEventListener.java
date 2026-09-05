@@ -3,7 +3,7 @@ package com.atlashub.audit.adapter.in.messaging;
 import com.atlashub.audit.application.command.LogActivityCommand;
 import com.atlashub.audit.application.usecase.LogActivityUseCase;
 import com.atlashub.audit.domain.valueobject.ActivityAction;
-import com.atlashub.shared.application.api.EventTrackerApi;
+import com.atlashub.shared.application.port.out.EventTrackerPort;
 import com.atlashub.shared.domain.event.EnvelopedDomainEvent;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -18,18 +18,18 @@ public class AuthAuditEventListener {
 
     private final LogActivityUseCase logActivityUseCase;
     private final ObjectMapper objectMapper;
-    private final EventTrackerApi eventTrackerApi;
+    private final EventTrackerPort EventTrackerPort;
 
-    public AuthAuditEventListener(LogActivityUseCase logActivityUseCase, ObjectMapper objectMapper, EventTrackerApi eventTrackerApi) {
+    public AuthAuditEventListener(LogActivityUseCase logActivityUseCase, ObjectMapper objectMapper, EventTrackerPort EventTrackerPort) {
         this.logActivityUseCase = logActivityUseCase;
         this.objectMapper = objectMapper;
-        this.eventTrackerApi = eventTrackerApi;
+        this.EventTrackerPort = EventTrackerPort;
     }
 
     @KafkaListener(topics = "auth-events", groupId = "audit-group")
     public void onAuthEvent(EnvelopedDomainEvent<?> envelopedEvent) {
         String eventId = envelopedEvent.correlationId();
-        if (eventTrackerApi.isProcessed(eventId, "audit-group")) {
+        if (EventTrackerPort.isProcessed(eventId, "audit-group")) {
             return;
         }
 
@@ -39,7 +39,7 @@ public class AuthAuditEventListener {
         if ("AuthAccountCreated".equals(eventType)) {
             action = ActivityAction.USER_LOGIN;
         } else {
-            eventTrackerApi.markSuccess(eventId, "audit-group");
+            EventTrackerPort.markSuccess(eventId, "audit-group");
             return;
         }
 
@@ -79,6 +79,6 @@ public class AuthAuditEventListener {
         );
         logActivityUseCase.execute(command);
         
-        eventTrackerApi.markSuccess(eventId, "audit-group");
+        EventTrackerPort.markSuccess(eventId, "audit-group");
     }
 }

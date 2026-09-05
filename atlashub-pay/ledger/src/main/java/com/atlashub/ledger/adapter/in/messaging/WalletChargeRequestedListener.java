@@ -31,7 +31,7 @@ public class WalletChargeRequestedListener extends BaseKafkaEventListener {
     }
 
     @RetryableTopic(attempts = "3", backoff = @Backoff(delay = 1000, multiplier = 2.0), dltStrategy = DltStrategy.FAIL_ON_ERROR)
-    @KafkaListener(topics = "Billing-events", groupId = GROUP_ID)
+    @KafkaListener(topics = "billing-events", groupId = GROUP_ID)
     public void onWalletChargeRequested(String messagePayload) {
         processEventIfMatches(messagePayload, "WalletChargeRequestedEvent", WalletChargeRequestedEvent.class, log, GROUP_ID, event -> {
             var payload = event.payload();

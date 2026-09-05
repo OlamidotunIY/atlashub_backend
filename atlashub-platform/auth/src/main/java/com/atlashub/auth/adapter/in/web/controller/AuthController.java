@@ -1,48 +1,22 @@
 package com.atlashub.auth.adapter.in.web.controller;
 
-import com.atlashub.auth.application.command.AuthenticateCommand;
-import com.atlashub.auth.application.command.ChangeTemporaryPasswordCommand;
-import com.atlashub.auth.application.command.CompleteTwoFactorCommand;
-import com.atlashub.auth.application.command.CompleteVerificationCommand;
-import com.atlashub.auth.application.command.RefreshTokenCommand;
-import com.atlashub.auth.application.command.RevokeSessionCommand;
-import com.atlashub.auth.application.command.SetupPasswordCommand;
+import com.atlashub.auth.adapter.in.web.request.*;
+import com.atlashub.auth.application.command.*;
+import com.atlashub.auth.application.port.AuthAccountQueryService;
 import com.atlashub.auth.application.result.AuthResponseDto;
 import com.atlashub.auth.application.result.AuthTokenDto;
+import com.atlashub.auth.application.result.AuthenticatedUserDto;
 import com.atlashub.auth.application.result.VerificationResponseDto;
-import com.atlashub.auth.application.usecase.AuthenticateUseCase;
-import com.atlashub.auth.application.usecase.ChangeTemporaryPasswordUseCase;
-import com.atlashub.auth.application.usecase.CompleteTwoFactorUseCase;
-import com.atlashub.auth.application.usecase.CompleteVerificationUseCase;
-import com.atlashub.auth.application.usecase.RefreshTokenUseCase;
-import com.atlashub.auth.application.usecase.RevokeSessionUseCase;
-import com.atlashub.auth.application.usecase.SetupPasswordUseCase;
-import com.atlashub.auth.application.usecase.ResendSetupTokenUseCase;
-import com.atlashub.auth.application.command.ResendSetupTokenCommand;
-import com.atlashub.auth.adapter.in.web.request.ResendSetupTokenRequestDto;
-import com.atlashub.auth.adapter.in.web.request.ChangeTemporaryPasswordRequestDto;
-import com.atlashub.auth.adapter.in.web.request.CompleteVerificationRequestDto;
-import com.atlashub.auth.adapter.in.web.request.LoginRequestDto;
-import com.atlashub.auth.adapter.in.web.request.SetupPasswordRequestDto;
-import com.atlashub.shared.application.dto.ApiResponse;
+import com.atlashub.auth.application.usecase.*;
 import com.atlashub.shared.adapter.security.PublicEndpoint;
+import com.atlashub.shared.application.dto.ApiResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-import com.atlashub.auth.adapter.in.web.request.VerifyMfaRequestDto;
-import com.atlashub.auth.adapter.in.web.request.RefreshTokenRequestDto;
-import com.atlashub.auth.adapter.in.web.request.LogoutRequestDto;
-import com.atlashub.auth.application.query.GetAuthenticatedUserQuery;
-import com.atlashub.auth.application.result.AuthenticatedUserDto;
-import com.atlashub.auth.application.usecase.GetAuthenticatedUserUseCase;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
 import java.security.Principal;
 
 @RestController
@@ -59,7 +33,7 @@ public class AuthController {
     private final CompleteVerificationUseCase completeVerificationUseCase;
     private final SetupPasswordUseCase setupPasswordUseCase;
     private final ResendSetupTokenUseCase resendSetupTokenUseCase;
-    private final GetAuthenticatedUserUseCase getAuthenticatedUserUseCase;
+    private final AuthAccountQueryService authQueryService;
 
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<AuthenticatedUserDto>> getMe(Principal principal) {
@@ -69,9 +43,8 @@ public class AuthController {
         }
 
         Long userId = Long.valueOf(principal.getName());
-        GetAuthenticatedUserQuery query = new GetAuthenticatedUserQuery(userId);
         
-        AuthenticatedUserDto result = getAuthenticatedUserUseCase.execute(query);
+        AuthenticatedUserDto result = authQueryService.getAuthenticatedUser(userId);
 
         return ResponseEntity.ok(new ApiResponse<>(true, "Authenticated user retrieved successfully", result, null));
     }
