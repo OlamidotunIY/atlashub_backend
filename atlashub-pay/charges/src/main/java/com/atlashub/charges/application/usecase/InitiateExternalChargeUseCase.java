@@ -2,8 +2,9 @@ package com.atlashub.charges.application.usecase;
 
 import com.atlashub.charges.application.command.InitiateExternalChargeCommand;
 import com.atlashub.charges.application.port.out.PaymentGatewayPort;
-import com.atlashub.charges.domain.model.PaystackCharge;
-import com.atlashub.charges.domain.repository.PaystackChargeRepository;
+import com.atlashub.charges.application.port.out.PaymentGatewayRouterPort;
+import com.atlashub.charges.domain.model.ExternalCharge;
+import com.atlashub.charges.domain.repository.ExternalChargeRepository;
 import com.atlashub.charges.domain.valueobject.ChargePurpose;
 import com.atlashub.shared.application.usecase.BaseUseCase;
 import com.atlashub.shared.application.port.out.DomainEventPublisher;
@@ -15,24 +16,26 @@ import java.util.UUID;
 @Service
 public class InitiateExternalChargeUseCase extends BaseUseCase<InitiateExternalChargeCommand, Void> {
 
-    private final PaystackChargeRepository chargeRepository;
-    private final PaymentGatewayPort paymentGatewayPort;
+    private final ExternalChargeRepository chargeRepository;
+    private final PaymentGatewayRouterPort paymentGatewayRouterPort;
     private final DomainEventPublisher publisher;
 
     public InitiateExternalChargeUseCase(
-            PaystackChargeRepository chargeRepository,
-            PaymentGatewayPort paymentGatewayPort,
+            ExternalChargeRepository chargeRepository,
+            PaymentGatewayRouterPort paymentGatewayRouterPort,
             DomainEventPublisher publisher) {
         this.chargeRepository = chargeRepository;
-        this.paymentGatewayPort = paymentGatewayPort;
+        this.paymentGatewayRouterPort = paymentGatewayRouterPort;
         this.publisher = publisher;
     }
 
     @Override
     @Transactional
     public Void execute(InitiateExternalChargeCommand command) {
-        String reference = "INV-" + command.invoiceId() + "-" + UUID.randomUUID().toString().substring(0, 8);
-        String metadata = String.valueOf(command.invoiceId());
+        String reference = "INV-" + command.purposeId() + "-" + UUID.randomUUID().toString().substring(0, 8);
+        String metadata = String.valueOf(command.purposeId());
+
+        PaymentGatewayPort paymentGatewayPort = paymentGatewayRouterPort.resolve(command.organizationId());
 
         String checkoutUrl = paymentGatewayPort.initializeCharge(
                 command.amount().amount(),
@@ -43,9 +46,9 @@ public class InitiateExternalChargeUseCase extends BaseUseCase<InitiateExternalC
                 command.redirectUrl()
         );
 
-        PaystackCharge charge = PaystackCharge.initiate(
+        ExternalCharge charge = ExternalCharge.initiate(
                 chargeRepository.nextIdentity(),
-                command.invoiceId(),
+                command.purposeId(),
                 command.organizationId(),
                 reference,
                 checkoutUrl,

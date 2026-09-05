@@ -12,7 +12,7 @@ public record ExternalChargeRequestedEvent(
         Payload payload
 ) implements DomainEvent<ExternalChargeRequestedEvent.Payload> {
     public record Payload(
-            Long invoiceId,
+            Long purposeId,
             Long organizationId,
             BigDecimal amount,
             String currency,

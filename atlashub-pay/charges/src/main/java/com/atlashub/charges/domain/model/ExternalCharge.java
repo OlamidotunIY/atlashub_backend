@@ -13,7 +13,7 @@ import java.time.ZonedDateTime;
 import java.util.UUID;
 
 @Getter
-public class PaystackCharge extends AggregateRoot<Long> {
+public class ExternalCharge extends AggregateRoot<Long> {
     private final Long id;
     private final Long purposeId;
     private final Long organizationId;
@@ -25,7 +25,7 @@ public class PaystackCharge extends AggregateRoot<Long> {
     private ZonedDateTime completedAt;
     private final ZonedDateTime createdAt;
 
-    public PaystackCharge(Long id, Long purposeId, Long organizationId, String reference, String checkoutUrl, Money amount, ChargePurpose purpose, ChargeStatus status, ZonedDateTime completedAt, ZonedDateTime createdAt) {
+    public ExternalCharge(Long id, Long purposeId, Long organizationId, String reference, String checkoutUrl, Money amount, ChargePurpose purpose, ChargeStatus status, ZonedDateTime completedAt, ZonedDateTime createdAt) {
         this.id = id;
         this.purposeId = purposeId;
         this.organizationId = organizationId;
@@ -38,8 +38,8 @@ public class PaystackCharge extends AggregateRoot<Long> {
         this.createdAt = createdAt != null ? createdAt : ZonedDateTime.now();
     }
 
-    public static PaystackCharge initiate(Long id, Long invoiceId, Long organizationId, String reference, String checkoutUrl, Money amount, ChargePurpose purpose) {
-        PaystackCharge charge = new PaystackCharge(id, invoiceId, organizationId, reference, checkoutUrl, amount, purpose, ChargeStatus.INITIATED, null, ZonedDateTime.now());
+    public static ExternalCharge initiate(Long id, Long purposeId, Long organizationId, String reference, String checkoutUrl, Money amount, ChargePurpose purpose) {
+        ExternalCharge charge = new ExternalCharge(id, purposeId, organizationId, reference, checkoutUrl, amount, purpose, ChargeStatus.INITIATED, null, ZonedDateTime.now());
         charge.registerEvent(new ExternalChargeInitiatedEvent(
                 UUID.randomUUID().toString(),
                 String.valueOf(charge.getId()),

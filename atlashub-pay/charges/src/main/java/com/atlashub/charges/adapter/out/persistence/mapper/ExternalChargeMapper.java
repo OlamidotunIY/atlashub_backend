@@ -1,17 +1,17 @@
 package com.atlashub.charges.adapter.out.persistence.mapper;
 
-import com.atlashub.charges.adapter.out.persistence.entity.PaystackChargeJpaEntity;
-import com.atlashub.charges.domain.model.PaystackCharge;
+import com.atlashub.charges.adapter.out.persistence.entity.ExternalChargeJpaEntity;
+import com.atlashub.charges.domain.model.ExternalCharge;
 import com.atlashub.shared.domain.money.CurrencyCode;
 import com.atlashub.shared.domain.money.Money;
 import org.springframework.stereotype.Component;
 
 @Component
-public class PaystackChargeMapper {
-    public PaystackCharge toDomain(PaystackChargeJpaEntity entity) {
-        return new PaystackCharge(
+public class ExternalChargeMapper {
+    public ExternalCharge toDomain(ExternalChargeJpaEntity entity) {
+        return new ExternalCharge(
                 entity.getId(),
-                entity.getInvoiceId(),
+                entity.getPurposeId(),
                 entity.getOrganizationId(),
                 entity.getReference(),
                 entity.getCheckoutUrl(),
@@ -26,8 +26,8 @@ public class PaystackChargeMapper {
         );
     }
 
-    public PaystackChargeJpaEntity toEntity(PaystackCharge domain) {
-        return new PaystackChargeJpaEntity(
+    public ExternalChargeJpaEntity toEntity(ExternalCharge domain) {
+        return new ExternalChargeJpaEntity(
                 domain.getId(),
                 domain.getPurposeId(),
                 domain.getOrganizationId(),

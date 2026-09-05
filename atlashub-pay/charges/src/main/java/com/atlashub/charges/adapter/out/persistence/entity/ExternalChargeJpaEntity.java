@@ -12,7 +12,7 @@ import java.time.ZonedDateTime;
     @Index(name = "idx_charge_invoice_id", columnList = "invoice_id"),
     @Index(name = "idx_charge_organization_id", columnList = "organization_id")
 })
-public class PaystackChargeJpaEntity {
+public class ExternalChargeJpaEntity {
 
     @Id
     @Column(nullable = false)
@@ -53,11 +53,11 @@ public class PaystackChargeJpaEntity {
     @Version
     private Long version;
 
-    protected PaystackChargeJpaEntity() {}
+    protected ExternalChargeJpaEntity() {}
 
-    public PaystackChargeJpaEntity(Long id, Long invoiceId, Long organizationId, String reference, String checkoutUrl, BigDecimal amount, String currency, ChargePurpose purpose, ChargeStatus status, ZonedDateTime completedAt, ZonedDateTime createdAt, Long version) {
+    public ExternalChargeJpaEntity(Long id, Long purposeId, Long organizationId, String reference, String checkoutUrl, BigDecimal amount, String currency, ChargePurpose purpose, ChargeStatus status, ZonedDateTime completedAt, ZonedDateTime createdAt, Long version) {
         this.id = id;
-        this.invoiceId = invoiceId;
+        this.purposeId = purposeId;
         this.organizationId = organizationId;
         this.reference = reference;
         this.checkoutUrl = checkoutUrl;
@@ -71,7 +71,7 @@ public class PaystackChargeJpaEntity {
     }
 
     public Long getId() { return id; }
-    public Long getInvoiceId() { return invoiceId; }
+    public Long getPurposeId() { return purposeId; }
     public Long getOrganizationId() { return organizationId; }
     public String getReference() { return reference; }
     public String getCheckoutUrl() { return checkoutUrl; }

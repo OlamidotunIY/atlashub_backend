@@ -1,14 +1,13 @@
 package com.atlashub.admin.adapter.in.internal;
 
-import com.atlashub.admin.domain.model.Admin;
+import com.atlashub.admin.application.port.AdminQueryService;
 import com.atlashub.admin.domain.repository.AdminRepository;
-import com.atlashub.shared.application.api.AdminQueryApi;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
 
 @Component
-public class InternalAdminApiImpl implements AdminQueryApi {
+public class InternalAdminApiImpl implements AdminQueryService {
 
     private final AdminRepository adminRepository;
 
@@ -17,12 +16,13 @@ public class InternalAdminApiImpl implements AdminQueryApi {
     }
 
     @Override
-    public Optional<AdminSharedDto> getAdminById(Long adminId) {
+    public Optional<AdminDto> getAdminById(Long adminId) {
         return adminRepository.findById(adminId)
-            .map(admin -> new AdminSharedDto(
-                admin.getId(),
-                admin.getUsername(),
-                admin.getEmail().value()
-            ));
+                .map(admin -> new AdminDto(
+                        admin.getId(),
+                        admin.getEmail().value(),
+                        admin.getRole().name(),
+                        admin.getUsername()
+                ));
     }
 }

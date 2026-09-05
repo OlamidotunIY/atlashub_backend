@@ -29,7 +29,7 @@ public class ExternalPaymentResultListener extends BaseKafkaEventListener {
     }
 
     @RetryableTopic(attempts = "3", backoff = @Backoff(delay = 1000, multiplier = 2.0), dltStrategy = DltStrategy.FAIL_ON_ERROR)
-    @KafkaListener(topics = "Pay-events", groupId = GROUP_ID)
+    @KafkaListener(topics = "pay-events", groupId = GROUP_ID)
     public void onExternalPaymentResult(String messagePayload) {
         processEventIfMatches(messagePayload, "PaymentSuccessfulEvent", PaymentSuccessfulEvent.class, log, GROUP_ID, event -> {
             ChargePurpose purpose = event.payload().purpose();

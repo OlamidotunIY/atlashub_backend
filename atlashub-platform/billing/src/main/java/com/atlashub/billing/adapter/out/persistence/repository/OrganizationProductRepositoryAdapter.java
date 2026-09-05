@@ -38,4 +38,14 @@ public class OrganizationProductRepositoryAdapter implements OrganizationProduct
     public Optional<OrganizationProduct> findById(Long id) {
         return jpaRepository.findById(id).map(mapper::toDomain);
     }
+
+    @Override
+    public void deleteById(Long id) {
+        jpaRepository.deleteById(id);
+    }
+
+    @Override
+    public boolean existsById(Long id) {
+        return jpaRepository.existsById(id);
+    }
 }

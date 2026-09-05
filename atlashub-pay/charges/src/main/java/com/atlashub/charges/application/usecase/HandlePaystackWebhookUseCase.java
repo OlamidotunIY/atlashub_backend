@@ -1,8 +1,8 @@
 package com.atlashub.charges.application.usecase;
 
 import com.atlashub.charges.application.command.HandlePaystackWebhookCommand;
-import com.atlashub.charges.domain.model.PaystackCharge;
-import com.atlashub.charges.domain.repository.PaystackChargeRepository;
+import com.atlashub.charges.domain.model.ExternalCharge;
+import com.atlashub.charges.domain.repository.ExternalChargeRepository;
 import com.atlashub.charges.domain.valueobject.PaystackEventType;
 import com.atlashub.shared.application.port.out.DomainEventPublisher;
 import com.atlashub.shared.application.usecase.BaseUseCase;
@@ -12,10 +12,10 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class HandlePaystackWebhookUseCase extends BaseUseCase<HandlePaystackWebhookCommand, Void> {
 
-    private final PaystackChargeRepository chargeRepository;
+    private final ExternalChargeRepository chargeRepository;
     private final DomainEventPublisher publisher;
 
-    public HandlePaystackWebhookUseCase(PaystackChargeRepository chargeRepository, DomainEventPublisher publisher) {
+    public HandlePaystackWebhookUseCase(ExternalChargeRepository chargeRepository, DomainEventPublisher publisher) {
         this.chargeRepository = chargeRepository;
         this.publisher = publisher;
     }

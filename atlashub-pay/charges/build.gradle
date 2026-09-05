@@ -4,3 +4,5 @@ dependencies {
     implementation 'org.springframework.kafka:spring-kafka'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 }
+
+dependencies { implementation project(':atlashub-pay:accounts') }

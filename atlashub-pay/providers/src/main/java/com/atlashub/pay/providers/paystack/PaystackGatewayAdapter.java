@@ -1,4 +1,4 @@
-package com.atlashub.charges.adapter.out.external;
+package com.atlashub.pay.providers.paystack;
 
 import com.atlashub.charges.application.port.out.PaymentGatewayPort;
 import com.atlashub.charges.domain.valueobject.ChargePurpose;
@@ -8,14 +8,14 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 
-@Component
-public class PaymentGatewayAdapter implements PaymentGatewayPort {
+@Component("paystackGatewayAdapter")
+public class PaystackGatewayAdapter implements PaymentGatewayPort {
 
-    private static final Logger log = LoggerFactory.getLogger(PaymentGatewayAdapter.class);
+    private static final Logger log = LoggerFactory.getLogger(PaystackGatewayAdapter.class);
 
     private final String paystackSecretKey;
 
-    public PaymentGatewayAdapter() {
+    public PaystackGatewayAdapter() {
         this.paystackSecretKey = "dummy_secret_key";
     }
 

@@ -38,4 +38,14 @@ public class BillingInvoiceRepositoryAdapter implements BillingInvoiceRepository
     public Optional<BillingInvoice> findById(Long id) {
         return jpaRepository.findById(id).map(mapper::toDomain);
     }
+
+    @Override
+    public void deleteById(Long id) {
+        jpaRepository.deleteById(id);
+    }
+
+    @Override
+    public boolean existsById(Long id) {
+        return jpaRepository.existsById(id);
+    }
 }

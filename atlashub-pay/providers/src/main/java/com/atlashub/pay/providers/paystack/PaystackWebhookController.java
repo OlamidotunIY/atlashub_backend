@@ -1,6 +1,5 @@
-package com.atlashub.charges.adapter.in.web.controller;
+package com.atlashub.pay.providers.paystack;
 
-import com.atlashub.charges.adapter.in.web.request.PaystackWebhookRequest;
 import com.atlashub.charges.application.command.HandlePaystackWebhookCommand;
 import com.atlashub.charges.application.usecase.HandlePaystackWebhookUseCase;
 import org.springframework.http.ResponseEntity;

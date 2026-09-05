@@ -29,18 +29,18 @@ public class ExternalChargeRequestedListener extends BaseKafkaEventListener {
     }
 
     @RetryableTopic(attempts = "3", backoff = @Backoff(delay = 1000, multiplier = 2.0), dltStrategy = DltStrategy.FAIL_ON_ERROR)
-    @KafkaListener(topics = "Billing-events", groupId = GROUP_ID)
+    @KafkaListener(topics = "billing-events", groupId = GROUP_ID)
     public void onExternalChargeRequested(String messagePayload) {
         processEventIfMatches(messagePayload, "ExternalChargeRequestedEvent", ExternalChargeRequestedEvent.class, log, GROUP_ID, event -> {
             var payload = event.payload();
-            log.info("Received ExternalChargeRequestedEvent for invoice {}. Initiating Paystack charge...", payload.invoiceId());
+            log.info("Received ExternalChargeRequestedEvent for invoice {}. Initiating Paystack charge...", payload.purposeId());
 
             InitiateExternalChargeCommand command = new InitiateExternalChargeCommand(
-                    payload.invoiceId(),
-                    payload.organizationId(),
-                    payload.amount(),
-                    payload.customerEmail(),
-                    payload.redirectUrl()
+                    event.payload().purposeId(),
+                    event.payload().organizationId(),
+                    event.payload().amount(),
+                    event.payload().customerEmail(),
+                    event.payload().redirectUrl()
             );
 
             useCase.execute(command);

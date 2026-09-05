@@ -1,4 +1,4 @@
-package com.atlashub.charges.adapter.in.web.request;
+package com.atlashub.pay.providers.paystack;
 
 import java.util.Map;
 
