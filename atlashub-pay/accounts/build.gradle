@@ -1,6 +1,6 @@
 dependencies {
     implementation project(':atlashub-shared')
-    implementation project(':atlashub-pay:ledger')
+    
     implementation project(':atlashub-platform:identity')
     
     // Spring context

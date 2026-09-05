@@ -20,7 +20,7 @@ public class OrganizationRegisteredListener extends BaseKafkaEventListener {
         this.bootstrapUseCase = bootstrapUseCase;
     }
 
-    @KafkaListener(topics = "Identity-events", groupId = "accounts-module-bootstrap-group")
+    @KafkaListener(topics = "organization-events", groupId = "accounts-module-bootstrap-group")
     public void onOrganizationRegistered(String messagePayload) {
         processEventIfMatches(messagePayload, "OrganizationRegistered", OrganizationRegistered.class, log,  "accounts-module-bootstrap-group", event -> {
             String aggregateId = event.aggregateId();

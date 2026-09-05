@@ -2,6 +2,7 @@ package com.atlashub.accounts.application.saga;
 
 import com.atlashub.accounts.application.result.AccountIssuanceRequestDto;
 import com.atlashub.accounts.application.port.AccountIssuancePort;
+import com.atlashub.accounts.application.port.AccountIssuanceRouterPort;
 import com.atlashub.accounts.domain.event.VirtualAccountCreatedEvent;
 import com.atlashub.accounts.domain.repository.VirtualAccountDomainRepository;
 import lombok.RequiredArgsConstructor;
@@ -15,7 +16,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class AccountIssuanceSaga {
 
-    private final AccountIssuancePort accountIssuancePort;
+    private final AccountIssuanceRouterPort accountIssuanceRouterPort;
     private final VirtualAccountDomainRepository repository;
 
     @Async
@@ -30,6 +31,7 @@ public class AccountIssuanceSaga {
                     account.getBankName()
             );
             
+            AccountIssuancePort accountIssuancePort = accountIssuanceRouterPort.resolve(account.getIntegration());
             accountIssuancePort.issueVirtualAccount(request);
         });
     }

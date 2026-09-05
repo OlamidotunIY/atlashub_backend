@@ -1,6 +1,6 @@
 package com.atlashub.accounts.adapter.in.messaging;
 
-import com.atlashub.shared.application.api.EventTrackerApi;
+import com.atlashub.shared.application.port.out.EventTrackerPort;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
@@ -8,16 +8,16 @@ import org.springframework.stereotype.Component;
 @Component
 public class AccountsSubscriptionRegistrar implements ApplicationRunner {
 
-    private final EventTrackerApi eventTrackerApi;
+    private final EventTrackerPort EventTrackerPort;
 
-    public AccountsSubscriptionRegistrar(EventTrackerApi eventTrackerApi) {
-        this.eventTrackerApi = eventTrackerApi;
+    public AccountsSubscriptionRegistrar(EventTrackerPort EventTrackerPort) {
+        this.EventTrackerPort = EventTrackerPort;
     }
 
     @Override
     public void run(ApplicationArguments args) {
-        eventTrackerApi.registerSubscription("OrganizationBanned", "accounts-module-group");
-        eventTrackerApi.registerSubscription("OrganizationComplianceApproved", "accounts-module-group");
-        eventTrackerApi.registerSubscription("OrganizationRegistered", "accounts-module-bootstrap-group");
+        EventTrackerPort.registerSubscription("OrganizationBanned", "accounts-module-group");
+        EventTrackerPort.registerSubscription("OrganizationComplianceApproved", "accounts-module-group");
+        EventTrackerPort.registerSubscription("OrganizationRegistered", "accounts-module-bootstrap-group");
     }
 }

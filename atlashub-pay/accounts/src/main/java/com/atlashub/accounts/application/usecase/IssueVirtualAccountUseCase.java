@@ -9,7 +9,7 @@ import com.atlashub.shared.application.port.out.DomainEventPublisher;
 import com.atlashub.shared.application.usecase.BaseUseCase;
 import lombok.RequiredArgsConstructor;
 
-import com.atlashub.accounts.application.port.VirtualAccountQueryService;
+import com.atlashub.accounts.application.port.AccountQueryService;
 import com.atlashub.shared.domain.exception.BusinessRuleException;
 import com.atlashub.accounts.domain.exception.AccountsErrorCode;
 
@@ -18,17 +18,17 @@ import com.atlashub.accounts.domain.exception.AccountsErrorCode;
 public class IssueVirtualAccountUseCase extends BaseUseCase<IssueVirtualAccountCommand, Long> {
 
     private final VirtualAccountDomainRepository repository;
-    private final VirtualAccountQueryService queryService;
+    private final AccountQueryService queryService;
     private final DomainEventPublisher eventPublisher;
 
     @Override
     @org.springframework.transaction.annotation.Transactional
     public Long execute(IssueVirtualAccountCommand command) {
         
-        if (queryService.countByIntegration(command.integration()) >= 2) {
+        if (queryService.countVirtualAccountsByIntegration(command.integration()) >= 2) {
             throw new BusinessRuleException(AccountsErrorCode.INVALID_ACCOUNT_STATE, "Organization can have at most 2 accounts");
         }
-        if (queryService.existsByIntegrationAndBankName(command.integration(), command.bankName())) {
+        if (queryService.existsVirtualAccountByIntegrationAndBankName(command.integration(), command.bankName())) {
             throw new BusinessRuleException(AccountsErrorCode.INVALID_ACCOUNT_STATE, "Organization already has an account with " + command.bankName());
         }
 
@@ -47,6 +47,3 @@ public class IssueVirtualAccountUseCase extends BaseUseCase<IssueVirtualAccountC
         return savedAccount.getId();
     }
 }
-
-
-

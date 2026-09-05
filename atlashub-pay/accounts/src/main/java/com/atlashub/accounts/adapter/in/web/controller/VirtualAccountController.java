@@ -2,10 +2,8 @@ package com.atlashub.accounts.adapter.in.web.controller;
 
 import com.atlashub.accounts.application.command.IssueVirtualAccountCommand;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import com.atlashub.accounts.application.query.GetVirtualAccountsQuery;
 import com.atlashub.accounts.application.usecase.IssueVirtualAccountUseCase;
-import com.atlashub.accounts.application.usecase.GetVirtualAccountsUseCase;
-import com.atlashub.accounts.application.usecase.ForceCloseAccountsUseCase;
+import com.atlashub.accounts.application.port.AccountQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,8 +16,7 @@ import com.atlashub.shared.application.dto.ApiResponse;
 public class VirtualAccountController {
 
     private final IssueVirtualAccountUseCase issueVirtualAccountUseCase;
-    private final GetVirtualAccountsUseCase getVirtualAccountsUseCase;
-    private final ForceCloseAccountsUseCase forceCloseAccountsUseCase;
+    private final AccountQueryService queryService;
 
     @PostMapping
     public ResponseEntity<ApiResponse<String>> issueUserAccount(
@@ -40,8 +37,7 @@ public class VirtualAccountController {
 
     @GetMapping
     public ResponseEntity<ApiResponse<?>> listAccounts(@RequestHeader("X-Organization-Id") String OrganizationId) {
-        var accounts = getVirtualAccountsUseCase.execute(new GetVirtualAccountsQuery(Long.valueOf(OrganizationId)));
+        var accounts = queryService.getVirtualAccounts(Long.valueOf(OrganizationId));
         return ResponseEntity.ok(new ApiResponse<>(true, "Accounts retrieved successfully", accounts, null));
     }
 }
-
