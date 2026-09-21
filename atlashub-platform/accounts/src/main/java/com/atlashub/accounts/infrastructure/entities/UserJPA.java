@@ -1,4 +1,4 @@
 package com.atlashub.accounts.infrastructure.entities;
 
-public class UserJpa {
+public class UserJPA {
 }
