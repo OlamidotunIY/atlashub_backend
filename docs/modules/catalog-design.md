@@ -1,59 +1,124 @@
-# Platform Catalog Module Design (`atlashub-platform:catalog`)
+# Catalog Module Design (`atlashub-platform:catalog`)
 
 ## Role & Purpose
 
-The Catalog module is AtlasHub's **internal product menu**. It defines the platform products that organizations can subscribe to — Atlas Pay, Atlas Commerce, Atlas Logistics, Atlas HR, Atlas Accounting — and the pricing for each. It is exclusively managed by AtlasHub administrators and serves as the authoritative source of truth for what is available on the platform and at what cost.
+The `catalog` module defines **what products AtlasHub sells** and **how much they cost**. This is the platform's internal product catalogue — completely separate from the product catalogues that organizations manage in `atlashub-commerce` (which is their own store inventory).
 
-When an organization wants to start using Atlas Pay, they are subscribing to a `HubProduct` defined in this catalog. When an admin wants to change the monthly price for Atlas Commerce, they do it here. The `billing` module reads from the catalog at subscription time to determine the correct invoice amount for an organization based on their country (currency) and chosen billing cycle.
+AtlasHub's products are things like:
+- **Atlas Pay** — transaction-based pricing, tiered by volume
+- **Atlas Commerce** — monthly subscription
+- **Atlas Logistics** — monthly subscription
+- **Atlas HR** — free
+- **Atlas Accounting** — monthly subscription
+- **Atlas Hotel** — future, premium subscription
 
-This module has **no awareness of individual organizations** — it only knows about products and their pricing tiers. It is intentionally simple and stable.
+The `catalog` module is the source of truth that the `billing` module reads when generating invoices and calculating what an organization owes.
 
 ---
 
 ## 1. Features
 
-### Platform Product Management
-AtlasHub staff (via the `admin` module) define each platform product as a `HubProduct` with a unique `ProductKey` (e.g., `PAY`, `COMMERCE`, `LOGISTICS`, `HR`, `ACCOUNTING`). Products have a lifecycle status (ACTIVE, INACTIVE, DEPRECATED). Deprecated products are no longer available for new subscriptions but remain accessible to existing subscribers.
+### Platform Products
+AtlasHub admins define `Product` records — each representing a subscribable service. Each product has:
+- A `pricingModel` (`SUBSCRIPTION_FLAT`, `SUBSCRIPTION_TIERED`, `TRANSACTION_FEE`, `FREE`)
+- One or more `PricingPlan`s (e.g., "Starter", "Growth", "Enterprise")
+- Currency-specific pricing (NGN, KES, USD)
 
-### Multi-Currency, Multi-Cycle Pricing
-Each `HubProduct` can have multiple `ProductPricing` entries — one per `(BillingCycle, CurrencyCode)` combination. This means:
-- A Nigerian organization (NGN) subscribing monthly sees: ₦50,000/month
-- A Kenyan organization (KES) subscribing annually sees: KES 480,000/year
-- The same product can be priced differently per market.
+### Transaction-Fee Pricing (Atlas Pay)
+Atlas Pay uses `TRANSACTION_FEE` pricing. The fee structure is tiered — as monthly transaction volume increases, the per-transaction rate decreases:
 
-At subscription time, the `billing` module resolves the correct pricing row by matching `(productId, billingCycle, currencyCode)` against the organization's base currency.
+```
+Tier 1: Volume ₦0–₦1M/month       → 1.5% per transaction (capped at ₦2,000)
+Tier 2: Volume ₦1M–₦10M/month     → 1.2% per transaction (capped at ₦1,500)
+Tier 3: Volume ₦10M–₦100M/month   → 0.9% per transaction (capped at ₦1,000)
+Tier 4: Volume > ₦100M/month       → 0.6% per transaction (capped at ₦500)
+```
+
+### Subscription Pricing (Commerce, Logistics, Accounting)
+Subscription products have a fixed monthly fee per plan, billed in advance.
+
+### Free Products (HR)
+Products with `pricingModel = FREE` are accessible without generating any invoice.
+
+### Multi-Currency Pricing
+Each `PricingPlan` stores prices in multiple currencies. When a Nigerian org subscribes, they pay in NGN; a Kenyan org pays in KES.
 
 ---
 
 ## 2. Domain Entities & Aggregates
 
-**`HubProduct` (Aggregate Root)**
-Represents a standalone platform product offering (e.g., "Atlas Pay", "Atlas Commerce").
-- **Fields**:
-  - `id`: Long
-  - `key`: `ProductKey` enum (`PAY`, `COMMERCE`, `LOGISTICS`, `HR`, `ACCOUNTING`)
-  - `name`: String
-  - `description`: String
-  - `status`: `ProductStatus` (ACTIVE, INACTIVE, DEPRECATED)
-  - `createdAt`: ZonedDateTime
-  - `updatedAt`: ZonedDateTime
-- **Methods**:
-  - `create(Long id, ProductKey key, String name, String description)` — static factory, raises `HubProductCreatedEvent`
-  - `updateDetails(String name, String description)` — raises `HubProductUpdatedEvent`
-  - `deactivate()` — guards against non-ACTIVE status, raises `HubProductDeactivatedEvent`
+### `Product` (Aggregate Root)
 
-**`ProductPricing` (Entity)**
-Defines the subscription cost for a `HubProduct` per billing cycle and currency.
-- **Fields**:
-  - `id`: Long
-  - `hubProductId`: Long
-  - `billingCycle`: `BillingCycle` (MONTHLY, ANNUALLY)
-  - `amount`: `Money` (carries both `BigDecimal` amount and `CurrencyCode`)
-- **Unique Constraint**: `(hubProductId, billingCycle, currencyCode)` — only one price per cycle+currency combo
-- **Methods**:
-  - `updatePrice(Money newAmount)`
+```
+Product
+├── id: Long
+├── code: String               ← unique slug: "ATLAS_PAY", "ATLAS_COMMERCE", "ATLAS_LOGISTICS", etc.
+├── name: String
+├── description: String
+├── pricingModel: PricingModel ← FREE, SUBSCRIPTION_FLAT, SUBSCRIPTION_TIERED, TRANSACTION_FEE
+├── isActive: Boolean
+├── plans: List<PricingPlan>   ← only for SUBSCRIPTION models
+├── feeStructure: FeeStructure ← only for TRANSACTION_FEE model
+└── createdAt: ZonedDateTime
+```
 
-> **Multi-Currency Note**: The Organization's base currency is derived from `User.country` at registration. When subscribing, the `billing` module queries `ProductPricing` for the matching `(productId, billingCycle, currencyCode)` row to generate the invoice amount.
+**Business Methods:**
+- `addPlan(PricingPlan plan)`
+- `deactivatePlan(Long planId)`
+- `updateFeeStructure(FeeStructure structure)`
+- `deactivate()`
+
+**Product Codes (Built-In):**
+```
+ATLAS_PAY        → pricingModel: TRANSACTION_FEE
+ATLAS_COMMERCE   → pricingModel: SUBSCRIPTION_FLAT
+ATLAS_LOGISTICS  → pricingModel: SUBSCRIPTION_FLAT
+ATLAS_HR         → pricingModel: FREE
+ATLAS_ACCOUNTING → pricingModel: SUBSCRIPTION_FLAT
+ATLAS_HOTEL      → pricingModel: SUBSCRIPTION_FLAT (future)
+```
+
+---
+
+### `PricingPlan` (Entity)
+
+```
+PricingPlan
+├── id: Long
+├── productId: Long
+├── name: String                ← "Starter", "Growth", "Enterprise"
+├── billingCycle: BillingCycle  ← MONTHLY, ANNUAL
+├── prices: Map<Currency, Money> ← { NGN: ₦15,000, KES: KES 3,000, USD: $30 }
+├── features: List<String>      ← human-readable feature list for marketing
+├── isActive: Boolean
+└── displayOrder: Integer
+```
+
+---
+
+### `FeeStructure` (Value Object)
+
+Used only for TRANSACTION_FEE products.
+
+```
+FeeStructure
+├── tiers: List<FeeTier>
+└── currency: Currency           ← base currency for tier thresholds
+
+FeeTier
+├── monthlyVolumeFrom: Money
+├── monthlyVolumeTo: Money       ← nullable for last tier (unbounded)
+├── feePercentage: BigDecimal    ← e.g., 1.5 (means 1.5%)
+└── feeCap: Money                ← maximum fee per transaction
+```
+
+---
+
+### `PricingModel` (Enum)
+`FREE`, `SUBSCRIPTION_FLAT`, `SUBSCRIPTION_TIERED`, `TRANSACTION_FEE`
+
+### `BillingCycle` (Enum)
+`MONTHLY`, `ANNUAL`
 
 ---
 
@@ -61,50 +126,52 @@ Defines the subscription cost for a `HubProduct` per billing cycle and currency.
 
 | Event | Published When | Consumed By |
 |---|---|---|
-| `HubProductCreatedEvent` | New product created | `billing` (may auto-create skeleton subscriptions), `notifications` |
-| `HubProductUpdatedEvent` | Product name/description updated | `billing` (informational) |
-| `HubProductDeactivatedEvent` | Product deactivated | `billing` (cancel new subscriptions for this product) |
+| `ProductCreatedEvent` | New platform product added | `billing` (make available for subscription) |
+| `PricingPlanUpdatedEvent` | Plan price changed | `billing` (apply to upcoming renewal invoices) |
+| `ProductDeactivatedEvent` | Product disabled | `billing` (prevent new subscriptions) |
 
 ---
 
-## 4. Exceptions & Errors
+## 4. Outbound Port (Open Host Service)
 
-**`CatalogErrorCode`** (implements `ErrorCode`):
-- `PRODUCT_NOT_FOUND`
-- `DUPLICATE_PRODUCT_KEY`
-- `INVALID_PRICING_MODEL`
-- `PRODUCT_NOT_ACTIVE`
-
----
-
-## 5. Commands & Use Cases
-
-- `CreateHubProductCommand(ProductKey key, String name, String description)` → `CreateHubProductUseCase`
-- `UpdateHubProductCommand(Long productId, String name, String description)` → `UpdateHubProductUseCase`
-- `SetProductPricingCommand(Long productId, BillingCycle cycle, Money amount)` → `SetProductPricingUseCase`
-  Upserts a `ProductPricing` row keyed by `(productId, billingCycle, currencyCode)`.
+```java
+// In atlashub-shared
+public interface CatalogQueryPort {
+    Optional<ProductDto> findByCode(String productCode);
+    Optional<PricingPlanDto> findPlanById(Long planId);
+    FeeStructureDto getPayFeeStructure();       // used by billing for invoice calculation
+    List<ProductDto> listActiveProducts();
+}
+```
 
 ---
 
-## 6. Queries
+## 5. Exceptions & Errors
 
-- `ListHubProductsQuery(ProductStatus status)` → `List<HubProductResult>`
-  Used by the `billing` module and the organization dashboard to show available products.
-- `GetHubProductDetailsQuery(Long productId)` → `HubProductDetailsResult`
-  Returns the product with all its configured pricing tiers.
-
----
-
-## 7. Listeners
-
-None. Catalog is the **source of truth** for platform products and does not react to other module events. It is only mutated by admin commands.
+**`CatalogErrorCode`**:
+- `PRODUCT_NOT_FOUND`, `PLAN_NOT_FOUND`
+- `PRODUCT_ALREADY_EXISTS`, `PLAN_ALREADY_EXISTS`
+- `INVALID_FEE_STRUCTURE` — tiers are not contiguous or have gaps
+- `PRODUCT_INACTIVE`
 
 ---
 
-## 8. Distributed Architecture & Transaction Guarantees
+## 6. Commands & Use Cases (Admin-Only)
 
-### Locking Strategy
-- **Optimistic Locking (`@Version`)**: Applied to `HubProduct` and `ProductPricing` to prevent concurrent admin overrides (e.g., two admins updating the same product price simultaneously).
+All catalog management is restricted to AtlasHub admin staff.
 
-### Inbox & Outbox Patterns
-- **Outbox**: Reliably publishes `HubProductUpdatedEvent` so that billing is notified when pricing changes. A billing module can use this to proactively recalculate upcoming invoice amounts for organizations on affected plans.
+- `CreateProductCommand(code, name, description, pricingModel)` → `CreateProductUseCase`
+- `AddPricingPlanCommand(productId, name, billingCycle, prices, features)` → `AddPricingPlanUseCase`
+- `UpdatePricingPlanCommand(planId, prices)` → `UpdatePricingPlanUseCase`
+- `DeactivatePricingPlanCommand(planId)` → `DeactivatePricingPlanUseCase`
+- `UpdateFeeStructureCommand(productId, tiers)` → `UpdateFeeStructureUseCase`
+- `DeactivateProductCommand(productId)` → `DeactivateProductUseCase`
+
+---
+
+## 7. Queries
+
+- `ListActiveProductsQuery()` → `List<ProductResult>` — for the subscription signup page
+- `GetProductByCodeQuery(code)` → `ProductResult`
+- `ListPricingPlansQuery(productId, currency)` → `List<PricingPlanResult>` — currency-filtered
+- `GetFeeStructureQuery(productCode, currency)` → `FeeStructureResult`
