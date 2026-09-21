@@ -2,21 +2,22 @@ package com.atlashub.catalog.application.usecase;
 
 import com.atlashub.catalog.application.command.SetProductPricingCommand;
 import com.atlashub.catalog.application.result.SetProductPricingResult;
-import com.atlashub.catalog.domain.exception.CatalogErrorCode;
+import com.atlashub.catalog.domain.exception.ProductNotFoundException;
 import com.atlashub.catalog.domain.model.HubProduct;
 import com.atlashub.catalog.domain.model.ProductPricing;
 import com.atlashub.catalog.domain.repository.HubProductRepository;
 import com.atlashub.catalog.domain.repository.ProductPricingRepository;
-import com.atlashub.shared.domain.exception.NotFoundException;
+import com.atlashub.shared.application.port.DomainEventPublisher;
 import com.atlashub.shared.application.usecase.BaseUseCase;
+import com.atlashub.shared.domain.exception.BusinessRuleException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
-import com.atlashub.shared.application.port.out.DomainEventPublisher;
-
+@Service
 public class SetProductPricingUseCase extends BaseUseCase<SetProductPricingCommand, SetProductPricingResult> {
 
     private static final Logger log = LoggerFactory.getLogger(SetProductPricingUseCase.class);
@@ -42,13 +43,10 @@ public class SetProductPricingUseCase extends BaseUseCase<SetProductPricingComma
 
         // 1. Guard: the target HubProduct must exist and be ACTIVE
         HubProduct product = hubProductRepository.findById(input.productId())
-                .orElseThrow(() -> new NotFoundException(
-                        CatalogErrorCode.PRODUCT_NOT_FOUND,
-                        "HubProduct not found with id: " + input.productId()));
+                .orElseThrow(() -> new ProductNotFoundException("HubProduct not found with id: " + input.productId()));
 
         if (!product.getStatus().name().equals("ACTIVE")) {
-            throw new com.atlashub.shared.domain.exception.BusinessRuleException(
-                    CatalogErrorCode.PRODUCT_NOT_ACTIVE,
+            throw new BusinessRuleException(
                     "Pricing can only be set on an ACTIVE product");
         }
 
@@ -67,7 +65,7 @@ public class SetProductPricingUseCase extends BaseUseCase<SetProductPricingComma
 
             pricing.updatePrice(input.amount());
             productPricingRepository.save(pricing);
-            
+
             publishEvents(pricing, eventPublisher);
 
             log.info("ProductPricing updated successfully");
@@ -85,7 +83,7 @@ public class SetProductPricingUseCase extends BaseUseCase<SetProductPricingComma
             );
 
             productPricingRepository.save(pricing);
-            
+
             publishEvents(pricing, eventPublisher);
 
             log.info("ProductPricing created successfully with id: {}", pricing.getId());
@@ -93,3 +91,6 @@ public class SetProductPricingUseCase extends BaseUseCase<SetProductPricingComma
         }
     }
 }
+
+
+

@@ -1,13 +1,12 @@
 package com.atlashub.catalog.adapter.out.persistence.query;
 
-import com.atlashub.catalog.adapter.out.persistence.repository.SpringDataProductRepository;
-import com.atlashub.catalog.adapter.out.persistence.repository.SpringDataProductTierRepository;
 import com.atlashub.catalog.application.port.HubProductQueryService;
 import com.atlashub.catalog.application.result.HubProductDetailsResult;
 import com.atlashub.catalog.application.result.HubProductDetailsResult.PricingResult;
-import com.atlashub.catalog.domain.exception.CatalogErrorCode;
-import com.atlashub.shared.domain.exception.NotFoundException;
-import com.atlashub.shared.domain.money.Money;
+import com.atlashub.catalog.domain.exception.ProductNotFoundException;
+import com.atlashub.catalog.domain.repository.HubProductRepository;
+import com.atlashub.catalog.domain.repository.ProductPricingRepository;
+import com.atlashub.shared.domain.valueobject.Money;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -17,19 +16,19 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class HubProductQueryServiceImpl implements HubProductQueryService {
 
-    private final SpringDataProductRepository productRepository;
-    private final SpringDataProductTierRepository tierRepository;
+    private final HubProductRepository productRepository;
+    private final ProductPricingRepository tierRepository;
 
     @Override
     public HubProductDetailsResult getHubProductDetails(Long productId) {
         var product = productRepository.findById(productId)
-                .orElseThrow(() -> new NotFoundException(CatalogErrorCode.PRODUCT_NOT_FOUND, "Product not found"));
+                .orElseThrow(() -> new ProductNotFoundException("Product not found"));
 
-        var pricingList = tierRepository.findByProductId(productId).stream()
+        var pricingList = tierRepository.findAllByProductId(productId).stream()
                 .map(tier -> new PricingResult(
                         tier.getId(),
                         tier.getBillingCycle(),
-                        new Money(tier.getAmount(), tier.getCurrency())
+                        new Money(tier.getAmount().amount(), tier.getAmount().currency())
                 ))
                 .collect(Collectors.toList());
 
@@ -45,3 +44,5 @@ public class HubProductQueryServiceImpl implements HubProductQueryService {
         );
     }
 }
+
+

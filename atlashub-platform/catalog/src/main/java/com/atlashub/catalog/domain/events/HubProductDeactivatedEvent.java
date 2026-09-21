@@ -8,6 +8,7 @@ public record HubProductDeactivatedEvent(
         String eventId,
         String aggregateId,
         ZonedDateTime occurredAt,
+        String correlationId,
         Void payload
 ) implements DomainEvent<Void> {
 }

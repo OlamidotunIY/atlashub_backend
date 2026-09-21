@@ -25,7 +25,7 @@ import com.atlashub.catalog.application.usecase.SetProductPricingUseCase;
 import com.atlashub.catalog.application.usecase.UpdateHubProductUseCase;
 import com.atlashub.catalog.domain.valueobject.ProductStatus;
 import com.atlashub.shared.application.dto.ApiResponse;
-import com.atlashub.shared.domain.money.Money;
+import com.atlashub.shared.domain.valueobject.Money;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

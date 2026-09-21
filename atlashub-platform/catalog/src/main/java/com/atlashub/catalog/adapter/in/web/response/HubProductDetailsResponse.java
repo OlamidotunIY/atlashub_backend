@@ -3,7 +3,7 @@ package com.atlashub.catalog.adapter.in.web.response;
 import com.atlashub.catalog.domain.valueobject.BillingCycle;
 import com.atlashub.catalog.domain.valueobject.ProductKey;
 import com.atlashub.catalog.domain.valueobject.ProductStatus;
-import com.atlashub.shared.domain.money.CurrencyCode;
+import com.atlashub.shared.domain.valueobject.CurrencyCode;
 import java.math.BigDecimal;
 import java.util.List;
 

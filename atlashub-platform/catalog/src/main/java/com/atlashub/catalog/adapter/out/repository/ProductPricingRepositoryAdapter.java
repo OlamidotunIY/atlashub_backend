@@ -1,13 +1,12 @@
-package com.atlashub.catalog.adapter.out;
+package com.atlashub.catalog.adapter.out.repository;
 
 import com.atlashub.catalog.adapter.out.entity.ProductPricingJpaEntity;
 import com.atlashub.catalog.adapter.out.mapper.ProductPricingMapper;
-import com.atlashub.catalog.adapter.out.repository.SpringDataProductPricingRepository;
 import com.atlashub.catalog.domain.model.ProductPricing;
 import com.atlashub.catalog.domain.repository.ProductPricingRepository;
 import com.atlashub.catalog.domain.valueobject.BillingCycle;
-import com.atlashub.shared.adapter.out.external.DomainSequenceGenerator;
-import com.atlashub.shared.domain.money.CurrencyCode;
+import com.atlashub.shared.infrastructure.service.DomainSequenceGenerator;
+import com.atlashub.shared.domain.valueobject.CurrencyCode;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;

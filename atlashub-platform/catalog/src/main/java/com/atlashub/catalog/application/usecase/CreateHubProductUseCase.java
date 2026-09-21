@@ -4,12 +4,14 @@ import com.atlashub.catalog.application.command.CreateHubProductCommand;
 import com.atlashub.catalog.application.result.CreateHubProductResult;
 import com.atlashub.catalog.domain.model.HubProduct;
 import com.atlashub.catalog.domain.repository.HubProductRepository;
-import com.atlashub.shared.application.port.out.DomainEventPublisher;
+import com.atlashub.shared.application.port.DomainEventPublisher;
 import com.atlashub.shared.application.usecase.BaseUseCase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Service
 public class CreateHubProductUseCase extends BaseUseCase<CreateHubProductCommand, CreateHubProductResult> {
 
     private static final Logger log = LoggerFactory.getLogger(CreateHubProductUseCase.class);

@@ -1,12 +1,11 @@
-package com.atlashub.catalog.adapter.out;
+package com.atlashub.catalog.adapter.out.repository;
 
 import com.atlashub.catalog.adapter.out.entity.HubProductJpaEntity;
 import com.atlashub.catalog.adapter.out.mapper.HubProductMapper;
-import com.atlashub.catalog.adapter.out.repository.SpringDataHubProductRepository;
 import com.atlashub.catalog.domain.model.HubProduct;
 import com.atlashub.catalog.domain.repository.HubProductRepository;
 import com.atlashub.catalog.domain.valueobject.ProductStatus;
-import com.atlashub.shared.adapter.out.external.DomainSequenceGenerator;
+import com.atlashub.shared.infrastructure.service.DomainSequenceGenerator;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
