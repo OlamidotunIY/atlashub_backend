@@ -5,41 +5,17 @@ include 'atlashub-shared'
 
 // Platform
 include 'atlashub-platform'
-include 'atlashub-platform:identity'
-include 'atlashub-platform:auth'
 include 'atlashub-platform:catalog'
-include 'atlashub-platform:admin'
-include 'atlashub-platform:billing'
-
-// Payments
-include 'atlashub-pay'
-include 'atlashub-pay:accounts'
-include 'atlashub-pay:ledger'
-include 'atlashub-pay:transfers'
-include 'atlashub-pay:charges'
-include 'atlashub-pay:subscriptions'
-include 'atlashub-pay:escrow'
-include 'atlashub-pay:settlement'
-include 'atlashub-pay:splits'
-include 'atlashub-pay:transactions-query'
-
-// Commerce
-include 'atlashub-commerce'
-include 'atlashub-commerce:inventory'
-include 'atlashub-commerce:orders'
-include 'atlashub-commerce:storefront'
-
-// Logistics
-include 'atlashub-logistics'
-include 'atlashub-logistics:shipping'
+include 'atlashub-platform:accounts'
 
 // Infrastructure
 include 'atlashub-infrastructure'
 include 'atlashub-infrastructure:eventbus'
-include 'atlashub-infrastructure:notifications'
 include 'atlashub-infrastructure:rate-limiter'
 include 'atlashub-infrastructure:audit'
 
 // App
-include 'atlashub-app'
-include 'atlashub-pay:providers'
+
+include 'atlashub-platform:authentication'
+include 'atlashub-main'
+include 'atlashub-platform:iam'
