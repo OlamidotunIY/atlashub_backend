@@ -1,4 +1,4 @@
-package com.atlashub.authentication.domain.services;
+package com.atlashub.authentication.application.port;
 
 public interface OtpTransmissionPort {
     void storeForTransmission(String correlationId, String rawCode);

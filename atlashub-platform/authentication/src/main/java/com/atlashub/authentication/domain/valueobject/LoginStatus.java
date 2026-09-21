@@ -1,4 +1,6 @@
 package com.atlashub.authentication.domain.valueobject;
 
-public record RefreshToken() {
+public enum LoginStatus {
+    SUCCESS,
+    OTP_REQUIRED
 }

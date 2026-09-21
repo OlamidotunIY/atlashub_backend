@@ -1,4 +1,5 @@
 package com.atlashub.authentication.domain.valueobject;
 
-public enum TokenStatus {
+public enum OtpStatus {
+    PENDING, USED, REVOKED
 }
