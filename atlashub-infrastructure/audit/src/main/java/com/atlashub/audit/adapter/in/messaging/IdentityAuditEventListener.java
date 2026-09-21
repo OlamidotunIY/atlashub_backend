@@ -3,7 +3,7 @@ package com.atlashub.audit.adapter.in.messaging;
 import com.atlashub.audit.application.command.LogActivityCommand;
 import com.atlashub.audit.application.usecase.LogActivityUseCase;
 import com.atlashub.audit.domain.valueobject.ActivityAction;
-import com.atlashub.shared.application.port.out.EventTrackerPort;
+import com.atlashub.shared.application.port.EventTrackerPort;
 import com.atlashub.shared.domain.event.EnvelopedDomainEvent;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;

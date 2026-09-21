@@ -1,0 +1,46 @@
+plugins {
+    id 'java'
+}
+
+group = 'com.atlashub'
+version = '2.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // 1. Your Internal Modular Monolith Projects
+    implementation project(':atlashub-shared')
+
+    // Platform Modules
+    implementation project(':atlashub-platform:authentication')
+    implementation project(':atlashub-platform:accounts')
+    implementation project(':atlashub-platform:catalog')
+
+    // Infrastructure Modules
+    implementation project(':atlashub-infrastructure:eventbus')
+    implementation project(':atlashub-infrastructure:rate-limiter')
+    implementation project(':atlashub-infrastructure:audit')
+
+    // 2. Spring Boot Core Web & Security
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+    // 3. Database & Redis (The actual connection drivers)
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
+    // 4. JWT Library (Required for the JwtAuthenticationFilter you are building)
+    implementation 'io.jsonwebtoken:jjwt-api:0.12.5'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.5'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.5'
+
+    // 5. Database Driver (Change to postgresql if using Postgres)
+    runtimeOnly 'com.mysql:mysql-connector-j'
+}
+
+test {
+    useJUnitPlatform()
+}

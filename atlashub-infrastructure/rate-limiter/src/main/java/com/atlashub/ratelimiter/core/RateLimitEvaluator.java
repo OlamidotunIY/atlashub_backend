@@ -1,6 +1,5 @@
 package com.atlashub.ratelimiter.core;
 
-import com.atlashub.ratelimiter.exception.RateLimiterErrorCode;
 import com.atlashub.ratelimiter.redis.RedisSlidingWindowRateLimiter;
 import com.atlashub.ratelimiter.redis.RedisTokenBucketRateLimiter;
 import com.atlashub.shared.domain.exception.RateLimitExceededException;
@@ -32,8 +31,7 @@ public class RateLimitEvaluator {
 
         if (!result.isAllowed()) {
             throw new RateLimitExceededException(
-                RateLimiterErrorCode.RATE_LIMIT_EXCEEDED, 
-                RateLimiterErrorCode.RATE_LIMIT_EXCEEDED.getDefaultMessage(),
+                "Rate limit exceeded",
                 result.retryAfterSeconds(),
                 result.limit()
             );
@@ -42,4 +40,5 @@ public class RateLimitEvaluator {
         return result;
     }
 }
+
 

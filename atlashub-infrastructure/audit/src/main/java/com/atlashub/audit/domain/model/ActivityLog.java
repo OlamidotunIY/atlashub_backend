@@ -1,7 +1,7 @@
 package com.atlashub.audit.domain.model;
 
 import com.atlashub.audit.domain.valueobject.ActivityAction;
-import com.atlashub.shared.domain.AggregateRoot;
+import com.atlashub.shared.domain.entities.AggregateRoot;
 import lombok.Getter;
 
 import java.time.ZonedDateTime;

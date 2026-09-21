@@ -2,6 +2,7 @@ package com.atlashub.eventbus.adapter.in.internal;
 
 import com.atlashub.eventbus.adapter.out.persistence.entity.EventDeliveryTrackerJpaEntity;
 import com.atlashub.eventbus.adapter.out.persistence.repository.JpaEventDeliveryTrackerRepository;
+import com.atlashub.shared.application.port.EventTrackerPort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -12,8 +13,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 @Service
-public class EventTrackerApiImpl implements 
-        com.atlashub.shared.application.port.out.EventTrackerPort, 
+public class EventTrackerApiImpl implements
+        EventTrackerPort,
         com.atlashub.eventbus.application.port.EventTrackerPort {
 
     private final JpaEventDeliveryTrackerRepository trackerRepository;
