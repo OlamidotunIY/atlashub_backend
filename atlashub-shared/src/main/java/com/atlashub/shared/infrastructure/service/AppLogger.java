@@ -1,4 +1,4 @@
-package com.atlashub.shared.adapter.logging;
+package com.atlashub.shared.infrastructure.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

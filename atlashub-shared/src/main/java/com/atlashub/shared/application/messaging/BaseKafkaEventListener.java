@@ -1,7 +1,7 @@
-package com.atlashub.shared.adapter.in.messaging;
+package com.atlashub.shared.application.messaging;
 
-import com.atlashub.shared.adapter.out.external.dlq.DeadLetterRepository;
-import com.atlashub.shared.application.port.out.EventTrackerPort;
+import com.atlashub.shared.infrastructure.persistence.repository.DeadLetterRepository;
+import com.atlashub.shared.application.port.EventTrackerPort;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;

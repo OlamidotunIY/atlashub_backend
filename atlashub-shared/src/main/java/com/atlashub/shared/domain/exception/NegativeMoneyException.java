@@ -1,6 +1,4 @@
-package com.atlashub.shared.domain.money;
-
-import com.atlashub.shared.domain.exception.ValidationException;
+package com.atlashub.shared.domain.exception;
 
 public class NegativeMoneyException extends ValidationException {
     public NegativeMoneyException(String message, Throwable cause) {

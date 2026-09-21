@@ -1,4 +1,4 @@
-package com.atlashub.shared.application.util;
+package com.atlashub.shared.domain.valueobject;
 
 import java.util.List;
 

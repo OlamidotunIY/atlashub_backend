@@ -1,4 +1,4 @@
-package com.atlashub.shared.application.port.out;
+package com.atlashub.shared.application.port;
 
 public interface EventTrackerPort {
     /**

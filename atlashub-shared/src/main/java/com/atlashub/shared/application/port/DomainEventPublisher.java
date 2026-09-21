@@ -1,4 +1,4 @@
-package com.atlashub.shared.application.port.out;
+package com.atlashub.shared.application.port;
 
 import com.atlashub.shared.domain.event.EnvelopedDomainEvent;
 

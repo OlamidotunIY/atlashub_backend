@@ -1,4 +1,4 @@
-package com.atlashub.shared.application.util;
+package com.atlashub.shared.application.service;
 
 import java.security.MessageDigest;
 

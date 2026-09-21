@@ -37,6 +37,8 @@ public interface DomainEvent<T> {
      */
     ZonedDateTime occurredAt();
 
+    String correlationId();
+
     /**
      * The domain-specific payload of the event.
      * Null if the event has no payload.

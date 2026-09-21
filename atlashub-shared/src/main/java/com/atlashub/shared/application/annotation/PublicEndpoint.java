@@ -1,4 +1,4 @@
-package com.atlashub.shared.adapter.security;
+package com.atlashub.shared.application.annotation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

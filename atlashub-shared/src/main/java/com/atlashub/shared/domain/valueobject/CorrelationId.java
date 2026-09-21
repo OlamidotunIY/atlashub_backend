@@ -1,4 +1,4 @@
-package com.atlashub.shared.adapter.tracing;
+package com.atlashub.shared.domain.valueobject;
 
 import org.slf4j.MDC;
 import java.util.UUID;

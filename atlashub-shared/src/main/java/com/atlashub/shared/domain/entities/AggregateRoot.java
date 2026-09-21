@@ -1,4 +1,4 @@
-package com.atlashub.shared.domain;
+package com.atlashub.shared.domain.entities;
 
 import com.atlashub.shared.domain.event.DomainEvent;
 

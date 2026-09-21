@@ -1,6 +1,5 @@
-package com.atlashub.shared.application.util;
+package com.atlashub.shared.domain.valueobject;
 
-import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 

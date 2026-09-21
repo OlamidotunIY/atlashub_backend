@@ -1,4 +1,4 @@
-package com.atlashub.shared.domain.money;
+package com.atlashub.shared.domain.valueobject;
 
 public enum CurrencyCode {
     NGN

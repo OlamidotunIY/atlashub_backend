@@ -1,4 +1,4 @@
-package com.atlashub.shared.domain.money;
+package com.atlashub.shared.application.annotation;
 
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;

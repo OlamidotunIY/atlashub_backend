@@ -1,6 +1,6 @@
 package com.atlashub.shared.domain.event;
 
-import com.atlashub.shared.adapter.tracing.CorrelationId;
+import com.atlashub.shared.domain.valueobject.CorrelationId;
 
 import java.time.ZonedDateTime;
 

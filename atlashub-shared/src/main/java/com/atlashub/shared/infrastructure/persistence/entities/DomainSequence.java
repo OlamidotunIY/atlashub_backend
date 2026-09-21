@@ -1,4 +1,4 @@
-package com.atlashub.shared.adapter.out.external;
+package com.atlashub.shared.infrastructure.persistence.entities;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

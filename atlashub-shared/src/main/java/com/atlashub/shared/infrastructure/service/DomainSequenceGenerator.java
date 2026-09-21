@@ -1,4 +1,4 @@
-package com.atlashub.shared.adapter.out.external;
+package com.atlashub.shared.infrastructure.service;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;

@@ -1,4 +1,4 @@
-package com.atlashub.shared.application.idempotency;
+package com.atlashub.shared.domain.valueobject;
 
 import java.util.Objects;
 import java.util.UUID;

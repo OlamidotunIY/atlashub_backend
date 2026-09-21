@@ -1,5 +1,7 @@
-package com.atlashub.shared.domain.money;
+package com.atlashub.shared.domain.service;
 
+import com.atlashub.shared.domain.valueobject.CurrencyCode;
+import com.atlashub.shared.domain.valueobject.Money;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;

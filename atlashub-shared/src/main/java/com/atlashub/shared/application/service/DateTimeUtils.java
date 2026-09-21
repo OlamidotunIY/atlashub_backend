@@ -1,4 +1,4 @@
-package com.atlashub.shared.application.util;
+package com.atlashub.shared.application.service;
 
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;

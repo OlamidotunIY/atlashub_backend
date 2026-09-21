@@ -1,12 +1,11 @@
 package com.atlashub.shared.domain.exception;
 
 public abstract class ApplicationException extends AtlasHubException {
-
-    protected ApplicationException(ErrorCode errorCode, String message) {
-        super(errorCode, message);
+    protected ApplicationException(String message) {
+        super(message);
     }
-
-    protected ApplicationException(ErrorCode errorCode, String message, Throwable cause) {
-        super(errorCode, message, cause);
+    protected ApplicationException(String message, Throwable cause) {
+        super(message, cause);
     }
 }
+
