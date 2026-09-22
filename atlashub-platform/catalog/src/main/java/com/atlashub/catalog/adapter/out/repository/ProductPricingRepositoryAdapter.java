@@ -64,7 +64,7 @@ public class ProductPricingRepositoryAdapter implements ProductPricingRepository
 
     @Override
     public Optional<ProductPricing> findByProductIdAndCurrency(Long productId, CurrencyCode currency) {
-        return repository.findByProductIdAndCurrency(productId, currency.name()).map(mapper::toDomain);
+        return repository.findByHubProductIdAndCurrencyCode(productId, currency.name()).map(mapper::toDomain);
     }
 
     @Override

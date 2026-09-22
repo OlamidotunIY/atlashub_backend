@@ -39,7 +39,7 @@ public class HubProduct extends AggregateRoot<Long> {
         product.registerEvent(
                 new HubProductCreatedEvent(
                         UUID.randomUUID().toString(),
-                        String.valueOf(id),
+                        id,
                         ZonedDateTime.now(),
                         CorrelationId.getOrCreate(),
                         new HubProductCreatedEvent.Payload(id, key, name, description, ProductStatus.ACTIVE)
@@ -57,7 +57,7 @@ public class HubProduct extends AggregateRoot<Long> {
         this.registerEvent(
                 new HubProductUpdatedEvent(
                         UUID.randomUUID().toString(),
-                        String.valueOf(id),
+                        this.id,
                         ZonedDateTime.now(),
                         CorrelationId.getOrCreate(),
                         new HubProductUpdatedEvent.Payload(name, description)
@@ -75,7 +75,7 @@ public class HubProduct extends AggregateRoot<Long> {
         this.registerEvent(
                 new HubProductDeactivatedEvent(
                         UUID.randomUUID().toString(),
-                        String.valueOf(id),
+                        this.id,
                         ZonedDateTime.now(),
                         CorrelationId.getOrCreate(),
                         null

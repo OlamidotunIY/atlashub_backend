@@ -34,7 +34,7 @@ public class ProductPricing extends AggregateRoot<Long> {
         pricing.registerEvent(
                 new ProductPricingUpdatedEvent(
                         UUID.randomUUID().toString(),
-                        String.valueOf(id),
+                        id,
                         ZonedDateTime.now(),
                         CorrelationId.getOrCreate(),
                         new ProductPricingUpdatedEvent.Payload(hubProductId, billingCycle, amount)
@@ -51,7 +51,7 @@ public class ProductPricing extends AggregateRoot<Long> {
         this.registerEvent(
                 new ProductPricingUpdatedEvent(
                         UUID.randomUUID().toString(),
-                        String.valueOf(id),
+                        this.id,
                         ZonedDateTime.now(),
                         CorrelationId.getOrCreate(),
                         new ProductPricingUpdatedEvent.Payload(hubProductId, billingCycle, newAmount)

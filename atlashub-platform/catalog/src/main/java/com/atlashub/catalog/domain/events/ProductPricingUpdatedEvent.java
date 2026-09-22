@@ -8,7 +8,7 @@ import java.time.ZonedDateTime;
 
 public record ProductPricingUpdatedEvent(
         String eventId,
-        String aggregateId,
+        Long aggregateId,
         ZonedDateTime occurredAt,
         String correlationId,
         Payload payload

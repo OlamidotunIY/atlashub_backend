@@ -7,7 +7,7 @@ import java.time.ZonedDateTime;
 
 public record HubProductCreatedEvent(
         String eventId,
-        String aggregateId,
+        Long aggregateId,
         ZonedDateTime occurredAt,
         String correlationId,
         Payload payload

@@ -9,5 +9,5 @@ import java.util.Optional;
 public interface SpringDataProductPricingRepository extends JpaRepository<ProductPricingJpaEntity, Long> {
     Optional<ProductPricingJpaEntity> findByHubProductIdAndBillingCycleAndCurrencyCode(Long hubProductId, String billingCycle, String currencyCode);
     List<ProductPricingJpaEntity> findAllByHubProductId(Long hubProductId);
-    Optional<ProductPricingJpaEntity> findByProductIdAndCurrency(Long productId, String currency);
+    Optional<ProductPricingJpaEntity> findByHubProductIdAndCurrencyCode(Long productId, String currency);
 }
