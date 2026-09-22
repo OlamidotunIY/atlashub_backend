@@ -10,13 +10,14 @@ repositories {
 }
 
 dependencies {
-    // 1. Your Internal Modular Monolith Projects
+    // 1. Internal Modular Monolith Projects
     implementation project(':atlashub-shared')
 
     // Platform Modules
     implementation project(':atlashub-platform:authentication')
     implementation project(':atlashub-platform:accounts')
     implementation project(':atlashub-platform:catalog')
+    implementation project(':atlashub-platform:iam')
 
     // Infrastructure Modules
     implementation project(':atlashub-infrastructure:eventbus')
@@ -27,18 +28,22 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
 
-    // 3. Database & Redis (The actual connection drivers)
+    // 3. Database & Redis
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
-    // 4. JWT Library (Required for the JwtAuthenticationFilter you are building)
+    // 4. JWT Library
     implementation 'io.jsonwebtoken:jjwt-api:0.12.5'
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.5'
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.5'
 
-    // 5. Database Driver (Change to postgresql if using Postgres)
+    // 5. MySQL Driver
     runtimeOnly 'com.mysql:mysql-connector-j'
+
+    // 6. Swagger / SpringDoc OpenAPI
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.4'
 }
 
 test {
