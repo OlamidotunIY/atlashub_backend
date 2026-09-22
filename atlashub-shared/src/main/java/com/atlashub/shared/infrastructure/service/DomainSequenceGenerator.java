@@ -16,16 +16,13 @@ public class DomainSequenceGenerator {
 
     @jakarta.annotation.PostConstruct
     public void init() {
-        seedSequence("Organization_seq", 1000L);
-        seedSequence("User_seq", 1000L);
-        seedSequence("virtual_account_seq", 1000L);
-        seedSequence("SplitRecipient_seq", 1000L);
-        seedSequence("transaction_seq", 10000L);
-        seedSequence("wallet_seq", 1000L);
-        seedSequence("apikey_seq", 1000L);
-        seedSequence("admin_seq", 100L);
-        seedSequence("HubProduct_seq", 1L);
-        seedSequence("ProductPricing_seq", 1L);
+        seedSequence("organization_seq", 1L);
+        seedSequence("user_seq", 1L);
+        seedSequence("hub_product_seq", 1L);
+        seedSequence("product_pricing_seq", 1L);
+        seedSequence("auth_account_seq", 1L);
+        seedSequence("otp_verification_seq", 1L);
+        seedSequence("trusted_device_seq", 1L);
     }
 
     private void seedSequence(String sequenceName, Long initialValue) {

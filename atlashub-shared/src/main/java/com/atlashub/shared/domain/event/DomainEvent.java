@@ -30,7 +30,7 @@ public interface DomainEvent<T> {
     /**
      * The ID of the aggregate that produced this event.
      */
-    String aggregateId();
+    Long aggregateId();
 
     /**
      * The time the event occurred.

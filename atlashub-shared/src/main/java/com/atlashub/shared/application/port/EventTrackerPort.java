@@ -1,9 +1,12 @@
 package com.atlashub.shared.application.port;
 
+import java.util.Set;
+
 public interface EventTrackerPort {
     /**
      * Registers a consumer for a specific event type.
-     * @param eventType the class simple name of the event (e.g., AdminCreatedEvent)
+     *
+     * @param eventType  the class simple name of the event (e.g., AdminCreatedEvent)
      * @param consumerId the Kafka group id or unique consumer identifier
      */
     void registerSubscription(String eventType, String consumerId);
@@ -23,4 +26,8 @@ public interface EventTrackerPort {
      * Used for idempotency.
      */
     boolean isProcessed(String eventId, String consumerId);
+
+    Set<String> getExpectedConsumers(String eventType);
+
+    void createPendingTrackers(String eventId, Set<String> consumerIds);
 }
