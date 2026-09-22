@@ -5,7 +5,6 @@ import com.atlashub.accounts.domain.valueobject.BusinessType;
 import com.atlashub.shared.domain.valueobject.Country;
 
 public record RegisterOrganizationCommand(
-        Long userId,
         String businessName,
         BusinessType businessType,
         BusinessSize businessSize,

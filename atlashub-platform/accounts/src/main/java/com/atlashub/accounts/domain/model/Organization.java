@@ -38,7 +38,7 @@ public class Organization extends AggregateRoot<Long> {
 
         organization.registerEvent(new OrganizationRegistered(
                 UUID.randomUUID().toString(),
-                String.valueOf(id),
+                organization.id,
                 ZonedDateTime.now(),
                 CorrelationId.getOrCreate(),
                 new OrganizationRegistered.Payload(
@@ -82,7 +82,7 @@ public class Organization extends AggregateRoot<Long> {
 
         registerEvent(new OrganizationUpdated(
                 UUID.randomUUID().toString(),
-                String.valueOf(id),
+                this.id,
                 this.updatedAt,
                 CorrelationId.getOrCreate(),
                 new OrganizationUpdated.Payload(

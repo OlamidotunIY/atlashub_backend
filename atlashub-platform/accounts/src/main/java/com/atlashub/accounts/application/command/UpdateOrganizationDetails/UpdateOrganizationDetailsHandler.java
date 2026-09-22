@@ -3,40 +3,35 @@ package com.atlashub.accounts.application.command.UpdateOrganizationDetails;
 import com.atlashub.accounts.domain.exception.OrganizationNotFoundException;
 import com.atlashub.accounts.domain.model.Organization;
 import com.atlashub.accounts.domain.repository.OrganizationRepository;
-import com.atlashub.shared.application.port.DomainEventPublisher;
-import com.atlashub.shared.application.usecase.BaseUseCase;
+import com.atlashub.shared.application.usecase.Command;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-public class UpdateOrganizationDetailsHandler extends BaseUseCase<UpdateOrganizationDetailsCommand, UpdateOrganizationDetailsResult> {
+@Component
+public class UpdateOrganizationDetailsHandler extends Command<UpdateOrganizationDetailsCommand, UpdateOrganizationDetailsResult> {
 
     private static final Logger log = LoggerFactory.getLogger(UpdateOrganizationDetailsHandler.class);
     private final OrganizationRepository organizationRepository;
-    private final DomainEventPublisher eventPublisher;
 
-    public UpdateOrganizationDetailsHandler(OrganizationRepository organizationRepository, DomainEventPublisher eventPublisher) {
+    public UpdateOrganizationDetailsHandler(OrganizationRepository organizationRepository) {
         this.organizationRepository = organizationRepository;
-        this.eventPublisher = eventPublisher;
     }
 
     @Override
     @Transactional
-    public UpdateOrganizationDetailsResult execute(UpdateOrganizationDetailsCommand input) {
-        log.info("Updating organization profile....");
+    public UpdateOrganizationDetailsResult execute(UpdateOrganizationDetailsCommand command) {
+        log.info("Updating organization details for id: {}", command.organizationId());
 
-        Organization organization = organizationRepository.findById(input.organizationId()).orElseThrow(() -> new OrganizationNotFoundException("Organization with id %d is not found".formatted(input.organizationId())));
+        Organization organization = organizationRepository.findById(command.organizationId())
+                .orElseThrow(() -> new OrganizationNotFoundException("Organization not found"));
 
-        organization.updateOrganization(input.businessName(), input.description(), input.logoUrl(), input.industry(), input.websiteUrl());
-
+        organization.updateOrganization(command.businessName(), command.description(),
+                command.logoUrl(), command.industry(), command.websiteUrl());
         organizationRepository.save(organization);
 
-        log.info("Organization ({}) is updated successfully", organization.getBusinessName());
-
-        publishEvents(organization, eventPublisher);
-
-        return new UpdateOrganizationDetailsResult(
-                organization
-        );
+        log.info("Successfully updated organization id: {}", organization.getId());
+        return new UpdateOrganizationDetailsResult(organization);
     }
 }

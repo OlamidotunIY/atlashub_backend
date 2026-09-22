@@ -1,50 +1,45 @@
 package com.atlashub.accounts.application.command.SwitchActiveOrganization;
 
-import com.atlashub.accounts.application.command.RegisterOrg.RegisterOrganizationHandler;
-import com.atlashub.accounts.domain.exception.OrganizationNotFoundException;
 import com.atlashub.accounts.domain.exception.UserNotFoundException;
-import com.atlashub.accounts.domain.model.Organization;
 import com.atlashub.accounts.domain.model.User;
-import com.atlashub.accounts.domain.repository.OrganizationRepository;
 import com.atlashub.accounts.domain.repository.UserRepository;
-import com.atlashub.shared.application.port.DomainEventPublisher;
-import com.atlashub.shared.application.usecase.BaseUseCase;
+import com.atlashub.shared.application.port.MembershipQueryPort;
+import com.atlashub.shared.application.usecase.Command;
+import com.atlashub.shared.domain.exception.AuthorizationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-public class SwitchActiveOrganizationHandler extends BaseUseCase<SwitchActiveOrganizationCommand, SwitchActiveOrganizationResult> {
+@Component
+public class SwitchActiveOrganizationHandler extends Command<SwitchActiveOrganizationCommand, SwitchActiveOrganizationResult> {
 
-    private static final Logger log = LoggerFactory.getLogger(RegisterOrganizationHandler.class);
-
-    private final OrganizationRepository organizationRepository;
+    private static final Logger log = LoggerFactory.getLogger(SwitchActiveOrganizationHandler.class);
     private final UserRepository userRepository;
-    private final DomainEventPublisher eventPublisher;
+    private final MembershipQueryPort membershipQueryPort;
 
-    public SwitchActiveOrganizationHandler(OrganizationRepository organizationRepository, UserRepository userRepository, DomainEventPublisher eventPublisher) {
-        this.organizationRepository = organizationRepository;
+    public SwitchActiveOrganizationHandler(UserRepository userRepository,
+                                           MembershipQueryPort membershipQueryPort) {
         this.userRepository = userRepository;
-        this.eventPublisher = eventPublisher;
+        this.membershipQueryPort = membershipQueryPort;
     }
 
     @Override
     @Transactional
-    public SwitchActiveOrganizationResult execute(SwitchActiveOrganizationCommand input) {
-        log.info("Starting organization switch for user id: {}", input.userId());
+    public SwitchActiveOrganizationResult execute(SwitchActiveOrganizationCommand command) {
+        log.info("Switching active organization for user id: {}", command.userId());
 
-        User user = userRepository.findById(input.userId())
+        User user = userRepository.findById(command.userId())
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
 
-        Organization organization = organizationRepository.findById(input.orgId()).orElseThrow(() -> new OrganizationNotFoundException("Organization not found"));
+        if (!membershipQueryPort.isMemberOf(command.userId(), command.orgId())) {
+            throw new AuthorizationException("User is not a member of the target organization");
+        }
 
-        user.switchActiveOrganization(organization.getId());
-
+        user.switchActiveOrganization(command.orgId());
         userRepository.save(user);
 
-        log.debug("user active organization switched successfully to {}", user.getActiveOrganizationId());
-
-        publishEvents(user, eventPublisher);
-
+        log.info("Active organization switched to: {}", command.orgId());
         return new SwitchActiveOrganizationResult(user);
     }
 }

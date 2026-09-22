@@ -2,33 +2,28 @@ plugins {
     id 'java'
 }
 
-group = 'com.atlashub.platform'
+group = 'com.atlashub'
 version = '2.0-SNAPSHOT'
-
-base {
-    archivesName = 'atlashub-platform-accounts'
-}
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    // Inherit standard domain, base use cases, and shared models
     implementation project(':atlashub-shared')
 
-    // Core Spring dependencies for the adapters and services
     implementation 'org.springframework.boot:spring-boot-starter'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-web'
-    implementation 'org.springframework.kafka:spring-kafka'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.security:spring-security-core'
 
-    // Optional: Swagger for API docs
+    // Swagger annotations
     implementation 'io.swagger.core.v3:swagger-annotations:2.2.20'
 
-    testImplementation platform('org.junit:junit-bom:6.0.0')
-    testImplementation 'org.junit.jupiter:junit-jupiter'
-    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    // Lombok
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
 }
 
 test {

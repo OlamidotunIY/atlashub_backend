@@ -44,7 +44,7 @@ public class User extends AggregateRoot<Long> {
 
         user.registerEvent(new UserCreated(
                 UUID.randomUUID().toString(),
-                String.valueOf(user.id),
+                user.getId(),
                 user.createdAt,
                 CorrelationId.getOrCreate(),
                 new UserCreated.Payload(
@@ -91,7 +91,7 @@ public class User extends AggregateRoot<Long> {
 
         registerEvent(new UserProfileUpdated(
                 UUID.randomUUID().toString(),
-                String.valueOf(this.id),
+                this.id,
                 this.updatedAt,
                 CorrelationId.getOrCreate(),
                 new UserProfileUpdated.Payload(
@@ -109,7 +109,7 @@ public class User extends AggregateRoot<Long> {
 
         registerEvent(new UserActiveOrganizationChanged(
                 UUID.randomUUID().toString(),
-                String.valueOf(this.id),
+                this.id,
                 this.updatedAt,
                 CorrelationId.getOrCreate(),
                 new UserActiveOrganizationChanged.Payload(this.id, organizationId)

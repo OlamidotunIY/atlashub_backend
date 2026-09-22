@@ -10,7 +10,7 @@ import java.time.ZonedDateTime;
 
 public record OrganizationRegistered(
     String eventId,
-    String aggregateId,
+    Long aggregateId,
     ZonedDateTime occurredAt,
     String correlationId,
     Payload payload

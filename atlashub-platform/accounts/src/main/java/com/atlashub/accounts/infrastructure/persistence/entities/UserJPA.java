@@ -1,4 +1,4 @@
-package com.atlashub.accounts.infrastructure.entities;
+package com.atlashub.accounts.infrastructure.persistence.entities;
 
 import com.atlashub.shared.infrastructure.persistence.entities.BaseJpaEntity;
 import jakarta.persistence.*;
