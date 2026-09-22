@@ -10,12 +10,14 @@ import com.atlashub.authentication.domain.valueobject.Session;
 import com.atlashub.shared.application.port.MembershipQueryPort;
 import com.atlashub.shared.application.service.HashingUtils;
 import com.atlashub.shared.application.usecase.Command;
+import org.springframework.stereotype.Component;
 
 import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
+@Component
 public class RefreshTokenHandler extends Command<RefreshTokenCommand, RefreshTokenResponse> {
 
     final SessionPort sessionPort;
@@ -23,7 +25,8 @@ public class RefreshTokenHandler extends Command<RefreshTokenCommand, RefreshTok
     final TokenPort tokenPort;
     final MembershipQueryPort membershipQueryPort;
 
-    public RefreshTokenHandler(SessionPort sessionPort, AuthAccountRepository accountRepository, TokenPort tokenPort, MembershipQueryPort membershipQueryPort) {
+    public RefreshTokenHandler(SessionPort sessionPort, AuthAccountRepository accountRepository,
+                               TokenPort tokenPort, MembershipQueryPort membershipQueryPort) {
         this.sessionPort = sessionPort;
         this.accountRepository = accountRepository;
         this.tokenPort = tokenPort;
@@ -59,11 +62,13 @@ public class RefreshTokenHandler extends Command<RefreshTokenCommand, RefreshTok
         Set<String> permissions = membershipQueryPort.getPermissions(account.getUserId(), orgId);
 
         sessionPort.delete(hash);
-        Session session = new Session(account.getId(), newHash, accessTokenExpiresAt, refreshTokenExpiresAt, existingSession.get().deviceId(), orgId);
 
+        TokenPort.AccessTokenResult accessToken = tokenPort.generateAccessToken(
+                new TokenPort.AccessTokenPayload(account.getUserId().toString(), orgId.toString(), permissions));
+
+        Session session = new Session(account.getId(), newHash, accessToken.jti(),
+                accessTokenExpiresAt, refreshTokenExpiresAt, existingSession.get().deviceId(), orgId);
         sessionPort.save(session);
-
-        TokenPort.AccessTokenResult accessToken = tokenPort.generateAccessToken(new TokenPort.AccessTokenPayload(account.getUserId().toString(), orgId.toString(), permissions));
 
         return new RefreshTokenResponse(accessToken.token(), accessTokenExpiresAt, newRawRefreshToken, refreshTokenExpiresAt);
     }

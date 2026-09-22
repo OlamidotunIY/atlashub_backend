@@ -4,10 +4,12 @@ import com.atlashub.authentication.application.port.SessionPort;
 import com.atlashub.authentication.application.port.TokenRevocationPort;
 import com.atlashub.shared.application.service.HashingUtils;
 import com.atlashub.shared.application.usecase.Command;
+import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
 
+@Component
 public class LogoutHandler extends Command<LogoutCommand, Void> {
 
     final SessionPort sessionPort;
@@ -21,7 +23,6 @@ public class LogoutHandler extends Command<LogoutCommand, Void> {
     @Override
     public Void execute(LogoutCommand input) {
         String hash = HashingUtils.sha256Hex(input.refreshToken());
-
         sessionPort.delete(hash);
 
         Duration remainingTime = Duration.between(ZonedDateTime.now(), input.accessTokenExpiresAt());

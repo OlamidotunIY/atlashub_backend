@@ -16,6 +16,7 @@ public interface TokenPort {
 
     record AccessTokenResult(
             String token,
+            String jti,
             ZonedDateTime expiresAt
     ) {
     }

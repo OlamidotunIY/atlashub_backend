@@ -1,11 +1,12 @@
 package com.atlashub.authentication.domain.entities;
 
+import com.atlashub.shared.domain.entities.AggregateRoot;
 import lombok.Getter;
 
 import java.time.ZonedDateTime;
 
 @Getter
-public class TrustedDevice {
+public class TrustedDevice extends AggregateRoot<Long> {
     private final Long id;
     private final Long userId;
     private String deviceFingerprint;

@@ -1,5 +1,6 @@
 package com.atlashub.authentication.infrastructure.persistence.entities;
 
+import com.atlashub.shared.infrastructure.persistence.entities.BaseJpaEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -10,20 +11,21 @@ import java.time.ZonedDateTime;
 
 @Entity
 @Table(
-        name = 'auth_accounts',
+        name = "auth_accounts",
         indexes = {
-
+                @Index(name = "Idx_auth_user_id", columnList = "user_id", unique = true),
+                @Index(name = "Idx_auth_email", columnList = "email", unique = true)
         }
 )
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-public class AuthAccountJpa {
+public class AuthAccountJpa implements BaseJpaEntity {
 
         @Id
         private Long id;
 
-        @Column()
+        @Column(name = "user_id")
         private Long userId;
 
         @Column()

@@ -1,4 +1,7 @@
 package com.atlashub.authentication.application.command.LogoutAllDevices;
 
-public record LogoutAllDevicesCommand() {
+/**
+ * userId is resolved from SecurityContext in the controller layer.
+ */
+public record LogoutAllDevicesCommand(Long userId) {
 }

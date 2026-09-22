@@ -62,7 +62,7 @@ public class AuthAccount extends AggregateRoot<Long> {
         if (failedLoginAttempts >= 5) {
             this.lockedUntil = ZonedDateTime.now().plusMinutes(30);
 
-            this.registerEvent(new AuthAccountLocked(UUID.randomUUID().toString(), this.id.toString(), ZonedDateTime.now(), CorrelationId.getOrCreate(), new AuthAccountLocked.Payload(this.lockedUntil)));
+            this.registerEvent(new AuthAccountLocked(UUID.randomUUID().toString(), this.id, ZonedDateTime.now(), CorrelationId.getOrCreate(), new AuthAccountLocked.Payload(this.lockedUntil)));
         }
     }
 

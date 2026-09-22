@@ -5,6 +5,7 @@ import java.time.ZonedDateTime;
 public record Session(
         Long authAccountId,
         String refreshTokenHash,
+        String accessTokenJti,
         ZonedDateTime accessTokenExpiresAt,
         ZonedDateTime refreshTokenExpiresAt,
         Long deviceId,

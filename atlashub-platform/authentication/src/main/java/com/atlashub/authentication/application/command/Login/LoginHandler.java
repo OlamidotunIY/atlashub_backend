@@ -21,12 +21,14 @@ import com.atlashub.shared.application.service.HashingUtils;
 import com.atlashub.shared.application.usecase.Command;
 import com.atlashub.shared.domain.exception.NotFoundException;
 import com.atlashub.shared.domain.valueobject.CorrelationId;
+import org.springframework.stereotype.Component;
 
 import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
+@Component
 public class LoginHandler extends Command<LoginCommand, LoginResponse> {
 
     final PasswordEncoderPort encoderPort;
@@ -40,7 +42,11 @@ public class LoginHandler extends Command<LoginCommand, LoginResponse> {
     final SessionPort sessionPort;
     final TokenPort tokenPort;
 
-    public LoginHandler(PasswordEncoderPort encoderPort, AuthAccountRepository accountRepository, TrustedDeviceRepository deviceRepository, OtpVerificationRepository verificationRepository, OtpVerificationIssuer issuer, OtpTransmissionPort transmissionPort, MembershipQueryPort membershipQueryPort, UserQueryPort userQueryPort, SessionPort sessionPort, TokenPort tokenPort) {
+    public LoginHandler(PasswordEncoderPort encoderPort, AuthAccountRepository accountRepository,
+                        TrustedDeviceRepository deviceRepository, OtpVerificationRepository verificationRepository,
+                        OtpVerificationIssuer issuer, OtpTransmissionPort transmissionPort,
+                        MembershipQueryPort membershipQueryPort, UserQueryPort userQueryPort,
+                        SessionPort sessionPort, TokenPort tokenPort) {
         this.encoderPort = encoderPort;
         this.accountRepository = accountRepository;
         this.deviceRepository = deviceRepository;
@@ -75,17 +81,14 @@ public class LoginHandler extends Command<LoginCommand, LoginResponse> {
         account.recordSuccessfulLogin(input.ipAddress());
         accountRepository.save(account);
 
-        Optional<TrustedDevice> existingDevice = deviceRepository.findByUserIdAndFingerprint(account.getUserId(), input.deviceFingerprint());
+        Optional<TrustedDevice> existingDevice = deviceRepository.findByUserIdAndDeviceFingerprint(account.getUserId(), input.deviceFingerprint());
         TrustedDevice device;
 
         if (existingDevice.isEmpty()) {
             if (!(account.getLastLoginAt() == null)) {
                 OtpVerificationIssuer.IssuedToken issuedToken = issuer.issue(verificationRepository.nextIdentity(), account.getId(), OtpType.DEVICE_VERIFICATION);
-
                 transmissionPort.storeForTransmission(CorrelationId.getOrCreate(), issuedToken.rawOtp());
-
                 verificationRepository.save(issuedToken.token());
-
                 return LoginResponse.otpRequired("Otp for device authorization sent");
             }
             device = TrustedDevice.create(deviceRepository.nextIdentity(), account.getUserId(), input.deviceFingerprint(), input.userAgent(), input.ipAddress());
@@ -102,9 +105,13 @@ public class LoginHandler extends Command<LoginCommand, LoginResponse> {
         ZonedDateTime now = ZonedDateTime.now();
         ZonedDateTime accessTokenExpiresAt = now.plusMinutes(30);
         ZonedDateTime refreshTokenExpiresAt = now.plusDays(24);
-        Session session = new Session(account.getId(), refreshTokenHash, accessTokenExpiresAt, refreshTokenExpiresAt, device.getId(), orgId);
+
+        TokenPort.AccessTokenResult accessToken = tokenPort.generateAccessToken(
+                new TokenPort.AccessTokenPayload(user.id().toString(), orgId.toString(), permissions));
+
+        Session session = new Session(account.getId(), refreshTokenHash, accessToken.jti(),
+                accessTokenExpiresAt, refreshTokenExpiresAt, device.getId(), orgId);
         sessionPort.save(session);
-        TokenPort.AccessTokenResult accessToken = tokenPort.generateAccessToken(new TokenPort.AccessTokenPayload(user.id().toString(), orgId.toString(), permissions));
 
         return LoginResponse.success(accessToken.token(), refreshToken, accessTokenExpiresAt, refreshTokenExpiresAt);
     }

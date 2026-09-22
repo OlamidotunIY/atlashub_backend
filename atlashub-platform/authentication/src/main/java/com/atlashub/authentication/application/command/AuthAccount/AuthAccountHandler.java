@@ -8,9 +8,11 @@ import com.atlashub.authentication.domain.services.OtpVerificationIssuer;
 import com.atlashub.authentication.domain.valueobject.OtpType;
 import com.atlashub.shared.application.usecase.Command;
 import com.atlashub.shared.domain.valueobject.CorrelationId;
+import org.springframework.stereotype.Component;
 
 import java.util.Optional;
 
+@Component
 public class AuthAccountHandler extends Command<AuthAccountCommand, Void> {
 
     final AuthAccountRepository accountRepository;

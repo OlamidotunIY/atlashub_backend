@@ -42,16 +42,18 @@ public class OtpVerification extends AggregateRoot<Long> {
 
         OtpVerification otpVerification = new OtpVerification(id, authAccountId, hashCode, type, OtpStatus.PENDING, expiresAt, now);
 
-        otpVerification.registerEvent(new OtpVerificationCreated(UUID.randomUUID().toString(), otpVerification.id.toString(), now, CorrelationId.getOrCreate(), new OtpVerificationCreated.Payload(type, expiresAt)));
+        otpVerification.registerEvent(new OtpVerificationCreated(UUID.randomUUID().toString(), otpVerification.id, now, CorrelationId.getOrCreate(), new OtpVerificationCreated.Payload(type, expiresAt)));
 
         return otpVerification;
     }
 
-    void verifyToken() {
-        if (!EnumSet.of(OtpStatus.USED, OtpStatus.REVOKED).contains(status)) {
+    /**
+     * Marks this OTP as used. Throws if it has already been used or revoked.
+     */
+    public void verifyToken() {
+        if (EnumSet.of(OtpStatus.USED, OtpStatus.REVOKED).contains(status)) {
             throw new VerifyTokenError();
         }
-
         this.status = OtpStatus.USED;
     }
 
