@@ -3,10 +3,12 @@ VM_IP = $(shell terraform -chdir=$(TF_DIR) output -raw k3s_vm_public_ip)
 
 ifeq ($(OS),Windows_NT)
     SSH = C:\Windows\sysnative\OpenSSH\ssh.exe
+    SCP = C:\Windows\sysnative\OpenSSH\scp.exe
     CAT = type
     SSH_KEY = $(USERPROFILE)\.ssh\id_rsa_azure
 else
     SSH = ssh
+    SCP = scp
     CAT = cat
     SSH_KEY = ~/.ssh/id_rsa_azure
 endif
@@ -19,8 +21,15 @@ start:
 	cd $(TF_DIR) && terraform init -upgrade && terraform apply -auto-approve
 	@echo "=> Waiting for VM and Docker to initialize (sleeping for 90s)..."
 	timeout /t 90 /nobreak
-	@echo "=> Deploying Backend Stack (Cloning & Building via SSH)..."
-	$(SSH) -i $(SSH_KEY) -o StrictHostKeyChecking=no ubuntu@$(VM_IP) "if [ ! -d 'atlashub' ]; then git clone https://github.com/OlamidotunIY/atlashub_backend.git atlashub; fi && cd atlashub && git pull && cd infrastructure/docker && docker compose -f docker-compose.prod.yml up -d --build"
+	@echo "=> Copying Secrets to VM..."
+	$(SCP) -i $(SSH_KEY) -o StrictHostKeyChecking=no .env ubuntu@$(VM_IP):/tmp/.env
+	$(SCP) -i $(SSH_KEY) -o StrictHostKeyChecking=no secrets/firebase-service-account.json ubuntu@$(VM_IP):/tmp/firebase-service-account.json
+	@echo "=> Building Docker Image and Loading into K3s..."
+	$(SSH) -i $(SSH_KEY) -o StrictHostKeyChecking=no ubuntu@$(VM_IP) "if [ ! -d 'atlashub' ]; then git clone https://github.com/OlamidotunIY/atlashub_backend.git atlashub; fi && cd atlashub && git pull && sudo docker build -t atlashub/app:latest . && sudo docker save atlashub/app:latest | sudo k3s ctr images import -"
+	@echo "=> Applying Kubernetes Secrets..."
+	$(SSH) -i $(SSH_KEY) -o StrictHostKeyChecking=no ubuntu@$(VM_IP) "export KUBECONFIG=/home/ubuntu/.kube/config && kubectl delete secret atlashub-secrets --ignore-not-found && kubectl create secret generic atlashub-secrets --from-env-file=/tmp/.env --from-file=firebase-service-account.json=/tmp/firebase-service-account.json"
+	@echo "=> Applying Kubernetes Manifests..."
+	$(SSH) -i $(SSH_KEY) -o StrictHostKeyChecking=no ubuntu@$(VM_IP) "export KUBECONFIG=/home/ubuntu/.kube/config && kubectl apply -k atlashub/infrastructure/k8s/base"
 	@echo "=> Waiting 30s for MySQL to boot..."
 	timeout /t 30 /nobreak
 	@echo "=> Restoring Database..."
@@ -42,16 +51,14 @@ ssh:
 
 # -----------------------------------------------------------------------------
 # DATABASE BACKUP & RESTORE COMMANDS
-# You will need to replace the commands below with the exact commands for your 
-# database (Postgres, MySQL, etc.) and how you expose it in Kubernetes.
 # -----------------------------------------------------------------------------
 
 backup-db:
-	@echo "=> Running MySQL Backup via SSH..."
-	@echo "=> Connecting to the VM, running mysqldump inside the docker container, and saving it locally."
-	$(SSH) -i $(SSH_KEY) -o StrictHostKeyChecking=no ubuntu@$(VM_IP) "docker exec atlashub-mysql mysqldump -u root -proot atlashub" > atlashub_backup.sql
+	@echo "=> Running MySQL Backup via SSH (Kubernetes)..."
+	@echo "=> Connecting to the VM, running mysqldump inside the kubernetes pod, and saving it locally."
+	$(SSH) -i $(SSH_KEY) -o StrictHostKeyChecking=no ubuntu@$(VM_IP) "export KUBECONFIG=/home/ubuntu/.kube/config && POD=\$$(kubectl get pod -l app=mysql -o jsonpath='{.items[0].metadata.name}') && kubectl exec \$$POD -- mysqldump -u root -proot atlashub" > atlashub_backup.sql
 
 restore-db:
-	@echo "=> Restoring MySQL Backup via SSH..."
-	@echo "=> Sending the local SQL file to the VM and piping it into the MySQL docker container."
-	$(CAT) atlashub_backup.sql | $(SSH) -i $(SSH_KEY) -o StrictHostKeyChecking=no ubuntu@$(VM_IP) "docker exec -i atlashub-mysql mysql -u root -proot atlashub"
+	@echo "=> Restoring MySQL Backup via SSH (Kubernetes)..."
+	@echo "=> Sending the local SQL file to the VM and piping it into the MySQL kubernetes pod."
+	$(CAT) atlashub_backup.sql | $(SSH) -i $(SSH_KEY) -o StrictHostKeyChecking=no ubuntu@$(VM_IP) "export KUBECONFIG=/home/ubuntu/.kube/config && POD=\$$(kubectl get pod -l app=mysql -o jsonpath='{.items[0].metadata.name}') && kubectl exec -i \$$POD -- mysql -u root -proot atlashub"

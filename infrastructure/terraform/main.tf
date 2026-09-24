@@ -148,6 +148,6 @@ resource "azurerm_linux_virtual_machine" "k3s_node" {
     version   = "latest"
   }
 
-  # Auto-install Docker and Docker Compose on boot
-  custom_data = filebase64("${path.module}/install_docker.sh")
+  # Auto-install Docker and K3s on boot
+  custom_data = filebase64("${path.module}/install_k3s.sh")
 }

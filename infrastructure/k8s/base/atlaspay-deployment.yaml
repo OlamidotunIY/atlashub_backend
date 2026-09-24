@@ -21,10 +21,29 @@ spec:
         env:
         - name: SPRING_PROFILES_ACTIVE
           value: "prod"
-        - name: SPRING_REDIS_HOST
+        - name: SPRING_DATA_REDIS_HOST
           value: "redis"
         - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
           value: "kafka:9092"
+        - name: SPRING_DATASOURCE_URL
+          value: "jdbc:mysql://mysql:3306/atlashub?serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true"
+        - name: SPRING_DATASOURCE_USERNAME
+          value: "atlashub"
+        - name: SPRING_DATASOURCE_PASSWORD
+          value: "atlashub"
+        - name: ATLASHUB_JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: atlashub-secrets
+              key: ATLASHUB_JWT_SECRET
+        volumeMounts:
+        - name: firebase-secrets
+          mountPath: /secrets
+          readOnly: true
+      volumes:
+      - name: firebase-secrets
+        secret:
+          secretName: atlashub-secrets
 ---
 apiVersion: v1
 kind: Service
