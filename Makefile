@@ -19,12 +19,14 @@ endif
 start:
 	@echo "=> Building Azure infrastructure..."
 	cd $(TF_DIR) && terraform init -upgrade && terraform apply -auto-approve
-	@echo "=> Waiting for VM and Docker to initialize (sleeping for 90s)..."
-	timeout /t 90 /nobreak
+	@echo "=> Waiting 45s for VM SSH to boot..."
+	timeout /t 45 /nobreak
 	$(MAKE) deploy-stack
 
 # Internal target: runs AFTER infrastructure exists so $(VM_IP) evaluates correctly
 deploy-stack:
+	@echo "=> Checking if Docker and K3s are installed and ready..."
+	$(SSH) -i $(SSH_KEY) -o StrictHostKeyChecking=no ubuntu@$(VM_IP) "while ! command -v docker >/dev/null 2>&1; do echo 'Waiting for Docker...'; sleep 5; done; while ! command -v k3s >/dev/null 2>&1; do echo 'Waiting for K3s...'; sleep 5; done; while ! sudo k3s kubectl get node >/dev/null 2>&1; do echo 'Waiting for Kubernetes to be ready...'; sleep 5; done; echo 'Infrastructure is Ready!'"
 	@echo "=> Copying Secrets to VM..."
 	$(eval FIREBASE_JSON := $(wildcard infrastructure/Firebase/*.json))
 	$(SCP) -i $(SSH_KEY) -o StrictHostKeyChecking=no .env ubuntu@$(VM_IP):/tmp/.env
