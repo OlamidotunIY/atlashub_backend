@@ -5,12 +5,6 @@ set -e
 sudo apt-get update
 sudo apt-get upgrade -y
 
-# Configure Firewall to allow Kubernetes and HTTP/HTTPS traffic
-sudo iptables -I INPUT 6 -m state --state NEW -p tcp --dport 80 -j ACCEPT
-sudo iptables -I INPUT 6 -m state --state NEW -p tcp --dport 443 -j ACCEPT
-sudo iptables -I INPUT 6 -m state --state NEW -p tcp --dport 6443 -j ACCEPT
-sudo netfilter-persistent save || true
-
 # Install Docker
 sudo apt-get install -y ca-certificates curl gnupg
 sudo install -m 0755 -d /etc/apt/keyrings
