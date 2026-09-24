@@ -1,11 +1,14 @@
 TF_DIR = infrastructure/terraform
+VM_IP = $(shell terraform -chdir=$(TF_DIR) output -raw k3s_vm_public_ip)
 
 ifeq ($(OS),Windows_NT)
     SSH = C:\Windows\System32\OpenSSH\ssh.exe
     CAT = type
+    SSH_KEY = $(USERPROFILE)\.ssh\id_rsa_azure
 else
     SSH = ssh
     CAT = cat
+    SSH_KEY = ~/.ssh/id_rsa_azure
 endif
 
 .PHONY: start stop backup-db restore-db ssh
@@ -17,7 +20,7 @@ start:
 	@echo "=> Waiting for VM and Docker to initialize (sleeping for 90s)..."
 	timeout /t 90 /nobreak
 	@echo "=> Deploying Backend Stack (Cloning & Building via SSH)..."
-	$(SSH) -i ~/.ssh/id_rsa_azure -o StrictHostKeyChecking=no ubuntu@$$(cd $(TF_DIR) && terraform output -raw k3s_vm_public_ip) \
+	$(SSH) -i $(SSH_KEY) -o StrictHostKeyChecking=no ubuntu@$(VM_IP) \
 		"if [ ! -d 'atlashub' ]; then git clone https://github.com/OlamidotunIY/atlashub_backend.git atlashub; fi && \
 		 cd atlashub && git pull && \
 		 cd infrastructure/docker && docker compose -f docker-compose.prod.yml up -d --build"
@@ -38,7 +41,7 @@ stop:
 # 3. SSH directly into the VM
 ssh:
 	@echo "=> Connecting to VM..."
-	$(SSH) -i ~/.ssh/id_rsa_azure -o StrictHostKeyChecking=no ubuntu@$$(cd $(TF_DIR) && terraform output -raw k3s_vm_public_ip)
+	$(SSH) -i $(SSH_KEY) -o StrictHostKeyChecking=no ubuntu@$(VM_IP)
 
 # -----------------------------------------------------------------------------
 # DATABASE BACKUP & RESTORE COMMANDS
@@ -49,11 +52,11 @@ ssh:
 backup-db:
 	@echo "=> Running MySQL Backup via SSH..."
 	@echo "=> Connecting to the VM, running mysqldump inside the docker container, and saving it locally."
-	$(SSH) -i ~/.ssh/id_rsa_azure -o StrictHostKeyChecking=no ubuntu@$$(cd $(TF_DIR) && terraform output -raw k3s_vm_public_ip) \
+	$(SSH) -i $(SSH_KEY) -o StrictHostKeyChecking=no ubuntu@$(VM_IP) \
 		"docker exec atlashub-mysql mysqldump -u root -proot atlashub" > atlashub_backup.sql
 
 restore-db:
 	@echo "=> Restoring MySQL Backup via SSH..."
 	@echo "=> Sending the local SQL file to the VM and piping it into the MySQL docker container."
-	$(CAT) atlashub_backup.sql | $(SSH) -i ~/.ssh/id_rsa_azure -o StrictHostKeyChecking=no ubuntu@$$(cd $(TF_DIR) && terraform output -raw k3s_vm_public_ip) \
+	$(CAT) atlashub_backup.sql | $(SSH) -i $(SSH_KEY) -o StrictHostKeyChecking=no ubuntu@$(VM_IP) \
 		"docker exec -i atlashub-mysql mysql -u root -proot atlashub"
