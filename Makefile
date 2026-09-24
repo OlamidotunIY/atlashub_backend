@@ -40,12 +40,12 @@ ssh:
 
 backup-db:
 	@echo "=> Running MySQL Backup via SSH..."
-	# Connecting to the VM, running mysqldump inside the docker container, and saving it locally.
-	ssh -o StrictHostKeyChecking=no ubuntu@$$(cd $(TF_DIR) && terraform output -raw k3s_vm_public_ip) \
+	@echo "=> Connecting to the VM, running mysqldump inside the docker container, and saving it locally."
+	ssh -i ~/.ssh/id_rsa_azure -o StrictHostKeyChecking=no ubuntu@$$(cd $(TF_DIR) && terraform output -raw k3s_vm_public_ip) \
 		"docker exec atlashub-mysql mysqldump -u root -proot atlashub" > atlashub_backup.sql
 
 restore-db:
 	@echo "=> Restoring MySQL Backup via SSH..."
-	# Sending the local SQL file to the VM and piping it into the MySQL docker container.
-	cat atlashub_backup.sql | ssh -o StrictHostKeyChecking=no ubuntu@$$(cd $(TF_DIR) && terraform output -raw k3s_vm_public_ip) \
+	@echo "=> Sending the local SQL file to the VM and piping it into the MySQL docker container."
+	cat atlashub_backup.sql | ssh -i ~/.ssh/id_rsa_azure -o StrictHostKeyChecking=no ubuntu@$$(cd $(TF_DIR) && terraform output -raw k3s_vm_public_ip) \
 		"docker exec -i atlashub-mysql mysql -u root -proot atlashub"
