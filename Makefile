@@ -26,8 +26,9 @@ start:
 # Internal target: runs AFTER infrastructure exists so $(VM_IP) evaluates correctly
 deploy-stack:
 	@echo "=> Copying Secrets to VM..."
+	$(eval FIREBASE_JSON := $(wildcard infrastructure/Firebase/*.json))
 	$(SCP) -i $(SSH_KEY) -o StrictHostKeyChecking=no .env ubuntu@$(VM_IP):/tmp/.env
-	$(SCP) -i $(SSH_KEY) -o StrictHostKeyChecking=no secrets/firebase-service-account.json ubuntu@$(VM_IP):/tmp/firebase-service-account.json
+	$(SCP) -i $(SSH_KEY) -o StrictHostKeyChecking=no $(FIREBASE_JSON) ubuntu@$(VM_IP):/tmp/firebase-service-account.json
 	@echo "=> Building Docker Image and Loading into K3s..."
 	$(SSH) -i $(SSH_KEY) -o StrictHostKeyChecking=no ubuntu@$(VM_IP) "if [ ! -d 'atlashub' ]; then git clone https://github.com/OlamidotunIY/atlashub_backend.git atlashub; fi && cd atlashub && git pull && sudo docker build -t atlashub/app:latest . && sudo docker save atlashub/app:latest | sudo k3s ctr images import -"
 	@echo "=> Applying Kubernetes Secrets..."
