@@ -2,7 +2,7 @@ TF_DIR = infrastructure/terraform
 VM_IP = $(shell terraform -chdir=$(TF_DIR) output -raw k3s_vm_public_ip)
 
 ifeq ($(OS),Windows_NT)
-    SSH = C:\Windows\System32\OpenSSH\ssh.exe
+    SSH = C:\Windows\sysnative\OpenSSH\ssh.exe
     CAT = type
     SSH_KEY = $(USERPROFILE)\.ssh\id_rsa_azure
 else
