@@ -41,9 +41,33 @@ cmd.exe /c "type atlashub_backup.sql | ssh -i ~/.ssh/id_rsa_azure -o StrictHostK
 
 ---
 
-## 4. Checking Logs
+## 4. Stopping or Restarting the API
+If you need to completely stop the backend and databases (this won't delete your data):
+```bash
+cd atlashub/infrastructure/docker
+docker compose -f docker-compose.prod.yml down
+```
+
+If you just want to restart the Java backend (for example, if it crashed):
+```bash
+cd atlashub/infrastructure/docker
+docker compose -f docker-compose.prod.yml restart app
+```
+
+---
+
+## 5. Copying your `.env` File to the Server
+If you have a `.env` file on your local Windows machine that you need to securely transfer to the Docker folder on the VM, open PowerShell on your Windows machine and run:
+
+```powershell
+scp -i ~/.ssh/id_rsa_azure .env ubuntu@<YOUR_VM_IP>:~/atlashub/infrastructure/docker/.env
+```
+
+---
+
+## 6. Checking Logs
 If something isn't working, SSH into the server and check the backend logs:
 ```bash
 cd atlashub/infrastructure/docker
-docker compose -f docker-compose.prod.yml logs -f atlashub-backend
+docker compose -f docker-compose.prod.yml logs -f app
 ```
