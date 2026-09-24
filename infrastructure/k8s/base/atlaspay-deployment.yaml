@@ -31,6 +31,8 @@ spec:
           value: "atlashub"
         - name: SPRING_DATASOURCE_PASSWORD
           value: "atlashub"
+        - name: FIREBASE_CREDENTIALS_PATH
+          value: "/secrets/firebase-service-account.json"
         - name: ATLASHUB_JWT_SECRET
           valueFrom:
             secretKeyRef:
