@@ -43,7 +43,7 @@ spec:
       volumes:
       - name: firebase-secrets
         secret:
-          secretName: atlashub-secrets
+          secretName: firebase-secrets
 ---
 apiVersion: v1
 kind: Service
