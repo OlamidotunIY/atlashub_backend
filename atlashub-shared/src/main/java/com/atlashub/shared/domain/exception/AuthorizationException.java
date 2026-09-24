@@ -1,12 +1,11 @@
 package com.atlashub.shared.domain.exception;
 
-public class AuthorizationException extends ApplicationException {
-
-    public AuthorizationException(ErrorCode errorCode, String message) {
-        super(errorCode, message);
+public class AuthorizationException extends DomainException {
+    public AuthorizationException(String message) {
+        super(message);
     }
-
-    public AuthorizationException(ErrorCode errorCode, String message, Throwable cause) {
-        super(errorCode, message, cause);
+    public AuthorizationException(String message, Throwable cause) {
+        super(message, cause);
     }
 }
+

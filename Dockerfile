@@ -8,25 +8,17 @@ COPY gradlew gradlew.bat ./
 COPY gradle ./gradle
 COPY build.gradle settings.gradle ./
 
-# Copy all sub-module build files (for dependency resolution caching)
-COPY atlashub-shared-kernel/build.gradle         atlashub-shared-kernel/
-COPY atlashub-identity/build.gradle              atlashub-identity/
-COPY atlashub-accounts/build.gradle              atlashub-accounts/
-COPY atlashub-ledger/build.gradle                atlashub-ledger/
-COPY atlashub-transfers/build.gradle             atlashub-transfers/
-COPY atlashub-charges/build.gradle               atlashub-charges/
-COPY atlashub-subscriptions/build.gradle         atlashub-subscriptions/
-COPY atlashub-escrow/build.gradle                atlashub-escrow/
-COPY atlashub-settlement/build.gradle            atlashub-settlement/
-COPY atlashub-transaction-splits/build.gradle    atlashub-transaction-splits/
-COPY atlashub-transactions-query/build.gradle    atlashub-transactions-query/
-COPY atlashub-notifications/build.gradle         atlashub-notifications/
-COPY atlashub-rate-limiter/build.gradle          atlashub-rate-limiter/
-COPY atlashub-eventbus/build.gradle              atlashub-eventbus/
-COPY atlashub-app/build.gradle                   atlashub-app/
-COPY atlashub-admin/build.gradle               atlashub-admin/
-COPY atlashub-auth/build.gradle                atlashub-auth/
-COPY atlashub-audit/build.gradle               atlashub-audit/
+# Copy all actual sub-module build files (for dependency resolution caching)
+COPY atlashub-shared/build.gradle               atlashub-shared/
+COPY atlashub-platform/catalog/build.gradle     atlashub-platform/catalog/
+COPY atlashub-platform/accounts/build.gradle    atlashub-platform/accounts/
+COPY atlashub-platform/authentication/build.gradle atlashub-platform/authentication/
+COPY atlashub-platform/storage/build.gradle     atlashub-platform/storage/
+COPY atlashub-platform/iam/build.gradle         atlashub-platform/iam/
+COPY atlashub-infrastructure/eventbus/build.gradle atlashub-infrastructure/eventbus/
+COPY atlashub-infrastructure/rate-limiter/build.gradle atlashub-infrastructure/rate-limiter/
+COPY atlashub-infrastructure/audit/build.gradle atlashub-infrastructure/audit/
+COPY atlashub-main/build.gradle                 atlashub-main/
 
 # Download dependencies (cached unless build files change)
 RUN chmod +x gradlew && ./gradlew dependencies --no-daemon --quiet || true
@@ -35,13 +27,14 @@ RUN chmod +x gradlew && ./gradlew dependencies --no-daemon --quiet || true
 COPY . .
 
 # Build the fat jar — skip tests in Docker build (tests run in CI separately)
-RUN ./gradlew :atlashub-app:bootJar --no-daemon -x test
+RUN ./gradlew :atlashub-main:bootJar --no-daemon -x test
 
 # ── Stage 2: Extract layers for efficient layer caching ───────────────────────
 FROM eclipse-temurin:25-jre-jammy AS extractor
 
 WORKDIR /workspace
-COPY --from=builder /workspace/atlashub-app/build/libs/atlashub.jar atlashub.jar
+# Copy the built jar from atlashub-main (glob match since version might change)
+COPY --from=builder /workspace/atlashub-main/build/libs/*-SNAPSHOT.jar atlashub.jar
 
 # Spring Boot layer extraction for optimal Docker caching
 RUN java -Djarmode=layertools -jar atlashub.jar extract
@@ -77,10 +70,8 @@ ENV JAVA_OPTS="-XX:+UseContainerSupport \
                -XX:MaxRAMPercentage=75.0 \
                -Djava.security.egd=file:/dev/./urandom"
 
-ENV OTEL_OPTS="-javaagent:/app/otel-agent.jar \
-               -Dotel.service.name=atlashub \
-               -Dotel.exporter.otlp.endpoint=${OTEL_EXPORTER_ENDPOINT:-http://tempo:4317} \
-               -Dotel.traces.exporter=${OTEL_EXPORTER:-none}"
+ENV OTEL_SERVICE_NAME="atlashub"
+ENV OTEL_OPTS="-javaagent:/app/otel-agent.jar"
 
 ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS $OTEL_OPTS org.springframework.boot.loader.launch.JarLauncher"]
 

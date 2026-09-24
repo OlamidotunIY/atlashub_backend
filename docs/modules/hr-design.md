@@ -2,54 +2,71 @@
 
 ## Role & Purpose
 
-The HR module is the **people operations engine** of the AtlasHub platform. It manages the full employment lifecycle within an organization — from onboarding a new hire to disbursing their monthly salary to handling their resignation. It is one of the most financially consequential modules because payroll disbursement directly triggers bulk money movement through `atlashub-pay`.
+The HR module is the **people operations engine** of AtlasHub. It manages the complete employment lifecycle within an organization — from onboarding a new hire to disbursing their monthly salary, managing their leave, and handling their resignation.
+
+HR is one of the most financially consequential modules because payroll disbursement directly triggers bulk money movement through `atlashub-pay`. This is enforced by a strict **Maker-Checker** workflow: one authorized user initiates the payroll run (maker), and a different authorized user with `hr:payroll:approve` permission must approve it before any money moves (checker).
 
 An organization using Atlas HR can:
-- Maintain a complete employee registry with bio-data, qualifications, and employment history.
-- Define salary grades and allowance/deduction structures that auto-calculate payslips.
-- Run monthly payroll with full compliance — PAYE tax, pension, NHF, and other statutory deductions calculated inline.
-- Manage annual leave, sick leave, and maternity/paternity leave with balance tracking.
-- Track attendance with clock-in/clock-out and auto-calculate overtime.
-- Disburse employee loans with installment repayments deducted from payroll.
-- Handle disciplinary infractions with resolution tracking.
-
-The HR module talks to two other modules heavily: `pay` (salary disbursement and loan payouts) and `accounting` (journal entries for salary expense, payroll payable, and tax liabilities).
+- Maintain a complete employee registry with bio-data, qualifications, and employment history
+- Define salary grades and allowance/deduction structures (organizations configure their own rules — no auto-calculated Nigerian tax; they enter what they want deducted)
+- Run monthly payroll with full maker-checker approval workflow
+- Manage leave types, applications, and balances
+- Track attendance with clock-in/clock-out and overtime calculation
+- Disburse employee loans with installment repayments deducted automatically from payroll
+- Handle disciplinary infractions with resolution tracking
 
 ---
 
 ## 1. Features
 
-### Employee Onboarding & Management
-When a new employee joins, they are either:
-- **Directly added** via `OnboardEmployeeUseCase` (with their `userId` linking to an existing platform user).
-- **Auto-drafted** when `InvitationAccepted` event fires (if the org has HR subscribed).
+### Employee Onboarding
+When a new employee joins:
+- Directly added via `OnboardEmployeeUseCase` by an HR admin
+- Or auto-drafted when `InvitationAcceptedEvent` fires (if the org has HR subscribed)
 
-The `Employee` aggregate holds complete bio-data, designation, department, salary grade reference, and employment status. Status transitions cover the full employment lifecycle: PROBATION → ACTIVE → ON_LEAVE → SUSPENDED → TERMINATED.
+The `Employee` aggregate holds complete bio-data, designation, department, and salary grade reference. Status covers the full employment lifecycle: PROBATION → ACTIVE → ON_LEAVE → SUSPENDED → TERMINATED.
 
-### Salary Grades & Payslip Calculation
-Rather than setting individual employee salaries manually for every employee, organizations define `SalaryGrade`s (e.g., "Grade 7 – Senior Engineer" = ₦450,000 base). Each grade includes configurable `GradeAllowance` entries (housing, transport) and `GradeDeduction` entries (PAYE, NHF, pension). Employees assigned to a grade automatically inherit these structures.
+### Salary Grades (Configurable)
+Organizations define `SalaryGrade`s (e.g., "Grade 7 — Senior Engineer, ₦450,000 base"). Each grade includes configurable `GradeAllowance` entries (housing, transport — FIXED or PERCENTAGE_OF_GROSS) and `GradeDeduction` entries (PAYE, pension, NHF — organizations enter the values themselves).
 
-Individual employees can also have additional `EmployeeAllowance` and `EmployeeDeduction` overrides beyond their grade — for loan repayments, performance bonuses, etc.
+Individual employees can have additional `EmployeeAllowance` and `EmployeeDeduction` overrides (e.g., loan repayment, performance bonus).
 
-### Payroll Run
-The payroll process follows a strict approval workflow:
-1. `InitiatePayrollUseCase`: Fetches all ACTIVE/PROBATION employees, calculates gross pay per employee from their grade + individual overrides, deducts all configured deductions (including active loan installments and statutory amounts), generates a `Payslip` per employee. Creates the `PayrollRun` in DRAFT status.
-2. `ApprovePayrollUseCase`: Manager/Owner approves. `PayrollRun` moves to APPROVED. Statutory deduction totals are posted to Tax Holding Account in `pay:ledger`.
-3. `DisbursePayrollUseCase`: Calls `pay` to execute bulk payouts to all employee bank accounts. `PayrollRun` moves to PROCESSING → DISBURSED on success, or reverts to APPROVED on failure (so admin can retry after funding the wallet).
+### Payroll Run (Maker-Checker)
+The payroll process enforces the four-eyes principle:
 
-Before payroll disbursement, the organization **must have sufficient funds in their Payroll Reserve Account** in `pay:ledger`. If not, `FundPayrollReserveCommand` must be called in `pay` to move funds from Operating Account → Payroll Reserve Account. Disbursement then debits the Payroll Reserve Account and credits the Payout Clearing Account.
+```
+1. INITIATE (Maker — requires hr:payroll:initiate permission)
+   InitiatePayrollUseCase fetches all ACTIVE/PROBATION employees,
+   calculates gross from grade + overrides, applies all deductions,
+   generates Payslip per employee → PayrollRun created in DRAFT
+
+2. SUBMIT FOR APPROVAL (Maker)
+   Maker submits → PayrollRun transitions to PENDING_APPROVAL
+   Approvers are notified via WebSocket + email
+
+3. APPROVE (Checker — requires hr:payroll:approve, MUST be a different user)
+   ApprovePayrollUseCase validates checker ≠ initiator
+   PayrollRun transitions to APPROVED
+   Statutory deduction totals posted to Tax Holding Account in pay:ledger
+
+4. DISBURSE (System — automatic after approval)
+   DisbursePayrollUseCase validates Payroll Reserve Account has sufficient funds
+   Calls pay to execute bulk payouts to all employee bank accounts
+   PayrollRun transitions to PROCESSING → DISBURSED (on success)
+   On partial failure: revert to APPROVED so admin can retry after investigation
+```
 
 ### Leave Management
-Organizations define `LeaveType`s (Annual Leave, Sick Leave, Maternity Leave) with maximum days per year and whether approval is required. Employees apply for leave via `ApplyForLeaveUseCase`, which validates against their `LeaveBalance.remaining`. On approval, the balance is deducted and the employee's status is set to ON_LEAVE. On rejection or cancellation, the balance is restored.
+Organizations define `LeaveType`s (Annual Leave, Sick Leave, Maternity Leave) with maximum days per year. `LeaveBalance` tracks each employee's entitlement, used days, and remaining days. Approval is optional per leave type — some orgs auto-approve sick leave.
 
 ### Attendance Tracking
-Employees clock in and out via `ClockInUseCase` / `ClockOutUseCase`. Clock-out automatically calculates `hoursWorked` and `overtimeHours` based on the organization's configured shift hours. Attendance records are used in payroll calculation if the org uses hourly or attendance-based pay.
+Clock-in/clock-out via `ClockInUseCase` / `ClockOutUseCase`. Clock-out calculates `hoursWorked` and `overtimeHours` based on configured shift hours. Used in payroll if the org uses attendance-based pay.
 
 ### Employee Loans
-Employees can apply for salary advances or loans. Approved loans are disbursed via `pay` (crediting the employee's bank account). Repayments are automatically deducted as `EmployeeDeduction` entries in the next payroll run, reducing `outstandingBalance` on each payslip.
+Employees apply for salary advances or loans. Approved loans are disbursed via `pay`. Repayments are automatically added as `EmployeeDeduction` entries for subsequent payroll runs, reducing `outstandingBalance` each month.
 
-### Infractions & Disciplinary
-Managers can log `Infraction` records (LOW, MEDIUM, HIGH severity) against employees. These can be resolved with resolution notes. HIGH severity infractions can trigger suspension.
+### Disciplinary Infractions
+Managers log `Infraction` records (LOW, MEDIUM, HIGH severity). HIGH-severity infractions can trigger `SuspendEmployeeUseCase`. All infractions can be resolved with resolution notes.
 
 ---
 
@@ -58,65 +75,217 @@ Managers can log `Infraction` records (LOW, MEDIUM, HIGH severity) against emplo
 ### `staff` Submodule
 
 **`Employee` (Aggregate Root)**
-- **Fields**: `id`, `organizationId`, `userId`, `firstName`, `lastName`, `email`, `phone`, `dob`, `address`, `hireDate`, `terminationDate`, `designation`, `department`, `salaryGradeId`, `baseSalary`: `Money`, `status`: `EmployeeStatus` (ACTIVE, PROBATION, SUSPENDED, TERMINATED, ON_LEAVE)
-- **Methods**: `updateBioData(...)`, `promote(String newDesignation, Long newGradeId)`, `suspend()`, `terminate(LocalDate date)`, `placeOnLeave()`, `returnFromLeave()`
+```
+Employee
+├── id: Long
+├── organizationId: Long
+├── userId: Long
+├── employeeNumber: String              ← auto-generated, e.g., "EMP-0042"
+├── firstName: String
+├── lastName: String
+├── email: EmailAddress
+├── phone: PhoneNumber
+├── dateOfBirth: LocalDate
+├── address: String
+├── nationality: String
+├── hireDate: LocalDate
+├── terminationDate: LocalDate          ← nullable
+├── designation: String
+├── department: String
+├── reportingManagerId: Long            ← nullable
+├── salaryGradeId: Long
+├── baseSalary: Money                   ← can override grade base salary
+├── status: EmployeeStatus             ← PROBATION, ACTIVE, ON_LEAVE, SUSPENDED, TERMINATED
+├── createdAt: ZonedDateTime
+└── updatedAt: ZonedDateTime
+```
 
-**`Qualification` (Entity)**
-- **Fields**: `id`, `employeeId`, `degree`, `institution`, `yearAwarded`
+**Business Methods:**
+- `updateBioData(...)` → registers `EmployeeProfileUpdatedEvent`
+- `promote(String newDesignation, Long newGradeId, Money newBaseSalary)` → registers `EmployeePromotedEvent`
+- `suspend(String reason)` → transitions to SUSPENDED → registers `EmployeeSuspendedEvent`
+- `reinstate()` → transitions to ACTIVE
+- `terminate(LocalDate date)` → transitions to TERMINATED → registers `EmployeeTerminatedEvent`
+- `placeOnLeave()`, `returnFromLeave()`
 
-**`Infraction` (Aggregate Root)**
-- **Fields**: `id`, `employeeId`, `organizationId`, `description`, `severity` (`InfractionSeverity`: LOW, MEDIUM, HIGH), `reportedAt`, `status` (PENDING, RESOLVED)
-- **Methods**: `resolve(String resolutionNotes)`
+**Domain Rules:**
+- An employee cannot be terminated while they have an ACTIVE loan with outstanding balance (must be settled or transferred first)
+- A TERMINATED employee's payslips are read-only — no modifications
 
-**`SalaryGrade` (Aggregate Root)**
-- **Fields**: `id`, `organizationId`, `name`, `baseSalary`: `Money`, `allowances`: `List<GradeAllowance>`, `deductions`: `List<GradeDeduction>`
-- **Methods**: `updateBaseSalary(Money amount)`, `addAllowance(...)`, `addDeduction(...)`
+---
 
-**`GradeAllowance` (Entity)**: `id`, `gradeId`, `name`, `type` (FIXED, PERCENTAGE_OF_GROSS), `value`: BigDecimal
-
-**`GradeDeduction` (Entity)**: `id`, `gradeId`, `name`, `type`, `value`, `isStatutory`: Boolean
-
-**`EmployeeAllowance` (Entity)**: `id`, `employeeId`, `name`, `type`, `value`, `effectiveFrom`: LocalDate
-
-**`EmployeeDeduction` (Entity)**: `id`, `employeeId`, `name`, `type`, `value`, `effectiveFrom`: LocalDate
+**`Qualification` (Entity)**: `id`, `employeeId`, `degree`, `institution`, `yearAwarded`
 
 **`EmployeeBank` (Aggregate Root)**
-- **Fields**: `id`, `employeeId`, `bankCode`, `bankName`, `accountNumber`, `accountName`, `isVerified`, `isPrimary`
-- **Methods**: `verify()`, `markPrimary()`
+```
+EmployeeBank
+├── id: Long
+├── employeeId: Long
+├── bankCode: String
+├── bankName: String
+├── accountNumber: String
+├── accountName: String                 ← verified via Paystack name enquiry
+├── isVerified: Boolean
+├── isPrimary: Boolean                  ← which account to use for salary payment
+└── addedAt: ZonedDateTime
+```
+
+**`SalaryGrade` (Aggregate Root)**
+```
+SalaryGrade
+├── id: Long
+├── organizationId: Long
+├── name: String                        ← e.g., "Grade 7 — Senior Engineer"
+├── baseSalary: Money
+├── allowances: List<GradeAllowance>
+└── deductions: List<GradeDeduction>
+```
+
+**`GradeAllowance` (Entity)**: `id`, `gradeId`, `name` (e.g., "Housing"), `type` (FIXED, PERCENTAGE_OF_GROSS), `value: BigDecimal`
+
+**`GradeDeduction` (Entity)**: `id`, `gradeId`, `name` (e.g., "PAYE Tax"), `type` (FIXED, PERCENTAGE_OF_GROSS), `value: BigDecimal`, `isStatutory: Boolean`
+
+**`EmployeeAllowance` (Entity)**: `id`, `employeeId`, `name`, `type`, `value`, `effectiveFrom: LocalDate`, `effectiveTo: LocalDate`
+
+**`EmployeeDeduction` (Entity)**: `id`, `employeeId`, `name`, `type`, `value`, `effectiveFrom: LocalDate`, `effectiveTo: LocalDate`, `loanId: Long` (nullable — links loan repayment deductions)
+
+**`Infraction` (Aggregate Root)**: `id`, `employeeId`, `organizationId`, `description`, `severity: InfractionSeverity` (LOW, MEDIUM, HIGH), `reportedAt`, `reportedBy: Long`, `status` (OPEN, RESOLVED), `resolutionNotes: String`
+
+---
 
 ### `leave` Submodule
 
-**`LeaveType` (Aggregate Root)**: `id`, `organizationId`, `name`, `maxDaysPerYear`, `isPaid`, `requiresApproval`
+**`LeaveType` (Aggregate Root)**: `id`, `organizationId`, `name`, `maxDaysPerYear: Integer`, `isPaid: Boolean`, `requiresApproval: Boolean`, `carryOverAllowed: Boolean`, `maxCarryOverDays: Integer`
 
 **`LeaveApplication` (Aggregate Root)**
-- **Fields**: `id`, `employeeId`, `organizationId`, `leaveTypeId`, `startDate`, `endDate`, `daysRequested`, `reason`, `status` (PENDING, APPROVED, REJECTED, CANCELLED), `approvedBy`, `approvedAt`
-- **Methods**: `approve(Long approverId)`, `reject(String reason)`, `cancel()`
+```
+LeaveApplication
+├── id: Long
+├── employeeId: Long
+├── organizationId: Long
+├── leaveTypeId: Long
+├── startDate: LocalDate
+├── endDate: LocalDate
+├── daysRequested: Integer
+├── reason: String
+├── status: LeaveStatus               ← PENDING, APPROVED, REJECTED, CANCELLED
+├── approvedBy: Long                  ← nullable
+└── approvedAt: ZonedDateTime         ← nullable
+```
 
-**`LeaveBalance` (Entity)**: `id`, `employeeId`, `leaveTypeId`, `year`, `entitlement`, `used`, `remaining`
-- **Methods**: `deduct(Integer days)`, `restore(Integer days)`
+**Business Methods:**
+- `approve(Long approverId)` → pessimistic lock on `LeaveBalance` → deducts days → registers `LeaveApprovedEvent`
+- `reject(String reason)` → registers `LeaveRejectedEvent`
+- `cancel()` → restores balance if previously approved
+
+**`LeaveBalance` (Entity)**
+```
+LeaveBalance
+├── id: Long
+├── employeeId: Long
+├── leaveTypeId: Long
+├── year: Integer
+├── entitlement: Integer
+├── used: Integer
+└── remaining: Integer
+```
+
+**Business Methods:**
+- `deduct(int days)` → guards: remaining ≥ days
+- `restore(int days)` → called on cancellation or rejection after approval
+
+---
 
 ### `attendance` Submodule
 
 **`AttendanceRecord` (Aggregate Root)**
-- **Fields**: `id`, `employeeId`, `organizationId`, `date`, `clockIn`, `clockOut`, `hoursWorked`, `overtimeHours`, `status` (PRESENT, ABSENT, LATE, HALF_DAY, ON_LEAVE)
-- **Methods**: `clockIn(ZonedDateTime time)`, `clockOut(ZonedDateTime time)`
+```
+AttendanceRecord
+├── id: Long
+├── employeeId: Long
+├── organizationId: Long
+├── date: LocalDate
+├── clockIn: ZonedDateTime            ← nullable
+├── clockOut: ZonedDateTime           ← nullable
+├── hoursWorked: BigDecimal           ← calculated on clock-out
+├── overtimeHours: BigDecimal         ← hours beyond configured shift
+└── status: AttendanceStatus          ← PRESENT, ABSENT, LATE, HALF_DAY, ON_LEAVE
+```
+
+---
 
 ### `loan` Submodule
 
 **`EmployeeLoan` (Aggregate Root)**
-- **Fields**: `id`, `employeeId`, `organizationId`, `principalAmount`: `Money`, `outstandingBalance`: `Money`, `monthlyDeduction`: `Money`, `status` (PENDING_APPROVAL, ACTIVE, FULLY_REPAID, CANCELLED), `approvedBy`, `startDate`
-- **Methods**: `approve(Long approverId, LocalDate startDate)`, `recordRepayment(Money amount)`, `cancel()`
+```
+EmployeeLoan
+├── id: Long
+├── employeeId: Long
+├── organizationId: Long
+├── principalAmount: Money
+├── outstandingBalance: Money
+├── monthlyDeduction: Money
+├── disbursedAt: ZonedDateTime        ← nullable
+├── status: LoanStatus                ← PENDING_APPROVAL, APPROVED, ACTIVE, FULLY_REPAID, CANCELLED
+├── approvedBy: Long                  ← nullable
+└── startDate: LocalDate              ← first repayment month
+```
+
+**Business Methods:**
+- `approve(Long approverId, LocalDate startDate)` → registers `LoanApprovedEvent`
+- `disburse()` → transitions APPROVED → ACTIVE; creates `EmployeeDeduction` entries in payroll
+- `recordRepayment(Money amount)` → pessimistic lock on `outstandingBalance`; if balance reaches zero, transitions to FULLY_REPAID; removes `EmployeeDeduction`
+- `cancel()` → only if PENDING_APPROVAL
+
+---
 
 ### `payroll` Submodule
 
 **`PayrollRun` (Aggregate Root)**
-- **Fields**: `id`, `organizationId`, `period` (e.g., "2026-09"), `totalGross`: `Money`, `totalDeductions`: `Money`, `totalNet`: `Money`, `status`: `PayrollStatus` (DRAFT, PENDING_APPROVAL, APPROVED, PROCESSING, DISBURSED, FAILED)
-- **Methods**: `addPayslip(Payslip)`, `submitForApproval()`, `approve()`, `markProcessing()`, `markDisbursed()`, `revertToApproved(String reason)`
+```
+PayrollRun
+├── id: Long
+├── organizationId: Long
+├── period: YearMonth                 ← e.g., 2026-09
+├── payslips: List<Payslip>
+├── totalGross: Money
+├── totalDeductions: Money
+├── totalNet: Money
+├── status: PayrollStatus             ← DRAFT, PENDING_APPROVAL, APPROVED, PROCESSING, DISBURSED, FAILED
+├── initiatedBy: Long                 ← userId (maker)
+├── approvedBy: Long                  ← userId (checker), nullable
+├── approvedAt: ZonedDateTime         ← nullable
+└── createdAt: ZonedDateTime
+```
+
+**Business Methods:**
+- `submitForApproval(Long initiatorId)` → transitions DRAFT → PENDING_APPROVAL
+- `approve(Long approverId)` → **validates approverId ≠ initiatedBy** (maker ≠ checker); transitions → APPROVED → registers `PayrollApprovedEvent`
+- `markProcessing()` → APPROVED → PROCESSING
+- `markDisbursed()` → PROCESSING → DISBURSED → registers `PayrollDisbursedEvent`
+- `revertToApproved(String reason)` → PROCESSING → APPROVED (for retry after payout failure)
+- `markFailed(String reason)` → called on unrecoverable failure
+
+**Domain Rule (Maker-Checker):**
+The check `approverId ≠ initiatedBy` is enforced in the domain method, not just the controller. Even if the authorization layer is bypassed, the domain will reject self-approval.
+
+---
 
 **`Payslip` (Entity)**
-- **Fields**: `id`, `payrollRunId`, `employeeId`, `grossPay`: `Money`, `totalAllowances`: `Money`, `totalDeductions`: `Money`, `netPay`: `Money`, `breakdown`: `List<PayslipLineItem>`, `status`
+```
+Payslip
+├── id: Long
+├── payrollRunId: Long
+├── employeeId: Long
+├── grossPay: Money
+├── totalAllowances: Money
+├── totalDeductions: Money
+├── netPay: Money
+├── breakdown: List<PayslipLineItem>  ← each allowance and deduction as a line
+└── status: PayslipStatus            ← DRAFT, DISBURSED, FAILED
+```
 
-**`PayslipLineItem` (Entity)**: `id`, `payslipId`, `name`, `type` (ALLOWANCE, DEDUCTION), `amount`: `Money`
+**`PayslipLineItem` (Entity)**: `id`, `payslipId`, `name`, `type` (ALLOWANCE, DEDUCTION), `amount: Money`
 
 ---
 
@@ -124,59 +293,61 @@ Managers can log `Infraction` records (LOW, MEDIUM, HIGH severity) against emplo
 
 | Event | Published When | Consumed By |
 |---|---|---|
-| `EmployeeOnboardedEvent` | New employee created | `notifications` (welcome email), `accounting` (open employment record) |
-| `EmployeeTerminatedEvent` | Employee terminated | `pay` (close any active salary mandates), `accounting` |
-| `EmployeePromotedEvent` | Employee promoted | `notifications` |
-| `InfractionLoggedEvent` | Infraction recorded | `notifications` (notify employee/manager) |
-| `LeaveApplicationCreatedEvent` | Leave applied for | `notifications` (notify approver) |
-| `LeaveApplicationApprovedEvent` | Leave approved | `notifications`, attendance tracking |
-| `LeaveApplicationRejectedEvent` | Leave rejected | `notifications` (notify employee with reason) |
-| `EmployeeLoanApprovedEvent` | Loan approved | `pay` (disburse loan amount to employee bank account) |
-| `PayrollInitiatedEvent` | Payroll run created | `notifications` (notify approver) |
-| `PayrollApprovedEvent` | Payroll approved by manager | `pay` (execute bulk salary payouts), `accounting` (Debit Salary Expense, Credit Payroll Payable) |
-| `PayrollDisbursedEvent` | All salaries disbursed | `accounting` (Debit Payroll Payable, Credit Payroll Reserve Account), `notifications` |
+| `EmployeeOnboardedEvent` | New employee created | `notifications` (welcome email + onboarding checklist) |
+| `EmployeeTerminatedEvent` | Employee terminated | `pay` (close active mandates), `accounting`, `notifications` |
+| `EmployeePromotedEvent` | Promotion processed | `notifications` (email employee) |
+| `EmployeeSuspendedEvent` | Suspended | `iam` (revoke access to org if needed), `notifications` |
+| `InfractionLoggedEvent` | Infraction recorded | `notifications` (notify employee and reporting manager) |
+| `LeaveApprovedEvent` | Leave approved | `notifications` (email employee), `attendance` (mark as ON_LEAVE for those dates) |
+| `LeaveRejectedEvent` | Leave rejected | `notifications` (email employee with reason) |
+| `LoanApprovedEvent` | Loan approved | `pay` (disburse loan amount to employee bank), `accounting` (Debit Loan Receivable, Credit Bank) |
+| `PayrollApprovedEvent` | Payroll approved by checker | `pay` (execute bulk payouts), `accounting` (Debit Salary Expense, Credit Payroll Payable) |
+| `PayrollDisbursedEvent` | All salaries paid | `accounting` (Debit Payroll Payable, Credit Payroll Reserve Account), `notifications` (SMS each employee) |
 
 ---
 
 ## 4. Exceptions & Errors
 
-**`HrErrorCode`** (implements `ErrorCode`):
+**`HrErrorCode`**:
 - `EMPLOYEE_NOT_FOUND`, `USER_ALREADY_EMPLOYED`
-- `INVALID_PAYROLL_STATE`, `PAYROLL_RUN_NOT_FOUND`
-- `BANK_ACCOUNT_INVALID`, `INFRACTION_NOT_FOUND`
-- `LEAVE_TYPE_NOT_FOUND`, `INSUFFICIENT_LEAVE_BALANCE`, `LEAVE_APPLICATION_NOT_FOUND`
-- `INVALID_LEAVE_STATE`, `LEAVE_DATES_CONFLICT`
-- `LOAN_NOT_FOUND`, `LOAN_APPROVAL_REQUIRED`, `LOAN_ALREADY_ACTIVE`
+- `EMPLOYEE_BANK_NOT_FOUND`, `EMPLOYEE_BANK_UNVERIFIED`
 - `SALARY_GRADE_NOT_FOUND`
-- `INSUFFICIENT_PAYROLL_RESERVE` — raised when attempting to disburse payroll without sufficient balance in Payroll Reserve Account
+- `INVALID_PAYROLL_STATE`, `PAYROLL_RUN_NOT_FOUND`
+- `SELF_APPROVAL_NOT_ALLOWED` — maker cannot be checker
+- `INSUFFICIENT_PAYROLL_RESERVE` — not enough funds in Payroll Reserve Account
+- `LEAVE_TYPE_NOT_FOUND`, `INSUFFICIENT_LEAVE_BALANCE`, `LEAVE_DATES_CONFLICT`
+- `INVALID_LEAVE_STATE`
+- `LOAN_NOT_FOUND`, `LOAN_ALREADY_ACTIVE`
+- `EMPLOYEE_HAS_OUTSTANDING_LOAN` — cannot terminate until settled
+- `INFRACTION_NOT_FOUND`
 
 ---
 
 ## 5. Commands & Use Cases
 
-### Staff Management
-- `OnboardEmployeeCommand(orgId, userId, bio, designation, salaryGradeId)` → `OnboardEmployeeUseCase`
+### Staff
+- `OnboardEmployeeCommand(orgId, userId, bio, designation, department, salaryGradeId, baseSalary)` → `OnboardEmployeeUseCase`
 - `UpdateEmployeeProfileCommand(...)` → `UpdateEmployeeProfileUseCase`
-- `TerminateEmployeeCommand(employeeId, date)` → `TerminateEmployeeUseCase`
-- `PromoteEmployeeCommand(employeeId, newDesignation, newGradeId)` → `PromoteEmployeeUseCase`
+- `PromoteEmployeeCommand(employeeId, newDesignation, newGradeId, newBaseSalary)` → `PromoteEmployeeUseCase`
 - `SuspendEmployeeCommand(employeeId, reason)` → `SuspendEmployeeUseCase`
-- `AddQualificationCommand(employeeId, degree, institution, year)` → `AddQualificationUseCase`
+- `TerminateEmployeeCommand(employeeId, terminationDate)` → `TerminateEmployeeUseCase`
+- `AddEmployeeBankCommand(employeeId, bankCode, accountNumber)` → `AddEmployeeBankUseCase` (verifies via Paystack)
 - `LogInfractionCommand(employeeId, description, severity)` → `LogInfractionUseCase`
-- `ResolveInfractionCommand(infractionId, notes)` → `ResolveInfractionUseCase`
+- `ResolveInfractionCommand(infractionId, resolutionNotes)` → `ResolveInfractionUseCase`
 
 ### Salary Grades
 - `CreateSalaryGradeCommand(orgId, name, baseSalary)` → `CreateSalaryGradeUseCase`
 - `AddGradeAllowanceCommand(gradeId, name, type, value)` → `AddGradeAllowanceUseCase`
 - `AddGradeDeductionCommand(gradeId, name, type, value, isStatutory)` → `AddGradeDeductionUseCase`
-- `AddEmployeeAllowanceCommand(employeeId, name, type, value)` → `AddEmployeeAllowanceUseCase`
-- `AddEmployeeDeductionCommand(employeeId, name, type, value)` → `AddEmployeeDeductionUseCase`
-- `AddEmployeeBankCommand(employeeId, bankCode, accountNumber)` → `AddEmployeeBankUseCase`
+- `AddEmployeeAllowanceCommand(employeeId, name, type, value, effectiveFrom, effectiveTo)` → `AddEmployeeAllowanceUseCase`
+- `AddEmployeeDeductionCommand(employeeId, name, type, value, effectiveFrom, effectiveTo)` → `AddEmployeeDeductionUseCase`
 
 ### Leave
 - `CreateLeaveTypeCommand(orgId, name, maxDays, isPaid, requiresApproval)` → `CreateLeaveTypeUseCase`
 - `ApplyForLeaveCommand(employeeId, leaveTypeId, startDate, endDate, reason)` → `ApplyForLeaveUseCase`
 - `ApproveLeaveCommand(leaveId, approverId)` → `ApproveLeaveUseCase`
 - `RejectLeaveCommand(leaveId, reason)` → `RejectLeaveUseCase`
+- `CancelLeaveCommand(leaveId)` → `CancelLeaveUseCase`
 
 ### Attendance
 - `ClockInCommand(employeeId, orgId)` → `ClockInUseCase`
@@ -184,50 +355,56 @@ Managers can log `Infraction` records (LOW, MEDIUM, HIGH severity) against emplo
 
 ### Loans
 - `ApplyForLoanCommand(employeeId, amount, monthlyDeduction)` → `ApplyForLoanUseCase`
-- `ApproveLoanCommand(loanId, approverId)` → `ApproveLoanUseCase` — publishes `EmployeeLoanApprovedEvent` → `pay` disburses loan
-- `RecordLoanRepaymentCommand(loanId, amount)` → `RecordLoanRepaymentUseCase`
+- `ApproveLoanCommand(loanId, approverId)` → `ApproveLoanUseCase` → publishes `LoanApprovedEvent`
+- `CancelLoanCommand(loanId)` → `CancelLoanUseCase`
 
 ### Payroll
-- `InitiatePayrollCommand(orgId, period)` → `InitiatePayrollUseCase`
-- `ApprovePayrollCommand(payrollRunId)` → `ApprovePayrollUseCase`
-- `DisbursePayrollCommand(payrollRunId)` → `DisbursePayrollUseCase`
-  Validates Payroll Reserve Account has sufficient balance. Publishes `PayrollApprovedEvent` → triggers bulk payouts in `atlashub-pay`.
+- `InitiatePayrollCommand(orgId, period, initiatorUserId)` → `InitiatePayrollUseCase`
+- `SubmitPayrollForApprovalCommand(payrollRunId, initiatorUserId)` → `SubmitPayrollForApprovalUseCase`
+- `ApprovePayrollCommand(payrollRunId, approverUserId)` → `ApprovePayrollUseCase` — validates approver ≠ initiator
+- `DisbursePayrollCommand(payrollRunId)` → `DisbursePayrollUseCase` — checks Payroll Reserve Account balance
 
 ---
 
 ## 6. Queries
 
-- `ListEmployeesQuery(orgId, status)` → `List<EmployeeResult>`
+- `ListEmployeesQuery(orgId, status, department)` → `Page<EmployeeResult>`
 - `GetEmployeeDetailsQuery(employeeId)` → `EmployeeDetailsResult`
-- `ListInfractionsQuery(orgId, employeeId)` → `List<InfractionResult>`
-- `ListPayrollRunsQuery(orgId)` → `List<PayrollRunResult>`
+- `ListPayrollRunsQuery(orgId, status)` → `List<PayrollRunResult>`
 - `GetPayslipQuery(payslipId)` → `PayslipResult`
-- `ListSalaryGradesQuery(orgId)` → `List<SalaryGradeResult>`
+- `ListPayslipsByEmployeeQuery(employeeId, year)` → `List<PayslipResult>`
 - `GetLeaveBalanceQuery(employeeId, year)` → `List<LeaveBalanceResult>`
 - `ListLeaveApplicationsQuery(orgId, employeeId, status)` → `List<LeaveApplicationResult>`
 - `GetAttendanceSummaryQuery(orgId, employeeId, month, year)` → `AttendanceSummaryResult`
 - `ListLoansQuery(orgId, employeeId, status)` → `List<LoanResult>`
+- `ListSalaryGradesQuery(orgId)` → `List<SalaryGradeResult>`
 
 ---
 
 ## 7. Listeners
 
-- **`UserInvitationAcceptedListener`**: Listens to `InvitationAccepted` (from `identity`). If the org has HR subscribed (checked via `billing`), drafts an `Employee` record and sends an onboarding reminder.
-- **`BulkPayoutCompletedListener`**: Listens to `BulkPayoutCompletedEvent` (from `pay`). Calls `PayrollRun.markDisbursed()`. Triggers `PayrollDisbursedEvent` → `accounting` posts the final journal entry.
-- **`BulkPayoutFailedListener`**: Listens to `BulkPayoutFailedEvent` (from `pay`). Calls `PayrollRun.revertToApproved(reason)` so admin can investigate, refund the failed items, and retry.
+- **`UserInvitationAcceptedListener`**: `InvitationAcceptedEvent` from `iam`. Calls `OnboardEmployeeUseCase` to draft an employee record (if org has HR subscribed — checked via `EntitlementQueryPort`).
+- **`BulkPayoutCompletedListener`**: `BulkPayoutCompletedEvent` from `pay`. Calls `PayrollRun.markDisbursed()` → publishes `PayrollDisbursedEvent`.
+- **`BulkPayoutFailedListener`**: `BulkPayoutFailedEvent` from `pay`. Calls `PayrollRun.revertToApproved(reason)` → admin investigates and retries.
 
 ---
 
-## 8. Distributed Architecture & Transaction Guarantees
+## 8. Distributed Architecture
 
-### Locking Strategy
-- **Optimistic Locking (`@Version`)**: Applied to `Employee`, `PayrollRun`, and `LeaveBalance`.
-- **Pessimistic Locking (`@Lock(PESSIMISTIC_WRITE)`)**: Applied to `LeaveBalance` during `ApproveLeaveUseCase` — prevents concurrent approvals from over-drawing the same leave balance. Applied to `EmployeeLoan.outstandingBalance` during repayment recording.
+### Locking
+- **Optimistic Locking**: `Employee`, `PayrollRun`, `Infraction`
+- **Pessimistic Locking**: `LeaveBalance` during `ApproveLeaveUseCase` — prevents concurrent approvals overdrawing leave balance
+- **Pessimistic Locking**: `EmployeeLoan.outstandingBalance` during `recordRepayment()` — prevents concurrent payroll deductions corrupting the balance
+- **Pessimistic Locking**: `EmployeeDeduction` list during payroll initiation — prevents concurrent deduction additions changing the payslip mid-calculation
 
-### Sagas & Compensation
-- **Payroll Saga**: `DisbursePayrollUseCase` publishes `PayrollApprovedEvent` → `pay` processes bulk payouts → On `BulkPayoutFailedEvent`, HR calls `PayrollRun.revertToApproved()` so admin can retry after funding the Payroll Reserve Account.
-- **Loan Disbursement Saga**: `ApproveLoanUseCase` publishes `EmployeeLoanApprovedEvent` → `pay` credits employee bank → On failure, HR reverts loan status to PENDING_APPROVAL.
+### Payroll Saga
+```
+DisbursePayrollUseCase → publishes PayrollApprovedEvent
+  → pay executes bulk payouts
+  → SUCCESS: BulkPayoutCompletedEvent → HR marks DISBURSED → PayrollDisbursedEvent
+  → FAILURE: BulkPayoutFailedEvent → HR reverts to APPROVED (admin can investigate and retry)
+```
 
-### Inbox & Outbox Patterns
-- **Outbox**: Publishes `PayrollApprovedEvent` and `EmployeeLoanApprovedEvent` guaranteeing delivery to `pay`.
-- **Inbox (`EventDeliveryTracker`)**: Idempotent processing of `BulkPayoutCompletedEvent` and `BulkPayoutFailedEvent`. Without this, a retry storm could mark the same payroll run as disbursed multiple times.
+### Outbox & Inbox
+- **Outbox**: `PayrollApprovedEvent`, `LoanApprovedEvent` — drive money movement and must not be lost
+- **Inbox**: `BulkPayoutCompletedEvent`, `BulkPayoutFailedEvent` — idempotent. A retry storm must not mark the same payroll disbursed twice.

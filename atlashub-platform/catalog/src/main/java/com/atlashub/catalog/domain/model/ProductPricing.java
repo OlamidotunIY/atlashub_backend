@@ -1,11 +1,14 @@
 package com.atlashub.catalog.domain.model;
 
+import com.atlashub.catalog.domain.events.ProductPricingUpdatedEvent;
 import com.atlashub.catalog.domain.valueobject.BillingCycle;
-import com.atlashub.shared.domain.AggregateRoot;
-import com.atlashub.shared.domain.money.Money;
+import com.atlashub.shared.domain.entities.AggregateRoot;
+import com.atlashub.shared.domain.valueobject.CorrelationId;
+import com.atlashub.shared.domain.valueobject.Money;
 import lombok.Getter;
 
 import java.time.ZonedDateTime;
+import java.util.UUID;
 
 @Getter
 public class ProductPricing extends AggregateRoot<Long> {
@@ -26,12 +29,34 @@ public class ProductPricing extends AggregateRoot<Long> {
     }
 
     public static ProductPricing create(Long id, Long hubProductId, BillingCycle billingCycle, Money amount) {
-        return new ProductPricing(id, hubProductId, billingCycle, amount, ZonedDateTime.now(), ZonedDateTime.now());
+        ProductPricing pricing = new ProductPricing(id, hubProductId, billingCycle, amount, ZonedDateTime.now(), ZonedDateTime.now());
+        
+        pricing.registerEvent(
+                new ProductPricingUpdatedEvent(
+                        UUID.randomUUID().toString(),
+                        id,
+                        ZonedDateTime.now(),
+                        CorrelationId.getOrCreate(),
+                        new ProductPricingUpdatedEvent.Payload(hubProductId, billingCycle, amount)
+                )
+        );
+        
+        return pricing;
     }
 
     public void updatePrice(Money newAmount) {
         this.amount = newAmount;
         this.updatedAt = ZonedDateTime.now();
+        
+        this.registerEvent(
+                new ProductPricingUpdatedEvent(
+                        UUID.randomUUID().toString(),
+                        this.id,
+                        ZonedDateTime.now(),
+                        CorrelationId.getOrCreate(),
+                        new ProductPricingUpdatedEvent.Payload(hubProductId, billingCycle, newAmount)
+                )
+        );
     }
 
     @Override

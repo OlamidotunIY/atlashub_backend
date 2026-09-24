@@ -1,31 +1,13 @@
-variable "tenancy_ocid" {
-  description = "OCI Tenancy OCID"
+variable "location" {
+  description = "Azure Region (Sweden Central has excellent capacity and prices)"
   type        = string
+  default     = "swedencentral"
 }
 
-variable "user_ocid" {
-  description = "OCI User OCID"
+variable "resource_group_name" {
+  description = "Name of the resource group"
   type        = string
-}
-
-variable "fingerprint" {
-  description = "OCI API Key Fingerprint"
-  type        = string
-}
-
-variable "private_key_path" {
-  description = "Path to OCI API Private Key"
-  type        = string
-}
-
-variable "region" {
-  description = "OCI Region (e.g., us-ashburn-1)"
-  type        = string
-}
-
-variable "compartment_ocid" {
-  description = "OCI Compartment OCID where resources will be created"
-  type        = string
+  default     = "atlashub-k3s-rg"
 }
 
 variable "ssh_public_key" {
@@ -33,20 +15,8 @@ variable "ssh_public_key" {
   type        = string
 }
 
-variable "instance_shape" {
-  description = "Compute Instance Shape (Always Free ARM)"
+variable "vm_size" {
+  description = "Azure VM Size (AMD Burstable tier - excellent for multiple backends on a budget)"
   type        = string
-  default     = "VM.Standard.A1.Flex"
-}
-
-variable "instance_ocpus" {
-  description = "Number of OCPUs (Max 4 for free tier)"
-  type        = number
-  default     = 2
-}
-
-variable "instance_memory_in_gbs" {
-  description = "Memory in GBs (Max 24 for free tier)"
-  type        = number
-  default     = 12
+  default     = "Standard_B4as_v2" # 4 vCPUs, 16 GB RAM ($113/mo)
 }

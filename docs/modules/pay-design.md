@@ -1,277 +1,424 @@
-# Payment Module Design (`atlashub-pay`)
+# Pay Module Design (`atlashub-pay`)
 
 ## Role & Purpose
 
-The Pay module is the **financial rails** of the AtlasHub platform. Every movement of money — whether a customer paying for a POS sale, a payroll disbursement to employees, an inter-outlet cash transfer, or an invoice payment to the platform — flows through this module's infrastructure. No other module holds, moves, or accounts for real money independently; they all delegate money movement to `atlashub-pay`.
+The Pay module is the **financial rails** of the AtlasHub platform. Every movement of money — whether a customer paying for a POS sale, a payroll disbursement to employees, an inter-outlet float transfer, an organization paying their AtlasHub subscription, or a vendor receiving their marketplace split — flows through this module's infrastructure.
 
-The Pay module does **not** decide the business purpose of a money movement. When Commerce completes a sale, it does not call Pay and say "handle this payment". It publishes an event and Pay responds with its own internal logic. Pay's job is to ensure money is correctly credited, debited, tracked in the ledger, and reported — regardless of where the instruction came from.
+No other module holds, moves, or accounts for real money independently. They all delegate money movement to `atlashub-pay`.
+
+Pay is also a **B2B2C module** — organizations that subscribe to Atlas Pay can expose the payment infrastructure to their own end-customers. A merchant's e-commerce website can call the AtlasHub Pay API to collect payments from shoppers, using the merchant's API key and HMAC authentication.
 
 Internally, Pay is split into specialized submodules:
-- **`accounts`** — Virtual bank accounts (NUBANs) issued per organization via external providers (Anchor)
-- **`ledger`** — Double-entry accounting ledger for all internal money movements
-- **`charges`** — Inbound payments from customers (card, bank transfer, USSD, POS terminal) via Paystack/Moniepoint
-- **`transfers`** — Outbound payouts to bank accounts (employee salaries, supplier payments, refunds)
-- **`splits`** — Revenue sharing rules applied to incoming payments
-- **`subscriptions`** — Payment mandates (recurring card charge authorizations from end-customers)
-- **`settlement`** — Tracking of settlement batches from payment processors to the organization's bank
-- **`transactions-query`** — Unified read model for querying the full transaction history
+- **`accounts`** — Virtual bank accounts (NUBANs) issued per organization via Anchor. Also per-customer dedicated NUBANs for B2B2C collection.
+- **`ledger`** — Double-entry accounting ledger tracking all internal money movements in real time
+- **`charges`** — Inbound payments via Paystack (card, bank transfer, USSD) and Moniepoint (physical POS terminals)
+- **`transfers`** — Outbound payouts to bank accounts (salaries, supplier payments, refunds, marketplace vendor disbursements)
+- **`splits`** — Configurable rules for distributing incoming payments among multiple recipients (AtlasHub fee + business share + vendor share)
+- **`mandates`** — Recurring payment authorizations from end-customers (for subscription services offered BY organizations)
+- **`settlement`** — Tracking settlement batches from Paystack/Moniepoint back to the organization's bank
+- **`tx-query`** — Unified read model for querying the full transaction history across all submodules
+- **`webhooks`** — Outbound webhook delivery to merchant servers when payment events occur
 
 ---
 
 ## 1. How External Platforms Integrate
 
-AtlasHub does not hold money directly. It works through licensed financial infrastructure providers. Here is how each integrates:
-
 ### Anchor (Virtual Account Issuance)
-Anchor is a Banking-as-a-Service provider that issues real NUBAN (Nigerian Uniform Bank Account Number) accounts. When an organization's KYC is approved:
-1. `OrganizationComplianceApprovedListener` in `pay:accounts` calls `IssueVirtualAccountUseCase`.
-2. This calls Anchor's API via `AnchorVirtualAccountAdapter` to create a virtual account linked to AtlasHub's pool account.
-3. Anchor issues a NUBAN and sends a webhook confirming activation.
-4. `ActivateVirtualAccountUseCase` is called by the inbound webhook adapter, assigns the NUBAN, activates the `VirtualAccount`, and publishes `VirtualAccountActivatedEvent`.
+When an organization's KYC is approved:
+1. `OrganizationComplianceApprovedListener` calls `IssueVirtualAccountUseCase`
+2. Calls Anchor's API via `AnchorVirtualAccountAdapter` to create a virtual account linked to AtlasHub's pool account
+3. Anchor issues a NUBAN and sends a webhook confirming activation
+4. `ActivateVirtualAccountUseCase` assigns the NUBAN, activates the `VirtualAccount`, publishes `VirtualAccountActivatedEvent`
 
 When someone makes a bank transfer to that NUBAN:
-- Anchor sends a `collection` webhook to AtlasHub.
-- An inbound webhook adapter processes it and calls `FundWalletCommand` → credits the org's **Operating Account** in the ledger → publishes `WalletFundedEvent`.
+- Anchor sends a `collection` webhook to AtlasHub
+- Webhook adapter calls `CreditWalletFromTransferUseCase` → credits the org's **Operating Account** in the ledger → publishes `WalletFundedEvent`
 
-### Paystack / Moniepoint (Payment Collection)
-For card payments, USSD, and POS terminal transactions:
-1. AtlasHub calls Paystack's or Moniepoint's API via the `charges` module adapter to initialize a charge.
-2. Paystack/Moniepoint redirects the customer through their payment flow.
-3. On success/failure, a webhook is sent to AtlasHub.
-4. The inbound webhook adapter in `charges` calls `ProcessWebhookPaymentUseCase`:
-   - Validates the webhook signature.
-   - Updates the `PaymentTransaction` aggregate status.
-   - On success, publishes `PaymentSuccessfulEvent` (consumed by Commerce, Billing, and the ledger).
-   - On failure, publishes `PaymentFailedEvent` (consumed by Commerce to release reserved stock).
+### Per-Customer Virtual Accounts (B2B2C)
+For organizations that need dedicated collection accounts per customer (e.g., a platform that wants each of its users to have their own NUBAN for credit top-ups):
+- Organization calls `IssueCustomerVirtualAccountUseCase` with their customer's details
+- Anchor issues a customer-specific NUBAN
+- Collections to this NUBAN are automatically credited to the organization's ledger with the customer reference attached
 
-### Moniepoint (Physical POS Terminal)
-For Moniepoint POS hardware terminal transactions:
-- Moniepoint sends a terminal transaction webhook.
-- Same path as above through the `charges` webhook adapter.
+### Paystack (Card, Bank Transfer, USSD)
+1. Merchant or internal module calls `InitializeChargeUseCase`
+2. Pay calls Paystack API → gets `checkoutUrl` or `ussdCode`
+3. Customer completes payment externally
+4. Paystack sends webhook to AtlasHub's webhook endpoint
+5. `ProcessPaystackWebhookUseCase` validates HMAC signature, finds the `Charge`, calls `markSuccessful()` or `markFailed()`
+6. On success: posts ledger entry + publishes `ChargeSuccessfulEvent` → consumed by Commerce, Billing, and the org's outbound webhook
+
+### Moniepoint (Physical POS Terminals)
+Same path as Paystack, via `ProcessMoniepointWebhookUseCase`. Moniepoint terminal transactions arrive via webhook.
 
 ### The Shadow Ledger Principle
-AtlasHub's internal pay ledger is a **shadow of real money held at Anchor/Paystack**. Every time a real money event occurs (Anchor confirms a deposit, Paystack confirms a collection, a payout settles), AtlasHub posts a corresponding `LedgerTransaction` to its internal double-entry ledger. This gives AtlasHub a real-time, independently auditable record of every organization's balance — without relying solely on external provider APIs.
+AtlasHub's internal pay ledger is a **shadow of real money held at Anchor/Paystack**. Every real money event (Anchor confirms a deposit, Paystack confirms a collection, a payout settles) produces a corresponding `LedgerTransaction` in the internal double-entry ledger. This gives AtlasHub a real-time, independently auditable record of every organization's balance — without relying solely on external provider APIs.
 
 ---
 
 ## 2. Internal Account Structure
 
-Every organization on AtlasHub has a set of internal **logical accounts** created at onboarding (bootstrapped on `OrganizationRegistered`). These are ledger accounts — not bank accounts. They exist in the Pay ledger to track money segregated by purpose:
+Every organization gets these ledger accounts bootstrapped when their compliance is approved:
 
-| Account Name | Type | Purpose |
+| Account | Type | Purpose |
 |---|---|---|
-| **Operating Account** | Asset | Day-to-day inflows and outflows (sales revenue, supplier payments, withdrawals) |
-| **Payroll Reserve Account** | Asset | Funds explicitly set aside before payroll disbursement; locked until payroll is approved |
-| **Tax Holding Account** | Liability | VAT, PAYE, and other statutory deductions collected but not yet remitted to FIRS/LIRS |
-| **Escrow Account** | Asset | Funds held during a commerce transaction pending delivery confirmation (released on delivery or refunded on failure) |
-| **Suspense Account** | Asset | Temporary holding account for inter-outlet transfers and unresolved entries while in transit |
-| **Till Accounts** (per outlet) | Asset | One account per POS till. Cash collected at the till is tracked here until reconciled to the Operating Account |
-
-Every `LedgerEntry` references one of these account IDs. This means every money movement has a clear source and destination.
+| **Operating Account** | Asset | Day-to-day inflows and outflows |
+| **Payroll Reserve Account** | Asset | Funds locked for upcoming payroll disbursement |
+| **Tax Holding Account** | Liability | VAT, PAYE collected but not yet remitted |
+| **Escrow Account** | Asset | Funds held pending delivery confirmation (marketplace transactions) |
+| **Suspense Account** | Asset | Inter-outlet transfer clearing (in-transit) |
+| **Till Accounts** (per outlet) | Asset | Cash at each POS till |
+| **Split Holding Account** | Asset | Funds received that are pending split distribution to vendors |
 
 ---
 
 ## 3. The Double-Entry Ledger (`pay:ledger`)
 
-The ledger submodule is the **core financial engine** of the Pay module. It enforces double-entry bookkeeping: every `LedgerTransaction` must contain at least one DEBIT entry and one CREDIT entry, and the sum of all DEBITs must equal the sum of all CREDITs. If they don't balance, the transaction is rejected.
+The ledger enforces double-entry bookkeeping: every `LedgerTransaction` must contain at least one DEBIT entry and one CREDIT entry, and the sum of all DEBITs must equal the sum of all CREDITs. If they don't balance, the transaction is rejected at domain construction time.
 
 ### Key Domain Models
-- **`LedgerTransaction`**: The top-level aggregate. Groups the balanced set of `LedgerEntry` records. Validated on construction — imbalanced transactions cannot be persisted.
-- **`LedgerEntry`**: A single line in a ledger transaction: which account, DEBIT or CREDIT, amount, and running balance after this entry.
-- **`BalanceSnapshot`**: Periodically stored balance for a given account, used to avoid re-scanning all entries from the beginning of time on each balance query. Balance queries use the latest snapshot + any entries after it.
-- **`TransactionReference`**: Links a `LedgerTransaction` back to its originating business event via `(transactionId, SourceSystem)`. The `SourceSystem` enum is critical for traceability.
 
-### Extended `SourceSystem` Values
-Every ledger transaction knows where it came from:
-
-| SourceSystem | Originating Event |
-|---|---|
-| `COMMERCE_CHECKOUT` | POS sale completed in Commerce |
-| `PLATFORM_BILLING` | Organization subscription invoice paid |
-| `PAYROLL` | Payroll disbursement from HR |
-| `LOAN_DISBURSEMENT` | Employee loan approved in HR |
-| `INTER_OUTLET_TRANSFER` | Cash or stock value transferred between outlets |
-| `CASH_BANKING` | Till cash deposited to organization's bank |
-| `EXTERNAL_COLLECTION` | Customer bank transfer to virtual NUBAN (from Anchor) |
-| `CARD_CHARGE` | Card/USSD/POS payment processed via Paystack/Moniepoint |
-| `PAYOUT` | Outbound bank transfer (salary, supplier, refund) |
-| `REFUND` | Customer refund posted |
-| `SPLIT` | Revenue share distributed to split account |
-| `MANUAL` | Admin-initiated manual entry |
-| `SYSTEM` | Auto-generated system entry (e.g., fee calculation) |
-
-### Example Ledger Transactions
-
-**Commerce POS Sale (Cash Payment)**:
+**`LedgerAccount` (Aggregate Root)**
 ```
-DEBIT  Till Account (Outlet A, Till 1)   ₦25,000   [cash received in till]
-CREDIT Operating Account                 ₦25,000   [revenue recognized]
-SourceSystem: COMMERCE_CHECKOUT | ref: salesOrder-1042
+LedgerAccount
+├── id: Long
+├── organizationId: Long
+├── accountType: LedgerAccountType    ← OPERATING, PAYROLL_RESERVE, TAX_HOLDING, ESCROW, SUSPENSE, TILL, SPLIT_HOLDING
+├── outletId: Long                    ← nullable — only for TILL accounts
+├── currency: Currency
+├── status: LedgerAccountStatus       ← ACTIVE, FROZEN, CLOSED
+└── createdAt: ZonedDateTime
 ```
 
-**Platform Billing Invoice Paid**:
+**`LedgerTransaction` (Aggregate Root)**
 ```
-DEBIT  Operating Account                 ₦50,000   [payment for subscription]
-CREDIT Billing Payable (Clearing)        ₦50,000   [clears the outstanding invoice]
-SourceSystem: PLATFORM_BILLING | ref: invoice-891
+LedgerTransaction
+├── id: Long
+├── organizationId: Long
+├── entries: List<LedgerEntry>        ← at least 2: one DEBIT, one CREDIT
+├── sourceSystem: SourceSystem        ← COMMERCE_CHECKOUT, PAYROLL, PLATFORM_BILLING, etc.
+├── sourceReferenceId: String         ← ID of the originating business entity
+├── description: String
+├── currency: Currency
+├── postedAt: ZonedDateTime
+└── reference: String                 ← unique idempotency reference
+```
+
+**Domain Rule**: At construction, `validateBalance()` is called. If ∑DEBIT ≠ ∑CREDIT, `UNBALANCED_LEDGER_TRANSACTION` exception is thrown. The ledger will never contain an unbalanced transaction.
+
+**`LedgerEntry` (Entity — immutable)**
+```
+LedgerEntry
+├── id: Long
+├── transactionId: Long
+├── accountId: Long
+├── type: EntryType              ← DEBIT | CREDIT
+├── amount: Money
+└── runningBalance: Money        ← balance of this account AFTER this entry
+```
+
+**`BalanceSnapshot` (Entity)**
+Periodically computed balance per account. Balance queries use `latest snapshot + entries since snapshot` to avoid full table scans.
+
+**`SourceSystem` (Enum)**
+```
+COMMERCE_CHECKOUT       ← POS sale completed
+COMMERCE_REFUND         ← Customer refund
+PLATFORM_BILLING        ← Organization pays their AtlasHub invoice
+PAYROLL                 ← Payroll disbursement
+LOAN_DISBURSEMENT       ← Employee loan approved
+INTER_OUTLET_TRANSFER   ← Stock/cash between outlets
+CASH_BANKING            ← Till cash deposited to bank
+EXTERNAL_COLLECTION     ← Bank transfer to NUBAN (Anchor)
+CARD_CHARGE             ← Card/USSD/POS payment (Paystack/Moniepoint)
+PAYOUT                  ← Outbound bank transfer
+SETTLEMENT              ← Paystack/Moniepoint settles to org bank
+SPLIT                   ← Revenue split to vendor/sub-merchant
+ESCROW_RELEASE          ← Escrow released on delivery confirmation
+ESCROW_REFUND           ← Escrow refunded on delivery failure
+MANUAL                  ← Admin-initiated manual entry
+SYSTEM                  ← Auto-generated (fee calculation, etc.)
+```
+
+### Ledger Transaction Examples
+
+**POS Card Sale**:
+```
+DEBIT  Escrow Account              ₦25,000   [payment held during delivery]
+CREDIT Operating Account           ₦25,000   [net revenue after fee]
+SourceSystem: COMMERCE_CHECKOUT | ref: order-1042
+```
+
+**Marketplace Split (AtlasHub fee 1.5%, Business 70%, Vendor 28.5%)**:
+```
+Transaction: ₦100,000 received
+DEBIT  Operating Account (Org)     ₦70,000   [business share]
+DEBIT  Split Holding Account       ₦28,500   [vendor share, pending disbursement]
+DEBIT  AtlasHub Fee (Platform)     ₦1,500    [AtlasHub's transaction fee]
+CREDIT Escrow Account              ₦100,000  [cleared from escrow on delivery]
+SourceSystem: SPLIT | ref: order-1042
 ```
 
 **Payroll Disbursement**:
 ```
-DEBIT  Payroll Reserve Account           ₦2,500,000  [deduct from reserve]
-CREDIT Payout Clearing Account           ₦2,500,000  [in-transit to bank accounts]
+DEBIT  Payroll Reserve Account     ₦2,500,000
+CREDIT Payout Clearing Account     ₦2,500,000
 SourceSystem: PAYROLL | ref: payrollRun-23
-```
-
-**Inter-Outlet Cash Transfer (Outlet A → Outlet B)**:
-```
-DEBIT  Suspense Account                  ₦100,000   [funds leave source]
-CREDIT Till Account (Outlet A, Till 1)  ₦100,000   [debit the source till]
-
-DEBIT  Till Account (Outlet B, Till 2)  ₦100,000   [credit destination till]
-CREDIT Suspense Account                  ₦100,000   [clears suspense on confirmation]
-SourceSystem: INTER_OUTLET_TRANSFER | ref: transfer-78
 ```
 
 ---
 
 ## 4. Virtual Accounts (`pay:accounts`)
 
-**`VirtualAccount` (Aggregate Root)**
-Represents a real bank account (NUBAN) issued by Anchor, linked to an organization.
-- **Fields**: `id`, `integration` (org's integration ID), `UserCode`, `accountName`, `bankName`, `idempotencyKey`, `currency`, `status` (PENDING_ISSUANCE, ACTIVE, CLOSURE_REQUESTED, CLOSED), `nuban`
-- **Methods**: `activate(NUBAN nuban)`, `requestClosure()`, `close()`
-- **Owner Types**: Accounts can be owned by an `ORGANIZATION` (the main operating account) or a `CUSTOMER` (a customer's dedicated virtual account for collections, used in split payment flows)
+### `VirtualAccount` (Aggregate Root)
 
-### Account Issuance Flow
-1. `OrganizationComplianceApproved` event received.
-2. `IssueVirtualAccountUseCase` calls Anchor API.
-3. Anchor creates the account asynchronously and sends a webhook.
-4. `ActivateVirtualAccountUseCase` assigns the NUBAN and activates the record.
-5. `VirtualAccountActivatedEvent` is published — the org's operating account in the ledger is now live.
+```
+VirtualAccount
+├── id: Long
+├── organizationId: Long
+├── ownerType: OwnerType           ← ORGANIZATION | CUSTOMER
+├── customerId: String             ← nullable, only for CUSTOMER-owned accounts
+├── accountName: String
+├── bankName: String
+├── nuban: String                  ← actual bank account number, nullable until activated
+├── bankCode: String
+├── anchorAccountId: String        ← Anchor's internal reference
+├── currency: Currency
+├── status: VirtualAccountStatus   ← PENDING_ISSUANCE, ACTIVE, SUSPENDED, CLOSED
+├── createdAt: ZonedDateTime
+└── activatedAt: ZonedDateTime     ← nullable
+```
+
+**Business Methods:**
+- `activate(String nuban, String bankName)` → registers `VirtualAccountActivatedEvent`
+- `suspend()` → registers `VirtualAccountSuspendedEvent`
+- `close()` → registers `VirtualAccountClosedEvent`
 
 ---
 
 ## 5. Inbound Payments (`pay:charges`)
 
-**`PaymentTransaction` (Aggregate Root)**
-Tracks a single customer payment attempt via an external gateway.
-- **Fields**: `id`, `organizationId`, `amount`: `Money`, `channel` (CARD, BANK_TRANSFER, USSD, POS_TERMINAL), `status` (PENDING, SUCCESS, FAILED, REFUNDED), `reference`, `gatewayResponse`, `sourceSystem`
-- **Methods**: `markSuccessful(String gatewayResponse)`, `markFailed(String reason)`, `refund()`
+### `Charge` (Aggregate Root)
 
-### Payment Flow
-1. Commerce calls `InitializePaymentUseCase` with amount, currency, and optionally a `splitId`.
-2. Pay calls Paystack/Moniepoint API, gets a `checkoutUrl` or terminal charge reference.
-3. Customer pays externally.
-4. Gateway sends a webhook to AtlasHub's inbound webhook endpoint.
-5. `ProcessWebhookPaymentUseCase` validates the signature (HMAC), finds the `PaymentTransaction` by reference, calls `markSuccessful()` or `markFailed()`.
-6. On success: posts a `LedgerTransaction` crediting the Operating Account, publishes `PaymentSuccessfulEvent`.
-7. If a `splitId` was provided, the split rules are evaluated and additional ledger entries are posted to split recipients.
+```
+Charge
+├── id: Long
+├── organizationId: Long
+├── customerId: String             ← nullable (set for B2B2C payments)
+├── amount: Money
+├── channel: PaymentChannel        ← CARD, BANK_TRANSFER, USSD, POS_TERMINAL
+├── status: ChargeStatus           ← PENDING, SUCCESSFUL, FAILED, REFUNDED
+├── reference: String              ← unique, used to correlate gateway webhook
+├── provider: PaymentProvider      ← PAYSTACK, MONIEPOINT
+├── checkoutUrl: String            ← nullable (for redirect-based payments)
+├── gatewayReference: String       ← provider's own transaction reference
+├── gatewayResponse: String        ← raw provider response, nullable
+├── splitId: Long                  ← nullable — which split rule to apply
+├── sourceSystem: SourceSystem
+├── sourceReferenceId: String      ← e.g., salesOrderId, billingInvoiceId
+├── metadata: Map<String, String>  ← arbitrary key-value for merchant use
+├── createdAt: ZonedDateTime
+└── completedAt: ZonedDateTime     ← nullable
+```
 
-**Webhook Idempotency**: All gateway webhooks are processed through the Inbox pattern using `(webhookId, consumerId)` as the idempotency key. Duplicate webhook deliveries (which are common with Paystack) will be silently discarded after the first successful processing.
+**Business Methods:**
+- `markSuccessful(String gatewayRef, String gatewayResponse)` → registers `ChargeSuccessfulEvent`
+- `markFailed(String reason)` → registers `ChargeFailedEvent`
+- `refund(Money amount)` → validates amount ≤ original, registers `ChargeRefundInitiatedEvent`
 
 ---
 
 ## 6. Outbound Transfers (`pay:transfers`)
 
-**`Payout` (Aggregate Root)**
-Represents an outbound bank transfer to an external account.
-- **Fields**: `id`, `organizationId`, `amount`: `Money`, `destinationBankCode`, `destinationAccountNumber`, `destinationAccountName`, `status` (PENDING, PROCESSING, SUCCESS, FAILED), `reference`, `sourceSystem`, `sourceReferenceId`
-- **Methods**: `process()`, `complete()`, `fail(String reason)`
-- The `sourceSystem` + `sourceReferenceId` fields link every payout back to the originating business event (payroll run ID, refund ID, supplier invoice ID, etc.)
+### `Payout` (Aggregate Root)
 
-### Who Creates Payouts
-| Originator | SourceSystem | Example |
-|---|---|---|
-| HR (payroll) | `PAYROLL` | Employee salaries after `PayrollApprovedEvent` |
-| Commerce (refund) | `REFUND` | Customer refund after `CustomerReturnApprovedEvent` |
-| Commerce (supplier) | `SUPPLIER_PAYMENT` | Supplier payment after PO receipt |
-| Organization (manual withdrawal) | `MANUAL` | Owner withdrawing from operating wallet |
-| HR (loan) | `LOAN_DISBURSEMENT` | Employee loan approved and disbursed |
+Every outbound bank transfer is a `Payout`. The `sourceSystem` and `sourceReferenceId` fields link every payout to its originating business event.
+
+```
+Payout
+├── id: Long
+├── organizationId: Long
+├── amount: Money
+├── recipientBankCode: String
+├── recipientAccountNumber: String
+├── recipientAccountName: String
+├── narration: String
+├── status: PayoutStatus           ← PENDING_APPROVAL, APPROVED, PROCESSING, SUCCESSFUL, FAILED
+├── reference: String
+├── provider: PaymentProvider      ← PAYSTACK, MONIEPOINT
+├── providerReference: String      ← nullable
+├── sourceSystem: SourceSystem     ← PAYROLL, REFUND, SUPPLIER_PAYMENT, MANUAL, LOAN_DISBURSEMENT, VENDOR_DISBURSEMENT
+├── sourceReferenceId: String
+├── initiatedBy: Long              ← userId (maker)
+├── approvedBy: Long               ← userId (checker), nullable
+├── approvedAt: ZonedDateTime      ← nullable
+├── createdAt: ZonedDateTime
+└── completedAt: ZonedDateTime     ← nullable
+```
+
+**Business Methods:**
+- `approve(Long approverId)` → transitions PENDING_APPROVAL → APPROVED → registers `PayoutApprovedEvent`
+- `markProcessing()` → APPROVED → PROCESSING
+- `complete(String providerRef)` → PROCESSING → SUCCESSFUL → registers `PayoutCompletedEvent`
+- `fail(String reason)` → registers `PayoutFailedEvent`
+
+**Maker-Checker Rule:**
+All payouts above ₦100,000 (configurable per org) require a second authorized user with `pay:transfers:approve` permission to approve before execution.
 
 ---
 
-## 7. Intra-Organization Transfers (`pay:ledger`)
+## 7. Revenue Splits (`pay:splits`)
 
-Movements of money **within** an organization (between their own accounts) do not require external API calls. They are pure ledger transactions. Key examples:
+### `SplitRule` (Aggregate Root)
 
-**Funding Payroll Reserve**: Before running payroll, the org must fund their Payroll Reserve Account.
+Defines how incoming payments are distributed.
+
 ```
-DEBIT  Operating Account          ₦5,000,000
-CREDIT Payroll Reserve Account    ₦5,000,000
-Command: FundPayrollReserveCommand(orgId, amount)
+SplitRule
+├── id: Long
+├── organizationId: Long
+├── name: String
+├── type: SplitType                ← PERCENTAGE | FLAT
+├── platformFeePercentage: BigDecimal  ← AtlasHub's cut (always applied first)
+├── subaccounts: List<SplitSubaccount>
+└── isActive: Boolean
 ```
 
-**Till Cash Reconciliation (End of Day)**: At day close, a till's balance is swept to the Operating Account.
+**`SplitSubaccount` (Entity)**
 ```
-DEBIT  Till Account (Till 1)      ₦180,000
-CREDIT Operating Account          ₦180,000
-Command: ReconcileTillCommand(tillId, userId, actualBalance)
+SplitSubaccount
+├── id: Long
+├── splitRuleId: Long
+├── recipientType: RecipientType   ← ORGANIZATION | VENDOR | EXTERNAL_BANK_ACCOUNT
+├── recipientId: String            ← orgId, vendorId, or bank account reference
+├── share: BigDecimal              ← percentage or flat amount
+└── description: String
 ```
 
-**Inter-Outlet Float Transfer** (Outlet A sends float to Outlet B):
-```
-Phase 1 (dispatch):
-  DEBIT  Suspense Account           ₦50,000
-  CREDIT Till Account (Outlet A)    ₦50,000
+**How Splits Work at Payment Time:**
 
-Phase 2 (receipt confirmation):
-  DEBIT  Till Account (Outlet B)    ₦50,000
-  CREDIT Suspense Account           ₦50,000
-Command: TransferInterOutletFloatCommand(sourceOutletId, destOutletId, amount)
-```
+When `InitializeChargeUseCase` is called with a `splitRuleId`:
+1. AtlasHub fee is deducted first (e.g., 1.5%)
+2. Remaining amount is split per the `SplitRule`
+3. For each subaccount recipient, a `LedgerTransaction` is posted crediting the appropriate account
+4. Vendor disbursements are queued as `Payout` records (scheduled or immediate, per org configuration)
 
 ---
 
-## 8. Revenue Splits (`pay:splits`)
+## 8. Recurring Payment Mandates (`pay:mandates`)
 
-**`PaymentSplit` (Aggregate Root)**
-Defines how incoming payments should be distributed among multiple recipients (e.g., a marketplace splitting revenue between the platform and a vendor).
-- **Fields**: `id`, `organizationId`, `name`, `type` (PERCENTAGE, FLAT), `subaccounts`: `List<SplitAccount>` (accountId, share)
+> **Note**: This submodule manages recurring card authorizations from END-CUSTOMERS of organizations. Example: a fitness studio that uses AtlasHub to charge its gym members every month. This is NOT related to billing subscriptions (which is an org paying AtlasHub).
 
-When an `InitializePaymentCommand` includes a `splitId`, the `charges` module evaluates the split rules at payment success and posts additional ledger entries crediting each split recipient's account.
+### `PaymentMandate` (Aggregate Root)
 
----
+```
+PaymentMandate
+├── id: Long
+├── organizationId: Long
+├── customerId: String
+├── email: EmailAddress
+├── amount: Money
+├── frequency: MandateFrequency    ← DAILY, WEEKLY, MONTHLY, QUARTERLY, ANNUALLY
+├── authorizationCode: String      ← Paystack's tokenized card authorization
+├── status: MandateStatus          ← ACTIVE, PAUSED, REVOKED, EXPIRED
+├── nextChargeDate: LocalDate
+└── createdAt: ZonedDateTime
+```
 
-## 9. Payment Mandates (`pay:subscriptions`)
-
-> **Note on Naming**: The `subscriptions` submodule in `pay` is NOT related to platform billing subscriptions (those live in `atlashub-platform:billing`). This submodule manages **recurring payment mandates** — authorizations from end-customers to charge their cards on a recurring basis. Example: a customer paying for a subscription service offered **by the organization**, not AtlasHub.
-
-**`SubscriptionMandate` (Aggregate Root)**
-- **Fields**: `id`, `organizationId`, `customerId`, `planId`, `authorizationCode` (from Paystack), `status` (ACTIVE, REVOKED), `nextChargeDate`
-
----
-
-## 10. Settlement (`pay:settlement`)
-
-**`Settlement` (Aggregate Root)**
-Tracks settlement batches from payment processors (Paystack settling collected funds to the organization's linked bank account).
-- **Fields**: `id`, `organizationId`, `processorReference`, `amount`: `Money`, `settledAt`: ZonedDateTime, `status` (PENDING, CONFIRMED, DISPUTED)
-- **Methods**: `confirm()`, `dispute(String reason)`
-
-When Paystack settles a batch to the organization's bank:
-1. A settlement webhook arrives.
-2. A `Settlement` record is created and confirmed.
-3. A `LedgerTransaction` is posted:
-   ```
-   DEBIT  Bank Account (External)     ₦X
-   CREDIT Operating Account           ₦X
-   SourceSystem: SETTLEMENT
-   ```
-4. `SettlementConfirmedEvent` is published for accounting to record.
+**Business Methods:**
+- `pause()`, `resume()`, `revoke()`, `advanceNextChargeDate()`
 
 ---
 
-## 11. Transaction History (`pay:transactions-query`)
+## 9. Settlement (`pay:settlement`)
 
-A dedicated **read model** that aggregates entries from the ledger, charges, payouts, and splits into a unified, queryable transaction history. No writes happen here — it is populated by consuming events from other Pay submodules.
+### `Settlement` (Aggregate Root)
 
-**Queries**:
-- `ListTransactionsQuery(orgId, type, status, dateFrom, dateTo, channel)` → `List<TransactionResult>`
+Tracks batches of funds settled by Paystack/Moniepoint to the organization's linked bank account.
+
+```
+Settlement
+├── id: Long
+├── organizationId: Long
+├── provider: PaymentProvider
+├── providerSettlementId: String
+├── amount: Money
+├── settledAt: ZonedDateTime
+├── status: SettlementStatus       ← PENDING, CONFIRMED, DISPUTED
+└── description: String
+```
+
+**Business Methods:**
+- `confirm()` → posts ledger entry: DEBIT Bank Account, CREDIT Operating Account → registers `SettlementConfirmedEvent`
+- `dispute(String reason)` → registers `SettlementDisputedEvent`
+
+---
+
+## 10. Outbound Webhooks (`pay:webhooks`)
+
+When payment events occur, AtlasHub notifies the organization's registered webhook endpoint.
+
+### `WebhookSubscription` (Aggregate Root)
+
+```
+WebhookSubscription
+├── id: Long
+├── organizationId: Long
+├── url: String                    ← HTTPS endpoint on the merchant's server
+├── events: Set<WebhookEventType>  ← which events to receive
+├── secretKey: String              ← merchant stores this to verify incoming webhooks
+├── status: WebhookStatus          ← ACTIVE, DISABLED
+├── createdAt: ZonedDateTime
+└── lastDeliveryAt: ZonedDateTime  ← nullable
+```
+
+### `WebhookDelivery` (Entity)
+
+```
+WebhookDelivery
+├── id: Long
+├── subscriptionId: Long
+├── eventType: WebhookEventType
+├── payload: String                ← JSON payload
+├── signature: String              ← HMAC-SHA256 of payload using merchant's secretKey
+├── httpStatus: Integer            ← nullable, set after delivery attempt
+├── status: DeliveryStatus         ← PENDING, DELIVERED, FAILED, RETRYING
+├── attemptCount: Integer
+├── nextRetryAt: ZonedDateTime     ← nullable, exponential backoff
+└── createdAt: ZonedDateTime
+```
+
+**Webhook Events:**
+```
+charge.successful
+charge.failed
+charge.refunded
+payout.completed
+payout.failed
+mandate.charged
+mandate.revoked
+settlement.confirmed
+```
+
+**Delivery Guarantees:**
+- Minimum once delivery with exponential backoff (1s, 2s, 4s, 8s, 16s, max 5 retries)
+- After 5 failed attempts, delivery is marked FAILED and the org is notified
+- Merchant verifies authenticity by checking `X-AtlasHub-Signature` header (HMAC-SHA256 of the payload body)
+
+---
+
+## 11. Transaction History (`pay:tx-query`)
+
+A dedicated **read model** aggregating entries from all Pay submodules into a unified, queryable history. No writes happen here — it is populated by consuming events.
+
+**Queries:**
+- `ListTransactionsQuery(orgId, type, status, dateFrom, dateTo, channel, page)` → `Page<TransactionResult>`
 - `GetTransactionDetailsQuery(transactionId)` → `TransactionDetailsResult`
 - `GetWalletBalanceQuery(orgId, accountType)` → `Money`
-- `ListPayoutsQuery(orgId, status, sourceSystem)` → `List<PayoutResult>`
-- `GetPaymentStatusQuery(reference)` → `PaymentStatusResult`
+- `GetWalletBalancesQuery(orgId)` → `Map<LedgerAccountType, Money>` ← dashboard wallet overview
+- `ListPayoutsQuery(orgId, status, sourceSystem, page)` → `Page<PayoutResult>`
+- `GetChargeByReferenceQuery(reference)` → `ChargeResult`
+- `GetTransactionVolumeQuery(orgId, month)` → `TransactionVolumeResult` ← for billing fee tier calculation
 
 ---
 
@@ -279,39 +426,43 @@ A dedicated **read model** that aggregates entries from the ledger, charges, pay
 
 | Event | Published When | Consumed By |
 |---|---|---|
-| `VirtualAccountCreatedEvent` | NUBAN issued | `notifications` (inform org) |
-| `VirtualAccountActivatedEvent` | NUBAN activated by Anchor webhook | `notifications`, `accounting` (open ledger accounts) |
-| `PaymentSuccessfulEvent` | Customer payment confirmed by gateway | `commerce` (complete sale), `billing` (mark invoice paid), `ledger` (credit operating account) |
-| `PaymentFailedEvent` | Payment failed or declined | `commerce` (release reserved stock), `notifications` |
-| `PayoutCompletedEvent` | Bank transfer confirmed successful | `hr` (mark salary disbursed), `accounting`, `notifications` |
-| `PayoutFailedEvent` | Bank transfer failed | `hr` (revert payroll run), `notifications` |
-| `WalletFundedEvent` | Operating Account credited | `accounting` (journal entry), `notifications` |
-| `WalletDebitedEvent` | Operating Account debited | `accounting` (journal entry) |
-| `SettlementConfirmedEvent` | Paystack/Moniepoint settles to bank | `accounting` (record settlement) |
+| `VirtualAccountActivatedEvent` | NUBAN activated | `notifications`, `accounting` |
+| `ChargeSuccessfulEvent` | Customer payment confirmed | `commerce` (complete sale), `billing` (mark invoice paid), `ledger` (post entry), `webhooks` (notify merchant) |
+| `ChargeFailedEvent` | Payment failed/declined | `commerce` (release reserved stock), `notifications`, `webhooks` |
+| `ChargeRefundInitiatedEvent` | Refund initiated | `transfers` (create payout), `accounting` |
+| `PayoutCompletedEvent` | Bank transfer confirmed | `hr` (mark salary disbursed), `accounting`, `notifications`, `webhooks` |
+| `PayoutFailedEvent` | Bank transfer failed | `hr` (revert payroll), `notifications`, `webhooks` |
+| `WalletFundedEvent` | Operating account credited (NUBAN transfer) | `accounting`, `notifications` |
+| `SettlementConfirmedEvent` | Paystack/Moniepoint settles funds | `accounting` |
 | `BulkPayoutCompletedEvent` | All payroll payouts processed | `hr` (mark payroll DISBURSED) |
-| `BulkPayoutFailedEvent` | One or more payroll payouts failed | `hr` (revert payroll to APPROVED for retry) |
+| `BulkPayoutFailedEvent` | One or more payroll payouts failed | `hr` (revert payroll run to APPROVED) |
+| `LedgerTransactionPostedEvent` | Any ledger entry posted | `accounting` (bridge listener posts GL journal entry) |
 
 ---
 
 ## 13. Exceptions & Errors
 
 **`PayErrorCode`**:
-- `INSUFFICIENT_FUNDS`, `WALLET_NOT_FOUND`, `ACCOUNT_NOT_FOUND`
-- `TRANSACTION_FAILED`, `TRANSACTION_NOT_FOUND`, `DUPLICATE_REFERENCE`
-- `PAYOUT_FAILED`, `INVALID_BANK_DETAILS`
+- `INSUFFICIENT_FUNDS`, `WALLET_NOT_FOUND`, `ACCOUNT_NOT_FOUND`, `ACCOUNT_FROZEN`
+- `CHARGE_NOT_FOUND`, `DUPLICATE_REFERENCE`
+- `PAYOUT_NOT_FOUND`, `INVALID_BANK_DETAILS`, `PAYOUT_APPROVAL_REQUIRED`
 - `UNBALANCED_LEDGER_TRANSACTION`, `CURRENCY_MISMATCH`
 - `WEBHOOK_SIGNATURE_INVALID`, `WEBHOOK_ALREADY_PROCESSED`
-- `ACCOUNT_SUSPENDED`, `SETTLEMENT_NOT_FOUND`
+- `SPLIT_RULE_NOT_FOUND`, `INVALID_SPLIT_PERCENTAGES` — percentages don't sum to 100
+- `SETTLEMENT_NOT_FOUND`
+- `MANDATE_NOT_FOUND`, `MANDATE_REVOKED`
+- `VIRTUAL_ACCOUNT_NOT_FOUND`, `VIRTUAL_ACCOUNT_INACTIVE`
 
 ---
 
 ## 14. Distributed Architecture & Transaction Guarantees
 
 ### Locking Strategy
-- **Pessimistic Locking (`@Lock(PESSIMISTIC_WRITE)`)**: **CRITICAL** for `BalanceSnapshot` during ledger posting. When posting a `LedgerTransaction`, all affected accounts are locked in a consistent sort order (ascending accountId) to prevent deadlocks while guaranteeing no two concurrent transactions corrupt the same account balance.
-- **Pessimistic Locking**: Applied to `VirtualAccount` during closure requests.
+- **Pessimistic Locking (`PESSIMISTIC_WRITE`)**: Applied to `LedgerAccount` during `PostLedgerTransactionUseCase`. All affected accounts are locked in ascending `accountId` order to prevent deadlocks. This is non-negotiable — concurrent ledger posts without this lock will corrupt balance snapshots.
+- **Pessimistic Locking**: Applied to `Payout` during `ApprovePayout` to prevent double approval.
+- **Optimistic Locking**: Applied to `Charge`, `VirtualAccount`, `SplitRule`, `PaymentMandate`.
 
-### Idempotency & Inbox/Outbox
-- **API Idempotency (Idempotency-Key header)**: All fund movement commands (`InitiatePayoutCommand`, `FundWalletCommand`) require a client-supplied Idempotency Key stored server-side. Duplicate requests with the same key return the original response without re-executing.
-- **Webhook Idempotency (Inbox pattern)**: All inbound webhooks (Anchor, Paystack, Moniepoint) are tracked by `(webhookId, consumerId)` via `EventDeliveryTracker`. A webhook that has already been processed is silently discarded.
-- **Outbox**: Publishes `PaymentSuccessfulEvent`, `PayoutCompletedEvent`, `BulkPayoutCompletedEvent`. These are written to the Outbox within the same DB transaction as the ledger posting, guaranteeing atomicity.
+### Idempotency & Outbox/Inbox
+- **API Idempotency (Idempotency-Key header)**: All mutation commands (charge, payout, ledger post) require a client-supplied Idempotency Key. Duplicate requests with the same key return the original result without re-executing.
+- **Webhook Idempotency (Inbox pattern)**: All inbound webhooks (Anchor, Paystack, Moniepoint) are tracked by `(webhookId, consumerId)` using `EventDeliveryTracker`. Duplicate deliveries are silently discarded.
+- **Outbox**: `ChargeSuccessfulEvent`, `PayoutCompletedEvent`, `BulkPayoutCompletedEvent`, `LedgerTransactionPostedEvent` — written to the outbox in the same transaction as the state change. These events drive financial movements downstream and must never be lost.

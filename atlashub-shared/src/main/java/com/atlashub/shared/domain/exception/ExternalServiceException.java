@@ -1,12 +1,11 @@
 package com.atlashub.shared.domain.exception;
 
 public class ExternalServiceException extends ApplicationException {
-
-    public ExternalServiceException(ErrorCode errorCode, String message) {
-        super(errorCode, message);
+    public ExternalServiceException(String message) {
+        super(message);
     }
-
-    public ExternalServiceException(ErrorCode errorCode, String message, Throwable cause) {
-        super(errorCode, message, cause);
+    public ExternalServiceException(String message, Throwable cause) {
+        super(message, cause);
     }
 }
+

@@ -3,11 +3,11 @@ package com.atlashub.catalog.domain.model;
 import com.atlashub.catalog.domain.events.HubProductCreatedEvent;
 import com.atlashub.catalog.domain.events.HubProductDeactivatedEvent;
 import com.atlashub.catalog.domain.events.HubProductUpdatedEvent;
-import com.atlashub.catalog.domain.exception.CatalogErrorCode;
+import com.atlashub.catalog.domain.exception.ProductNotActiveException;
 import com.atlashub.catalog.domain.valueobject.ProductKey;
 import com.atlashub.catalog.domain.valueobject.ProductStatus;
-import com.atlashub.shared.domain.AggregateRoot;
-import com.atlashub.shared.domain.exception.BusinessRuleException;
+import com.atlashub.shared.domain.entities.AggregateRoot;
+import com.atlashub.shared.domain.valueobject.CorrelationId;
 import lombok.Getter;
 
 import java.time.ZonedDateTime;
@@ -39,9 +39,10 @@ public class HubProduct extends AggregateRoot<Long> {
         product.registerEvent(
                 new HubProductCreatedEvent(
                         UUID.randomUUID().toString(),
-                        String.valueOf(id),
+                        id,
                         ZonedDateTime.now(),
-                        new HubProductCreatedEvent.Payload(key)
+                        CorrelationId.getOrCreate(),
+                        new HubProductCreatedEvent.Payload(id, key, name, description, ProductStatus.ACTIVE)
                 )
         );
 
@@ -56,16 +57,17 @@ public class HubProduct extends AggregateRoot<Long> {
         this.registerEvent(
                 new HubProductUpdatedEvent(
                         UUID.randomUUID().toString(),
-                        String.valueOf(id),
+                        this.id,
                         ZonedDateTime.now(),
-                        null
+                        CorrelationId.getOrCreate(),
+                        new HubProductUpdatedEvent.Payload(name, description)
                 )
         );
     }
 
     public void deactivate() {
         if (status != ProductStatus.ACTIVE) {
-            throw new BusinessRuleException(CatalogErrorCode.PRODUCT_NOT_ACTIVE, "This product cannot be deactivated, cause it is not active");
+            throw new ProductNotActiveException("This product cannot be deactivated, cause it is not active");
         }
 
         this.status = ProductStatus.INACTIVE;
@@ -73,8 +75,9 @@ public class HubProduct extends AggregateRoot<Long> {
         this.registerEvent(
                 new HubProductDeactivatedEvent(
                         UUID.randomUUID().toString(),
-                        String.valueOf(id),
+                        this.id,
                         ZonedDateTime.now(),
+                        CorrelationId.getOrCreate(),
                         null
                 )
         );
@@ -85,3 +88,4 @@ public class HubProduct extends AggregateRoot<Long> {
         return id;
     }
 }
+

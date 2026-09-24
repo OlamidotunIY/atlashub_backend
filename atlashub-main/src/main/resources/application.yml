@@ -1,0 +1,49 @@
+spring:
+  application:
+    name: atlashub-backend
+  
+  # Database Connection Details
+  datasource:
+    url: ${ATLASHUB_DB_URL:jdbc:mysql://localhost:3306/atlashub}
+    username: ${ATLASHUB_DB_USERNAME:root}
+    password: ${ATLASHUB_DB_PASSWORD:}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  # Redis Configuration
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+
+  # JPA & Hibernate Settings
+  jpa:
+    database-platform: org.hibernate.dialect.MySQLDialect
+    hibernate:
+      open-in-view: false
+      ddl-auto: update
+    show-sql: false # Prints SQL queries to the console so you can debug
+    properties:
+      hibernate:
+        format_sql: true
+
+  security:
+    user:
+      name: admin
+      password: atlashub
+
+# Custom Application Properties
+jwt:
+  secret: ${ATLASHUB_JWT_SECRET}
+  expiration: ${ATLASHUB_JWT_EXPIRY_MINUTES:60} 
+
+atlashub:
+  cache:
+    user-ttl: ${ATLASHUB_CACHE_USER_TTL:PT12H}
+    organization-ttl: ${ATLASHUB_CACHE_ORGANIZATION_TTL:PT12H}
+
+firebase:
+  credentials:
+    path: ${FIREBASE_CREDENTIALS_PATH:/secrets/firebase-service-account.json}
+  storage:
+    bucket: ${FIREBASE_STORAGE_BUCKET:your-project-id.appspot.com}

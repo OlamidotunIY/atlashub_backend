@@ -2,7 +2,7 @@ package com.atlashub.catalog.application.result;
 
 import com.atlashub.catalog.domain.model.ProductPricing;
 import com.atlashub.catalog.domain.valueobject.BillingCycle;
-import com.atlashub.shared.domain.money.Money;
+import com.atlashub.shared.domain.valueobject.Money;
 
 public record SetProductPricingResult(
         Long pricingId,

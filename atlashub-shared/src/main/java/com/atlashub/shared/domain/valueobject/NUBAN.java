@@ -1,15 +1,21 @@
 package com.atlashub.shared.domain.valueobject;
 
-import com.atlashub.shared.domain.exception.SharedErrorCode;
+import com.atlashub.shared.domain.exception.InvalidNubanFormatException;
+
+import com.atlashub.shared.domain.exception.MissingRequiredFieldException;
+
 import com.atlashub.shared.domain.exception.ValidationException;
 
 public record NUBAN(String value) {
     public NUBAN {
         if (value == null || value.isBlank()) {
-            throw new ValidationException(SharedErrorCode.MISSING_REQUIRED_FIELD, "NUBAN cannot be null or blank");
+            throw new MissingRequiredFieldException("NUBAN cannot be null or blank");
         }
         if (!value.matches("^\\d{10}$")) {
-            throw new ValidationException(SharedErrorCode.INVALID_NUBAN_FORMAT, "NUBAN must be exactly 10 digits");
+            throw new InvalidNubanFormatException("NUBAN must be exactly 10 digits");
         }
     }
 }
+
+
+

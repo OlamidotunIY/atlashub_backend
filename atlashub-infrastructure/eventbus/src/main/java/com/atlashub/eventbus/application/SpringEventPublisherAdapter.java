@@ -1,6 +1,6 @@
 package com.atlashub.eventbus.application;
 
-import com.atlashub.shared.application.port.out.DomainEventPublisher;
+import com.atlashub.shared.application.port.DomainEventPublisher;
 import com.atlashub.shared.domain.event.EnvelopedDomainEvent;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;

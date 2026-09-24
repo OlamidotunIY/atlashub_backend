@@ -44,7 +44,7 @@ When a module consumer receives an event, it checks the `EventDeliveryTracker` b
 | `hr.BulkPayoutCompletedListener` | `BulkPayoutCompletedEvent` | Prevent marking payroll disbursed twice |
 | `commerce.PaymentSuccessfulListener` | `PaymentSuccessfulEvent` | Prevent double stock deduction |
 | `pay.WebhookInboundAdapter` | Gateway webhooks | Prevent double ledger posting from duplicate Paystack webhooks |
-| `auth.UserCreatedListener` | `UserCreated` | Prevent creating two `AuthAccount`s for one user |
+| `auth.UserCreatedListener` | `UserCreated` | Prevent creating two `AuthAccountJpa`s for one user |
 | `accounting.*Listener` | All business events | Prevent duplicate journal entries |
 
 ---

@@ -8,7 +8,7 @@ public record WebhookDeliveryRequestedEvent(
         String aggregateId,
         ZonedDateTime occurredAt,
         Payload payload
-) implements DomainEvent<WebhookDeliveryRequestedEvent.Payload> {
+) {
 
     public record Payload(
             String endpointUrl,

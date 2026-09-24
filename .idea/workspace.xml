@@ -1,0 +1,853 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="BackgroundAgentGlobalSettings">
+    <option name="selectedModelId" value="claude-sonnet-4.5" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="174f3fac-956e-4ce4-b2e2-bac8d3e75c4d" name="Changes" comment="fix: file system">
+      <changelist_data name="Iyanda Olamidotun" email="olamidotun225@gmail.com" automatic="false" />
+      <change afterPath="$PROJECT_DIR$/infrastructure/docker/nginx.conf" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/infrastructure/terraform/terraform.tfvars" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.env.example" beforeDir="false" afterPath="$PROJECT_DIR$/.env.example" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources/data_sources_history.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources/data_sources_history.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/db-forest-config.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/gradle.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/gradle.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Dockerfile" beforeDir="false" afterPath="$PROJECT_DIR$/Dockerfile" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-infrastructure/audit/src/main/java/com/atlashub/audit/adapter/in/messaging/AuthAuditEventListener.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-infrastructure/audit/src/main/java/com/atlashub/audit/adapter/in/messaging/AuthAuditEventListener.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-infrastructure/audit/src/main/java/com/atlashub/audit/adapter/in/messaging/IdentityAuditEventListener.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-infrastructure/audit/src/main/java/com/atlashub/audit/adapter/out/persistence/entity/ActivityLogJpaEntity.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-infrastructure/audit/src/main/java/com/atlashub/audit/adapter/out/persistence/entity/ActivityLogJpaEntity.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-infrastructure/eventbus/src/main/java/com/atlashub/eventbus/adapter/in/internal/EventTrackerApiImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-infrastructure/eventbus/src/main/java/com/atlashub/eventbus/adapter/in/internal/EventTrackerApiImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-infrastructure/eventbus/src/main/java/com/atlashub/eventbus/adapter/in/messaging/listener/SpringDomainEventListener.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-infrastructure/eventbus/src/main/java/com/atlashub/eventbus/adapter/in/messaging/listener/SpringDomainEventListener.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-infrastructure/eventbus/src/main/java/com/atlashub/eventbus/adapter/out/persistence/entity/OutboxMessageJpaEntity.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-infrastructure/eventbus/src/main/java/com/atlashub/eventbus/adapter/out/persistence/entity/OutboxMessageJpaEntity.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-infrastructure/eventbus/src/main/java/com/atlashub/eventbus/adapter/out/persistence/repository/SpringDataOutboxMessageRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-infrastructure/eventbus/src/main/java/com/atlashub/eventbus/adapter/out/persistence/repository/SpringDataOutboxMessageRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-infrastructure/eventbus/src/main/java/com/atlashub/eventbus/application/port/EventTrackerPort.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-infrastructure/eventbus/src/main/java/com/atlashub/eventbus/application/usecase/ProcessOutboxMessagesUseCase.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-infrastructure/eventbus/src/main/java/com/atlashub/eventbus/application/usecase/ProcessOutboxMessagesUseCase.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-main/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-main/build.gradle" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-main/src/main/java/com/atlashub/main/config/ApplicationConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-main/src/main/java/com/atlashub/main/config/ApplicationConfig.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-main/src/main/java/com/atlashub/main/security/JwtAuthenticationFilter.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-main/src/main/java/com/atlashub/main/security/JwtAuthenticationFilter.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-main/src/main/resources/application.yml" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-main/src/main/resources/application.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/accounts/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/accounts/build.gradle" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/accounts/src/main/java/com/atlashub/accounts/domain/model/User.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/accounts/src/main/java/com/atlashub/accounts/domain/model/User.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/accounts/src/main/java/com/atlashub/accounts/infrastructure/persistence/adapters/OrganizationRepositoryAdapter.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/accounts/src/main/java/com/atlashub/accounts/infrastructure/persistence/adapters/OrganizationRepositoryAdapter.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/accounts/src/main/java/com/atlashub/accounts/infrastructure/persistence/adapters/UserRepositoryAdapter.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/accounts/src/main/java/com/atlashub/accounts/infrastructure/persistence/adapters/UserRepositoryAdapter.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/accounts/src/main/java/com/atlashub/accounts/infrastructure/persistence/entities/UserJPA.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/accounts/src/main/java/com/atlashub/accounts/infrastructure/persistence/entities/UserJPA.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/accounts/src/main/java/com/atlashub/accounts/infrastructure/services/OrganizationQueryPortAdapter.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/accounts/src/main/java/com/atlashub/accounts/infrastructure/services/OrganizationQueryPortAdapter.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/accounts/src/main/java/com/atlashub/accounts/infrastructure/services/UserQueryPortAdapter.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/accounts/src/main/java/com/atlashub/accounts/infrastructure/services/UserQueryPortAdapter.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/accounts/src/main/java/com/atlashub/accounts/presentation/dto/RegisterRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/accounts/src/main/java/com/atlashub/accounts/presentation/dto/RegisterRequest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/accounts/src/main/java/com/atlashub/accounts/presentation/dto/UpdateOrganizationRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/accounts/src/main/java/com/atlashub/accounts/presentation/dto/UpdateOrganizationRequest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/accounts/src/main/java/com/atlashub/accounts/presentation/dto/UpdateProfileRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/accounts/src/main/java/com/atlashub/accounts/presentation/dto/UpdateProfileRequest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/accounts/src/main/java/com/atlashub/accounts/presentation/rest/AccountsController.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/accounts/src/main/java/com/atlashub/accounts/presentation/rest/AccountsController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/application/command/AuthAccount/AuthAccountHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/application/command/AuthAccount/AuthAccountHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/application/command/ChangePassword/ChangePasswordHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/application/command/ChangePassword/ChangePasswordHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/application/command/InitiatePasswordReset/InitiatePasswordResetHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/application/command/InitiatePasswordReset/InitiatePasswordResetHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/application/command/Login/LoginHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/application/command/Login/LoginHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/application/command/Logout/LogoutHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/application/command/Logout/LogoutHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/application/command/LogoutAllDevices/LogoutAllDevicesHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/application/command/LogoutAllDevices/LogoutAllDevicesHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/application/command/RefreshToken/RefreshTokenHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/application/command/RefreshToken/RefreshTokenHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/application/command/ResetPassword/ResetPasswordHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/application/command/ResetPassword/ResetPasswordHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/application/command/SendVerificationEmail/SendVerificationEmailHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/application/command/SendVerificationEmail/SendVerificationEmailHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/application/command/VerifyEmail/VerifyEmailHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/application/command/VerifyEmail/VerifyEmailHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/application/port/SessionPort.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/application/port/TokenPort.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/application/port/TokenPort.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/application/query/GetActiveSessions/GetActiveSessionsHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/application/query/GetActiveSessions/GetActiveSessionsHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/application/query/GetActiveSessions/SessionResult.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/application/query/GetActiveSessions/SessionResult.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/domain/entities/AuthAccount.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/domain/entities/AuthAccount.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/domain/entities/OtpVerification.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/domain/events/OtpVerificationCreated.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/domain/events/OtpVerificationCreated.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/domain/repositories/AuthAccountRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/domain/repositories/AuthAccountRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/domain/repositories/OtpVerificationRepository.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/domain/services/OtpVerificationIssuer.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/domain/services/OtpVerificationIssuer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/domain/valueobject/OtpStatus.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/domain/valueobject/OtpType.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/domain/valueobject/Session.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/infrastructure/persistence/adapters/AuthAccountRepositoryAdapter.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/infrastructure/persistence/adapters/AuthAccountRepositoryAdapter.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/infrastructure/persistence/adapters/OtpVerificationRepositoryAdapter.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/infrastructure/persistence/entities/AuthAccountJpa.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/infrastructure/persistence/entities/AuthAccountJpa.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/infrastructure/persistence/entities/OtpVerificationJpa.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/infrastructure/persistence/mappers/OtpVerificationMapper.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/infrastructure/persistence/repositories/SpringDataAuthAccountRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/infrastructure/persistence/repositories/SpringDataAuthAccountRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/infrastructure/persistence/repositories/SpringDataOtpVerificationRepository.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/infrastructure/security/JwtTokenAdapter.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/infrastructure/security/JwtTokenAdapter.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/infrastructure/security/SessionAdapter.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/presentation/dto/LoginRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/presentation/dto/LoginRequest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/presentation/dto/ResetPasswordRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/presentation/dto/ResetPasswordRequest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/presentation/dto/VerifyEmailRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/presentation/dto/VerifyEmailRequest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/presentation/rest/AuthController.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/presentation/rest/AuthController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/catalog/src/main/java/com/atlashub/catalog/adapter/in/web/controller/HubProductController.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/catalog/src/main/java/com/atlashub/catalog/adapter/in/web/controller/HubProductController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/catalog/src/main/java/com/atlashub/catalog/adapter/in/web/request/CreateHubProductWebRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/catalog/src/main/java/com/atlashub/catalog/adapter/in/web/request/CreateHubProductWebRequest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/catalog/src/main/java/com/atlashub/catalog/adapter/in/web/request/SetProductPricingWebRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/catalog/src/main/java/com/atlashub/catalog/adapter/in/web/request/SetProductPricingWebRequest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/catalog/src/main/java/com/atlashub/catalog/adapter/in/web/request/UpdateHubProductWebRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/catalog/src/main/java/com/atlashub/catalog/adapter/in/web/request/UpdateHubProductWebRequest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/catalog/src/main/java/com/atlashub/catalog/adapter/in/web/response/HubProductDetailsResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/catalog/src/main/java/com/atlashub/catalog/adapter/in/web/response/HubProductDetailsResponse.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/catalog/src/main/java/com/atlashub/catalog/adapter/in/web/response/HubProductResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/catalog/src/main/java/com/atlashub/catalog/adapter/in/web/response/HubProductResponse.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/application/port/UserQueryPort.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/application/port/UserQueryPort.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/infrastructure/k8s/base/kustomization.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/infrastructure/k8s/base/kustomization.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/infrastructure/terraform/main.tf" beforeDir="false" afterPath="$PROJECT_DIR$/infrastructure/terraform/main.tf" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/infrastructure/terraform/outputs.tf" beforeDir="false" afterPath="$PROJECT_DIR$/infrastructure/terraform/outputs.tf" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/infrastructure/terraform/variables.tf" beforeDir="false" afterPath="$PROJECT_DIR$/infrastructure/terraform/variables.tf" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/settings.gradle" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="CompilerWorkspaceConfiguration">
+    <option name="MAKE_PROJECT_ON_SAVE" value="true" />
+  </component>
+  <component name="CopilotPersistence">
+    <persistenceIdMap>
+      <entry key="_/run/media/dotun/USB_DRIVE/atlashub" value="3Gii758TXfxkFm44SfUQ7x2dkIF" />
+    </persistenceIdMap>
+  </component>
+  <component name="DatabaseLocalColorSettings">
+    <colors>
+      <entry key="e716987c-d470-4e7f-959f-34b19b2b02ad" value="" />
+    </colors>
+  </component>
+  <component name="EmbeddingIndexingInfo">
+    <option name="cachedIndexableFilesCount" value="390" />
+  </component>
+  <component name="ExternalProjectsData">
+    <projectState path="$PROJECT_DIR$">
+      <ProjectState />
+    </projectState>
+    <projectState path="$PROJECT_DIR$/atlashub-core">
+      <ProjectState />
+    </projectState>
+  </component>
+  <component name="ExternalProjectsManager">
+    <system id="GRADLE">
+      <state>
+        <task path="$PROJECT_DIR$">
+          <activation />
+        </task>
+        <projects_view>
+          <tree_state>
+            <expand>
+              <path>
+                <item name="" type="6a2764b6:ExternalProjectsStructure$RootNode" />
+                <item name="atlashub" type="f1a62948:ProjectNode" />
+              </path>
+            </expand>
+            <select />
+          </tree_state>
+        </projects_view>
+      </state>
+    </system>
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="HTTP Private Environment File" />
+        <option value="Enum" />
+        <option value="Record" />
+        <option value="Interface" />
+        <option value="Class" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="INCOMING_COMMITS_CHECK_STRATEGY" value="FETCH" />
+    <option name="PREVIOUS_COMMIT_AUTHORS">
+      <list>
+        <option value="Iyanda Olamidotun &lt;olamidotun225@gmail.com&gt;" />
+      </list>
+    </option>
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="master" />
+      </map>
+    </option>
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+    <option name="SIGN_OFF_COMMIT" value="true" />
+    <option name="UPDATE_TYPE" value="REBASE" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;OlamidotunIY&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/OlamidotunIY/atlaspay.git&quot;,
+    &quot;accountId&quot;: &quot;89d8d7f3-21d4-45db-9b94-3c838a9c94bd&quot;
+  },
+  &quot;recentNewPullRequestHead&quot;: {
+    &quot;server&quot;: {
+      &quot;useHttp&quot;: false,
+      &quot;host&quot;: &quot;github.com&quot;,
+      &quot;port&quot;: null,
+      &quot;suffix&quot;: null
+    },
+    &quot;owner&quot;: &quot;OlamidotunIY&quot;,
+    &quot;repository&quot;: &quot;atlaspay&quot;
+  }
+}</component>
+  <component name="HttpClientOnboardingState">{
+  &quot;isOnboardingCommentShown&quot;: true
+}</component>
+  <component name="HttpClientSelectedEnvironments">
+    <file url="file://$APPLICATION_CONFIG_DIR$/scratches/generated-requests.http" environment="dev" />
+  </component>
+  <component name="MacroExpansionManager">
+    <option name="directoryName" value="eHIkGgpP" />
+  </component>
+  <component name="McpProjectServerCommands">
+    <commands />
+    <urls />
+  </component>
+  <component name="NextEditCompletionFeaturesState">
+    <decayedCancelled>
+      <entry key="MS100" value="1.4393310098050645" />
+      <entry key="MS500" value="2.376990196699726" />
+      <entry key="S2" value="3.634128131548069" />
+      <entry key="S5" value="5.332993018985664" />
+      <entry key="S10" value="6.428446725597802" />
+      <entry key="S30" value="7.532858520702129" />
+      <entry key="S60" value="8.952384109882708" />
+      <entry key="M2" value="11.885801515298002" />
+      <entry key="M5" value="16.082949388616896" />
+      <entry key="M10" value="18.25889011106765" />
+      <entry key="M15" value="19.10316194473115" />
+      <entry key="M30" value="20.017698431587476" />
+      <entry key="H1" value="20.63205817264764" />
+      <entry key="H2" value="24.52761205722899" />
+      <entry key="H4" value="58.396003223822575" />
+      <entry key="D1" value="616.3177647810292" />
+      <entry key="W1" value="1546.224121622513" />
+    </decayedCancelled>
+    <decayedSelected>
+      <entry key="MS100" value="0.0" />
+      <entry key="MS500" value="0.0" />
+      <entry key="S2" value="0.0" />
+      <entry key="S5" value="0.0" />
+      <entry key="S10" value="0.0" />
+      <entry key="S30" value="2.9299361979330685E-156" />
+      <entry key="S60" value="2.413089858498749E-78" />
+      <entry key="M2" value="2.1951145889454956E-39" />
+      <entry key="M5" value="5.2133641957365545E-16" />
+      <entry key="M10" value="3.228942307812849E-8" />
+      <entry key="M15" value="1.2776125676531611E-5" />
+      <entry key="M30" value="0.005216856926363817" />
+      <entry key="H1" value="0.25152330372644327" />
+      <entry key="H2" value="7.803412022310455" />
+      <entry key="H4" value="75.44361662596371" />
+      <entry key="D1" value="981.9613955069036" />
+      <entry key="W1" value="2060.996405055634" />
+    </decayedSelected>
+    <decayedShown>
+      <entry key="MS100" value="1.3483550080428366" />
+      <entry key="MS500" value="2.3363402829126074" />
+      <entry key="S2" value="3.6164379284149013" />
+      <entry key="S5" value="5.321953611762193" />
+      <entry key="S10" value="6.421618982821446" />
+      <entry key="S30" value="7.530042436510436" />
+      <entry key="S60" value="8.950212173585419" />
+      <entry key="M2" value="11.883809085362916" />
+      <entry key="M5" value="16.08161384298311" />
+      <entry key="M10" value="18.258080798942785" />
+      <entry key="M15" value="19.10259835194182" />
+      <entry key="M30" value="20.022602318041503" />
+      <entry key="H1" value="20.883285868384398" />
+      <entry key="H2" value="32.328751659412895" />
+      <entry key="H4" value="133.8288806691043" />
+      <entry key="D1" value="1598.2525890487739" />
+      <entry key="W1" value="3607.2120690562633" />
+    </decayedShown>
+  </component>
+  <component name="ProblemsViewState">
+    <option name="selectedTabId" value="CurrentFile" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 3,
+  &quot;fromUser&quot;: false
+}</component>
+  <component name="ProjectId" id="3Gii758TXfxkFm44SfUQ7x2dkIF" />
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
+  <component name="ProjectSessionTemplates">
+    <option name="panelTemplate">
+      <template>
+        <option name="modeId" value="Ask" />
+        <option name="model">
+          <model>
+            <option name="modelType" value="builtin_id" />
+            <option name="modelValue" value="gpt-5.3-codex" />
+          </model>
+        </option>
+        <option name="targetType" value="BACKGROUND" />
+        <option name="worktreeMode" value="WORKSPACE" />
+      </template>
+    </option>
+  </component>
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Docker.docker-compose.yml: Compose Deployment.executor&quot;: &quot;Run&quot;,
+    &quot;Docker.docker: Compose Deployment.executor&quot;: &quot;Run&quot;,
+    &quot;Gradle.Build atlashub-backend.executor&quot;: &quot;Run&quot;,
+    &quot;Gradle.Build atlashub.executor&quot;: &quot;Run&quot;,
+    &quot;HTTP Request.generated-requests | #1.executor&quot;: &quot;Run&quot;,
+    &quot;HTTP Request.generated-requests | #2.executor&quot;: &quot;Run&quot;,
+    &quot;HTTP Request.generated-requests | #3.executor&quot;: &quot;Run&quot;,
+    &quot;HTTP Request.generated-requests | #4.executor&quot;: &quot;Run&quot;,
+    &quot;HTTP Request.replay-dlq-events.executor&quot;: &quot;Run&quot;,
+    &quot;Makefile Target.start.executor&quot;: &quot;Run&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RequestMappingsPanelOrder0&quot;: &quot;0&quot;,
+    &quot;RequestMappingsPanelOrder1&quot;: &quot;1&quot;,
+    &quot;RequestMappingsPanelWidth0&quot;: &quot;75&quot;,
+    &quot;RequestMappingsPanelWidth1&quot;: &quot;75&quot;,
+    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;SONARLINT_PRECOMMIT_ANALYSIS&quot;: &quot;true&quot;,
+    &quot;Spring Boot.AtlasHubApplication.executor&quot;: &quot;Run&quot;,
+    &quot;Spring Boot.AtlashubApplication.executor&quot;: &quot;Run&quot;,
+    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
+    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
+    &quot;copilot.chat.legacySessionMetadata.migrated&quot;: &quot;true&quot;,
+    &quot;dart.analysis.tool.window.visible&quot;: &quot;false&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;dev&quot;,
+    &quot;git.auto.fetch.suggestion.counter&quot;: &quot;2&quot;,
+    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
+    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;E:/Projects/Atlashub/atlashub-backend/atlashub-platform/accounts/src/main/java/com/atlashub/accounts/domain/exception&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.jshint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.jshint&quot;: &quot;&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;project.structure.last.edited&quot;: &quot;Modules&quot;,
+    &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
+    &quot;project.structure.side.proportion&quot;: &quot;0.0&quot;,
+    &quot;rest.client.default.execution.environment&quot;: &quot;dev&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
+    &quot;show.migrate.to.gradle.popup&quot;: &quot;false&quot;,
+    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;
+  }
+}</component>
+  <component name="Push.Settings">
+    <force-push-targets>
+      <force-push-target remote-path="origin" branch="dev" />
+    </force-push-targets>
+  </component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="E:\Projects\Atlashub\atlashub-backend\atlashub-platform\accounts\src\main\java\com\atlashub\accounts\domain\exception" />
+      <recent name="E:\Projects\Atlashub\atlashub-backend\atlashub-platform\accounts\src\main\java\com\atlashub\accounts\domain\repository" />
+      <recent name="E:\Projects\Atlashub\atlashub-backend\atlashub-platform\accounts\src\main\java\com\atlashub\accounts\domain\event" />
+      <recent name="E:\Projects\Atlashub\atlashub-backend\atlashub-platform\identity\src\main\java\com\atlashub\identity\domain\valueobject" />
+      <recent name="E:\Projects\Atlashub\atlashub-backend\atlashub-platform\accounts\src\main\java\com\atlashub\accounts\domain\valueobject" />
+    </key>
+    <key name="MoveClassesOrPackagesDialog.RECENTS_KEY">
+      <recent name="persistence.identity" />
+      <recent name="persistence.identity.entities" />
+      <recent name="core.identity.entities" />
+      <recent name="core.identity.repository" />
+      <recent name="core.cards.repository" />
+    </key>
+    <key name="CopyClassDialog.RECENTS_KEY">
+      <recent name="com.atlashub.authentication.infrastructure.messaging.events" />
+      <recent name="com.atlashub.accounts.application.command.RegisterOrg" />
+      <recent name="com.atlashub.accounts.domain.model" />
+      <recent name="core.access.valueobjects" />
+    </key>
+  </component>
+  <component name="RunManager" selected="Makefile Target.start">
+    <configuration name="generated-requests | #1" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" nameIsGenerated="true" path="$APPLICATION_CONFIG_DIR$/scratches/generated-requests.http" executionIdentifier="#1" runType="Run single request">
+      <method v="2" />
+    </configuration>
+    <configuration name="generated-requests | #2" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" nameIsGenerated="true" path="$APPLICATION_CONFIG_DIR$/scratches/generated-requests.http" executionIdentifier="#2" index="2" runType="Run single request">
+      <method v="2" />
+    </configuration>
+    <configuration name="generated-requests | #4" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" nameIsGenerated="true" path="$APPLICATION_CONFIG_DIR$/scratches/generated-requests.http" executionIdentifier="#4" index="4" runType="Run single request">
+      <method v="2" />
+    </configuration>
+    <configuration name="start" type="MAKEFILE_TARGET_RUN_CONFIGURATION" factoryName="Makefile" temporary="true">
+      <makefile filename="$PROJECT_DIR$/Makefile" target="start" workingDirectory="" arguments="">
+        <envs />
+      </makefile>
+      <method v="2" />
+    </configuration>
+    <configuration name="AtlashubApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+      <option name="ALTERNATIVE_JRE_PATH" value="dragonwell-21" />
+      <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
+      <option name="envFilePaths">
+        <option value="$PROJECT_DIR$/.env" />
+      </option>
+      <module name="atlashub.atlashub-main.main" />
+      <selectedOptions>
+        <option name="environmentVariables" />
+      </selectedOptions>
+      <option name="SPRING_BOOT_MAIN_CLASS" value="com.atlashub.main.AtlashubApplication" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration default="true" type="docker-deploy" factoryName="docker-compose.yml" temporary="true">
+      <deployment type="docker-compose.yml">
+        <settings />
+      </deployment>
+      <method v="2" />
+    </configuration>
+    <configuration name="docker: Compose Deployment" type="docker-deploy" factoryName="docker-compose.yml" temporary="true" server-name="Docker">
+      <deployment type="docker-compose.yml">
+        <settings>
+          <option name="sourceFilePath" value="infrastructure/docker/docker-compose.yml" />
+        </settings>
+      </deployment>
+      <method v="2" />
+    </configuration>
+    <configuration default="true" type="tests" factoryName="Autodetect">
+      <module name="atlashub" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="DEBUG_JUST_MY_CODE" value="false" />
+      <option name="RUN_TOOL" value="" />
+      <option name="_new_additionalArguments" value="&quot;&quot;" />
+      <option name="_new_target" value="&quot;&quot;" />
+      <option name="_new_targetType" value="&quot;PATH&quot;" />
+      <method v="2" />
+    </configuration>
+    <configuration default="true" type="tests" factoryName="Doctests">
+      <module name="atlashub" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="DEBUG_JUST_MY_CODE" value="false" />
+      <option name="RUN_TOOL" value="" />
+      <option name="SCRIPT_NAME" value="" />
+      <option name="CLASS_NAME" value="" />
+      <option name="METHOD_NAME" value="" />
+      <option name="FOLDER_NAME" value="" />
+      <option name="TEST_TYPE" value="TEST_SCRIPT" />
+      <option name="PATTERN" value="" />
+      <option name="USE_PATTERN" value="false" />
+      <method v="2" />
+    </configuration>
+    <list>
+      <item itemvalue="Docker.docker: Compose Deployment" />
+      <item itemvalue="HTTP Request.generated-requests | #1" />
+      <item itemvalue="HTTP Request.generated-requests | #2" />
+      <item itemvalue="HTTP Request.generated-requests | #4" />
+      <item itemvalue="Makefile Target.start" />
+      <item itemvalue="Spring Boot.AtlashubApplication" />
+    </list>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Makefile Target.start" />
+        <item itemvalue="Makefile Target.start" />
+        <item itemvalue="Docker.docker: Compose Deployment" />
+        <item itemvalue="HTTP Request.generated-requests | #4" />
+        <item itemvalue="HTTP Request.generated-requests | #2" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-jdk-30f59d01ecdd-34e2839f716b-intellij.indexing.shared.core-IU-262.9437.185" />
+        <option value="bundled-js-predefined-d6986cc7102b-4abd2a77f808-JavaScript-IU-262.9437.185" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="174f3fac-956e-4ce4-b2e2-bac8d3e75c4d" name="Changes" comment="" />
+      <created>1784460624797</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1784460624797</updated>
+    </task>
+    <task id="LOCAL-00001" summary="initialize Gradle project with basic configuration and .gitignore">
+      <option name="closed" value="true" />
+      <created>1784560622811</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1784560622811</updated>
+    </task>
+    <task id="LOCAL-00002" summary="add design reference document for AtlasHub architecture and conventions">
+      <option name="closed" value="true" />
+      <created>1784561558888</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1784561558888</updated>
+    </task>
+    <task id="LOCAL-00003" summary="add core identity and shared domain models for KYC processing">
+      <option name="closed" value="true" />
+      <created>1784574767652</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1784574767652</updated>
+    </task>
+    <task id="LOCAL-00004" summary="add account management classes and events for KYC processing">
+      <option name="closed" value="true" />
+      <created>1784633575752</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1784633575753</updated>
+    </task>
+    <task id="LOCAL-00005" summary="add transfer event handling and limit policy integration in transfer saga">
+      <option name="closed" value="true" />
+      <created>1784645986268</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1784645986268</updated>
+    </task>
+    <task id="LOCAL-00006" summary="refactor transfer classes to use consistent method naming and improve null checks">
+      <option name="closed" value="true" />
+      <created>1784647232572</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1784647232572</updated>
+    </task>
+    <task id="LOCAL-00007" summary="add ApiKey and related value objects for API key management">
+      <option name="closed" value="true" />
+      <created>1784651816660</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1784651816660</updated>
+    </task>
+    <task id="LOCAL-00008" summary="add card management classes and events for card lifecycle handling">
+      <option name="closed" value="true" />
+      <created>1784651868119</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1784651868119</updated>
+    </task>
+    <task id="LOCAL-00009" summary="add value objects for authorization decisions and delivery status; implement limit policy and evaluation services">
+      <option name="closed" value="true" />
+      <created>1784651882778</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1784651882778</updated>
+    </task>
+    <task id="LOCAL-00010" summary="add event handling for API key issuance and revocation; implement null checks and default status">
+      <option name="closed" value="true" />
+      <created>1784652385784</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1784652385784</updated>
+    </task>
+    <task id="LOCAL-00011" summary="add webhook delivery and subscription event handling; implement delivery status management and subscription state transitions">
+      <option name="closed" value="true" />
+      <created>1784653585459</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1784653585459</updated>
+    </task>
+    <task id="LOCAL-00012" summary="add repositories for API key and webhook management; implement methods for retrieval and retry policies">
+      <option name="closed" value="true" />
+      <created>1784655239195</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1784655239195</updated>
+    </task>
+    <task id="LOCAL-00013" summary="add design references for API, application composition, messaging, persistence, and simulators">
+      <option name="closed" value="true" />
+      <created>1784656769363</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1784656769363</updated>
+    </task>
+    <task id="LOCAL-00014" summary="add module structure documentation for API, application, messaging, persistence, and simulators">
+      <option name="closed" value="true" />
+      <created>1784657011145</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1784657011145</updated>
+    </task>
+    <task id="LOCAL-00015" summary="add: CompanyJpaEntity">
+      <option name="closed" value="true" />
+      <created>1784756820162</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1784756820162</updated>
+    </task>
+    <task id="LOCAL-00016" summary="add: CompanyMapper">
+      <option name="closed" value="true" />
+      <created>1784756837935</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1784756837935</updated>
+    </task>
+    <task id="LOCAL-00017" summary="add: JpaCompanyRepository">
+      <option name="closed" value="true" />
+      <created>1784756868466</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1784756868466</updated>
+    </task>
+    <task id="LOCAL-00018" summary="update: PageResult (changed name from Page to PageResult)">
+      <option name="closed" value="true" />
+      <created>1784756905455</created>
+      <option name="number" value="00018" />
+      <option name="presentableId" value="LOCAL-00018" />
+      <option name="project" value="LOCAL" />
+      <updated>1784756905455</updated>
+    </task>
+    <task id="LOCAL-00019" summary="add: Company and SpringDataCompanyRepository">
+      <option name="closed" value="true" />
+      <created>1784756963755</created>
+      <option name="number" value="00019" />
+      <option name="presentableId" value="LOCAL-00019" />
+      <option name="project" value="LOCAL" />
+      <updated>1784756963755</updated>
+    </task>
+    <task id="LOCAL-00020" summary="update: changed Page to PageResult">
+      <option name="closed" value="true" />
+      <created>1784757012001</created>
+      <option name="number" value="00020" />
+      <option name="presentableId" value="LOCAL-00020" />
+      <option name="project" value="LOCAL" />
+      <updated>1784757012001</updated>
+    </task>
+    <task id="LOCAL-00021" summary="feat: create files for UserJpaEntity, UserMapper, and JpaUserRepository">
+      <option name="closed" value="true" />
+      <created>1784757061128</created>
+      <option name="number" value="00021" />
+      <option name="presentableId" value="LOCAL-00021" />
+      <option name="project" value="LOCAL" />
+      <updated>1784757061128</updated>
+    </task>
+    <task id="LOCAL-00022" summary="add: include toJpaEntity method and toDomain method">
+      <option name="closed" value="true" />
+      <created>1784757934542</created>
+      <option name="number" value="00022" />
+      <option name="presentableId" value="LOCAL-00022" />
+      <option name="project" value="LOCAL" />
+      <updated>1784757934542</updated>
+    </task>
+    <task id="LOCAL-00023" summary="add: entity fields">
+      <option name="closed" value="true" />
+      <created>1784757967280</created>
+      <option name="number" value="00023" />
+      <option name="presentableId" value="LOCAL-00023" />
+      <option name="project" value="LOCAL" />
+      <updated>1784757967280</updated>
+    </task>
+    <task id="LOCAL-00024" summary="add: getters for fields like companyId etc, and added a new constructor and rehydrate method that will be used by the mapper">
+      <option name="closed" value="true" />
+      <created>1784758027914</created>
+      <option name="number" value="00024" />
+      <option name="presentableId" value="LOCAL-00024" />
+      <option name="project" value="LOCAL" />
+      <updated>1784758027915</updated>
+    </task>
+    <task id="LOCAL-00025" summary="add: SpringDataUserRepository interface with findByCompanyId method">
+      <option name="closed" value="true" />
+      <created>1784758166304</created>
+      <option name="number" value="00025" />
+      <option name="presentableId" value="LOCAL-00025" />
+      <option name="project" value="LOCAL" />
+      <updated>1784758166304</updated>
+    </task>
+    <task id="LOCAL-00026" summary="fix: type mismatch error">
+      <option name="closed" value="true" />
+      <created>1784758613531</created>
+      <option name="number" value="00026" />
+      <option name="presentableId" value="LOCAL-00026" />
+      <option name="project" value="LOCAL" />
+      <updated>1784758613531</updated>
+    </task>
+    <task id="LOCAL-00027" summary="add: methods body to all inherited methods using the Jpa repository.">
+      <option name="closed" value="true" />
+      <created>1784758651627</created>
+      <option name="number" value="00027" />
+      <option name="presentableId" value="LOCAL-00027" />
+      <option name="project" value="LOCAL" />
+      <updated>1784758651627</updated>
+    </task>
+    <task id="LOCAL-00028" summary="update: restructured file system in some packages in core">
+      <option name="closed" value="true" />
+      <created>1785020645322</created>
+      <option name="number" value="00028" />
+      <option name="presentableId" value="LOCAL-00028" />
+      <option name="project" value="LOCAL" />
+      <updated>1785020645322</updated>
+    </task>
+    <task id="LOCAL-00029" summary="add: mappers for kyc case and kyc saga">
+      <option name="closed" value="true" />
+      <created>1785020707110</created>
+      <option name="number" value="00029" />
+      <option name="presentableId" value="LOCAL-00029" />
+      <option name="project" value="LOCAL" />
+      <updated>1785020707110</updated>
+    </task>
+    <task id="LOCAL-00030" summary="add: spring data kyc repository">
+      <option name="closed" value="true" />
+      <created>1785020727621</created>
+      <option name="number" value="00030" />
+      <option name="presentableId" value="LOCAL-00030" />
+      <option name="project" value="LOCAL" />
+      <updated>1785020727621</updated>
+    </task>
+    <task id="LOCAL-00031" summary="add: entities for kyc case and kyc cas evaluation sega">
+      <option name="closed" value="true" />
+      <created>1785020763435</created>
+      <option name="number" value="00031" />
+      <option name="presentableId" value="LOCAL-00031" />
+      <option name="project" value="LOCAL" />
+      <updated>1785020763435</updated>
+    </task>
+    <task id="LOCAL-00032" summary="feat: implement repository methods for kyc case and kyc case evaluation sega">
+      <option name="closed" value="true" />
+      <created>1785020817811</created>
+      <option name="number" value="00032" />
+      <option name="presentableId" value="LOCAL-00032" />
+      <option name="project" value="LOCAL" />
+      <updated>1785020817811</updated>
+    </task>
+    <task id="LOCAL-00033" summary="feat: created entity fields for account">
+      <option name="closed" value="true" />
+      <created>1785022386264</created>
+      <option name="number" value="00033" />
+      <option name="presentableId" value="LOCAL-00033" />
+      <option name="project" value="LOCAL" />
+      <updated>1785022386264</updated>
+    </task>
+    <task id="LOCAL-00034" summary="feat: created mapper for account">
+      <option name="closed" value="true" />
+      <created>1785022401016</created>
+      <option name="number" value="00034" />
+      <option name="presentableId" value="LOCAL-00034" />
+      <option name="project" value="LOCAL" />
+      <updated>1785022401016</updated>
+    </task>
+    <task id="LOCAL-00035" summary="feat: implemented repository methods for account">
+      <option name="closed" value="true" />
+      <created>1785022427409</created>
+      <option name="number" value="00035" />
+      <option name="presentableId" value="LOCAL-00035" />
+      <option name="project" value="LOCAL" />
+      <updated>1785022427409</updated>
+    </task>
+    <task id="LOCAL-00036" summary="fix: file system">
+      <option name="closed" value="true" />
+      <created>1785023150089</created>
+      <option name="number" value="00036" />
+      <option name="presentableId" value="LOCAL-00036" />
+      <option name="project" value="LOCAL" />
+      <updated>1785023150089</updated>
+    </task>
+    <task id="LOCAL-00037" summary="fix: file system">
+      <option name="closed" value="true" />
+      <created>1786725474542</created>
+      <option name="number" value="00037" />
+      <option name="presentableId" value="LOCAL-00037" />
+      <option name="project" value="LOCAL" />
+      <updated>1786725474549</updated>
+    </task>
+    <option name="localTasksCounter" value="38" />
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="UnknownFeatures">
+    <option featureType="dependencySupport" implementationName="java:org.springframework:spring-core" />
+    <option featureType="dependencySupport" implementationName="java:org.springframework.security:spring-security-core" />
+    <option featureType="dependencySupport" implementationName="java:jakarta.validation:jakarta.validation-api" />
+    <option featureType="dependencySupport" implementationName="java:io.projectreactor:reactor-core" />
+    <option featureType="dependencySupport" implementationName="java:org.springframework.data:spring-data-commons" />
+    <option featureType="dependencySupport" implementationName="java:org.hibernate.validator:hibernate-validator" />
+    <option featureType="dependencySupport" implementationName="java:org.springframework:spring-webmvc" />
+    <option featureType="dependencySupport" implementationName="java:org.projectlombok:lombok" />
+    <option featureType="dependencySupport" implementationName="java:junit:junit" />
+    <option featureType="dependencySupport" implementationName="executable:docker" />
+    <option featureType="dependencySupport" implementationName="java:jakarta.persistence:jakarta.persistence-api" />
+    <option featureType="dependencySupport" implementationName="java:org.flywaydb:flyway-core" />
+    <option featureType="dependencySupport" implementationName="executable:podman" />
+    <option featureType="dependencySupport" implementationName="java:org.springframework.boot:spring-boot" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="add repositories for API key and webhook management; implement methods for retrieval and retry policies" />
+    <MESSAGE value="add design references for API, application composition, messaging, persistence, and simulators" />
+    <MESSAGE value="add module structure documentation for API, application, messaging, persistence, and simulators" />
+    <MESSAGE value="add: CompanyJpaEntity" />
+    <MESSAGE value="add: CompanyMapper" />
+    <MESSAGE value="add: JpaCompanyRepository" />
+    <MESSAGE value="update: PageResult (changed name from Page to PageResult)" />
+    <MESSAGE value="add: Company and SpringDataCompanyRepository" />
+    <MESSAGE value="update: changed Page to PageResult" />
+    <MESSAGE value="feat: create files for UserJpaEntity, UserMapper, and JpaUserRepository" />
+    <MESSAGE value="add: include toJpaEntity method and toDomain method" />
+    <MESSAGE value="add: entity fields" />
+    <MESSAGE value="add: getters for fields like companyId etc, and added a new constructor and rehydrate method that will be used by the mapper" />
+    <MESSAGE value="add: SpringDataUserRepository interface with findByCompanyId method" />
+    <MESSAGE value="fix: type mismatch error" />
+    <MESSAGE value="add: methods body to all inherited methods using the Jpa repository." />
+    <MESSAGE value="update: restructured file system in some packages in core" />
+    <MESSAGE value="add: mappers for kyc case and kyc saga" />
+    <MESSAGE value="add: spring data kyc repository" />
+    <MESSAGE value="add: entities for kyc case and kyc cas evaluation sega" />
+    <MESSAGE value="feat: implement repository methods for kyc case and kyc case evaluation sega" />
+    <MESSAGE value="feat: created entity fields for account" />
+    <MESSAGE value="feat: created mapper for account" />
+    <MESSAGE value="feat: implemented repository methods for account" />
+    <MESSAGE value="fix: file system" />
+    <option name="LAST_COMMIT_MESSAGE" value="fix: file system" />
+    <option name="OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT" value="true" />
+    <option name="REFORMAT_BEFORE_PROJECT_COMMIT" value="true" />
+  </component>
+  <component name="XSLT-Support.FileAssociations.UIState">
+    <expand />
+    <select />
+  </component>
+</project>
