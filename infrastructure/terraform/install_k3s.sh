@@ -9,11 +9,22 @@ sudo apt-get upgrade -y
 sudo iptables -I INPUT 6 -m state --state NEW -p tcp --dport 80 -j ACCEPT
 sudo iptables -I INPUT 6 -m state --state NEW -p tcp --dport 443 -j ACCEPT
 sudo iptables -I INPUT 6 -m state --state NEW -p tcp --dport 6443 -j ACCEPT
-sudo netfilter-persistent save
+sudo netfilter-persistent save || true
+
+# Install Docker
+sudo apt-get install -y ca-certificates curl gnupg
+sudo install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+sudo chmod a+r /etc/apt/keyrings/docker.gpg
+echo \
+  "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+  "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo apt-get update
+sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+sudo usermod -aG docker ubuntu
 
 # Install K3s (Lightweight Kubernetes)
-# We disable traefik if we want to install our own, but actually K3s built-in traefik is fine.
-# By default, K3s includes containerd, CoreDNS, Traefik, Klipper load-balancer
 curl -sfL https://get.k3s.io | sh -
 
 # Wait for node to be ready

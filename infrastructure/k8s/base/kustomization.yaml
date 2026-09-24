@@ -4,3 +4,6 @@ resources:
   - atlaspay-deployment.yaml
   - redis-deployment.yaml
   - kafka-deployment.yaml
+  - mysql-deployment.yaml
+  - observability-deployment.yaml
+  - ingress.yaml
