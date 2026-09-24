@@ -2,11 +2,11 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: atlashub-ingress
-  annotations:
-    kubernetes.io/ingress.class: "traefik"
 spec:
+  ingressClassName: traefik
   rules:
-  - http:
+  - host: atlashub.name.ng
+    http:
       paths:
       - path: /
         pathType: Prefix
