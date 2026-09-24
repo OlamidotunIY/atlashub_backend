@@ -67,9 +67,10 @@ ssh:
 backup-db:
 	@echo "=> Running MySQL Backup via SSH (Kubernetes)..."
 	@echo "=> Connecting to the VM, running mysqldump inside the kubernetes pod, and saving it locally."
-	$(SSH) -i $(SSH_KEY) -o StrictHostKeyChecking=no ubuntu@$(VM_IP) "export KUBECONFIG=/home/ubuntu/.kube/config && POD=\$$(kubectl get pod -l app=mysql -o jsonpath='{.items[0].metadata.name}') && kubectl exec \$$POD -- mysqldump -u root -proot atlashub" > atlashub_backup.sql
+	$(SSH) -i $(SSH_KEY) -o StrictHostKeyChecking=no ubuntu@$(VM_IP) "export KUBECONFIG=/home/ubuntu/.kube/config && POD=$$(kubectl get pod -l app=mysql -o jsonpath='{.items[0].metadata.name}') && kubectl exec $$POD -- mysqldump -u root -proot atlashub" > atlashub_backup.sql
 
 restore-db:
 	@echo "=> Restoring MySQL Backup via SSH (Kubernetes)..."
-	@echo "=> Sending the local SQL file to the VM and piping it into the MySQL kubernetes pod."
-	$(CAT) atlashub_backup.sql | $(SSH) -i $(SSH_KEY) -o StrictHostKeyChecking=no ubuntu@$(VM_IP) "export KUBECONFIG=/home/ubuntu/.kube/config && POD=\$$(kubectl get pod -l app=mysql -o jsonpath='{.items[0].metadata.name}') && kubectl exec -i \$$POD -- mysql -u root -proot atlashub"
+	@if not exist atlashub_backup.sql echo "=> No backup file found. Skipping restore."
+	@if exist atlashub_backup.sql echo "=> Sending the local SQL file to the VM and piping it into the MySQL kubernetes pod."
+	@if exist atlashub_backup.sql $(CAT) atlashub_backup.sql | $(SSH) -i $(SSH_KEY) -o StrictHostKeyChecking=no ubuntu@$(VM_IP) "export KUBECONFIG=/home/ubuntu/.kube/config && POD=$$(kubectl get pod -l app=mysql -o jsonpath='{.items[0].metadata.name}') && kubectl exec -i $$POD -- mysql -u root -proot atlashub"
