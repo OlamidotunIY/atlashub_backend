@@ -20,10 +20,7 @@ start:
 	@echo "=> Waiting for VM and Docker to initialize (sleeping for 90s)..."
 	timeout /t 90 /nobreak
 	@echo "=> Deploying Backend Stack (Cloning & Building via SSH)..."
-	$(SSH) -i $(SSH_KEY) -o StrictHostKeyChecking=no ubuntu@$(VM_IP) \
-		"if [ ! -d 'atlashub' ]; then git clone https://github.com/OlamidotunIY/atlashub_backend.git atlashub; fi && \
-		 cd atlashub && git pull && \
-		 cd infrastructure/docker && docker compose -f docker-compose.prod.yml up -d --build"
+	$(SSH) -i $(SSH_KEY) -o StrictHostKeyChecking=no ubuntu@$(VM_IP) "if [ ! -d 'atlashub' ]; then git clone https://github.com/OlamidotunIY/atlashub_backend.git atlashub; fi && cd atlashub && git pull && cd infrastructure/docker && docker compose -f docker-compose.prod.yml up -d --build"
 	@echo "=> Waiting 30s for MySQL to boot..."
 	timeout /t 30 /nobreak
 	@echo "=> Restoring Database..."
@@ -52,11 +49,9 @@ ssh:
 backup-db:
 	@echo "=> Running MySQL Backup via SSH..."
 	@echo "=> Connecting to the VM, running mysqldump inside the docker container, and saving it locally."
-	$(SSH) -i $(SSH_KEY) -o StrictHostKeyChecking=no ubuntu@$(VM_IP) \
-		"docker exec atlashub-mysql mysqldump -u root -proot atlashub" > atlashub_backup.sql
+	$(SSH) -i $(SSH_KEY) -o StrictHostKeyChecking=no ubuntu@$(VM_IP) "docker exec atlashub-mysql mysqldump -u root -proot atlashub" > atlashub_backup.sql
 
 restore-db:
 	@echo "=> Restoring MySQL Backup via SSH..."
 	@echo "=> Sending the local SQL file to the VM and piping it into the MySQL docker container."
-	$(CAT) atlashub_backup.sql | $(SSH) -i $(SSH_KEY) -o StrictHostKeyChecking=no ubuntu@$(VM_IP) \
-		"docker exec -i atlashub-mysql mysql -u root -proot atlashub"
+	$(CAT) atlashub_backup.sql | $(SSH) -i $(SSH_KEY) -o StrictHostKeyChecking=no ubuntu@$(VM_IP) "docker exec -i atlashub-mysql mysql -u root -proot atlashub"
