@@ -33,7 +33,7 @@ deploy-stack:
 	@$(SSH) -i $(SSH_KEY) -o StrictHostKeyChecking=no ubuntu@$(VM_IP) "test -f /tmp/.env" && echo "=> .env already exists on VM, skipping." || $(SCP) -i $(SSH_KEY) -o StrictHostKeyChecking=no .env ubuntu@$(VM_IP):/tmp/.env
 	@$(SSH) -i $(SSH_KEY) -o StrictHostKeyChecking=no ubuntu@$(VM_IP) "test -f /tmp/$(FIREBASE_JSON_NAME)" && echo "=> Firebase JSON already exists on VM, skipping." || $(SCP) -i $(SSH_KEY) -o StrictHostKeyChecking=no $(FIREBASE_JSON) ubuntu@$(VM_IP):/tmp/$(FIREBASE_JSON_NAME)
 	@echo "=> Ensuring Docker Image exists in K3s..."
-	@$(SSH) -i $(SSH_KEY) -o StrictHostKeyChecking=no ubuntu@$(VM_IP) "sudo k3s ctr images ls | grep -q atlashub/app:latest" || $(MAKE) build-image
+	@$(SSH) -i $(SSH_KEY) -o StrictHostKeyChecking=no ubuntu@$(VM_IP) "sudo k3s ctr images ls | grep -q atlashub/app:latest" || "$(MAKE)" build-image
 	@echo "=> Applying Kubernetes Secrets..."
 	$(SSH) -i $(SSH_KEY) -o StrictHostKeyChecking=no ubuntu@$(VM_IP) "export KUBECONFIG=/home/ubuntu/.kube/config && kubectl delete secret atlashub-secrets firebase-secrets --ignore-not-found && kubectl create secret generic atlashub-secrets --from-env-file=/tmp/.env && kubectl create secret generic firebase-secrets --from-file=/tmp/$(FIREBASE_JSON_NAME)"
 	@echo "=> Applying Kubernetes Manifests..."
