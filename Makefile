@@ -30,7 +30,7 @@ start:
 # 2. Backup the database and completely destroy the infrastructure
 stop:
 	@echo "=> Backing up the database to local machine..."
-	$(MAKE) backup-db
+	-$(MAKE) backup-db || true
 	@echo "=> Destroying all Azure infrastructure (including disks)..."
 	cd $(TF_DIR) && terraform destroy -auto-approve
 	@echo "=> Environment destroyed. Billing is now $$0."
