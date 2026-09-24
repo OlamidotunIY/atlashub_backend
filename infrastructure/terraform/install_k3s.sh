@@ -30,11 +30,11 @@ curl -sfL https://get.k3s.io | sh -
 # Wait for node to be ready
 sleep 15
 
-# Export kubeconfig for ubuntu user
+# Export kubeconfig for ubuntu user permanently
 mkdir -p /home/ubuntu/.kube
 sudo cp /etc/rancher/k3s/k3s.yaml /home/ubuntu/.kube/config
 sudo chown ubuntu:ubuntu /home/ubuntu/.kube/config
-export KUBECONFIG=/home/ubuntu/.kube/config
+echo "export KUBECONFIG=/home/ubuntu/.kube/config" >> /home/ubuntu/.bashrc
 
 echo "K3s installation complete. Node status:"
 kubectl get nodes
