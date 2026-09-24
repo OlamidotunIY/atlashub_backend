@@ -2,6 +2,8 @@ package com.atlashub.main.security;
 
 import com.atlashub.authentication.infrastructure.security.JwtTokenAdapter;
 import com.atlashub.authentication.application.port.TokenRevocationPort;
+import com.atlashub.authentication.domain.entities.Session;
+import com.atlashub.authentication.domain.repositories.SessionRepository;
 import com.atlashub.shared.domain.valueobject.CorrelationId;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
@@ -25,10 +27,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenAdapter jwtTokenAdapter;
     private final TokenRevocationPort revocationPort;
+    private final SessionRepository sessionRepository;
 
-    public JwtAuthenticationFilter(JwtTokenAdapter jwtTokenAdapter, TokenRevocationPort revocationPort) {
+    public JwtAuthenticationFilter(JwtTokenAdapter jwtTokenAdapter,
+                                   TokenRevocationPort revocationPort,
+                                   SessionRepository sessionRepository) {
         this.jwtTokenAdapter = jwtTokenAdapter;
         this.revocationPort = revocationPort;
+        this.sessionRepository = sessionRepository;
     }
 
     @Override
@@ -58,6 +64,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
 
             String userId = claims.getSubject();
+            String sessionId = claims.get("sessionId", String.class);
+
+            if (sessionId == null || sessionId.isBlank()) {
+                SecurityContextHolder.clearContext();
+                filterChain.doFilter(request, response);
+                return;
+            }
+
+            Session session = sessionRepository.findById(Long.valueOf(sessionId))
+                    .filter(activeSession -> !activeSession.isExpired())
+                    .filter(activeSession -> activeSession.getUserId().equals(userId))
+                    .orElse(null);
+
+            if (session == null) {
+                SecurityContextHolder.clearContext();
+                filterChain.doFilter(request, response);
+                return;
+            }
 
             @SuppressWarnings("unchecked")
             List<String> permissions = claims.get("permissions", List.class);

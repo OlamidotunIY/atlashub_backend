@@ -17,5 +17,6 @@ include 'atlashub-infrastructure:audit'
 // App
 
 include 'atlashub-platform:authentication'
+include 'atlashub-platform:storage'
 include 'atlashub-main'
 include 'atlashub-platform:iam'

@@ -9,693 +9,86 @@
   <component name="ChangeListManager">
     <list default="true" id="174f3fac-956e-4ce4-b2e2-bac8d3e75c4d" name="Changes" comment="fix: file system">
       <changelist_data name="Iyanda Olamidotun" email="olamidotun225@gmail.com" automatic="false" />
-      <change afterPath="$PROJECT_DIR$/atlashub-platform/accounts/src/main/java/com/atlashub/accounts/domain/exception/UserAlreadyExist.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/atlashub-platform/accounts/src/main/java/com/atlashub/accounts/infrastructure/entities/OrganizationJPA.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/atlashub-platform/accounts/src/main/java/com/atlashub/accounts/infrastructure/entities/UserJPA.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/domain/entities/AuthAccount.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/domain/entities/TrustedDevice.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/domain/events/AuthAccountLocked.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/domain/exceptions/AuthInvaraintError.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/domain/exceptions/AuthLocked.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/domain/exceptions/EmailAlreadyVerified.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/domain/exceptions/VerifyTokenError.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/domain/ports/OtpGenerator.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/infrastructure/persistence/entities/AuthAccountJpa.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/infrastructure/persistence/mappers/AuthAccountMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/atlashub-platform/catalog/src/main/java/com/atlashub/catalog/domain/exception/ProductNotActiveException.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/atlashub-platform/catalog/src/main/java/com/atlashub/catalog/domain/exception/ProductNotFoundException.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/application/port/OrganizationQueryPort.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/application/port/UserQueryPort.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/domain/exception/NegativeMoneyException.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/claudeCodeTabState.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dictionaries/project.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/diff-generator.xml" beforeDir="false" />
+      <change afterPath="$PROJECT_DIR$/infrastructure/docker/nginx.conf" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/infrastructure/terraform/terraform.tfvars" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.env.example" beforeDir="false" afterPath="$PROJECT_DIR$/.env.example" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources/data_sources_history.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources/data_sources_history.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/db-forest-config.xml" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/gradle.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/gradle.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/jpa.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/jpb-settings.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/material_theme_project_new.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/runConfigurations/replay_dlq_events.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/sqldialects.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/GEMINI.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-app/build.gradle" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-app/src/main/java/com/atlashub/app/AtlasHubApplication.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-app/src/main/java/com/atlashub/app/config/OpenApiConfig.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-app/src/main/java/com/atlashub/app/config/PublicEndpointScanner.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-app/src/main/java/com/atlashub/app/config/SecurityConfig.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-app/src/main/java/com/atlashub/app/config/SimulatorConfig.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-app/src/main/java/com/atlashub/app/config/WebMvcConfig.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-app/src/main/java/com/atlashub/app/exception/GlobalExceptionHandler.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-app/src/main/java/com/atlashub/app/security/AuthTokenParser.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-app/src/main/java/com/atlashub/app/security/authentication/AtlasHubAuthenticationToken.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-app/src/main/java/com/atlashub/app/security/filter/ApiKeyAuthenticationFilter.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-app/src/main/java/com/atlashub/app/security/filter/JwtAuthenticationFilter.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-app/src/main/java/com/atlashub/app/security/websocket/JwtChannelInterceptor.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-app/src/main/resources/application-local.yml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-app/src/main/resources/application-prod.yml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-app/src/main/resources/application.yml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-app/src/main/resources/logback-spring.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-app/src/test/java/com/atlashub/app/AtlasHubApplicationTests.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-app/src/test/java/com/atlashub/app/architecture/ArchitectureRulesTest.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-app/src/test/java/com/atlashub/app/testinfra/BaseIntegrationTest.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-app/src/test/resources/application-test.yml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-commerce/build.gradle" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-commerce/inventory/build.gradle" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-commerce/inventory/src/main/java/com/atlashub/inventory/domain/model/ProductInventory.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-commerce/orders/build.gradle" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-commerce/orders/src/main/java/com/atlashub/orders/domain/model/Order.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-commerce/storefront/build.gradle" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-commerce/storefront/src/main/java/com/atlashub/storefront/domain/model/Store.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-infrastructure/audit/src/main/java/com/atlashub/audit/adapter/in/messaging/AuditSubscriptionRegistrar.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-infrastructure/audit/src/main/java/com/atlashub/audit/adapter/in/messaging/AuditSubscriptionRegistrar.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Dockerfile" beforeDir="false" afterPath="$PROJECT_DIR$/Dockerfile" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/atlashub-infrastructure/audit/src/main/java/com/atlashub/audit/adapter/in/messaging/AuthAuditEventListener.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-infrastructure/audit/src/main/java/com/atlashub/audit/adapter/in/messaging/AuthAuditEventListener.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-infrastructure/audit/src/main/java/com/atlashub/audit/adapter/in/messaging/IdentityAuditEventListener.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-infrastructure/audit/src/main/java/com/atlashub/audit/adapter/in/messaging/IdentityAuditEventListener.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-infrastructure/audit/src/main/java/com/atlashub/audit/domain/model/ActivityLog.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-infrastructure/audit/src/main/java/com/atlashub/audit/domain/model/ActivityLog.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-infrastructure/build.gradle" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-infrastructure/audit/src/main/java/com/atlashub/audit/adapter/in/messaging/IdentityAuditEventListener.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-infrastructure/audit/src/main/java/com/atlashub/audit/adapter/out/persistence/entity/ActivityLogJpaEntity.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-infrastructure/audit/src/main/java/com/atlashub/audit/adapter/out/persistence/entity/ActivityLogJpaEntity.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/atlashub-infrastructure/eventbus/src/main/java/com/atlashub/eventbus/adapter/in/internal/EventTrackerApiImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-infrastructure/eventbus/src/main/java/com/atlashub/eventbus/adapter/in/internal/EventTrackerApiImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-infrastructure/eventbus/src/main/java/com/atlashub/eventbus/adapter/in/web/controller/EventReplayController.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-infrastructure/eventbus/src/main/java/com/atlashub/eventbus/adapter/in/web/controller/EventReplayController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-infrastructure/eventbus/src/main/java/com/atlashub/eventbus/adapter/out/external/messaging/KafkaTopicConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-infrastructure/eventbus/src/main/java/com/atlashub/eventbus/adapter/out/external/messaging/KafkaTopicConfig.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-infrastructure/eventbus/src/main/java/com/atlashub/eventbus/application/SpringEventPublisherAdapter.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-infrastructure/eventbus/src/main/java/com/atlashub/eventbus/application/SpringEventPublisherAdapter.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-infrastructure/eventbus/src/main/java/com/atlashub/eventbus/application/usecase/ReplayEventUseCase.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-infrastructure/eventbus/src/main/java/com/atlashub/eventbus/application/usecase/ReplayEventUseCase.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-infrastructure/eventbus/src/main/java/com/atlashub/eventbus/domain/exception/EventbusErrorCode.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-infrastructure/eventbus/src/main/java/com/atlashub/eventbus/domain/model/OutboxMessage.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-infrastructure/eventbus/src/main/java/com/atlashub/eventbus/domain/model/OutboxMessage.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-infrastructure/notifications/build.gradle" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-infrastructure/notifications/src/main/java/com/atlashub/notifications/adapter/in/messaging/AccountEventListener.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-infrastructure/notifications/src/main/java/com/atlashub/notifications/adapter/in/messaging/AdminCredentialsCreatedEventListener.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-infrastructure/notifications/src/main/java/com/atlashub/notifications/adapter/in/messaging/AuthEventListener.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-infrastructure/notifications/src/main/java/com/atlashub/notifications/adapter/in/messaging/DomainEventWebSocketBroadcaster.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-infrastructure/notifications/src/main/java/com/atlashub/notifications/adapter/in/messaging/IdentityEventListener.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-infrastructure/notifications/src/main/java/com/atlashub/notifications/adapter/in/messaging/NotificationSubscriptionRegistrar.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-infrastructure/notifications/src/main/java/com/atlashub/notifications/adapter/in/messaging/WebhookDeliveryListener.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-infrastructure/notifications/src/main/java/com/atlashub/notifications/adapter/in/web/controller/WsTicketController.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-infrastructure/notifications/src/main/java/com/atlashub/notifications/adapter/in/web/response/WsTicketResponseDto.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-infrastructure/notifications/src/main/java/com/atlashub/notifications/adapter/out/external/config/TicketHandshakeInterceptor.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-infrastructure/notifications/src/main/java/com/atlashub/notifications/adapter/out/external/config/WebSocketConfig.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-infrastructure/notifications/src/main/java/com/atlashub/notifications/adapter/out/external/dto/VirtualAccountActivatedNotificationEvent.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-infrastructure/notifications/src/main/java/com/atlashub/notifications/adapter/out/external/smtp/SmtpEmailSenderAdapter.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-infrastructure/notifications/src/main/java/com/atlashub/notifications/application/port/EmailSenderPort.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-infrastructure/notifications/src/main/java/com/atlashub/notifications/application/service/WsTicketService.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-infrastructure/notifications/src/main/java/com/atlashub/notifications/application/usecase/SendAdminWelcomeEmailUseCase.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-infrastructure/notifications/src/main/java/com/atlashub/notifications/application/usecase/SendVerificationEmailUseCase.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-infrastructure/notifications/src/main/resources/templates/emails/admin-welcome.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-infrastructure/notifications/src/main/resources/templates/emails/login-notification.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-infrastructure/notifications/src/main/resources/templates/emails/organization-joined.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-infrastructure/notifications/src/main/resources/templates/emails/password-changed.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-infrastructure/notifications/src/main/resources/templates/emails/user-setup-password.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-infrastructure/notifications/src/main/resources/templates/emails/verification.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-infrastructure/rate-limiter/src/main/java/com/atlashub/ratelimiter/core/EvaluateRateLimitUseCase.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-infrastructure/rate-limiter/src/main/java/com/atlashub/ratelimiter/core/EvaluateRateLimitUseCase.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-infrastructure/rate-limiter/src/main/java/com/atlashub/ratelimiter/core/RateLimitEvaluator.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-infrastructure/rate-limiter/src/main/java/com/atlashub/ratelimiter/core/RateLimitEvaluator.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-infrastructure/rate-limiter/src/main/java/com/atlashub/ratelimiter/exception/RateLimiterErrorCode.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-infrastructure/rate-limiter/src/main/java/com/atlashub/ratelimiter/web/GlobalRateLimitInterceptor.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-infrastructure/rate-limiter/src/main/java/com/atlashub/ratelimiter/web/GlobalRateLimitInterceptor.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-logistics/build.gradle" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-logistics/shipping/build.gradle" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-logistics/shipping/src/main/java/com/atlashub/shipping/domain/valueobject/Shipment.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/accounts/build.gradle" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/accounts/adapter/in/messaging/AccountsSubscriptionRegistrar.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/accounts/adapter/in/messaging/OrganizationBannedEventListener.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/accounts/adapter/in/messaging/OrganizationComplianceApprovedListener.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/accounts/adapter/in/messaging/OrganizationRegisteredListener.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/accounts/adapter/in/web/controller/InternalAccountController.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/accounts/adapter/in/web/controller/VirtualAccountController.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/accounts/adapter/out/persistence/InternalAccountRepositoryAdapter.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/accounts/adapter/out/persistence/VirtualAccountPersistenceAdapter.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/accounts/adapter/out/persistence/entity/InternalAccountEntity.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/accounts/adapter/out/persistence/entity/VirtualAccountEntity.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/accounts/adapter/out/persistence/mapper/InternalAccountMapper.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/accounts/adapter/out/persistence/mapper/VirtualAccountMapper.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/accounts/adapter/out/persistence/query/AccountQueryServiceImpl.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/accounts/adapter/out/persistence/repository/JpaVirtualAccountRepository.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/accounts/adapter/out/persistence/repository/SpringDataInternalAccountRepository.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/accounts/application/command/ActivateVirtualAccountCommand.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/accounts/application/command/BootstrapOrganizationAccountsCommand.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/accounts/application/command/ForceCloseAccountsCommand.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/accounts/application/command/IssueVirtualAccountCommand.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/accounts/application/command/RequestClosureCommand.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/accounts/application/port/AccountIssuancePort.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/accounts/application/port/AccountIssuanceRouterPort.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/accounts/application/port/AccountQueryService.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/accounts/application/port/in/AccountDetailsDto.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/accounts/application/query/GetInternalAccountQuery.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/accounts/application/query/GetVirtualAccountsQuery.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/accounts/application/result/AccountIssuanceRequestDto.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/accounts/application/result/InternalAccountDto.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/accounts/application/result/VirtualAccountDto.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/accounts/application/saga/AccountIssuanceSaga.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/accounts/application/usecase/ActivateVirtualAccountUseCase.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/accounts/application/usecase/BootstrapOrganizationAccountsUseCase.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/accounts/application/usecase/ForceCloseAccountsUseCase.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/accounts/application/usecase/IssueVirtualAccountUseCase.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/accounts/application/usecase/RequestClosureUseCase.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/accounts/domain/event/VirtualAccountActivatedEvent.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/accounts/domain/event/VirtualAccountClosedEvent.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/accounts/domain/event/VirtualAccountClosureRequestedEvent.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/accounts/domain/event/VirtualAccountCreatedEvent.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/accounts/domain/exception/AccountsErrorCode.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/accounts/domain/model/InternalAccount.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/accounts/domain/model/VirtualAccount.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/accounts/domain/repository/InternalAccountDomainRepository.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/accounts/domain/repository/VirtualAccountDomainRepository.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/accounts/domain/valueobject/AccountStatus.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/accounts/domain/valueobject/InternalAccountStatus.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/accounts/domain/valueobject/InternalAccountType.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/accounts/domain/valueobject/OwnerType.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/accounts/src/test/java/com/atlashub/accounts/application/usecase/IssueVirtualAccountUseCaseTest.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/accounts/src/test/java/com/atlashub/accounts/domain/model/VirtualAccountTest.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/build.gradle" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/charges/build.gradle" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/charges/src/main/java/com/atlashub/charges/adapter/in/messaging/ExternalChargeRequestedListener.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/charges/src/main/java/com/atlashub/charges/adapter/out/persistence/entity/ExternalChargeJpaEntity.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/charges/src/main/java/com/atlashub/charges/adapter/out/persistence/mapper/ExternalChargeMapper.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/charges/src/main/java/com/atlashub/charges/adapter/out/persistence/query/ChargeQueryServiceImpl.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/charges/src/main/java/com/atlashub/charges/adapter/out/persistence/repository/ExternalChargeRepositoryAdapter.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/charges/src/main/java/com/atlashub/charges/adapter/out/persistence/repository/SpringDataExternalChargeRepository.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/charges/src/main/java/com/atlashub/charges/application/command/HandlePaystackWebhookCommand.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/charges/src/main/java/com/atlashub/charges/application/command/InitiateExternalChargeCommand.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/charges/src/main/java/com/atlashub/charges/application/port/ChargeQueryService.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/charges/src/main/java/com/atlashub/charges/application/port/out/PaymentGatewayPort.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/charges/src/main/java/com/atlashub/charges/application/port/out/PaymentGatewayRouterPort.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/charges/src/main/java/com/atlashub/charges/application/usecase/HandlePaystackWebhookUseCase.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/charges/src/main/java/com/atlashub/charges/application/usecase/InitiateExternalChargeUseCase.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/charges/src/main/java/com/atlashub/charges/application/usecase/ProcessWalletChargeUseCase.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/charges/src/main/java/com/atlashub/charges/domain/event/ExternalChargeFailedEvent.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/charges/src/main/java/com/atlashub/charges/domain/event/ExternalChargeInitiatedEvent.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/charges/src/main/java/com/atlashub/charges/domain/event/ExternalChargeRequestedEvent.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/charges/src/main/java/com/atlashub/charges/domain/event/ExternalPaymentFailedEvent.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/charges/src/main/java/com/atlashub/charges/domain/event/ExternalPaymentSuccessfulEvent.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/charges/src/main/java/com/atlashub/charges/domain/event/PaymentSuccessfulEvent.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/charges/src/main/java/com/atlashub/charges/domain/exception/ChargesErrorCode.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/charges/src/main/java/com/atlashub/charges/domain/model/ExternalCharge.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/charges/src/main/java/com/atlashub/charges/domain/repository/ExternalChargeRepository.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/charges/src/main/java/com/atlashub/charges/domain/valueobject/ChargePurpose.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/charges/src/main/java/com/atlashub/charges/domain/valueobject/ChargeStatus.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/charges/src/main/java/com/atlashub/charges/domain/valueobject/PaystackEventType.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/escrow/build.gradle" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/build.gradle" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/ledger/adapter/in/messaging/WalletChargeRequestedListener.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/ledger/adapter/in/web/controller/LedgerController.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/ledger/adapter/in/web/request/GetLedgerHistoryRequestDto.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/ledger/adapter/out/catalog/AccountsModuleInternalAccountAdapter.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/ledger/adapter/out/persistence/BalanceSnapshotRepositoryAdapter.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/ledger/adapter/out/persistence/LedgerEntryRepositoryAdapter.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/ledger/adapter/out/persistence/LedgerTransactionRepositoryAdapter.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/ledger/adapter/out/persistence/entity/BalanceSnapshotJpaEntity.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/ledger/adapter/out/persistence/entity/LedgerEntryJpaEntity.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/ledger/adapter/out/persistence/entity/LedgerTransactionJpaEntity.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/ledger/adapter/out/persistence/entity/WalletChargeJpaEntity.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/ledger/adapter/out/persistence/mapper/BalanceSnapshotMapper.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/ledger/adapter/out/persistence/mapper/LedgerEntryMapper.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/ledger/adapter/out/persistence/mapper/LedgerTransactionMapper.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/ledger/adapter/out/persistence/mapper/WalletChargeMapper.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/ledger/adapter/out/persistence/repository/SpringDataBalanceSnapshotRepository.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/ledger/adapter/out/persistence/repository/SpringDataLedgerEntryRepository.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/ledger/adapter/out/persistence/repository/SpringDataLedgerTransactionRepository.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/ledger/adapter/out/persistence/repository/SpringDataWalletChargeRepository.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/ledger/adapter/out/persistence/repository/WalletChargeRepositoryAdapter.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/ledger/application/command/HandleWalletChargeCommand.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/ledger/application/command/PostLedgerTransactionCommand.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/ledger/application/command/ProcessWalletChargeCommand.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/ledger/application/port/out/InternalAccountPort.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/ledger/application/query/GetAccountBalanceQuery.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/ledger/application/query/GetLedgerHistoryQuery.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/ledger/application/result/BalanceDto.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/ledger/application/result/LedgerHistoryDto.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/ledger/application/usecase/GetAccountBalanceUseCase.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/ledger/application/usecase/GetLedgerHistoryUseCase.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/ledger/application/usecase/HandleWalletChargeUseCase.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/ledger/application/usecase/PostLedgerTransactionUseCase.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/ledger/domain/event/FundsReservationFailedEvent.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/ledger/domain/event/FundsReservedEvent.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/ledger/domain/event/LedgerTransactionPostedEvent.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/ledger/domain/event/WalletChargeFailedEvent.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/ledger/domain/event/WalletChargeRequestedEvent.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/ledger/domain/event/WalletChargeSuccessfulEvent.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/ledger/domain/exception/LedgerErrorCode.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/ledger/domain/model/BalanceSnapshot.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/ledger/domain/model/LedgerEntry.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/ledger/domain/model/LedgerTransaction.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/ledger/domain/model/TransactionReference.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/ledger/domain/model/WalletCharge.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/ledger/domain/repository/BalanceSnapshotRepository.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/ledger/domain/repository/LedgerEntryRepository.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/ledger/domain/repository/LedgerTransactionRepository.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/ledger/domain/repository/WalletChargeRepository.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/ledger/domain/valueobject/EntryType.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/ledger/domain/valueobject/InternalAccountType.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/ledger/domain/valueobject/SourceSystem.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/ledger/domain/valueobject/WalletChargeStatus.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/src/test/java/com/atlashub/ledger/application/usecase/GetAccountBalanceUseCaseTest.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/src/test/java/com/atlashub/ledger/application/usecase/PostLedgerTransactionUseCaseTest.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/src/test/java/com/atlashub/ledger/domain/model/LedgerTransactionTest.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/providers/build.gradle" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/providers/src/main/java/com/atlashub/pay/providers/anchor/AnchorVirtualAccountAdapter.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/providers/src/main/java/com/atlashub/pay/providers/paystack/PaystackGatewayAdapter.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/providers/src/main/java/com/atlashub/pay/providers/paystack/PaystackWebhookController.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/providers/src/main/java/com/atlashub/pay/providers/paystack/PaystackWebhookRequest.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/providers/src/main/java/com/atlashub/pay/providers/routing/AccountIssuanceRouterAdapter.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/providers/src/main/java/com/atlashub/pay/providers/routing/PaymentGatewayRouterAdapter.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/providers/src/main/java/com/atlashub/pay/providers/routing/RoutingPolicy.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/providers/src/main/java/com/atlashub/providers/adapter/in/AccountIssuanceRouterAdapter.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/providers/src/main/java/com/atlashub/providers/adapter/in/PaymentGatewayRouterAdapter.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/providers/src/main/java/com/atlashub/providers/routing/PaymentCapability.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/providers/src/main/java/com/atlashub/providers/routing/RoutingPolicy.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/settlement/build.gradle" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/splits/build.gradle" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/subscriptions/build.gradle" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/transactions-query/build.gradle" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/transfers/build.gradle" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/admin/build.gradle" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/admin/src/main/java/com/atlashub/admin/adapter/in/internal/InternalAdminApiImpl.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/admin/src/main/java/com/atlashub/admin/adapter/in/web/controller/AdminController.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/admin/src/main/java/com/atlashub/admin/adapter/in/web/request/BootstrapRequestDto.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/admin/src/main/java/com/atlashub/admin/adapter/in/web/request/CreateAdminRequestDto.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/admin/src/main/java/com/atlashub/admin/adapter/out/persistence/entity/AdminJpaEntity.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/admin/src/main/java/com/atlashub/admin/adapter/out/persistence/mapper/AdminMapper.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/admin/src/main/java/com/atlashub/admin/adapter/out/persistence/query/AdminQueryServiceImpl.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/admin/src/main/java/com/atlashub/admin/adapter/out/persistence/repository/AdminRepositoryAdapter.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/admin/src/main/java/com/atlashub/admin/adapter/out/persistence/repository/SpringDataAdminRepository.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/admin/src/main/java/com/atlashub/admin/application/command/BootstrapMasterAdminCommand.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/admin/src/main/java/com/atlashub/admin/application/command/CreateAdminCommand.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/admin/src/main/java/com/atlashub/admin/application/command/GenerateCompanyEmailAliasCommand.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/admin/src/main/java/com/atlashub/admin/application/port/AdminQueryService.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/admin/src/main/java/com/atlashub/admin/application/result/AdminCreationResult.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/admin/src/main/java/com/atlashub/admin/application/result/AdminDto.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/admin/src/main/java/com/atlashub/admin/application/result/CreateAdminResult.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/admin/src/main/java/com/atlashub/admin/application/result/GenerateEmailResult.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/admin/src/main/java/com/atlashub/admin/application/service/AdminCreationService.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/admin/src/main/java/com/atlashub/admin/application/usecase/BootstrapMasterAdminUseCase.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/admin/src/main/java/com/atlashub/admin/application/usecase/CreateAdminUseCase.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/admin/src/main/java/com/atlashub/admin/application/usecase/VerifyOrganizationUseCase.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/admin/src/main/java/com/atlashub/admin/domain/event/AdminCreatedEvent.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/admin/src/main/java/com/atlashub/admin/domain/event/AdminPermissionGrantedEvent.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/admin/src/main/java/com/atlashub/admin/domain/event/AdminPermissionRevokedEvent.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/admin/src/main/java/com/atlashub/admin/domain/event/AdminSuspendedEvent.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/admin/src/main/java/com/atlashub/admin/domain/exception/AdminErrorCode.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/admin/src/main/java/com/atlashub/admin/domain/model/Admin.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/admin/src/main/java/com/atlashub/admin/domain/model/EmployeeCode.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/admin/src/main/java/com/atlashub/admin/domain/repository/AdminRepository.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/admin/src/main/java/com/atlashub/admin/domain/valueobject/AdminPermission.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/admin/src/main/java/com/atlashub/admin/domain/valueobject/AdminRole.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/admin/src/main/java/com/atlashub/admin/domain/valueobject/AdminStatus.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/build.gradle" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/adapter/in/messaging/AdminCreatedEventListener.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/adapter/in/messaging/AuthSubscriptionRegistrar.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/adapter/in/messaging/SessionCacheUpdateListener.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/adapter/in/messaging/UserCreatedEventListener.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/adapter/in/web/controller/AuthController.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/adapter/in/web/request/ChangeTemporaryPasswordRequestDto.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/adapter/in/web/request/CompleteVerificationRequestDto.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/adapter/in/web/request/LoginRequestDto.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/adapter/in/web/request/LogoutRequestDto.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/adapter/in/web/request/RefreshTokenRequestDto.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/adapter/in/web/request/RegisterViaInvitationRequestDto.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/adapter/in/web/request/ResendSetupTokenRequestDto.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/adapter/in/web/request/SetupPasswordRequestDto.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/adapter/in/web/request/VerifyMfaRequestDto.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/adapter/out/external/cache/RedisPreAuthTokenStoreAdapter.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/adapter/out/external/cache/RedisSetupTokenStoreAdapter.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/adapter/out/external/cache/RedisTokenCacheAdapter.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/adapter/out/external/config/JwtProperties.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/adapter/out/external/identity/IdentityInvitationAdapter.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/adapter/out/external/security/BcryptPasswordEncoderAdapter.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/adapter/out/external/security/JwtTokenGeneratorAdapter.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/adapter/out/external/security/OtpGeneratorAdapter.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/adapter/out/external/security/TotpAdapter.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/adapter/out/persistence/AuthAccountRepositoryAdapter.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/adapter/out/persistence/SessionRepositoryAdapter.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/adapter/out/persistence/VerificationRepositoryAdapter.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/adapter/out/persistence/entity/AuthAccountJpaEntity.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/adapter/out/persistence/entity/SessionJpaEntity.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/adapter/out/persistence/entity/VerificationJpaEntity.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/adapter/out/persistence/mapper/AuthAccountMapper.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/adapter/out/persistence/mapper/SessionMapper.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/adapter/out/persistence/mapper/VerificationMapper.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/adapter/out/persistence/query/AuthAccountQueryServiceImpl.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/adapter/out/persistence/repository/SpringDataAuthAccountRepository.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/adapter/out/persistence/repository/SpringDataSessionRepository.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/adapter/out/persistence/repository/SpringDataVerificationRepository.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/application/command/AuthenticateCommand.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/application/command/ChangeTemporaryPasswordCommand.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/application/command/CompleteTwoFactorCommand.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/application/command/CompleteVerificationCommand.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/application/command/CreateAuthAccountCommand.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/application/command/CreateVerificationCommand.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/application/command/EnableTotpCommand.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/application/command/RefreshTokenCommand.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/application/command/RegisterViaInvitationCommand.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/application/command/ResendSetupTokenCommand.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/application/command/RevokeAllSessionsCommand.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/application/command/RevokeSessionCommand.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/application/command/SetupPasswordCommand.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/application/command/UpdateCredentialCommand.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/application/port/AuthAccountQueryService.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/application/port/in/OtpGeneratorPort.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/application/port/in/PasswordEncoderPort.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/application/port/PasswordEncoderPort.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/application/port/in/PreAuthTokenStorePort.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/application/port/in/SetupTokenStorePort.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/application/port/in/TokenGeneratorPort.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/application/port/in/TotpServicePort.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/application/port/out/InvitationQueryPort.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/application/port/out/TokenCachePort.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/application/result/AuthAccountDto.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/application/result/AuthResponseDto.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/application/result/AuthTokenDto.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/application/result/AuthenticatedUserDto.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/application/result/PreAuthTokenDto.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/application/result/SessionDto.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/application/result/TotpSetupDto.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/application/result/VerificationResponseDto.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/application/service/TokenIssuanceService.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/application/usecase/AuthenticateUseCase.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/application/usecase/ChangeTemporaryPasswordUseCase.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/application/usecase/CompleteTwoFactorUseCase.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/application/usecase/CompleteVerificationUseCase.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/application/usecase/CreateAuthAccountUseCase.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/application/usecase/CreateVerificationUseCase.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/application/usecase/EnableTotpUseCase.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/application/usecase/RefreshTokenUseCase.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/application/usecase/RegisterViaInvitationUseCase.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/application/usecase/ResendSetupTokenUseCase.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/application/usecase/RevokeAllSessionsUseCase.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/application/usecase/RevokeSessionUseCase.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/application/usecase/SetupPasswordUseCase.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/application/usecase/UpdateCredentialUseCase.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/domain/event/AuthAccountCreatedEvent.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/domain/event/AuthAccountSuspendedEvent.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/domain/event/AuthAdminCredentialsCreatedEvent.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/domain/event/AuthNewDeviceLoginEvent.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/domain/event/AuthPasswordSetupInitiatedEvent.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/domain/event/AuthSessionCreatedEvent.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/domain/event/AuthSessionRevokedEvent.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/domain/event/AuthVerificationCompletedEvent.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/domain/event/AuthVerificationCreatedEvent.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/domain/event/SessionPayload.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/domain/event/VerificationPayload.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/domain/exception/AuthErrorCode.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/domain/model/AuthAccount.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/domain/model/Session.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/domain/model/Verification.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/domain/repository/AuthAccountRepository.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/domain/repository/SessionRepository.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/domain/repository/VerificationRepository.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/domain/service/VerificationCodeHasher.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/domain/valueobject/AuthProvider.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/domain/valueobject/AuthStatus.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/domain/valueobject/PrincipalType.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/domain/valueobject/SessionStatus.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/domain/valueobject/VerificationStatus.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/auth/src/main/java/com/atlashub/auth/domain/valueobject/VerificationType.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/billing/build.gradle" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/billing/src/main/java/com/atlashub/billing/adapter/in/messaging/ExternalPaymentResultListener.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/billing/src/main/java/com/atlashub/billing/adapter/in/messaging/WalletChargeResultListener.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/billing/src/main/java/com/atlashub/billing/adapter/in/web/controller/BillingController.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/billing/src/main/java/com/atlashub/billing/adapter/in/web/request/CheckoutSubscriptionRequest.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/billing/src/main/java/com/atlashub/billing/adapter/in/web/response/CheckoutSubscriptionResponse.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/billing/src/main/java/com/atlashub/billing/adapter/out/persistence/entity/BillingInvoiceJpaEntity.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/billing/src/main/java/com/atlashub/billing/adapter/out/persistence/entity/OrganizationProductJpaEntity.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/billing/src/main/java/com/atlashub/billing/adapter/out/persistence/mapper/BillingInvoiceMapper.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/billing/src/main/java/com/atlashub/billing/adapter/out/persistence/mapper/OrganizationProductMapper.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/billing/src/main/java/com/atlashub/billing/adapter/out/persistence/repository/BillingInvoiceRepositoryAdapter.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/billing/src/main/java/com/atlashub/billing/adapter/out/persistence/repository/OrganizationProductRepositoryAdapter.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/billing/src/main/java/com/atlashub/billing/adapter/out/persistence/repository/SpringDataBillingInvoiceRepository.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/billing/src/main/java/com/atlashub/billing/adapter/out/persistence/repository/SpringDataOrganizationProductRepository.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/billing/src/main/java/com/atlashub/billing/application/command/CheckoutSubscriptionCommand.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/billing/src/main/java/com/atlashub/billing/application/command/FinalizeInvoicePaymentCommand.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/billing/src/main/java/com/atlashub/billing/application/command/HandleWalletChargeFailedCommand.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/billing/src/main/java/com/atlashub/billing/application/port/out/ProductPricingDto.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/billing/src/main/java/com/atlashub/billing/application/usecase/CheckoutSubscriptionUseCase.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/billing/src/main/java/com/atlashub/billing/application/usecase/FinalizeInvoicePaymentUseCase.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/billing/src/main/java/com/atlashub/billing/application/usecase/HandleWalletChargeFailedUseCase.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/billing/src/main/java/com/atlashub/billing/domain/events/BillingInvoiceGeneratedEvent.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/billing/src/main/java/com/atlashub/billing/domain/events/BillingInvoicePaidEvent.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/billing/src/main/java/com/atlashub/billing/domain/events/ExternalChargeRequestedEvent.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/billing/src/main/java/com/atlashub/billing/domain/events/PaymentSuccessfulEvent.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/billing/src/main/java/com/atlashub/billing/domain/events/ProductSubscribedEvent.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/billing/src/main/java/com/atlashub/billing/domain/events/SubscriptionCanceledEvent.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/billing/src/main/java/com/atlashub/billing/domain/events/SubscriptionRenewedEvent.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/billing/src/main/java/com/atlashub/billing/domain/events/SubscriptionSuspendedEvent.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/billing/src/main/java/com/atlashub/billing/domain/events/WalletChargeFailedEvent.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/billing/src/main/java/com/atlashub/billing/domain/events/WalletChargeRequestedEvent.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/billing/src/main/java/com/atlashub/billing/domain/events/WalletChargeSuccessfulEvent.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/billing/src/main/java/com/atlashub/billing/domain/exception/BillingErrorCode.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/billing/src/main/java/com/atlashub/billing/domain/model/BillingInvoice.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/billing/src/main/java/com/atlashub/billing/domain/model/OrganizationProduct.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/billing/src/main/java/com/atlashub/billing/domain/repository/BillingInvoiceRepository.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/billing/src/main/java/com/atlashub/billing/domain/repository/OrganizationProductRepository.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/billing/src/main/java/com/atlashub/billing/domain/valueobject/ChargePurpose.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/billing/src/main/java/com/atlashub/billing/domain/valueobject/InvoiceStatus.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/billing/src/main/java/com/atlashub/billing/domain/valueobject/PaymentMethod.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/billing/src/main/java/com/atlashub/billing/domain/valueobject/SubscriptionStatus.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/build.gradle" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-infrastructure/eventbus/src/main/java/com/atlashub/eventbus/adapter/in/messaging/listener/SpringDomainEventListener.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-infrastructure/eventbus/src/main/java/com/atlashub/eventbus/adapter/in/messaging/listener/SpringDomainEventListener.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-infrastructure/eventbus/src/main/java/com/atlashub/eventbus/adapter/out/persistence/entity/OutboxMessageJpaEntity.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-infrastructure/eventbus/src/main/java/com/atlashub/eventbus/adapter/out/persistence/entity/OutboxMessageJpaEntity.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-infrastructure/eventbus/src/main/java/com/atlashub/eventbus/adapter/out/persistence/repository/SpringDataOutboxMessageRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-infrastructure/eventbus/src/main/java/com/atlashub/eventbus/adapter/out/persistence/repository/SpringDataOutboxMessageRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-infrastructure/eventbus/src/main/java/com/atlashub/eventbus/application/port/EventTrackerPort.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-infrastructure/eventbus/src/main/java/com/atlashub/eventbus/application/usecase/ProcessOutboxMessagesUseCase.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-infrastructure/eventbus/src/main/java/com/atlashub/eventbus/application/usecase/ProcessOutboxMessagesUseCase.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-main/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-main/build.gradle" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-main/src/main/java/com/atlashub/main/config/ApplicationConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-main/src/main/java/com/atlashub/main/config/ApplicationConfig.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-main/src/main/java/com/atlashub/main/security/JwtAuthenticationFilter.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-main/src/main/java/com/atlashub/main/security/JwtAuthenticationFilter.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-main/src/main/resources/application.yml" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-main/src/main/resources/application.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/accounts/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/accounts/build.gradle" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/accounts/src/main/java/com/atlashub/accounts/domain/model/User.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/accounts/src/main/java/com/atlashub/accounts/domain/model/User.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/accounts/src/main/java/com/atlashub/accounts/infrastructure/persistence/adapters/OrganizationRepositoryAdapter.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/accounts/src/main/java/com/atlashub/accounts/infrastructure/persistence/adapters/OrganizationRepositoryAdapter.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/accounts/src/main/java/com/atlashub/accounts/infrastructure/persistence/adapters/UserRepositoryAdapter.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/accounts/src/main/java/com/atlashub/accounts/infrastructure/persistence/adapters/UserRepositoryAdapter.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/accounts/src/main/java/com/atlashub/accounts/infrastructure/persistence/entities/UserJPA.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/accounts/src/main/java/com/atlashub/accounts/infrastructure/persistence/entities/UserJPA.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/accounts/src/main/java/com/atlashub/accounts/infrastructure/services/OrganizationQueryPortAdapter.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/accounts/src/main/java/com/atlashub/accounts/infrastructure/services/OrganizationQueryPortAdapter.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/accounts/src/main/java/com/atlashub/accounts/infrastructure/services/UserQueryPortAdapter.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/accounts/src/main/java/com/atlashub/accounts/infrastructure/services/UserQueryPortAdapter.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/accounts/src/main/java/com/atlashub/accounts/presentation/dto/RegisterRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/accounts/src/main/java/com/atlashub/accounts/presentation/dto/RegisterRequest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/accounts/src/main/java/com/atlashub/accounts/presentation/dto/UpdateOrganizationRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/accounts/src/main/java/com/atlashub/accounts/presentation/dto/UpdateOrganizationRequest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/accounts/src/main/java/com/atlashub/accounts/presentation/dto/UpdateProfileRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/accounts/src/main/java/com/atlashub/accounts/presentation/dto/UpdateProfileRequest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/accounts/src/main/java/com/atlashub/accounts/presentation/rest/AccountsController.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/accounts/src/main/java/com/atlashub/accounts/presentation/rest/AccountsController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/application/command/AuthAccount/AuthAccountHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/application/command/AuthAccount/AuthAccountHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/application/command/ChangePassword/ChangePasswordHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/application/command/ChangePassword/ChangePasswordHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/application/command/InitiatePasswordReset/InitiatePasswordResetHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/application/command/InitiatePasswordReset/InitiatePasswordResetHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/application/command/Login/LoginHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/application/command/Login/LoginHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/application/command/Logout/LogoutHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/application/command/Logout/LogoutHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/application/command/LogoutAllDevices/LogoutAllDevicesHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/application/command/LogoutAllDevices/LogoutAllDevicesHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/application/command/RefreshToken/RefreshTokenHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/application/command/RefreshToken/RefreshTokenHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/application/command/ResetPassword/ResetPasswordHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/application/command/ResetPassword/ResetPasswordHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/application/command/SendVerificationEmail/SendVerificationEmailHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/application/command/SendVerificationEmail/SendVerificationEmailHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/application/command/VerifyEmail/VerifyEmailHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/application/command/VerifyEmail/VerifyEmailHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/application/port/SessionPort.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/application/port/TokenPort.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/application/port/TokenPort.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/application/query/GetActiveSessions/GetActiveSessionsHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/application/query/GetActiveSessions/GetActiveSessionsHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/application/query/GetActiveSessions/SessionResult.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/application/query/GetActiveSessions/SessionResult.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/domain/entities/AuthAccount.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/domain/entities/AuthAccount.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/domain/entities/OtpVerification.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/domain/events/OtpVerificationCreated.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/domain/events/OtpVerificationCreated.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/domain/repositories/AuthAccountRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/domain/repositories/AuthAccountRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/domain/repositories/OtpVerificationRepository.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/domain/services/OtpVerificationIssuer.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/domain/services/OtpVerificationIssuer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/domain/valueobject/OtpStatus.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/domain/valueobject/OtpType.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/domain/valueobject/Session.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/infrastructure/persistence/adapters/AuthAccountRepositoryAdapter.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/infrastructure/persistence/adapters/AuthAccountRepositoryAdapter.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/infrastructure/persistence/adapters/OtpVerificationRepositoryAdapter.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/infrastructure/persistence/entities/AuthAccountJpa.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/infrastructure/persistence/entities/AuthAccountJpa.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/infrastructure/persistence/entities/OtpVerificationJpa.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/infrastructure/persistence/mappers/OtpVerificationMapper.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/infrastructure/persistence/repositories/SpringDataAuthAccountRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/infrastructure/persistence/repositories/SpringDataAuthAccountRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/infrastructure/persistence/repositories/SpringDataOtpVerificationRepository.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/infrastructure/security/JwtTokenAdapter.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/infrastructure/security/JwtTokenAdapter.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/infrastructure/security/SessionAdapter.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/presentation/dto/LoginRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/presentation/dto/LoginRequest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/presentation/dto/ResetPasswordRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/presentation/dto/ResetPasswordRequest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/presentation/dto/VerifyEmailRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/presentation/dto/VerifyEmailRequest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/presentation/rest/AuthController.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/presentation/rest/AuthController.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/atlashub-platform/catalog/src/main/java/com/atlashub/catalog/adapter/in/web/controller/HubProductController.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/catalog/src/main/java/com/atlashub/catalog/adapter/in/web/controller/HubProductController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/catalog/src/main/java/com/atlashub/catalog/adapter/in/web/request/CreateHubProductWebRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/catalog/src/main/java/com/atlashub/catalog/adapter/in/web/request/CreateHubProductWebRequest.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/atlashub-platform/catalog/src/main/java/com/atlashub/catalog/adapter/in/web/request/SetProductPricingWebRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/catalog/src/main/java/com/atlashub/catalog/adapter/in/web/request/SetProductPricingWebRequest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/catalog/src/main/java/com/atlashub/catalog/adapter/in/web/request/UpdateHubProductWebRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/catalog/src/main/java/com/atlashub/catalog/adapter/in/web/request/UpdateHubProductWebRequest.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/atlashub-platform/catalog/src/main/java/com/atlashub/catalog/adapter/in/web/response/HubProductDetailsResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/catalog/src/main/java/com/atlashub/catalog/adapter/in/web/response/HubProductDetailsResponse.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/catalog/src/main/java/com/atlashub/catalog/adapter/out/HubProductRepositoryAdapter.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/catalog/src/main/java/com/atlashub/catalog/adapter/out/ProductPricingRepositoryAdapter.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/catalog/src/main/java/com/atlashub/catalog/adapter/out/mapper/ProductPricingMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/catalog/src/main/java/com/atlashub/catalog/adapter/out/mapper/ProductPricingMapper.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/catalog/src/main/java/com/atlashub/catalog/adapter/out/persistence/query/HubProductQueryServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/catalog/src/main/java/com/atlashub/catalog/adapter/out/persistence/query/HubProductQueryServiceImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/catalog/src/main/java/com/atlashub/catalog/application/command/SetProductPricingCommand.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/catalog/src/main/java/com/atlashub/catalog/application/command/SetProductPricingCommand.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/catalog/src/main/java/com/atlashub/catalog/application/result/HubProductDetailsResult.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/catalog/src/main/java/com/atlashub/catalog/application/result/HubProductDetailsResult.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/catalog/src/main/java/com/atlashub/catalog/application/result/SetProductPricingResult.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/catalog/src/main/java/com/atlashub/catalog/application/result/SetProductPricingResult.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/catalog/src/main/java/com/atlashub/catalog/application/usecase/CreateHubProductUseCase.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/catalog/src/main/java/com/atlashub/catalog/application/usecase/CreateHubProductUseCase.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/catalog/src/main/java/com/atlashub/catalog/application/usecase/ListHubProductUseCase.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/catalog/src/main/java/com/atlashub/catalog/application/usecase/ListHubProductUseCase.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/catalog/src/main/java/com/atlashub/catalog/application/usecase/SetProductPricingUseCase.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/catalog/src/main/java/com/atlashub/catalog/application/usecase/SetProductPricingUseCase.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/catalog/src/main/java/com/atlashub/catalog/application/usecase/UpdateHubProductUseCase.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/catalog/src/main/java/com/atlashub/catalog/application/usecase/UpdateHubProductUseCase.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/catalog/src/main/java/com/atlashub/catalog/domain/events/HubProductCreatedEvent.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/catalog/src/main/java/com/atlashub/catalog/domain/events/HubProductCreatedEvent.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/catalog/src/main/java/com/atlashub/catalog/domain/events/HubProductDeactivatedEvent.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/catalog/src/main/java/com/atlashub/catalog/domain/events/HubProductDeactivatedEvent.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/catalog/src/main/java/com/atlashub/catalog/domain/events/HubProductUpdatedEvent.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/catalog/src/main/java/com/atlashub/catalog/domain/events/HubProductUpdatedEvent.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/catalog/src/main/java/com/atlashub/catalog/domain/events/ProductPricingUpdatedEvent.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/catalog/src/main/java/com/atlashub/catalog/domain/events/ProductPricingUpdatedEvent.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/catalog/src/main/java/com/atlashub/catalog/domain/exception/CatalogErrorCode.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/catalog/src/main/java/com/atlashub/catalog/domain/model/HubProduct.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/catalog/src/main/java/com/atlashub/catalog/domain/model/HubProduct.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/catalog/src/main/java/com/atlashub/catalog/domain/model/ProductPricing.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/catalog/src/main/java/com/atlashub/catalog/domain/model/ProductPricing.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/catalog/src/main/java/com/atlashub/catalog/domain/repository/ProductPricingRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/catalog/src/main/java/com/atlashub/catalog/domain/repository/ProductPricingRepository.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/build.gradle" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/adapter/in/messaging/IdentitySubscriptionRegistrar.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/adapter/in/messaging/OrganizationCreatedEventListener.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/adapter/in/web/controller/ApiKeyController.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/adapter/in/web/controller/InvitationController.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/adapter/in/web/controller/OrganizationController.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/adapter/in/web/controller/SplitRecipientController.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/adapter/in/web/controller/UserController.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/adapter/in/web/request/AnnualProjectedSalesVolumeDto.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/adapter/in/web/request/CompleteComplianceAccountRequest.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/adapter/in/web/request/CompleteComplianceContactRequest.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/adapter/in/web/request/CompleteComplianceOwnerRequest.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/adapter/in/web/request/CompleteComplianceProfileRequest.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/adapter/in/web/request/CompleteComplianceServiceAgreementRequest.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/adapter/in/web/request/CreateUserRequest.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/adapter/in/web/request/ListSplitRecipientsRequestDto.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/adapter/in/web/request/ListUsersRequestDto.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/adapter/in/web/request/RegenerateApiKeyRequest.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/adapter/in/web/request/RegisterOrganizationRequest.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/adapter/in/web/request/RegisterSplitRecipientRequest.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/adapter/in/web/request/SendInvitationRequestDto.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/adapter/in/web/response/ListApiKeysResponseDto.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/adapter/in/web/response/RegenerateApiKeyResponseDto.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/adapter/in/web/response/RevokeApiKeyResponseDto.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/adapter/out/external/anchor/AnchorAccountNameAdapter.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/adapter/out/persistence/ApiKeyRepositoryAdapter.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/adapter/out/persistence/InvitationPersistenceAdapter.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/adapter/out/persistence/OrganizationMemberPersistenceAdapter.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/adapter/out/persistence/OrganizationRepositoryAdapter.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/adapter/out/persistence/SplitRecipientRepositoryAdapter.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/adapter/out/persistence/UserRepositoryAdapter.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/adapter/out/persistence/entity/ApiKeyJpaEntity.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/adapter/out/persistence/entity/InvitationJpaEntity.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/adapter/out/persistence/entity/OrganizationJpaEntity.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/adapter/out/persistence/entity/OrganizationMemberJpaEntity.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/adapter/out/persistence/entity/SplitRecipientJpaEntity.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/adapter/out/persistence/entity/UserJpaEntity.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/adapter/out/persistence/mapper/ApiKeyMapper.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/adapter/out/persistence/mapper/InvitationMapper.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/adapter/out/persistence/mapper/OrganizationMapper.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/adapter/out/persistence/mapper/OrganizationMemberMapper.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/adapter/out/persistence/mapper/SplitRecipientMapper.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/adapter/out/persistence/mapper/UserMapper.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/adapter/out/persistence/query/ApiKeyQueryServiceImpl.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/adapter/out/persistence/query/InvitationQueryServiceImpl.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/adapter/out/persistence/query/OrganizationMemberQueryServiceImpl.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/adapter/out/persistence/query/OrganizationQueryServiceImpl.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/adapter/out/persistence/query/SplitRecipientQueryServiceImpl.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/adapter/out/persistence/query/UserQueryServiceImpl.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/adapter/out/persistence/repository/SpringDataApiKeyRepository.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/adapter/out/persistence/repository/SpringDataInvitationRepository.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/adapter/out/persistence/repository/SpringDataOrganizationMemberRepository.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/adapter/out/persistence/repository/SpringDataOrganizationRepository.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/adapter/out/persistence/repository/SpringDataSplitRecipientRepository.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/adapter/out/persistence/repository/SpringDataUserRepository.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/application/command/AcceptInvitationCommand.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/application/command/CompleteComplianceAccountCommand.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/application/command/CompleteComplianceContactCommand.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/application/command/CompleteComplianceOwnerCommand.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/application/command/CompleteComplianceProfileCommand.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/application/command/CompleteComplianceServiceAgreementCommand.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/application/command/CreateUserCommand.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/application/command/DeclineInvitationCommand.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/application/command/GenerateLiveApiKeyPairCommand.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/application/command/GenerateTestApiKeyPairCommand.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/application/command/RegenerateApiKeyCommand.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/application/command/RegisterOrganizationCommand.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/application/command/RegisterSplitRecipientCommand.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/application/command/RevokeApiKeyCommand.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/application/command/SendInvitationCommand.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/application/command/SubmitComplianceCommand.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/application/port/AccountNameResolutionPort.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/application/port/ApiKeyQueryService.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/application/port/InvitationQueryService.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/application/port/OrganizationMemberQueryService.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/application/port/OrganizationQueryService.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/application/port/SplitRecipientQueryService.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/application/port/UserQueryService.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/application/query/GetInvitationByTokenQuery.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/application/query/GetOrganizationProfileQuery.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/application/query/GetSplitRecipientQuery.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/application/query/GetUserQuery.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/application/query/ListApiKeysQuery.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/application/query/ListSplitRecipientsQuery.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/application/query/ListUsersQuery.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/application/result/ApiKeyDto.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/application/result/ApiKeyPairResult.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/application/result/CreateUserResult.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/application/result/InvitationDto.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/application/result/OrganizationMemberDto.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/application/result/OrganizationProfileDto.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/application/result/RegisterOrganizationResult.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/application/result/RegisterSplitRecipientResult.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/application/result/SplitRecipientDto.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/application/result/UserDto.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/application/usecase/AcceptInvitationUseCase.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/application/usecase/CompleteComplianceAccountUseCase.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/application/usecase/CompleteComplianceContactUseCase.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/application/usecase/CompleteComplianceOwnerUseCase.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/application/usecase/CompleteComplianceProfileUseCase.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/application/usecase/CompleteComplianceServiceAgreementUseCase.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/application/usecase/CreateUserUseCase.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/application/usecase/DeclineInvitationUseCase.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/application/usecase/ExpireInvitationsTask.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/application/usecase/GenerateLiveApiKeyPairUseCase.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/application/usecase/GenerateTestApiKeyPairUseCase.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/application/usecase/ListApiKeysUseCase.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/application/usecase/ListSplitRecipientsUseCase.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/application/usecase/ListUsersUseCase.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/application/usecase/RegenerateApiKeyUseCase.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/application/usecase/RegisterOrganizationUseCase.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/application/usecase/RegisterSplitRecipientUseCase.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/application/usecase/RevokeApiKeyUseCase.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/application/usecase/SendInvitationUseCase.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/application/usecase/SubmitComplianceUseCase.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/domain/event/ApiKeyGenerated.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/domain/event/ApiKeyRevoked.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/domain/event/InvitationAccepted.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/domain/event/InvitationCreated.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/domain/event/InvitationDeclined.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/domain/event/InvitationExpired.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/domain/event/MemberRoleChanged.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/domain/event/OrganizationBanned.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/domain/event/OrganizationComplianceApproved.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/domain/event/OrganizationComplianceRejected.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/domain/event/OrganizationComplianceStepCompleted.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/domain/event/OrganizationComplianceSubmitted.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/domain/event/OrganizationMemberAdded.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/domain/event/OrganizationMemberRemoved.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/domain/event/OrganizationPasswordChanged.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/domain/event/OrganizationRegistered.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/domain/event/OrganizationUpdated.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/domain/event/SplitRecipientDeactivated.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/domain/event/SplitRecipientRegistered.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/domain/event/UserActiveOrganizationChanged.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/domain/event/UserCreated.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/domain/event/UserProfileUpdated.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/domain/exception/IdentityErrorCode.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/domain/model/ApiKey.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/domain/model/Invitation.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/domain/model/Organization.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/domain/model/OrganizationCompliance.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/domain/model/OrganizationMember.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/domain/model/SplitRecipient.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/domain/model/User.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/domain/repository/ApiKeyRepository.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/domain/repository/InvitationRepository.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/domain/repository/OrganizationMemberRepository.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/domain/repository/OrganizationRepository.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/domain/repository/SplitRecipientRepository.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/domain/repository/UserRepository.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/domain/valueobject/ApiEnvironment.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/domain/valueobject/BusinessSize.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/domain/valueobject/BusinessType.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/domain/valueobject/ComplianceStatus.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/domain/valueobject/ComplianceStep.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/domain/valueobject/GovernmentIdType.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/domain/valueobject/InvitationStatus.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/domain/valueobject/KeyType.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/domain/valueobject/MemberStatus.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/domain/valueobject/OrganizationRole.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/main/java/com/atlashub/identity/domain/valueobject/StaffSize.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/test/java/com/atlashub/identity/application/usecase/RegisterOrganizationUseCaseTest.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/identity/src/test/java/com/atlashub/identity/domain/model/OrganizationTest.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/notifications/src/main/java/com/atlashub/notifications/adapter/in/messaging/listener/InvitationEventConsumer.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/adapter/in/messaging/BaseKafkaEventListener.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/application/messaging/BaseKafkaEventListener.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/adapter/logging/AppLogger.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/infrastructure/service/AppLogger.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/adapter/out/external/DomainSequence.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/adapter/out/external/DomainSequenceGenerator.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/infrastructure/service/DomainSequenceGenerator.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/adapter/out/external/dlq/DeadLetterMessage.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/adapter/out/external/dlq/DeadLetterRepository.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/adapter/security/PublicEndpoint.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/application/annotation/PublicEndpoint.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/adapter/tracing/CorrelationId.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/domain/valueobject/CorrelationId.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/application/idempotency/IdempotencyKey.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/domain/valueobject/IdempotencyKey.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/application/port/out/DomainEventPublisher.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/application/port/DomainEventPublisher.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/application/port/out/EventTrackerPort.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/application/port/EventTrackerPort.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/application/usecase/BaseUseCase.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/application/usecase/BaseUseCase.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/application/usecase/Command.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/application/usecase/Command.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/application/usecase/Query.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/application/usecase/Query.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/application/util/DateTimeUtils.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/application/service/DateTimeUtils.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/application/util/HashingUtils.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/application/service/HashingUtils.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/application/util/PageResult.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/domain/valueobject/PageResult.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/application/util/Result.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/domain/valueobject/Result.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/domain/AggregateRoot.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/domain/entities/AggregateRoot.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/domain/event/DomainEvent.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/domain/event/DomainEvent.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/domain/event/EnvelopedDomainEvent.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/domain/event/EnvelopedDomainEvent.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/domain/event/WebhookDeliveryRequestedEvent.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/domain/event/WebhookDeliveryRequestedEvent.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/domain/exception/ApplicationException.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/domain/exception/ApplicationException.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/domain/exception/AtlasHubException.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/domain/exception/AtlasHubException.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/domain/exception/AuthorizationException.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/domain/exception/AuthorizationException.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/domain/exception/BusinessRuleException.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/domain/exception/BusinessRuleException.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/domain/exception/ConflictException.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/domain/exception/ConflictException.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/domain/exception/DomainException.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/domain/exception/DomainException.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/domain/exception/ErrorCode.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/domain/exception/ExternalServiceException.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/domain/exception/ExternalServiceException.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/domain/exception/NotFoundException.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/domain/exception/NotFoundException.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/domain/exception/RateLimitExceededException.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/domain/exception/RateLimitExceededException.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/domain/exception/SharedErrorCode.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/domain/exception/ValidationException.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/domain/exception/ValidationException.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/domain/money/CurrencyCode.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/domain/valueobject/CurrencyCode.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/domain/money/Monetary.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/application/annotation/Monetary.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/domain/money/Money.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/domain/valueobject/Money.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/domain/money/MoneyDeserializer.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/domain/service/MoneyDeserializer.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/domain/money/MoneySerializer.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/domain/service/MoneySerializer.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/domain/money/NegativeMoneyException.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/domain/valueobject/Country.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/domain/valueobject/Country.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/domain/valueobject/EmailAddress.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/domain/valueobject/EmailAddress.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/domain/valueobject/NUBAN.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/domain/valueobject/NUBAN.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/domain/valueobject/PhoneNumber.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/domain/valueobject/PhoneNumber.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-shared/src/test/java/com/atlashub/shared/money/MoneyTest.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/build.gradle" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/architecture/sagas-design.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/architecture/sagas-design.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/design.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/design.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/modules/accounting-design.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/modules/accounting-design.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/modules/admin-design.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/modules/admin-design.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/modules/auth-design.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/modules/auth-design.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/modules/billing-design.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/modules/billing-design.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/modules/catalog-design.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/modules/catalog-design.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/modules/commerce-design.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/modules/commerce-design.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/modules/hr-design.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/modules/hr-design.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/modules/identity-design.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/modules/identity-design.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/modules/infrastructure-design.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/modules/infrastructure-design.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/modules/logistics-design.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/modules/logistics-design.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/modules/pay-design.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/modules/pay-design.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend_api_context.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/catalog/src/main/java/com/atlashub/catalog/adapter/in/web/response/HubProductResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/catalog/src/main/java/com/atlashub/catalog/adapter/in/web/response/HubProductResponse.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/application/port/UserQueryPort.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/application/port/UserQueryPort.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/infrastructure/k8s/base/kustomization.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/infrastructure/k8s/base/kustomization.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/infrastructure/terraform/main.tf" beforeDir="false" afterPath="$PROJECT_DIR$/infrastructure/terraform/main.tf" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/infrastructure/terraform/outputs.tf" beforeDir="false" afterPath="$PROJECT_DIR$/infrastructure/terraform/outputs.tf" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/infrastructure/terraform/variables.tf" beforeDir="false" afterPath="$PROJECT_DIR$/infrastructure/terraform/variables.tf" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/settings.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/settings.gradle" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -713,12 +106,11 @@
   </component>
   <component name="DatabaseLocalColorSettings">
     <colors>
-      <entry key="409781a2-9992-4e0b-8111-c7e77d94aded" value="green" />
-      <entry key="41589cab-ab15-43df-a6a7-63dbd77e6080" value="Blue" />
+      <entry key="e716987c-d470-4e7f-959f-34b19b2b02ad" value="" />
     </colors>
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="678" />
+    <option name="cachedIndexableFilesCount" value="390" />
   </component>
   <component name="ExternalProjectsData">
     <projectState path="$PROJECT_DIR$">
@@ -754,8 +146,8 @@
         <option value="HTTP Private Environment File" />
         <option value="Enum" />
         <option value="Record" />
-        <option value="Class" />
         <option value="Interface" />
+        <option value="Class" />
       </list>
     </option>
   </component>
@@ -812,61 +204,61 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.0" />
-      <entry key="MS500" value="1.0" />
-      <entry key="S2" value="1.000000096502945" />
-      <entry key="S5" value="1.0023234556065637" />
-      <entry key="S10" value="1.0679472342337346" />
-      <entry key="S30" value="1.671607088170804" />
-      <entry key="S60" value="2.513567565352231" />
-      <entry key="M2" value="4.326545175431384" />
-      <entry key="M5" value="8.228605036120477" />
-      <entry key="M10" value="11.183122570270674" />
-      <entry key="M15" value="12.84911515739179" />
-      <entry key="M30" value="18.66175315342791" />
-      <entry key="H1" value="38.99576134187833" />
-      <entry key="H2" value="94.75980699306378" />
-      <entry key="H4" value="205.44959037962275" />
-      <entry key="D1" value="753.017797957527" />
-      <entry key="W1" value="1495.6006706608139" />
+      <entry key="MS100" value="1.4393310098050645" />
+      <entry key="MS500" value="2.376990196699726" />
+      <entry key="S2" value="3.634128131548069" />
+      <entry key="S5" value="5.332993018985664" />
+      <entry key="S10" value="6.428446725597802" />
+      <entry key="S30" value="7.532858520702129" />
+      <entry key="S60" value="8.952384109882708" />
+      <entry key="M2" value="11.885801515298002" />
+      <entry key="M5" value="16.082949388616896" />
+      <entry key="M10" value="18.25889011106765" />
+      <entry key="M15" value="19.10316194473115" />
+      <entry key="M30" value="20.017698431587476" />
+      <entry key="H1" value="20.63205817264764" />
+      <entry key="H2" value="24.52761205722899" />
+      <entry key="H4" value="58.396003223822575" />
+      <entry key="D1" value="616.3177647810292" />
+      <entry key="W1" value="1546.224121622513" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
-      <entry key="MS500" value="5.531411559949734E-99" />
-      <entry key="S2" value="4.058405479081703E-25" />
-      <entry key="S5" value="2.94673839552326E-10" />
-      <entry key="S10" value="3.4004223914049386E-5" />
-      <entry key="S30" value="0.1412507313737495" />
-      <entry key="S60" value="1.5380236410183505" />
-      <entry key="M2" value="5.86247722839712" />
-      <entry key="M5" value="15.150555182318689" />
-      <entry key="M10" value="22.42998942150121" />
-      <entry key="M15" value="27.07656622741732" />
-      <entry key="M30" value="45.06440765423726" />
-      <entry key="H1" value="97.68471291381493" />
-      <entry key="H2" value="210.1931641474234" />
-      <entry key="H4" value="399.26344768671913" />
-      <entry key="D1" value="1182.8070809601197" />
-      <entry key="W1" value="1929.6447271867319" />
+      <entry key="MS500" value="0.0" />
+      <entry key="S2" value="0.0" />
+      <entry key="S5" value="0.0" />
+      <entry key="S10" value="0.0" />
+      <entry key="S30" value="2.9299361979330685E-156" />
+      <entry key="S60" value="2.413089858498749E-78" />
+      <entry key="M2" value="2.1951145889454956E-39" />
+      <entry key="M5" value="5.2133641957365545E-16" />
+      <entry key="M10" value="3.228942307812849E-8" />
+      <entry key="M15" value="1.2776125676531611E-5" />
+      <entry key="M30" value="0.005216856926363817" />
+      <entry key="H1" value="0.25152330372644327" />
+      <entry key="H2" value="7.803412022310455" />
+      <entry key="H4" value="75.44361662596371" />
+      <entry key="D1" value="981.9613955069036" />
+      <entry key="W1" value="2060.996405055634" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="1.504496706926137E-10" />
-      <entry key="MS500" value="0.010851211998164923" />
-      <entry key="S2" value="0.32275253173556134" />
-      <entry key="S5" value="0.6379507665262544" />
-      <entry key="S10" value="0.8560521249550058" />
-      <entry key="S30" value="1.6993469703835036" />
-      <entry key="S60" value="3.952347927260118" />
-      <entry key="M2" value="10.088648440337558" />
-      <entry key="M5" value="23.293328827334193" />
-      <entry key="M10" value="33.550633798310756" />
-      <entry key="M15" value="39.87530829873122" />
-      <entry key="M30" value="63.683293336065894" />
-      <entry key="H1" value="136.63175983318055" />
-      <entry key="H2" value="304.89733369305395" />
-      <entry key="H4" value="604.6566845611246" />
-      <entry key="D1" value="1935.7919596551121" />
-      <entry key="W1" value="3425.2372945250577" />
+      <entry key="MS100" value="1.3483550080428366" />
+      <entry key="MS500" value="2.3363402829126074" />
+      <entry key="S2" value="3.6164379284149013" />
+      <entry key="S5" value="5.321953611762193" />
+      <entry key="S10" value="6.421618982821446" />
+      <entry key="S30" value="7.530042436510436" />
+      <entry key="S60" value="8.950212173585419" />
+      <entry key="M2" value="11.883809085362916" />
+      <entry key="M5" value="16.08161384298311" />
+      <entry key="M10" value="18.258080798942785" />
+      <entry key="M15" value="19.10259835194182" />
+      <entry key="M30" value="20.022602318041503" />
+      <entry key="H1" value="20.883285868384398" />
+      <entry key="H2" value="32.328751659412895" />
+      <entry key="H4" value="133.8288806691043" />
+      <entry key="D1" value="1598.2525890487739" />
+      <entry key="W1" value="3607.2120690562633" />
     </decayedShown>
   </component>
   <component name="ProblemsViewState">
@@ -910,6 +302,7 @@
     &quot;HTTP Request.generated-requests | #3.executor&quot;: &quot;Run&quot;,
     &quot;HTTP Request.generated-requests | #4.executor&quot;: &quot;Run&quot;,
     &quot;HTTP Request.replay-dlq-events.executor&quot;: &quot;Run&quot;,
+    &quot;Makefile Target.start.executor&quot;: &quot;Run&quot;,
     &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
     &quot;RequestMappingsPanelOrder0&quot;: &quot;0&quot;,
     &quot;RequestMappingsPanelOrder1&quot;: &quot;1&quot;,
@@ -923,6 +316,7 @@
     &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
     &quot;SONARLINT_PRECOMMIT_ANALYSIS&quot;: &quot;true&quot;,
     &quot;Spring Boot.AtlasHubApplication.executor&quot;: &quot;Run&quot;,
+    &quot;Spring Boot.AtlashubApplication.executor&quot;: &quot;Run&quot;,
     &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
     &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
     &quot;copilot.chat.legacySessionMetadata.migrated&quot;: &quot;true&quot;,
@@ -944,7 +338,7 @@
     &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
     &quot;project.structure.side.proportion&quot;: &quot;0.0&quot;,
     &quot;rest.client.default.execution.environment&quot;: &quot;dev&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;reference.projectsettings.compiler.annotationProcessors&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
     &quot;show.migrate.to.gradle.popup&quot;: &quot;false&quot;,
     &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;
   }
@@ -970,12 +364,13 @@
       <recent name="core.cards.repository" />
     </key>
     <key name="CopyClassDialog.RECENTS_KEY">
+      <recent name="com.atlashub.authentication.infrastructure.messaging.events" />
       <recent name="com.atlashub.accounts.application.command.RegisterOrg" />
       <recent name="com.atlashub.accounts.domain.model" />
       <recent name="core.access.valueobjects" />
     </key>
   </component>
-  <component name="RunManager" selected="Spring Boot.AtlasHubApplication">
+  <component name="RunManager" selected="Makefile Target.start">
     <configuration name="generated-requests | #1" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" nameIsGenerated="true" path="$APPLICATION_CONFIG_DIR$/scratches/generated-requests.http" executionIdentifier="#1" runType="Run single request">
       <method v="2" />
     </configuration>
@@ -985,9 +380,23 @@
     <configuration name="generated-requests | #4" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" nameIsGenerated="true" path="$APPLICATION_CONFIG_DIR$/scratches/generated-requests.http" executionIdentifier="#4" index="4" runType="Run single request">
       <method v="2" />
     </configuration>
-    <configuration name="AtlasHubApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
-      <module name="atlashub.atlashub-app.main" />
-      <option name="SPRING_BOOT_MAIN_CLASS" value="com.atlashub.app.AtlasHubApplication" />
+    <configuration name="start" type="MAKEFILE_TARGET_RUN_CONFIGURATION" factoryName="Makefile" temporary="true">
+      <makefile filename="$PROJECT_DIR$/Makefile" target="start" workingDirectory="" arguments="">
+        <envs />
+      </makefile>
+      <method v="2" />
+    </configuration>
+    <configuration name="AtlashubApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+      <option name="ALTERNATIVE_JRE_PATH" value="dragonwell-21" />
+      <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
+      <option name="envFilePaths">
+        <option value="$PROJECT_DIR$/.env" />
+      </option>
+      <module name="atlashub.atlashub-main.main" />
+      <selectedOptions>
+        <option name="environmentVariables" />
+      </selectedOptions>
+      <option name="SPRING_BOOT_MAIN_CLASS" value="com.atlashub.main.AtlashubApplication" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
@@ -995,14 +404,6 @@
     <configuration default="true" type="docker-deploy" factoryName="docker-compose.yml" temporary="true">
       <deployment type="docker-compose.yml">
         <settings />
-      </deployment>
-      <method v="2" />
-    </configuration>
-    <configuration name="docker-compose.yml: Compose Deployment" type="docker-deploy" factoryName="docker-compose.yml" temporary="true" server-name="Docker">
-      <deployment type="docker-compose.yml">
-        <settings>
-          <option name="sourceFilePath" value="docker-compose.yml" />
-        </settings>
       </deployment>
       <method v="2" />
     </configuration>
@@ -1052,12 +453,21 @@
       <option name="USE_PATTERN" value="false" />
       <method v="2" />
     </configuration>
+    <list>
+      <item itemvalue="Docker.docker: Compose Deployment" />
+      <item itemvalue="HTTP Request.generated-requests | #1" />
+      <item itemvalue="HTTP Request.generated-requests | #2" />
+      <item itemvalue="HTTP Request.generated-requests | #4" />
+      <item itemvalue="Makefile Target.start" />
+      <item itemvalue="Spring Boot.AtlashubApplication" />
+    </list>
     <recent_temporary>
       <list>
+        <item itemvalue="Makefile Target.start" />
+        <item itemvalue="Makefile Target.start" />
         <item itemvalue="Docker.docker: Compose Deployment" />
         <item itemvalue="HTTP Request.generated-requests | #4" />
         <item itemvalue="HTTP Request.generated-requests | #2" />
-        <item itemvalue="HTTP Request.generated-requests | #1" />
       </list>
     </recent_temporary>
   </component>

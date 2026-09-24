@@ -19,6 +19,7 @@
             <option value="$PROJECT_DIR$/atlashub-platform/authentication" />
             <option value="$PROJECT_DIR$/atlashub-platform/catalog" />
             <option value="$PROJECT_DIR$/atlashub-platform/iam" />
+            <option value="$PROJECT_DIR$/atlashub-platform/storage" />
             <option value="$PROJECT_DIR$/atlashub-shared" />
           </set>
         </option>

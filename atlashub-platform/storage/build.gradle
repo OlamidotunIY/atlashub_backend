@@ -1,0 +1,29 @@
+plugins {
+    id 'java'
+}
+
+group = 'com.atlashub'
+version = '2.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation project(':atlashub-shared')
+
+    implementation 'org.springframework.boot:spring-boot-starter'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.security:spring-security-core'
+
+    // Swagger annotations
+    implementation 'io.swagger.core.v3:swagger-annotations:2.2.20'
+
+    // Firebase Admin SDK — includes GCS signed URL support
+    implementation 'com.google.firebase:firebase-admin:9.3.0'
+}
+
+test {
+    useJUnitPlatform()
+}

@@ -18,6 +18,7 @@ spring:
 
   # JPA & Hibernate Settings
   jpa:
+    database-platform: org.hibernate.dialect.MySQLDialect
     hibernate:
       open-in-view: false
       ddl-auto: update
@@ -35,3 +36,14 @@ spring:
 jwt:
   secret: ${ATLASHUB_JWT_SECRET}
   expiration: ${ATLASHUB_JWT_EXPIRY_MINUTES:60} 
+
+atlashub:
+  cache:
+    user-ttl: ${ATLASHUB_CACHE_USER_TTL:PT12H}
+    organization-ttl: ${ATLASHUB_CACHE_ORGANIZATION_TTL:PT12H}
+
+firebase:
+  credentials:
+    path: ${FIREBASE_CREDENTIALS_PATH:/secrets/firebase-service-account.json}
+  storage:
+    bucket: ${FIREBASE_STORAGE_BUCKET:your-project-id.appspot.com}
