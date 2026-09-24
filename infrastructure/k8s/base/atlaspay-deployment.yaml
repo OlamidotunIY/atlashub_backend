@@ -18,11 +18,16 @@ spec:
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8080
+        envFrom:
+        - secretRef:
+            name: atlashub-secrets
         env:
         - name: SPRING_PROFILES_ACTIVE
           value: "prod"
         - name: SPRING_DATA_REDIS_HOST
           value: "redis"
+        - name: REDIS_PORT
+          value: "6379"
         - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
           value: "kafka:9092"
         - name: SPRING_DATASOURCE_URL
@@ -31,11 +36,6 @@ spec:
           value: "atlashub"
         - name: SPRING_DATASOURCE_PASSWORD
           value: "atlashub"
-        - name: ATLASHUB_JWT_SECRET
-          valueFrom:
-            secretKeyRef:
-              name: atlashub-secrets
-              key: ATLASHUB_JWT_SECRET
         volumeMounts:
         - name: firebase-secrets
           mountPath: /app/infrastructure/Firebase
