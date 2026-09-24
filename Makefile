@@ -38,8 +38,8 @@ deploy-stack:
 	$(SSH) -i $(SSH_KEY) -o StrictHostKeyChecking=no ubuntu@$(VM_IP) "export KUBECONFIG=/home/ubuntu/.kube/config && kubectl delete secret atlashub-secrets firebase-secrets --ignore-not-found && kubectl create secret generic atlashub-secrets --from-env-file=/tmp/.env && kubectl create secret generic firebase-secrets --from-file=/tmp/$(FIREBASE_JSON_NAME)"
 	@echo "=> Applying Kubernetes Manifests..."
 	$(SSH) -i $(SSH_KEY) -o StrictHostKeyChecking=no ubuntu@$(VM_IP) "export KUBECONFIG=/home/ubuntu/.kube/config && kubectl apply -k atlashub/infrastructure/k8s/base"
-	@echo "=> Waiting 30s for MySQL to boot..."
-	timeout /t 30 /nobreak
+	@echo "=> Waiting for MySQL to boot and accept connections..."
+	@$(SSH) -i $(SSH_KEY) -o StrictHostKeyChecking=no ubuntu@$(VM_IP) "export KUBECONFIG=/home/ubuntu/.kube/config && while true; do POD=$$(kubectl get pod -l app=mysql -o jsonpath='{.items[0].metadata.name}' 2>/dev/null); if [ -n \"$$POD\" ]; then if kubectl exec $$POD -- mysqladmin ping -u root -proot --silent 2>/dev/null; then break; fi; fi; echo 'Waiting for MySQL container...'; sleep 5; done; echo 'MySQL is fully ready!'"
 	@echo "=> Restoring Database..."
 	$(MAKE) restore-db
 	@echo "=> Environment is completely up and running!"
