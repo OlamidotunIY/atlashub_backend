@@ -24,10 +24,8 @@ import com.atlashub.authentication.application.command.VerifyEmail.VerifyEmailCo
 import com.atlashub.authentication.application.command.VerifyEmail.VerifyEmailHandler;
 import com.atlashub.authentication.application.query.GetActiveSessions.GetActiveSessionsHandler;
 import com.atlashub.authentication.application.query.GetActiveSessions.GetActiveSessionsQuery;
-import com.atlashub.authentication.application.query.GetActiveSessions.SessionResult;
 import com.atlashub.authentication.application.query.GetTrustedDevices.GetTrustedDevicesHandler;
 import com.atlashub.authentication.application.query.GetTrustedDevices.GetTrustedDevicesQuery;
-import com.atlashub.authentication.application.query.GetTrustedDevices.TrustedDeviceResult;
 import com.atlashub.authentication.presentation.dto.*;
 import com.atlashub.shared.application.annotation.PublicEndpoint;
 import com.atlashub.shared.application.dto.ApiResponse;
@@ -91,23 +89,23 @@ public class AuthController {
     @PublicEndpoint
     @PostMapping("/login")
     @Operation(summary = "Login with email and password")
-    public ResponseEntity<ApiResponse<LoginResponse>> login(
+    public ResponseEntity<ApiResponse<LoginWebResponse>> login(
             @Valid @RequestBody LoginRequest request,
             HttpServletRequest httpRequest) {
         LoginResponse response = loginHandler.execute(new LoginCommand(
                 request.email(), request.password(), request.deviceFingerprint(),
                 getClientIp(httpRequest), httpRequest.getHeader("User-Agent")
         ));
-        return ResponseEntity.ok(new ApiResponse<>(true, "Login processed", response, null));
+        return ResponseEntity.ok(new ApiResponse<>(true, "Login processed", toWebResponse(response), null));
     }
 
     @PublicEndpoint
     @PostMapping("/refresh")
     @Operation(summary = "Refresh access token")
-    public ResponseEntity<ApiResponse<RefreshTokenResponse>> refresh(
+    public ResponseEntity<ApiResponse<RefreshTokenWebResponse>> refresh(
             @Valid @RequestBody RefreshTokenRequest request) {
-        return ResponseEntity.ok(new ApiResponse<>(true, "Token refreshed",
-                refreshTokenHandler.execute(new RefreshTokenCommand(request.refreshToken())), null));
+        RefreshTokenResponse response = refreshTokenHandler.execute(new RefreshTokenCommand(request.refreshToken()));
+        return ResponseEntity.ok(new ApiResponse<>(true, "Token refreshed", toWebResponse(response), null));
     }
 
     @PublicEndpoint
@@ -183,18 +181,29 @@ public class AuthController {
 
     @GetMapping("/sessions")
     @Operation(summary = "Get all active sessions", security = @SecurityRequirement(name = "bearerAuth"))
-    public ResponseEntity<ApiResponse<List<SessionResult>>> getSessions(
+    public ResponseEntity<ApiResponse<List<SessionWebResponse>>> getSessions(
             @AuthenticationPrincipal Long userId) {
-        return ResponseEntity.ok(new ApiResponse<>(true, "Success",
-                getActiveSessionsHandler.execute(new GetActiveSessionsQuery(userId)), null));
+        List<SessionWebResponse> sessions = getActiveSessionsHandler.execute(new GetActiveSessionsQuery(userId)).stream()
+                .map(session -> new SessionWebResponse(
+                        session.token(), session.expiresAt(), session.ipAddress(), session.userAgent()))
+                .toList();
+        return ResponseEntity.ok(new ApiResponse<>(true, "Success", sessions, null));
     }
 
     @GetMapping("/devices")
     @Operation(summary = "Get trusted devices", security = @SecurityRequirement(name = "bearerAuth"))
-    public ResponseEntity<ApiResponse<List<TrustedDeviceResult>>> getDevices(
+    public ResponseEntity<ApiResponse<List<TrustedDeviceWebResponse>>> getDevices(
             @AuthenticationPrincipal Long userId) {
-        return ResponseEntity.ok(new ApiResponse<>(true, "Success",
-                getTrustedDevicesHandler.execute(new GetTrustedDevicesQuery(userId)), null));
+        List<TrustedDeviceWebResponse> devices = getTrustedDevicesHandler.execute(new GetTrustedDevicesQuery(userId)).stream()
+                .map(device -> new TrustedDeviceWebResponse(
+                        device.id(),
+                        device.deviceFingerprint(),
+                        device.deviceName(),
+                        device.lastSeenIp(),
+                        device.trustedAt(),
+                        device.expiresAt()))
+                .toList();
+        return ResponseEntity.ok(new ApiResponse<>(true, "Success", devices, null));
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
@@ -202,5 +211,23 @@ public class AuthController {
     private String getClientIp(HttpServletRequest request) {
         String xff = request.getHeader("X-Forwarded-For");
         return (xff == null || xff.isBlank()) ? request.getRemoteAddr() : xff.split(",")[0].trim();
+    }
+
+    private LoginWebResponse toWebResponse(LoginResponse response) {
+        return new LoginWebResponse(
+                response.status().name(),
+                response.accessToken(),
+                response.accessTokenExpiresAt(),
+                response.refreshToken(),
+                response.refreshTokenExpiresAt(),
+                response.message());
+    }
+
+    private RefreshTokenWebResponse toWebResponse(RefreshTokenResponse response) {
+        return new RefreshTokenWebResponse(
+                response.accessToken(),
+                response.accessTokenExpiresAt(),
+                response.refreshToken(),
+                response.refreshTokenExpiresAt());
     }
 }

@@ -9,6 +9,7 @@ public interface TokenPort {
 
     record AccessTokenPayload(
             String userId,
+            String sessionId,
             String orgId,
             Set<String> permissions
     ) {

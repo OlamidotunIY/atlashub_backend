@@ -36,6 +36,7 @@ public class JwtTokenAdapter implements TokenPort {
         String token = Jwts.builder()
                 .id(jti)
                 .subject(payload.userId())
+                .claim("sessionId", payload.sessionId())
                 .claim("orgId", payload.orgId())
                 .claim("permissions", payload.permissions())
                 .issuedAt(Date.from(now.toInstant()))

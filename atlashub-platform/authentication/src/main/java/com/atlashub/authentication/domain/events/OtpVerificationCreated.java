@@ -1,6 +1,6 @@
 package com.atlashub.authentication.domain.events;
 
-import com.atlashub.authentication.domain.valueobject.OtpType;
+import com.atlashub.authentication.domain.valueobject.VerificationType;
 import com.atlashub.shared.domain.event.DomainEvent;
 
 import java.time.ZonedDateTime;
@@ -12,8 +12,9 @@ public record OtpVerificationCreated(
         String correlationId,
         Payload payload
 ) implements DomainEvent<OtpVerificationCreated.Payload> {
+
     public record Payload(
-            OtpType type,
+            VerificationType verificationType,
             ZonedDateTime expiresAt
     ) {
     }

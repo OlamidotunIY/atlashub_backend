@@ -6,6 +6,6 @@ import com.atlashub.shared.domain.repository.Repository;
 import java.util.Optional;
 
 public interface AuthAccountRepository extends Repository<AuthAccount> {
-    Optional<AuthAccount> findByEmail(String email);
+    Optional<AuthAccount> findByAccountId(String accountId);
     Optional<AuthAccount> findByUserId(Long userId);
 }

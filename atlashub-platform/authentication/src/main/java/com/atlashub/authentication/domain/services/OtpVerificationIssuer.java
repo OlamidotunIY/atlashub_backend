@@ -1,13 +1,14 @@
 package com.atlashub.authentication.domain.services;
 
-import com.atlashub.authentication.domain.entities.OtpVerification;
+import com.atlashub.authentication.domain.entities.Verification;
 import com.atlashub.authentication.domain.ports.OtpGenerator;
-import com.atlashub.authentication.domain.valueobject.OtpType;
+import com.atlashub.authentication.domain.valueobject.VerificationType;
 import com.atlashub.shared.application.port.PasswordEncoderPort;
 
 import java.time.ZonedDateTime;
 
 public class OtpVerificationIssuer {
+
     private final OtpGenerator otpGenerator;
     private final PasswordEncoderPort otpHasher;
 
@@ -16,15 +17,16 @@ public class OtpVerificationIssuer {
         this.otpHasher = otpHasher;
     }
 
-    public IssuedToken issue(Long id, Long authAccountId, OtpType type) {
+    public IssuedToken issue(Long id, String identifier, VerificationType type) {
         String rawOtp = otpGenerator.generate();
-        String codeHash = otpHasher.encode(rawOtp);
+        String valueHash = otpHasher.encode(rawOtp);
 
-        OtpVerification otpVerification = OtpVerification.create(id, authAccountId, codeHash, type, ZonedDateTime.now().plusMinutes(10));
+        Verification verification = Verification.create(
+                id, identifier, valueHash, type, ZonedDateTime.now().plusMinutes(10));
 
-        return new IssuedToken(otpVerification, rawOtp);
+        return new IssuedToken(verification, rawOtp);
     }
 
-    public record IssuedToken(OtpVerification token, String rawOtp) {
+    public record IssuedToken(Verification token, String rawOtp) {
     }
 }

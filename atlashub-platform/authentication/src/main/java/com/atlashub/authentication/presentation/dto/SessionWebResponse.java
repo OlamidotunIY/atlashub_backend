@@ -1,8 +1,8 @@
-package com.atlashub.authentication.application.query.GetActiveSessions;
+package com.atlashub.authentication.presentation.dto;
 
 import java.time.ZonedDateTime;
 
-public record SessionResult(
+public record SessionWebResponse(
         String token,
         ZonedDateTime expiresAt,
         String ipAddress,

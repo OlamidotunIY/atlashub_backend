@@ -25,12 +25,12 @@ public class ChangePasswordHandler extends Command<ChangePasswordCommand, Void> 
         AuthAccount account = accountRepository.findByUserId(command.userId())
                 .orElseThrow(() -> new NotFoundException("Account not found"));
 
-        if (!passwordEncoderPort.matches(command.currentPassword(), account.getPasswordHash())) {
+        if (!passwordEncoderPort.matches(command.currentPassword(), account.getPassword())) {
             throw new InvalidCredentials();
         }
 
         String newHash = passwordEncoderPort.encode(command.newPassword());
-        account.resetPassword(newHash);
+        account.updatePassword(newHash);
         accountRepository.save(account);
 
         return null;

@@ -13,12 +13,16 @@ import org.springframework.stereotype.Component;
 import java.util.Optional;
 
 @Component
-public class AuthAccountRepositoryAdapter extends JpaBaseRepository<AuthAccount, AuthAccountJpa> implements AuthAccountRepository {
+public class AuthAccountRepositoryAdapter
+        extends JpaBaseRepository<AuthAccount, AuthAccountJpa>
+        implements AuthAccountRepository {
 
     private final SpringDataAuthAccountRepository springDataRepo;
 
-    public AuthAccountRepositoryAdapter(SpringDataAuthAccountRepository springDataRepo, AuthAccountMapper mapper,
-                                        DomainSequenceGenerator sequenceGenerator, DomainEventPublisher eventPublisher) {
+    public AuthAccountRepositoryAdapter(SpringDataAuthAccountRepository springDataRepo,
+                                        AuthAccountMapper mapper,
+                                        DomainSequenceGenerator sequenceGenerator,
+                                        DomainEventPublisher eventPublisher) {
         super(springDataRepo, mapper, sequenceGenerator, eventPublisher);
         this.springDataRepo = springDataRepo;
     }
@@ -29,8 +33,8 @@ public class AuthAccountRepositoryAdapter extends JpaBaseRepository<AuthAccount,
     }
 
     @Override
-    public Optional<AuthAccount> findByEmail(String email) {
-        return springDataRepo.findByEmail(email).map(mapper::toDomain);
+    public Optional<AuthAccount> findByAccountId(String accountId) {
+        return springDataRepo.findByAccountId(accountId).map(mapper::toDomain);
     }
 
     @Override

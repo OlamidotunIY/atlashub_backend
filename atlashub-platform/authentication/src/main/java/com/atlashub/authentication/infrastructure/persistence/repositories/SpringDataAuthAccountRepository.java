@@ -6,6 +6,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 
 public interface SpringDataAuthAccountRepository extends JpaRepository<AuthAccountJpa, Long> {
-    Optional<AuthAccountJpa> findByEmail(String email);
+    Optional<AuthAccountJpa> findByAccountId(String accountId);
     Optional<AuthAccountJpa> findByUserId(Long userId);
 }
