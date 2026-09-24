@@ -65,7 +65,22 @@ scp -i ~/.ssh/id_rsa_azure .env ubuntu@<YOUR_VM_IP>:~/atlashub/infrastructure/do
 
 ---
 
-## 6. Checking Logs
+## 6. Copying Firebase Credentials (Required for Startup)
+The Java backend requires a Firebase Service Account JSON file to boot.
+
+First, create the secrets folder on the remote server by running this on your local Windows machine:
+```powershell
+ssh -i ~/.ssh/id_rsa_azure ubuntu@<YOUR_VM_IP> "mkdir -p ~/atlashub/infrastructure/docker/secrets"
+```
+
+Next, securely copy your local Firebase JSON file into that folder:
+```powershell
+scp -i ~/.ssh/id_rsa_azure path\to\your\local-firebase.json ubuntu@<YOUR_VM_IP>:~/atlashub/infrastructure/docker/secrets/firebase-service-account.json
+```
+
+---
+
+## 7. Checking Logs
 If something isn't working, SSH into the server and check the backend logs:
 ```bash
 cd atlashub/infrastructure/docker

@@ -174,8 +174,8 @@ services:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/atlashub?serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: atlashub
       SPRING_DATASOURCE_PASSWORD: atlashub
-      SPRING_REDIS_HOST: redis
-      SPRING_REDIS_PORT: 6379
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       SPRING_PROFILES_ACTIVE: prod
       ATLASHUB_JWT_SECRET: ${ATLASHUB_JWT_SECRET:-dummy_secret_key_change_me_in_production_1234567890}
