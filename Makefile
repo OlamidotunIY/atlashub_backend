@@ -21,6 +21,10 @@ start:
 	cd $(TF_DIR) && terraform init -upgrade && terraform apply -auto-approve
 	@echo "=> Waiting for VM and Docker to initialize (sleeping for 90s)..."
 	timeout /t 90 /nobreak
+	$(MAKE) deploy-stack
+
+# Internal target: runs AFTER infrastructure exists so $(VM_IP) evaluates correctly
+deploy-stack:
 	@echo "=> Copying Secrets to VM..."
 	$(SCP) -i $(SSH_KEY) -o StrictHostKeyChecking=no .env ubuntu@$(VM_IP):/tmp/.env
 	$(SCP) -i $(SSH_KEY) -o StrictHostKeyChecking=no secrets/firebase-service-account.json ubuntu@$(VM_IP):/tmp/firebase-service-account.json
