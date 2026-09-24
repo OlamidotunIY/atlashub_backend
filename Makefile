@@ -27,10 +27,10 @@ start:
 deploy-stack:
 	@echo "=> Checking if Docker and K3s are installed and ready..."
 	$(SSH) -i $(SSH_KEY) -o StrictHostKeyChecking=no ubuntu@$(VM_IP) "while ! command -v docker >/dev/null 2>&1; do echo 'Waiting for Docker...'; sleep 5; done; while ! command -v k3s >/dev/null 2>&1; do echo 'Waiting for K3s...'; sleep 5; done; while ! sudo k3s kubectl get node >/dev/null 2>&1; do echo 'Waiting for Kubernetes to be ready...'; sleep 5; done; echo 'Infrastructure is Ready!'"
-	@echo "=> Copying Secrets to VM..."
+	@echo "=> Copying Secrets to VM (if not exists)..."
 	$(eval FIREBASE_JSON := $(wildcard infrastructure/Firebase/*.json))
-	$(SCP) -i $(SSH_KEY) -o StrictHostKeyChecking=no .env ubuntu@$(VM_IP):/tmp/.env
-	$(SCP) -i $(SSH_KEY) -o StrictHostKeyChecking=no $(FIREBASE_JSON) ubuntu@$(VM_IP):/tmp/firebase-service-account.json
+	@$(SSH) -i $(SSH_KEY) -o StrictHostKeyChecking=no ubuntu@$(VM_IP) "test -f /tmp/.env" && echo "=> .env already exists on VM, skipping." || $(SCP) -i $(SSH_KEY) -o StrictHostKeyChecking=no .env ubuntu@$(VM_IP):/tmp/.env
+	@$(SSH) -i $(SSH_KEY) -o StrictHostKeyChecking=no ubuntu@$(VM_IP) "test -f /tmp/firebase-service-account.json" && echo "=> Firebase JSON already exists on VM, skipping." || $(SCP) -i $(SSH_KEY) -o StrictHostKeyChecking=no $(FIREBASE_JSON) ubuntu@$(VM_IP):/tmp/firebase-service-account.json
 	@echo "=> Building Docker Image and Loading into K3s..."
 	$(SSH) -i $(SSH_KEY) -o StrictHostKeyChecking=no ubuntu@$(VM_IP) "if [ ! -d 'atlashub' ]; then git clone https://github.com/OlamidotunIY/atlashub_backend.git atlashub; fi && cd atlashub && git pull && sudo docker build -t atlashub/app:latest . && sudo docker save atlashub/app:latest | sudo k3s ctr images import -"
 	@echo "=> Applying Kubernetes Secrets..."
