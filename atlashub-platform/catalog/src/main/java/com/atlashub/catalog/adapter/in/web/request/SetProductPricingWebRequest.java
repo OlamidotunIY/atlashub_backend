@@ -1,13 +1,14 @@
 package com.atlashub.catalog.adapter.in.web.request;
 
-import com.atlashub.catalog.domain.valueobject.BillingCycle;
-import com.atlashub.shared.domain.valueobject.CurrencyCode;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import java.math.BigDecimal;
 
 public record SetProductPricingWebRequest(
-        @NotNull BillingCycle cycle,
-        @NotNull BigDecimal amount,
-        @NotNull CurrencyCode currency
+        @NotBlank @Pattern(regexp = "MONTHLY|ANNUALLY") String cycle,
+        @NotNull @DecimalMin(value = "0.00", inclusive = false) BigDecimal amount,
+        @NotBlank @Pattern(regexp = "NGN") String currency
 ) {
 }

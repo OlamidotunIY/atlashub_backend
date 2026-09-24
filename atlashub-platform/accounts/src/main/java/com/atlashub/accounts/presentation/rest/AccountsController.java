@@ -25,14 +25,17 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1")
 @Tag(name = "Accounts", description = "User and organization account management")
+@Validated
 public class AccountsController {
 
     private final RegisterOrganizationHandler registerHandler;
@@ -85,9 +88,9 @@ public class AccountsController {
 
     @GetMapping("/me")
     @Operation(summary = "Get current user profile and organizations", security = @SecurityRequirement(name = "bearerAuth"))
-    public ResponseEntity<ApiResponse<UserProfileResult>> getMe(@AuthenticationPrincipal Long userId) {
-        return ResponseEntity.ok(new ApiResponse<>(true, "Success",
-                getUserProfileHandler.execute(new GetUserProfileQuery(userId)), null));
+    public ResponseEntity<ApiResponse<UserProfileResponse>> getMe(@AuthenticationPrincipal Long userId) {
+        UserProfileResult result = getUserProfileHandler.execute(new GetUserProfileQuery(userId));
+        return ResponseEntity.ok(new ApiResponse<>(true, "Success", toWebResponse(result), null));
     }
 
     @PutMapping("/me")
@@ -104,15 +107,15 @@ public class AccountsController {
 
     @GetMapping("/organizations")
     @Operation(summary = "Get organization details", security = @SecurityRequirement(name = "bearerAuth"))
-    public ResponseEntity<ApiResponse<OrganizationDetailsResult>> getOrganization(@RequestParam Long id) {
-        return ResponseEntity.ok(new ApiResponse<>(true, "Success",
-                getOrgDetailsHandler.execute(new GetOrganizationDetailsQuery(id)), null));
+    public ResponseEntity<ApiResponse<OrganizationDetailsResponse>> getOrganization(@RequestParam @Positive Long id) {
+        OrganizationDetailsResult result = getOrgDetailsHandler.execute(new GetOrganizationDetailsQuery(id));
+        return ResponseEntity.ok(new ApiResponse<>(true, "Success", toWebResponse(result), null));
     }
 
     @PutMapping("/organizations")
     @Operation(summary = "Update organization details", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<ApiResponse<Void>> updateOrganization(
-            @RequestParam Long id,
+            @RequestParam @Positive Long id,
             @Valid @RequestBody UpdateOrganizationRequest request) {
         updateOrgHandler.execute(new UpdateOrganizationDetailsCommand(
                 id, request.businessName(), request.description(),
@@ -128,5 +131,37 @@ public class AccountsController {
             @Valid @RequestBody SwitchOrganizationRequest request) {
         switchOrgHandler.execute(new SwitchActiveOrganizationCommand(userId, request.organizationId()));
         return ResponseEntity.ok(new ApiResponse<>(true, "Active organization switched", null, null));
+    }
+
+    private UserProfileResponse toWebResponse(UserProfileResult result) {
+        return new UserProfileResponse(
+                result.id(),
+                result.firstName(),
+                result.lastName(),
+                result.email(),
+                result.phone(),
+                result.imageUrl(),
+                result.country(),
+                result.activeOrganizationId(),
+                result.createdAt(),
+                result.organizations().stream()
+                        .map(org -> new OrganizationSummaryResponse(
+                                org.id(), org.businessName(), org.country(), org.baseCurrency(), org.logoUrl()))
+                        .toList());
+    }
+
+    private OrganizationDetailsResponse toWebResponse(OrganizationDetailsResult result) {
+        return new OrganizationDetailsResponse(
+                result.id(),
+                result.businessName(),
+                result.businessType(),
+                result.businessSize(),
+                result.industry(),
+                result.description(),
+                result.logoUrl(),
+                result.websiteUrl(),
+                result.country(),
+                result.baseCurrency(),
+                result.createdAt());
     }
 }

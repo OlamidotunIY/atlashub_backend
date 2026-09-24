@@ -26,26 +26,8 @@ public class SpringDomainEventListener {
             return "organization-events";
         } else if (eventClassName.startsWith("User")) {
             return "user-events";
-        } else if (eventClassName.startsWith("Auth") || eventClassName.startsWith("Verification")) {
+        } else if (eventClassName.startsWith("Auth") || eventClassName.startsWith("Otp")) {
             return "auth-events";
-        } else if (eventClassName.startsWith("Account") || eventClassName.startsWith("SplitRecipient")) {
-            return "account-events";
-        } else if (eventClassName.startsWith("Transaction") || eventClassName.startsWith("Transfer")) {
-            return "transaction-events";
-        } else if (eventClassName.startsWith("Charge")) {
-            return "charge-events";
-        } else if (eventClassName.startsWith("Ledger")) {
-            return "ledger-events";
-        } else if (eventClassName.startsWith("Settlement")) {
-            return "settlement-events";
-        } else if (eventClassName.startsWith("Admin")) {
-            return "admin-events";
-        } else if (eventClassName.endsWith("ChargeRequestedEvent")) {
-            return "billing-events";
-        } else if (eventClassName.endsWith("PaymentResultEvent") || eventClassName.endsWith("ChargeResultEvent") || eventClassName.endsWith("ChargeSuccessfulEvent") || eventClassName.endsWith("ChargeFailedEvent")) {
-            return "pay-events";
-        } else if (eventClassName.startsWith("HubProduct") || eventClassName.startsWith("ProductPricing")) {
-            return "catalog-events";
         }
         return "system-events";
     }

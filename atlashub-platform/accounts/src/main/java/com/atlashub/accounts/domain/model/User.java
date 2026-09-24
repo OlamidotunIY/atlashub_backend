@@ -25,6 +25,7 @@ public class User extends AggregateRoot<Long> {
     private PhoneNumber phone;
     private final Country country;
     private Long activeOrganizationId;
+    private boolean emailVerified;
     private final ZonedDateTime createdAt;
     private ZonedDateTime updatedAt;
 
@@ -40,7 +41,7 @@ public class User extends AggregateRoot<Long> {
 
         _validatePassword(passwordHash);
 
-        User user = new User(id, firstName, lastName, email, null, null, country, null, ZonedDateTime.now(), ZonedDateTime.now());
+        User user = new User(id, firstName, lastName, email, null, null, country, null, false, ZonedDateTime.now(), ZonedDateTime.now());
 
         user.registerEvent(new UserCreated(
                 UUID.randomUUID().toString(),
@@ -61,7 +62,7 @@ public class User extends AggregateRoot<Long> {
      * Reconstitution constructor — used by mappers only. No events raised.
      */
     public User(Long id, String firstName, String lastName, EmailAddress email, String imageUrl,
-                PhoneNumber phone, Country country, Long activeOrganizationId,
+                PhoneNumber phone, Country country, Long activeOrganizationId, Boolean emailVerified,
                 ZonedDateTime createdAt, ZonedDateTime updatedAt) {
         this.id = id;
         this.firstName = firstName;
@@ -71,8 +72,18 @@ public class User extends AggregateRoot<Long> {
         this.phone = phone;
         this.country = country;
         this.activeOrganizationId = activeOrganizationId;
+        this.emailVerified = emailVerified != null && emailVerified;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
+    }
+
+    /**
+     * Called by the Kafka listener when the authentication module publishes
+     * an {@code AuthEmailVerifiedEvent}. Sets emailVerified to true.
+     */
+    public void markEmailVerified() {
+        this.emailVerified = true;
+        this.updatedAt = ZonedDateTime.now();
     }
 
     public void updateImageUrl(String imageUrl) {
@@ -134,24 +145,13 @@ public class User extends AggregateRoot<Long> {
             if (Character.isUpperCase(c)) hasUpper = true;
             else if (Character.isLowerCase(c)) hasLower = true;
             else if (Character.isDigit(c)) hasDigit = true;
-            else if (!Character.isWhitespace(c)) hasSpecial = true; // Anything not a letter, number, or space
+            else if (!Character.isWhitespace(c)) hasSpecial = true;
         }
 
-        if (!hasUpper) {
-            throw new WeakPasswordException("Password must contain at least one uppercase letter.");
-        }
-
-        if (!hasLower) {
-            throw new WeakPasswordException("Password must contain at least one lowercase letter.");
-        }
-
-        if (!hasDigit) {
-            throw new WeakPasswordException("Password must contain at least one number.");
-        }
-
-        if (!hasSpecial) {
-            throw new WeakPasswordException("Password must contain at least one special character.");
-        }
+        if (!hasUpper) throw new WeakPasswordException("Password must contain at least one uppercase letter.");
+        if (!hasLower) throw new WeakPasswordException("Password must contain at least one lowercase letter.");
+        if (!hasDigit) throw new WeakPasswordException("Password must contain at least one number.");
+        if (!hasSpecial) throw new WeakPasswordException("Password must contain at least one special character.");
     }
 
     @Override
@@ -159,13 +159,3 @@ public class User extends AggregateRoot<Long> {
         return id;
     }
 }
-
-
-
-
-
-
-
-
-
-

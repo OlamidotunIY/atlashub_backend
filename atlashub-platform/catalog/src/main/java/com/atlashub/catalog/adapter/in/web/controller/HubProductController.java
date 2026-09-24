@@ -3,45 +3,36 @@ package com.atlashub.catalog.adapter.in.web.controller;
 import com.atlashub.catalog.adapter.in.web.request.CreateHubProductWebRequest;
 import com.atlashub.catalog.adapter.in.web.request.SetProductPricingWebRequest;
 import com.atlashub.catalog.adapter.in.web.request.UpdateHubProductWebRequest;
-import com.atlashub.catalog.adapter.in.web.response.CreateHubProductResponse;
-import com.atlashub.catalog.adapter.in.web.response.HubProductDetailsResponse;
-import com.atlashub.catalog.adapter.in.web.response.HubProductResponse;
-import com.atlashub.catalog.adapter.in.web.response.SetProductPricingResponse;
-import com.atlashub.catalog.adapter.in.web.response.UpdateHubProductResponse;
+import com.atlashub.catalog.adapter.in.web.response.*;
 import com.atlashub.catalog.application.command.CreateHubProductCommand;
 import com.atlashub.catalog.application.command.SetProductPricingCommand;
 import com.atlashub.catalog.application.command.UpdateHubProductCommand;
+import com.atlashub.catalog.application.port.HubProductQueryService;
 import com.atlashub.catalog.application.query.GetHubProductDetailsQuery;
 import com.atlashub.catalog.application.query.ListHubProductsQuery;
-import com.atlashub.catalog.application.result.CreateHubProductResult;
-import com.atlashub.catalog.application.result.HubProductDetailsResult;
-import com.atlashub.catalog.application.result.HubProductResult;
-import com.atlashub.catalog.application.result.SetProductPricingResult;
-import com.atlashub.catalog.application.result.UpdateHubProductResult;
+import com.atlashub.catalog.application.result.*;
 import com.atlashub.catalog.application.usecase.CreateHubProductUseCase;
-import com.atlashub.catalog.application.port.HubProductQueryService;
 import com.atlashub.catalog.application.usecase.ListHubProductUseCase;
 import com.atlashub.catalog.application.usecase.SetProductPricingUseCase;
 import com.atlashub.catalog.application.usecase.UpdateHubProductUseCase;
+import com.atlashub.catalog.domain.valueobject.BillingCycle;
+import com.atlashub.catalog.domain.valueobject.ProductKey;
 import com.atlashub.catalog.domain.valueobject.ProductStatus;
 import com.atlashub.shared.application.dto.ApiResponse;
+import com.atlashub.shared.domain.valueobject.CurrencyCode;
 import com.atlashub.shared.domain.valueobject.Money;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/platform/catalog/products")
+@Validated
 public class HubProductController {
 
     private final CreateHubProductUseCase createHubProductUseCase;
@@ -67,7 +58,7 @@ public class HubProductController {
     public ResponseEntity<ApiResponse<CreateHubProductResponse>> createProduct(
             @Valid @RequestBody CreateHubProductWebRequest request) {
         CreateHubProductCommand command = new CreateHubProductCommand(
-                request.key(),
+                ProductKey.valueOf(request.key()),
                 request.name(),
                 request.description()
         );
@@ -95,8 +86,8 @@ public class HubProductController {
             @Valid @RequestBody SetProductPricingWebRequest request) {
         SetProductPricingCommand command = new SetProductPricingCommand(
                 productId,
-                request.cycle(),
-                new Money(request.amount(), request.currency())
+                BillingCycle.valueOf(request.cycle()),
+                new Money(request.amount(), CurrencyCode.valueOf(request.currency()))
         );
         SetProductPricingResult result = setProductPricingUseCase.execute(command);
         return ResponseEntity.ok(new ApiResponse<>(true, "Product pricing updated successfully", new SetProductPricingResponse(result.pricingId()), null));
@@ -109,7 +100,8 @@ public class HubProductController {
         List<HubProductResult> appResults = listHubProductUseCase.execute(query);
                 
         List<HubProductResponse> webResponse = appResults.stream()
-                .map(r -> new HubProductResponse(r.id(), r.key(), r.name(), r.description(), r.status()))
+                .map(r -> new HubProductResponse(
+                        r.id(), r.key().name(), r.name(), r.description(), r.status().name()))
                 .toList();
 
         return ResponseEntity.ok(new ApiResponse<>(true, "Hub products retrieved successfully", webResponse, null));
@@ -117,18 +109,18 @@ public class HubProductController {
 
     @GetMapping("/{productId}")
     public ResponseEntity<ApiResponse<HubProductDetailsResponse>> getProductDetails(
-            @PathVariable Long productId) {
+            @PathVariable @Positive Long productId) {
         GetHubProductDetailsQuery query = new GetHubProductDetailsQuery(productId);
         HubProductDetailsResult appResult = queryService.getHubProductDetails(query.productId());
         
         HubProductDetailsResponse webResponse = new HubProductDetailsResponse(
                 appResult.id(),
-                appResult.key(),
+                appResult.key().name(),
                 appResult.name(),
                 appResult.description(),
-                appResult.status(),
+                appResult.status().name(),
                 appResult.pricing().stream().map(p -> new HubProductDetailsResponse.Pricing(
-                        p.pricingId(), p.billingCycle(), p.amount().amount(), p.amount().currency()
+                        p.pricingId(), p.billingCycle().name(), p.amount().amount(), p.amount().currency().name()
                 )).toList()
         );
         

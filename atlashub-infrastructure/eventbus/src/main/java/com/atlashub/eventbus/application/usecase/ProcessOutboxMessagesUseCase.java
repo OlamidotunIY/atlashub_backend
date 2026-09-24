@@ -1,10 +1,10 @@
 package com.atlashub.eventbus.application.usecase;
 
 import com.atlashub.eventbus.application.command.ProcessOutboxMessagesCommand;
-import com.atlashub.eventbus.application.port.EventTrackerPort;
 import com.atlashub.eventbus.application.port.MessageBrokerPort;
 import com.atlashub.eventbus.domain.model.OutboxMessage;
 import com.atlashub.eventbus.domain.repository.OutboxMessageRepository;
+import com.atlashub.shared.application.port.EventTrackerPort;
 import com.atlashub.shared.application.usecase.BaseUseCase;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;

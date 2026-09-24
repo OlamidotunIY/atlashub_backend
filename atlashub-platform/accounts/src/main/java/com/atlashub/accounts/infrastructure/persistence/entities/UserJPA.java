@@ -46,6 +46,9 @@ public class UserJPA implements BaseJpaEntity {
     private Long activeOrganizationId;
 
     @Column(nullable = false)
+    private boolean emailVerified;
+
+    @Column(nullable = false)
     private ZonedDateTime createdAt;
 
     @Column(nullable = false)

@@ -1,13 +1,12 @@
 package com.atlashub.catalog.adapter.in.web.request;
 
-
-import com.atlashub.catalog.domain.valueobject.ProductKey;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 
 public record CreateHubProductWebRequest(
-        @NotNull ProductKey key,
-        @NotBlank String name,
-        @NotBlank String description
+        @NotBlank @Pattern(regexp = "PAY|COMMERCE|LOGISTICS|HR|ACCOUNTING") String key,
+        @NotBlank @Size(max = 120) String name,
+        @NotBlank @Size(max = 1000) String description
 ) {
 }

@@ -14,8 +14,7 @@ import java.util.concurrent.ConcurrentMap;
 
 @Service
 public class EventTrackerApiImpl implements
-        EventTrackerPort,
-        com.atlashub.eventbus.application.port.EventTrackerPort {
+        EventTrackerPort {
 
     private final JpaEventDeliveryTrackerRepository trackerRepository;
     
