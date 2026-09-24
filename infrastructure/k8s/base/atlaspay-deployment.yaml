@@ -31,8 +31,6 @@ spec:
           value: "atlashub"
         - name: SPRING_DATASOURCE_PASSWORD
           value: "atlashub"
-        - name: FIREBASE_CREDENTIALS_PATH
-          value: "/secrets/firebase-service-account.json"
         - name: ATLASHUB_JWT_SECRET
           valueFrom:
             secretKeyRef:
@@ -40,7 +38,7 @@ spec:
               key: ATLASHUB_JWT_SECRET
         volumeMounts:
         - name: firebase-secrets
-          mountPath: /secrets
+          mountPath: /app/infrastructure/Firebase
           readOnly: true
       volumes:
       - name: firebase-secrets
