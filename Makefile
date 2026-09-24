@@ -29,12 +29,13 @@ deploy-stack:
 	$(SSH) -i $(SSH_KEY) -o StrictHostKeyChecking=no ubuntu@$(VM_IP) "while ! command -v docker >/dev/null 2>&1; do echo 'Waiting for Docker...'; sleep 5; done; while ! command -v k3s >/dev/null 2>&1; do echo 'Waiting for K3s...'; sleep 5; done; while ! sudo k3s kubectl get node >/dev/null 2>&1; do echo 'Waiting for Kubernetes to be ready...'; sleep 5; done; echo 'Infrastructure is Ready!'"
 	@echo "=> Copying Secrets to VM (if not exists)..."
 	$(eval FIREBASE_JSON := $(wildcard infrastructure/Firebase/*.json))
+	$(eval FIREBASE_JSON_NAME := $(notdir $(FIREBASE_JSON)))
 	@$(SSH) -i $(SSH_KEY) -o StrictHostKeyChecking=no ubuntu@$(VM_IP) "test -f /tmp/.env" && echo "=> .env already exists on VM, skipping." || $(SCP) -i $(SSH_KEY) -o StrictHostKeyChecking=no .env ubuntu@$(VM_IP):/tmp/.env
-	@$(SSH) -i $(SSH_KEY) -o StrictHostKeyChecking=no ubuntu@$(VM_IP) "test -f /tmp/firebase-service-account.json" && echo "=> Firebase JSON already exists on VM, skipping." || $(SCP) -i $(SSH_KEY) -o StrictHostKeyChecking=no $(FIREBASE_JSON) ubuntu@$(VM_IP):/tmp/firebase-service-account.json
+	@$(SSH) -i $(SSH_KEY) -o StrictHostKeyChecking=no ubuntu@$(VM_IP) "test -f /tmp/$(FIREBASE_JSON_NAME)" && echo "=> Firebase JSON already exists on VM, skipping." || $(SCP) -i $(SSH_KEY) -o StrictHostKeyChecking=no $(FIREBASE_JSON) ubuntu@$(VM_IP):/tmp/$(FIREBASE_JSON_NAME)
 	@echo "=> Ensuring Docker Image exists in K3s..."
 	@$(SSH) -i $(SSH_KEY) -o StrictHostKeyChecking=no ubuntu@$(VM_IP) "sudo k3s ctr images ls | grep -q atlashub/app:latest" || $(MAKE) build-image
 	@echo "=> Applying Kubernetes Secrets..."
-	$(SSH) -i $(SSH_KEY) -o StrictHostKeyChecking=no ubuntu@$(VM_IP) "export KUBECONFIG=/home/ubuntu/.kube/config && kubectl delete secret atlashub-secrets firebase-secrets --ignore-not-found && kubectl create secret generic atlashub-secrets --from-env-file=/tmp/.env && kubectl create secret generic firebase-secrets --from-file=firebase-service-account.json=/tmp/firebase-service-account.json"
+	$(SSH) -i $(SSH_KEY) -o StrictHostKeyChecking=no ubuntu@$(VM_IP) "export KUBECONFIG=/home/ubuntu/.kube/config && kubectl delete secret atlashub-secrets firebase-secrets --ignore-not-found && kubectl create secret generic atlashub-secrets --from-env-file=/tmp/.env && kubectl create secret generic firebase-secrets --from-file=/tmp/$(FIREBASE_JSON_NAME)"
 	@echo "=> Applying Kubernetes Manifests..."
 	$(SSH) -i $(SSH_KEY) -o StrictHostKeyChecking=no ubuntu@$(VM_IP) "export KUBECONFIG=/home/ubuntu/.kube/config && kubectl apply -k atlashub/infrastructure/k8s/base"
 	@echo "=> Waiting 30s for MySQL to boot..."

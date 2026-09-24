@@ -38,7 +38,7 @@ spec:
               key: ATLASHUB_JWT_SECRET
         volumeMounts:
         - name: firebase-secrets
-          mountPath: /secrets
+          mountPath: /app/infrastructure/Firebase
           readOnly: true
       volumes:
       - name: firebase-secrets
