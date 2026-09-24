@@ -178,6 +178,7 @@ services:
       SPRING_REDIS_PORT: 6379
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       SPRING_PROFILES_ACTIVE: prod
+      ATLASHUB_JWT_SECRET: ${ATLASHUB_JWT_SECRET:-dummy_secret_key_change_me_in_production_1234567890}
       # Tracing enabled
       OTEL_EXPORTER_ENDPOINT: http://tempo:4318
       OTEL_TRACES_EXPORTER: otlp
