@@ -29,6 +29,10 @@ Before generating or updating an entity, analyze its Domain Rules and Business M
 **Handling Domain Errors:**
 - If a method implies throwing a custom domain error (e.g., "deactivating the last owner throws LastOwnerDeactivationException"), you MUST first use the **`create-domain-error`** skill to generate it.
 
+**Handling Value Objects:**
+- If a field is a custom complex type or enum (e.g., `MemberStatus`), first check if it exists in the `shared` module.
+- If it does not exist globally or locally, you MUST use the **`create-domain-valueobject`** skill to generate it before writing the entity.
+
 ## Generation Mode (Creating New)
 **Step 1: Scaffold Skeleton**
 Run the PowerShell script to safely generate the baseline file structure and prevent accidental overwrites:
