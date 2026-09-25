@@ -27,7 +27,13 @@ The `Repository<T>` base interface (which you are extending) already provides th
 
 **CRITICAL:** Do NOT redefine these methods in your newly generated repository interface. Only add *custom* query methods (e.g., `Optional<AuthAccount> findByEmail(String email);`) if explicitly required.
 
-## Step 4: Gradle Compilation Check
+## Rule 4: No Inline Imports
+You MUST NOT use wildcard imports (`import java.util.*`). You MUST NOT use inline fully qualified class names inside the code (e.g., `java.util.Optional<String>`). Always import explicitly at the top of the file.
+
+## Batch Processing
+This skill supports processing multiple repositories simultaneously. You can use `invoke_subagent` for large batches.
+
+## Step 5: Gradle Compilation Check
 You MUST run the Gradle compiler to prove to the user that your generated repository compiles properly.
 **CRITICAL RULE:** NEVER run `.\gradlew compileJava` globally. You MUST strictly target the module you are working on.
 Example: `.\gradlew :atlashub-platform:iam:compileJava`

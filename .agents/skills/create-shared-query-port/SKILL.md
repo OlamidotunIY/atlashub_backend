@@ -30,7 +30,13 @@ public interface UserQueryPort {
 }
 ```
 
-## Step 4: Gradle Compilation Check
+## Rule 4: No Inline Imports
+You MUST NOT use wildcard imports (`import java.util.*`). You MUST NOT use inline fully qualified class names inside the code (e.g., `java.util.Optional<String>`). Always import explicitly at the top of the file.
+
+## Batch Processing
+This skill supports processing multiple query ports simultaneously. You can use `invoke_subagent` for large batches.
+
+## Step 5: Gradle Compilation Check
 You MUST run the Gradle compiler to prove to the user that your generated port compiles properly.
 **CRITICAL RULE:** NEVER run `.\gradlew compileJava` globally. You MUST strictly target the module you are working on.
 Example: `.\gradlew :atlashub-shared:compileJava`
