@@ -29,4 +29,6 @@ Do not write the file manually. You MUST use the PowerShell generator script:
 *Example: `...generate-error.ps1 -Module "iam" -ErrorName "EmailAlreadyVerified" -BaseException "ConflictException"`*
 
 ## Step 3: Gradle Verification
-Run `.\gradlew :<module_gradle_path>:compileJava` to verify it compiles.
+**CRITICAL RULE:** NEVER run `.\gradlew compileJava` globally, as it will compile the entire app.
+You MUST strictly target the module you are working on.
+Example: `.\gradlew :atlashub-platform:iam:compileJava`

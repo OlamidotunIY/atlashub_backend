@@ -50,9 +50,9 @@ Instead, execute the provided helper script. The script automatically searches f
 
 ## Step 3: Gradle Compilation Check
 After the script finishes generating the files, you MUST run the Gradle compiler to prove to the user that your generated events have zero syntax or import errors.
-1. Determine the Gradle module path (e.g., if the module is in `atlashub-platform/iam`, the Gradle path is `:atlashub-platform:iam`).
-2. Run the compilation command: `.\gradlew :<gradle_path>:compileJava`
-3. If the build fails due to the files you just generated, you must fix the errors immediately.
+**CRITICAL RULE:** NEVER run `.\gradlew compileJava` globally, as it will compile the entire app.
+You MUST strictly target the module you are working on.
+Example: `.\gradlew :atlashub-platform:iam:compileJava`
 
 ## Step 4: Final Verification
 Confirm to the user that the file was created. Show them the successful output of the Gradle build to prove it compiled flawlessly.

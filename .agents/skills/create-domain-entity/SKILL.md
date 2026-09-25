@@ -27,7 +27,8 @@ Before generating or updating an entity, analyze its Domain Rules and Business M
 3. **Proactive Creation:** If you personally identify a valid business use case that *should* publish an event, but it is missing from the docs, you are empowered to proactively create that event using the `create-domain-event` skill.
 
 **Handling Domain Errors:**
-- If a method implies throwing a custom domain error (e.g., "deactivating the last owner throws LastOwnerDeactivationException"), you MUST first use the **`create-domain-error`** skill to generate it.
+- **CRITICAL RULE:** NEVER throw exceptions from the `shared` module directly inside an entity (e.g., do NOT `throw new BusinessRuleException("...")`). 
+- You MUST create module-specific, semantically named custom errors (e.g., `LastOwnerDeactivationException`) using the **`create-domain-error`** skill, and throw those custom errors instead.
 
 **Handling Value Objects:**
 - If a field is a custom complex type or enum (e.g., `MemberStatus`), first check if it exists in the `shared` module.
@@ -51,9 +52,11 @@ Once the skeleton is scaffolded, use `replace_file_content` to inject the fields
    - Any method that updates state MUST call `this.touch();`.
    - Implement `private void touch() { this.updatedAt = ZonedDateTime.now(); }`.
 4. **Events & Errors:**
-   - Enforce all requested rules inside the mutator methods. Throw specific Domain Errors if violated (create them with `create-domain-error` if missing).
-   - Use `this.registerEvent(...)` with `CorrelationId.getOrCreate()` for domain events. (Create events with `create-domain-event` first if missing).
+   - Enforce all requested invariants.
+   - **CRITICAL:** If an invariant fails, throw a custom Domain Error (created via `create-domain-error`). NEVER throw a `shared` module base exception directly.
+   - Use `this.registerEvent(...)` with `CorrelationId.getOrCreate()` for domain events.
 
 ## Step 3: Gradle Verification
-Run `.\gradlew :<module_gradle_path>:compileJava` to verify it compiles perfectly without missing imports.
-If errors occur, fix them immediately before answering the user.
+**CRITICAL RULE:** NEVER run `.\gradlew compileJava` globally, as it will compile the entire app and take too long.
+You MUST strictly target the module you are working on.
+Example: `.\gradlew :atlashub-platform:iam:compileJava`
