@@ -7,7 +7,7 @@ param (
 $ErrorActionPreference = "Stop"
 
 $ModulePath = "atlashub-platform\$Module\src\main\java\com\atlashub\$Module"
-$CommandDir = "$ModulePath\application\command\$CommandName"
+$CommandDir = "$ModulePath\application\commands\$CommandName"
 
 if (-Not (Test-Path $CommandDir)) {
     New-Item -ItemType Directory -Force -Path $CommandDir | Out-Null
@@ -23,7 +23,7 @@ if (Test-Path $HandlerFile) {
 
 # 1. Command Record
 $CommandContent = @"
-package com.atlashub.${Module}.application.command.${CommandName};
+package com.atlashub.${Module}.application.commands.${CommandName};
 
 public record ${CommandName}Command() {}
 "@
@@ -35,7 +35,7 @@ $ResponseGeneric = $ResponseType
 if ($ResponseType -eq "${CommandName}Response") {
     $ResponseFile = "$CommandDir\${CommandName}Response.java"
     $ResponseContent = @"
-package com.atlashub.${Module}.application.command.${CommandName};
+package com.atlashub.${Module}.application.commands.${CommandName};
 
 public record ${CommandName}Response() {}
 "@
@@ -44,7 +44,7 @@ public record ${CommandName}Response() {}
 
 # 3. Handler Class
 $HandlerContent = @"
-package com.atlashub.${Module}.application.command.${CommandName};
+package com.atlashub.${Module}.application.commands.${CommandName};
 
 import com.atlashub.shared.application.usecase.Command;
 import org.springframework.stereotype.Component;

@@ -6,7 +6,7 @@ description: >-
 
 # Create Application Command Workflow
 
-Application Commands live in `application/command/<CommandName>/`. Each package contains a Handler, a Command request object, and optionally a Response object.
+Application Commands live in `application/commands/<CommandName>/`. Each package contains a Handler, a Command request object, and optionally a Response object.
 
 ## Pre-Requisites (Dependencies)
 Before writing the handler, analyze the required dependencies:
