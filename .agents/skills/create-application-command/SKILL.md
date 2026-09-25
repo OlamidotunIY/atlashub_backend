@@ -13,8 +13,10 @@ Before writing the handler, analyze the required dependencies:
 1. **Repositories:** If the command needs a domain repository (e.g., `UserRepository`), and it doesn't exist, trigger the `create-domain-repository` skill first.
 2. **Cross-Module Queries:** If the command needs data from an entity belonging to a *different* module, it MUST NOT use that module's repository. It must use a Query Port from the `shared` module. Trigger the `create-shared-query-port` skill if it doesn't exist.
 
-## Rule 1: Scaffold Skeleton
-Use the provided PowerShell script to safely generate the package and files.
+## Rule 1: Scaffold Skeleton or Update Existing
+Check if the command package (`application/commands/<CommandName>`) already exists. 
+- **If it exists:** Do NOT run the scaffold script. Do NOT recreate the package. Proceed directly to updating the existing files.
+- **If it does not exist:** Use the provided PowerShell script to safely generate the package and files.
 Pass `Void` for the ResponseType if the command does not return data. The skill should intelligently decide whether it needs to return a custom Response record (e.g., for API endpoints) or Void (e.g., for async listeners).
 ```powershell
 .agents\skills\create-application-command\scripts\scaffold-command.ps1 -Module "<module_name>" -CommandName "<CommandName>" -ResponseType "<Void | CommandNameResponse>"

@@ -12,8 +12,10 @@ Application Queries live in `application/queries/<QueryName>/` (or `application/
 Before writing the handler, analyze the required dependencies:
 1. **Cross-Module Queries:** If the query needs data from an entity belonging to a *different* module, it MUST NOT use that module's repository. It must use a Query Port from the `shared` module. Trigger the `create-shared-query-port` skill if it doesn't exist.
 
-## Rule 1: Scaffold Skeleton
-Use the provided PowerShell script to safely generate the package and files.
+## Rule 1: Scaffold Skeleton or Update Existing
+Check if the query package (`application/queries/<QueryName>` or `query`) already exists.
+- **If it exists:** Do NOT run the scaffold script. Do NOT recreate the package. Proceed directly to updating the existing files.
+- **If it does not exist:** Use the provided PowerShell script to safely generate the package and files.
 ```powershell
 .agents\skills\create-application-query\scripts\scaffold-query.ps1 -Module "<module_name>" -QueryName "<QueryName>" -ResponseType "<QueryNameResponse | List<UserDto>>"
 ```
