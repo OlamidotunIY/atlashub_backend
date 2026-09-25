@@ -13,6 +13,11 @@ If the user asks you to "check", "verify", or "update" an existing Entity:
 3. If it perfectly matches, tell the user "Everything is structurally perfect" and do nothing.
 4. If it violates ANY rules, do not recreate it. Use the `replace_file_content` tool to safely inject the missing pieces. Then compile it via Gradle.
 
+## Batch Processing (Multiple Entities)
+This skill supports processing a list or table of multiple entities simultaneously for BOTH Generation Mode and Audit/Update Mode.
+1. You MUST process every entity iteratively. Do not skip any.
+2. **Execution Strategy:** Because Domain Entities contain complex business logic, processing many sequentially in one turn can overwhelm context limits. You are strongly encouraged to use `invoke_subagent` to spawn a concurrent team of subagents to process or audit them simultaneously, isolating the context for each entity.
+
 ## Generation Mode (Creating New)
 **Step 1: Scaffold Skeleton**
 Run the PowerShell script to safely generate the baseline file structure and prevent accidental overwrites:

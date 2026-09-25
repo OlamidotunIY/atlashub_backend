@@ -22,11 +22,10 @@ If creating new events, ask for missing info:
 3. **Module Name** (e.g., `iam`, `accounts`)
 
 ## Batch Processing (Multiple Events)
-If the user pastes a list or table of multiple events at once:
+This skill supports processing a list or table of multiple events simultaneously for BOTH Generation Mode and Audit/Update Mode.
 1. Deduce the target module from context, or ask the user if it's missing.
 2. You MUST process every event iteratively. Do not skip any.
-3. For **every single event** in the list, independently perform **Step 1 (Deep Domain Analysis)** to deduce its unique payload.
-4. You can execute the PowerShell script multiple times in a single turn to generate all the files at once.
+3. **Execution Strategy:** You can either process them sequentially in a single turn (best for small batches) OR use `invoke_subagent` to spawn a concurrent team of subagents to process them simultaneously (best for massive lists).
 
 ## Step 1: Deep Domain Analysis (Payload Discovery)
 Before writing any code, you MUST figure out the optimal payload by analyzing the domain:
