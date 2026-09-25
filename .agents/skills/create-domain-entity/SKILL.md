@@ -1,48 +1,39 @@
 ---
 name: create-domain-entity
 description: >-
-  Use this skill to create Domain Entities or Aggregate Roots, complete with invariants, domain events, errors, and strict DDD rules.
+  Use this skill to create, audit, check, or update Domain Entities / Aggregate Roots.
 ---
 
 # Create Domain Entity
 
-You are responsible for generating complete, robust Domain Entities according to strict DDD architecture.
+## Audit / Update Mode
+If the user asks you to "check", "verify", or "update" an existing Entity:
+1. Read the existing entity file using your tools.
+2. Verify it meets ALL rules below (e.g., ID fields are final, `touch()` exists and is called, invariants are checked, events are registered).
+3. If it perfectly matches, tell the user "Everything is structurally perfect" and do nothing.
+4. If it violates ANY rules, do not recreate it. Use the `replace_file_content` tool to safely inject the missing pieces. Then compile it via Gradle.
 
-## Inputs Required
-1. **Entity Name & Type** (e.g., `OrganizationMember (Aggregate Root)`)
-2. **Fields & Business Methods** (User will provide a markdown list of fields and methods)
-3. **Domain Rules** (Invariants that must be enforced)
-4. **Module Name** (e.g., `iam`)
+## Generation Mode (Creating New)
+**Step 1: Scaffold Skeleton**
+Run the PowerShell script to safely generate the baseline file structure and prevent accidental overwrites:
+```powershell
+.agents\skills\create-domain-entity\scripts\scaffold-entity.ps1 -Module "<module>" -EntityName "<EntityName>" -IsAggregateRoot $<true/false>
+```
 
-## Step 1: Pre-Requisites (Events & Errors)
-Before generating the entity, analyze the requested Domain Rules and Business Methods.
-- If a method implies publishing a domain event (e.g., "accepting an invite throws MemberJoinedEvent"), you MUST first use the **`create-domain-event`** skill to generate it.
-- If a method implies throwing a custom domain error (e.g., "deactivating the last owner throws LastOwnerDeactivationException"), you MUST first use the **`create-domain-error`** skill to generate it.
+**Step 2: Inject Business Logic**
+Once the skeleton is scaffolded, use `replace_file_content` to inject the fields, constructor, `create` method, and business mutators into the file, adhering to these rules:
 
-## Step 2: Code Generation Rules
-You must build the entity strictly following these rules:
-
-1. **Path:** `<ModuleRoot>/src/main/java/com/atlashub/<module>/domain/entities/<EntityName>.java`
-2. **Aggregate Root:** If the user specifies it is an Aggregate Root, it must `extends AggregateRoot<Long>`. You must override `public Long getId()`. (Import `com.atlashub.shared.domain.entities.AggregateRoot`).
-3. **Final Fields:**
-   - ID fields (e.g., `id`, `organizationId`) MUST be `final Long`.
-   - Any field that is strictly set at creation and never updated MUST be `final`.
-4. **Constructors:**
-   - You must create a full constructor taking ALL fields.
-5. **Static Factory Method (`create`):**
-   - Must have a `public static <Entity> create(...)` method.
-   - It should ONLY accept fields the system cannot deduce itself.
-   - Do NOT accept `createdAt` (set it to `ZonedDateTime.now()`), `updatedAt` (set it to `now()`), or default statuses (e.g., `Status.PENDING`). Inject them automatically inside the `create` method.
-6. **Mutator Methods & `touch()`:**
+1. **Final Fields:** ID fields (`id`, `organizationId`) MUST be `final Long`.
+2. **Static Factory Method (`create`):**
+   - Accept ONLY fields the system cannot deduce.
+   - Do NOT accept `createdAt`, `updatedAt`, or default statuses. Set them internally.
+3. **Mutator Methods & `touch()`:**
    - Any method that updates state MUST call `this.touch();`.
-   - You must implement: `private void touch() { this.updatedAt = ZonedDateTime.now(); }` if the entity has an `updatedAt` field.
-7. **Business Logic & Invariants:**
-   - Enforce all requested rules inside the mutator methods.
-   - If a rule fails, throw the specific Domain Error you created in Step 1.
-   - If 2 or more methods check the exact same invariant, extract it into a private helper method (e.g., `private boolean isLocked()`).
-8. **Event Registration:**
-   - When a business action is successful and requires an event, use `this.registerEvent(...)`.
-   - Pass `CorrelationId.getOrCreate()` into the event's correlation field. (Import `com.atlashub.shared.domain.valueobject.CorrelationId`).
+   - Implement `private void touch() { this.updatedAt = ZonedDateTime.now(); }`.
+4. **Events & Errors:**
+   - Enforce all requested rules inside the mutator methods. Throw specific Domain Errors if violated (create them with `create-domain-error` if missing).
+   - Use `this.registerEvent(...)` with `CorrelationId.getOrCreate()` for domain events. (Create events with `create-domain-event` first if missing).
 
 ## Step 3: Gradle Verification
 Run `.\gradlew :<module_gradle_path>:compileJava` to verify it compiles perfectly without missing imports.
+If errors occur, fix them immediately before answering the user.

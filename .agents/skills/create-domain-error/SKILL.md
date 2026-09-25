@@ -1,53 +1,27 @@
 ---
 name: create-domain-error
 description: >-
-  Use this skill whenever you need to create a custom Domain Exception/Error for a specific module's business logic.
+  Use this skill whenever you need to create a custom Domain Exception/Error, OR to audit/check an existing one.
 ---
 
 # Create Domain Error
 
-You are responsible for generating custom Domain Exceptions. These errors are thrown by Domain Entities when invariants are violated.
+You are responsible for generating custom Domain Exceptions extending core shared exceptions.
 
-## Inputs Required
-1. **Error Name** (e.g., `EmailAlreadyVerified`)
-2. **Module Name** (e.g., `iam`, `accounts`)
-3. **Reason/Context** (so you can choose the correct base exception)
+## Audit / Update Mode
+If the user asks you to "check", "verify", or "update" an existing Error:
+1. Read the existing file using your tools.
+2. Verify it extends a valid Base Exception (`ConflictException`, `BusinessRuleException`, `NotFoundException`, `ValidationException`, or `AuthorizationException`).
+3. Verify it has the standard message and cause constructors.
+4. If it violates rules, use `replace_file_content` to fix it. If perfect, tell the user "Everything is structurally perfect" and end.
 
-## Step 1: Base Exception Selection
-You MUST inherit from one of the core base exceptions in the `shared` module:
-- `ConflictException` (e.g., already exists, state conflict)
-- `BusinessRuleException` (e.g., violated a domain invariant like negative balance)
-- `NotFoundException` (e.g., entity not found)
-- `ValidationException` (e.g., bad format)
-- `AuthorizationException` (e.g., forbidden action)
+## Generation Mode (Creating New)
+Do not write the file manually. You MUST use the PowerShell generator script:
 
-*Import Path:* `com.atlashub.shared.domain.exception.<BaseException>`
-
-## Step 2: Code Generation
-Create the class in the module's `domain/exception` package.
-Path: `<ModuleRoot>/src/main/java/com/atlashub/<module>/domain/exception/<ErrorName>.java`
-
-**Template:**
-```java
-package com.atlashub.<module>.domain.exception;
-
-import com.atlashub.shared.domain.exception.<BaseException>;
-
-public class <ErrorName> extends <BaseException> {
-    
-    public <ErrorName>() {
-        super("<Default Error Message>");
-    }
-
-    public <ErrorName>(String message) {
-        super(message);
-    }
-
-    public <ErrorName>(String message, Throwable cause) {
-        super(message, cause);
-    }
-}
+```powershell
+.agents\skills\create-domain-error\scripts\generate-error.ps1 -Module "<module>" -ErrorName "<ErrorName>" -BaseException "<BaseException>"
 ```
+*Example: `...generate-error.ps1 -Module "iam" -ErrorName "EmailAlreadyVerified" -BaseException "ConflictException"`*
 
 ## Step 3: Gradle Verification
 Run `.\gradlew :<module_gradle_path>:compileJava` to verify it compiles.

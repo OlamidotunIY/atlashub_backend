@@ -8,10 +8,15 @@ description: >-
 # Create Domain Event Workflow
 
 You are responsible for generating Domain Event records in the Atlashub backend codebase according to strict Domain-Driven Design (DDD) guidelines.
-To eliminate human/AI error and ensure perfectly structured, compliant Java files, you MUST use the provided PowerShell helper script instead of writing the code manually.
+## Audit / Update Mode
+If the user asks you to "check", "verify", or "update" an existing Event:
+1. Read the existing file using your tools.
+2. Verify it meets ALL rules (no wildcard imports, extends DomainEvent, has a Payload record, does NOT duplicate the aggregate ID inside the payload).
+3. If it perfectly matches, tell the user "Everything is structurally perfect."
+4. If it violates ANY rules, do not recreate it. Use the `replace_file_content` tool to safely update the file, then compile it via Gradle.
 
-## Inputs Required from User
-If the user does not provide these, ask for the missing information:
+## Generation Mode (Inputs Required)
+If creating new events, ask for missing info:
 1. **Event Name(s)** (e.g., `MemberJoinedEvent`)
 2. **Trigger / Consumers** (e.g., "Invitation accepted, used by notifications and hr")
 3. **Module Name** (e.g., `iam`, `accounts`)
