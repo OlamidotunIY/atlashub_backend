@@ -44,6 +44,11 @@ Instead, execute the provided helper script. The script automatically searches f
 .agents\skills\create-domain-event\scripts\generate-event.ps1 -Module "iam" -EventName "MemberJoinedEvent" -PayloadFields "Long organizationId, Long userId, String email, Long customRoleId"
 ```
 
-## Step 3: Verification
-Check the output of the script to ensure it printed `SUCCESS`. 
-Confirm to the user that the file was created and briefly explain how you deduced the payload fields based on your domain analysis.
+## Step 3: Gradle Compilation Check
+After the script finishes generating the files, you MUST run the Gradle compiler to prove to the user that your generated events have zero syntax or import errors.
+1. Determine the Gradle module path (e.g., if the module is in `atlashub-platform/iam`, the Gradle path is `:atlashub-platform:iam`).
+2. Run the compilation command: `.\gradlew :<gradle_path>:compileJava`
+3. If the build fails due to the files you just generated, you must fix the errors immediately.
+
+## Step 4: Final Verification
+Confirm to the user that the file was created. Show them the successful output of the Gradle build to prove it compiled flawlessly.
