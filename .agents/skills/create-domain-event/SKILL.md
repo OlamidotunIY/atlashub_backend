@@ -48,6 +48,14 @@ Instead, execute the provided helper script. The script automatically searches f
 .agents\skills\create-domain-event\scripts\generate-event.ps1 -Module "iam" -EventName "MemberJoinedEvent" -PayloadFields "Long organizationId, Long userId, String email, Long customRoleId"
 ```
 
+
+## CRITICAL: Self-Correction & Verification Before Gradle
+Before you (or your dedicated subagents) run the Gradle compiler check, you MUST ALWAYS perform a strict self-review of all created and modified files. 
+- Read back the files you just wrote using "cat" or "view_file".
+- Check against ALL rules (e.g., absolutely NO inline imports, NO wildcard imports, NO leftover "// TODO"s, NO "return null;" placeholders).
+- If ANY rule is violated, you MUST fix it immediately using "replace_file_content".
+- Only after this explicit re-confirmation are you allowed to run ".\gradlew compileJava". Dedicated subagents MUST also follow this rule.
+
 ## Step 3: Gradle Compilation Check
 After the script finishes generating the files, you MUST run the Gradle compiler to prove to the user that your generated events have zero syntax or import errors.
 **CRITICAL RULE:** NEVER run `.\gradlew compileJava` globally, as it will compile the entire app.

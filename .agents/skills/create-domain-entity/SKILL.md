@@ -60,3 +60,12 @@ Once the skeleton is scaffolded, use `replace_file_content` to inject the fields
 **CRITICAL RULE:** NEVER run `.\gradlew compileJava` globally, as it will compile the entire app and take too long.
 You MUST strictly target the module you are working on.
 Example: `.\gradlew :atlashub-platform:iam:compileJava`
+
+
+
+## CRITICAL: Self-Correction & Verification Before Gradle
+Before you (or your dedicated subagents) run the Gradle compiler check, you MUST ALWAYS perform a strict self-review of all created and modified files. 
+- Read back the files you just wrote using `cat` or \iew_file\.
+- Check against ALL rules (e.g., absolutely NO inline imports, NO wildcard imports, NO leftover `// TODO`s, NO \eturn null;\ placeholders).
+- If ANY rule is violated, you MUST fix it immediately using \eplace_file_content\.
+- Only after this explicit re-confirmation are you allowed to run \.\gradlew compileJava\. Dedicated subagents MUST also follow this rule.

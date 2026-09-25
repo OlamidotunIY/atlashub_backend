@@ -43,7 +43,15 @@ After the scaffold script creates the baseline files, you MUST use `replace_file
 ## Batch Processing (Multiple Commands)
 This skill supports processing a list of multiple commands simultaneously.
 1. You MUST process every command iteratively. Do not skip any.
-2. **Execution Strategy:** Because handlers contain complex orchestration, you are strongly encouraged to use `invoke_subagent` to spawn a concurrent team of subagents to process them simultaneously to avoid context limits.
+2. **Execution Strategy:** Because handlers contain complex orchestration, You MUST ALWAYS use `invoke_subagent` to spawn a concurrent team of subagents when processing multiple items.
+
+
+## CRITICAL: Self-Correction & Verification Before Gradle
+Before you (or your dedicated subagents) run the Gradle compiler check, you MUST ALWAYS perform a strict self-review of all created and modified files. 
+- Read back the files you just wrote using "cat" or "view_file".
+- Check against ALL rules (e.g., absolutely NO inline imports, NO wildcard imports, NO leftover "// TODO"s, NO "return null;" placeholders).
+- If ANY rule is violated, you MUST fix it immediately using "replace_file_content".
+- Only after this explicit re-confirmation are you allowed to run ".\gradlew compileJava". Dedicated subagents MUST also follow this rule.
 
 ## Step 3: Gradle Compilation Check
 You MUST run the Gradle compiler to prove to the user that your generated command compiles properly.

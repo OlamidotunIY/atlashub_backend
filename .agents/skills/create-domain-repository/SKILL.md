@@ -33,6 +33,14 @@ You MUST NOT use wildcard imports (`import java.util.*`). You MUST NOT use inlin
 ## Batch Processing
 This skill supports processing multiple repositories simultaneously. You can use `invoke_subagent` for large batches.
 
+
+## CRITICAL: Self-Correction & Verification Before Gradle
+Before you (or your dedicated subagents) run the Gradle compiler check, you MUST ALWAYS perform a strict self-review of all created and modified files. 
+- Read back the files you just wrote using "cat" or "view_file".
+- Check against ALL rules (e.g., absolutely NO inline imports, NO wildcard imports, NO leftover "// TODO"s, NO "return null;" placeholders).
+- If ANY rule is violated, you MUST fix it immediately using "replace_file_content".
+- Only after this explicit re-confirmation are you allowed to run ".\gradlew compileJava". Dedicated subagents MUST also follow this rule.
+
 ## Step 5: Gradle Compilation Check
 You MUST run the Gradle compiler to prove to the user that your generated repository compiles properly.
 **CRITICAL RULE:** NEVER run `.\gradlew compileJava` globally. You MUST strictly target the module you are working on.
