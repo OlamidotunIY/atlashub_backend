@@ -10,7 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Component
-public class RevokeApiKeyHandler extends Command<RevokeApiKeyCommand, Void> {
+public class RevokeApiKeyHandler extends Command<RevokeApiKeyCommand, ApiKey> {
 
     private static final Logger log = LoggerFactory.getLogger(RevokeApiKeyHandler.class);
 
@@ -21,7 +21,7 @@ public class RevokeApiKeyHandler extends Command<RevokeApiKeyCommand, Void> {
     }
 
     @Override
-    public Void execute(RevokeApiKeyCommand command) {
+    public ApiKey execute(RevokeApiKeyCommand command) {
         log.info("Executing RevokeApiKeyCommand");
         
         ApiKey apiKey = apiKeyRepository.findById(command.keyId())
@@ -34,6 +34,6 @@ public class RevokeApiKeyHandler extends Command<RevokeApiKeyCommand, Void> {
         apiKey.revoke(command.requestedByUserId());
         apiKeyRepository.save(apiKey);
 
-        return null;
+        return apiKey;
     }
 }

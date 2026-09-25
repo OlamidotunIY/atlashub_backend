@@ -9,7 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Component
-public class DeclineInvitationHandler extends Command<DeclineInvitationCommand, Void> {
+public class DeclineInvitationHandler extends Command<DeclineInvitationCommand, Invitation> {
 
     private static final Logger log = LoggerFactory.getLogger(DeclineInvitationHandler.class);
     private final InvitationRepository invitationRepository;
@@ -19,7 +19,7 @@ public class DeclineInvitationHandler extends Command<DeclineInvitationCommand, 
     }
 
     @Override
-    public Void execute(DeclineInvitationCommand command) {
+    public Invitation execute(DeclineInvitationCommand command) {
         log.info("Executing DeclineInvitationCommand");
         
         Invitation invitation = invitationRepository.findByToken(command.token())
@@ -29,6 +29,6 @@ public class DeclineInvitationHandler extends Command<DeclineInvitationCommand, 
 
         invitationRepository.save(invitation);
 
-        return null;
+        return invitation;
     }
 }

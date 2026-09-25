@@ -8,7 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Component
-public class DeactivateMemberHandler extends Command<DeactivateMemberCommand, Void> {
+public class DeactivateMemberHandler extends Command<DeactivateMemberCommand, OrganizationMember> {
 
     private static final Logger log = LoggerFactory.getLogger(DeactivateMemberHandler.class);
     private final OrganizationMemberRepository organizationMemberRepository;
@@ -18,7 +18,7 @@ public class DeactivateMemberHandler extends Command<DeactivateMemberCommand, Vo
     }
 
     @Override
-    public Void execute(DeactivateMemberCommand command) {
+    public OrganizationMember execute(DeactivateMemberCommand command) {
         log.info("Executing DeactivateMemberCommand");
         
         OrganizationMember member = organizationMemberRepository.findById(command.memberId())
@@ -27,6 +27,6 @@ public class DeactivateMemberHandler extends Command<DeactivateMemberCommand, Vo
         member.deactivate(false);
         organizationMemberRepository.save(member);
 
-        return null;
+        return member;
     }
 }

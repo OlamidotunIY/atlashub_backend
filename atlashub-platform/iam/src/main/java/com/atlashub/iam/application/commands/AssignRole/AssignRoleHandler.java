@@ -10,7 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Component
-public class AssignRoleHandler extends Command<AssignRoleCommand, Void> {
+public class AssignRoleHandler extends Command<AssignRoleCommand, OrganizationMember> {
 
     private static final Logger log = LoggerFactory.getLogger(AssignRoleHandler.class);
 
@@ -23,7 +23,7 @@ public class AssignRoleHandler extends Command<AssignRoleCommand, Void> {
     }
 
     @Override
-    public Void execute(AssignRoleCommand command) {
+    public OrganizationMember execute(AssignRoleCommand command) {
         log.info("Executing AssignRoleCommand");
         
         OrganizationMember member = organizationMemberRepository.findById(command.memberId())
@@ -35,6 +35,6 @@ public class AssignRoleHandler extends Command<AssignRoleCommand, Void> {
         member.assignRole(role.getId());
         organizationMemberRepository.save(member);
 
-        return null;
+        return member;
     }
 }

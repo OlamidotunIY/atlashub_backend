@@ -8,7 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Component
-public class RevokeInvitationHandler extends Command<RevokeInvitationCommand, Void> {
+public class RevokeInvitationHandler extends Command<RevokeInvitationCommand, Invitation> {
 
     private static final Logger log = LoggerFactory.getLogger(RevokeInvitationHandler.class);
     private final InvitationRepository invitationRepository;
@@ -18,7 +18,7 @@ public class RevokeInvitationHandler extends Command<RevokeInvitationCommand, Vo
     }
 
     @Override
-    public Void execute(RevokeInvitationCommand command) {
+    public Invitation execute(RevokeInvitationCommand command) {
         log.info("Executing RevokeInvitationCommand");
         
         Invitation invitation = invitationRepository.findById(command.invitationId())
@@ -27,6 +27,6 @@ public class RevokeInvitationHandler extends Command<RevokeInvitationCommand, Vo
         invitation.revoke(command.revokedByUserId());
         invitationRepository.save(invitation);
 
-        return null;
+        return invitation;
     }
 }

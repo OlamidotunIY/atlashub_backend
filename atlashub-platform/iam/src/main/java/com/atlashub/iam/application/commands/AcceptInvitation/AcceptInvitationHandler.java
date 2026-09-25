@@ -8,7 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Component
-public class AcceptInvitationHandler extends Command<AcceptInvitationCommand, Void> {
+public class AcceptInvitationHandler extends Command<AcceptInvitationCommand, Invitation> {
 
     private static final Logger log = LoggerFactory.getLogger(AcceptInvitationHandler.class);
     
@@ -19,7 +19,7 @@ public class AcceptInvitationHandler extends Command<AcceptInvitationCommand, Vo
     }
 
     @Override
-    public Void execute(AcceptInvitationCommand command) {
+    public Invitation execute(AcceptInvitationCommand command) {
         log.info("Executing AcceptInvitationCommand for token: {}", command.token());
         
         Invitation invitation = invitationRepository.findByToken(command.token())
@@ -28,6 +28,6 @@ public class AcceptInvitationHandler extends Command<AcceptInvitationCommand, Vo
         invitation.accept(command.acceptingUserId());
         invitationRepository.save(invitation);
 
-        return null;
+        return invitation;
     }
 }

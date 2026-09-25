@@ -8,7 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Component
-public class UpdateCustomRoleHandler extends Command<UpdateCustomRoleCommand, Void> {
+public class UpdateCustomRoleHandler extends Command<UpdateCustomRoleCommand, CustomRole> {
 
     private static final Logger log = LoggerFactory.getLogger(UpdateCustomRoleHandler.class);
     
@@ -19,7 +19,7 @@ public class UpdateCustomRoleHandler extends Command<UpdateCustomRoleCommand, Vo
     }
 
     @Override
-    public Void execute(UpdateCustomRoleCommand command) {
+    public CustomRole execute(UpdateCustomRoleCommand command) {
         log.info("Executing UpdateCustomRoleCommand");
         
         CustomRole role = customRoleRepository.findById(command.roleId())
@@ -39,6 +39,6 @@ public class UpdateCustomRoleHandler extends Command<UpdateCustomRoleCommand, Vo
         
         customRoleRepository.save(role);
 
-        return null;
+        return role;
     }
 }

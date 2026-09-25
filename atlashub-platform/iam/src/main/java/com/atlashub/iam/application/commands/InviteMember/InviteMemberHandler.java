@@ -13,7 +13,7 @@ import com.atlashub.shared.domain.valueobject.EmailAddress;
 import java.util.UUID;
 
 @Component
-public class InviteMemberHandler extends Command<InviteMemberCommand, Void> {
+public class InviteMemberHandler extends Command<InviteMemberCommand, Invitation> {
 
     private static final Logger log = LoggerFactory.getLogger(InviteMemberHandler.class);
 
@@ -31,7 +31,7 @@ public class InviteMemberHandler extends Command<InviteMemberCommand, Void> {
     }
 
     @Override
-    public Void execute(InviteMemberCommand command) {
+    public Invitation execute(InviteMemberCommand command) {
         log.info("Executing InviteMemberCommand");
         
         if (!organizationQueryPort.existsById(command.orgId())) {
@@ -56,6 +56,6 @@ public class InviteMemberHandler extends Command<InviteMemberCommand, Void> {
 
         invitationRepository.save(invitation);
 
-        return null;
+        return invitation;
     }
 }
