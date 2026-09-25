@@ -1,15 +1,15 @@
 package com.atlashub.eventbus.application.usecase;
 
+import com.atlashub.eventbus.domain.exception.EventNotFoundException;
+
 import com.atlashub.eventbus.application.command.ReplayEventCommand;
 import com.atlashub.eventbus.application.port.MessageBrokerPort;
-import com.atlashub.eventbus.domain.exception.EventbusErrorCode;
 import com.atlashub.eventbus.domain.model.OutboxMessage;
 import com.atlashub.eventbus.domain.repository.OutboxMessageRepository;
-import com.atlashub.shared.domain.exception.NotFoundException;
 import com.atlashub.shared.application.usecase.BaseUseCase;
 import org.springframework.stereotype.Service;
 
-import com.atlashub.shared.adapter.out.external.dlq.DeadLetterRepository;
+import com.atlashub.shared.infrastructure.persistence.repository.DeadLetterRepository;
 
 @Service
 public class ReplayEventUseCase extends BaseUseCase<ReplayEventCommand, Void> {
@@ -29,7 +29,7 @@ public class ReplayEventUseCase extends BaseUseCase<ReplayEventCommand, Void> {
     @Override
     public Void execute(ReplayEventCommand input) {
         OutboxMessage message = outboxMessageRepository.findByEventId(input.eventId())
-                .orElseThrow(() -> new NotFoundException(EventbusErrorCode.EVENT_NOT_FOUND, "Event with ID " + input.eventId() + " not found in outbox"));
+                .orElseThrow(() -> new EventNotFoundException("Event with ID " + input.eventId() + " not found in outbox"));
 
         // Simply re-publish the exact same payload to the original topic.
         // The eventbus subscribers will pick it up, and if they previously failed, 
@@ -41,3 +41,5 @@ public class ReplayEventUseCase extends BaseUseCase<ReplayEventCommand, Void> {
         return null;
     }
 }
+
+

@@ -2,16 +2,17 @@ package com.atlashub.catalog.application.usecase;
 
 import com.atlashub.catalog.application.command.UpdateHubProductCommand;
 import com.atlashub.catalog.application.result.UpdateHubProductResult;
-import com.atlashub.catalog.domain.exception.CatalogErrorCode;
+import com.atlashub.catalog.domain.exception.ProductNotFoundException;
 import com.atlashub.catalog.domain.model.HubProduct;
 import com.atlashub.catalog.domain.repository.HubProductRepository;
-import com.atlashub.shared.application.port.out.DomainEventPublisher;
-import com.atlashub.shared.domain.exception.NotFoundException;
+import com.atlashub.shared.application.port.DomainEventPublisher;
 import com.atlashub.shared.application.usecase.BaseUseCase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Service
 public class UpdateHubProductUseCase extends BaseUseCase<UpdateHubProductCommand, UpdateHubProductResult> {
     private static final Logger log = LoggerFactory.getLogger(UpdateHubProductUseCase.class);
     private final DomainEventPublisher eventPublisher;
@@ -27,7 +28,7 @@ public class UpdateHubProductUseCase extends BaseUseCase<UpdateHubProductCommand
     public UpdateHubProductResult execute(UpdateHubProductCommand input) {
         log.info("Starting HubProduct Update for product with id {}", input.productId());
 
-        HubProduct product = hubProductRepository.findById(input.productId()).orElseThrow(() -> new NotFoundException(CatalogErrorCode.PRODUCT_NOT_FOUND, "Product not found"));
+        HubProduct product = hubProductRepository.findById(input.productId()).orElseThrow(() -> new ProductNotFoundException("Product not found"));
 
         product.updateDetails(input.name(), input.description());
 
@@ -44,3 +45,5 @@ public class UpdateHubProductUseCase extends BaseUseCase<UpdateHubProductCommand
         );
     }
 }
+
+

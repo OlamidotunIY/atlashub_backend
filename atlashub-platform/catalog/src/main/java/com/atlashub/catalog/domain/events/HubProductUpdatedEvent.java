@@ -6,8 +6,10 @@ import java.time.ZonedDateTime;
 
 public record HubProductUpdatedEvent(
         String eventId,
-        String aggregateId,
+        Long aggregateId,
         ZonedDateTime occurredAt,
-        Void payload
-) implements DomainEvent<Void> {
+        String correlationId,
+        Payload payload
+) implements DomainEvent<HubProductUpdatedEvent.Payload> {
+    public record Payload(String name, String description) {}
 }

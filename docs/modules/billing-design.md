@@ -1,130 +1,255 @@
-# Platform Billing Module Design (`atlashub-platform:billing`)
+# Billing Module Design (`atlashub-platform:billing`)
 
 ## Role & Purpose
 
-The Billing module is the **subscription engine** of the AtlasHub platform. It manages the commercial relationship between AtlasHub and the organizations that use it. Every time an organization subscribes to a platform product (e.g., Atlas Pay), renews their subscription, or falls behind on payment, this module is the one tracking it.
+The `billing` module manages the **commercial relationship between AtlasHub and its business customers**. It handles subscriptions, invoices, entitlements, and access revocation. It is the revenue engine of the AtlasHub platform itself.
 
-It answers questions like: *Is this organization currently allowed to use Atlas Commerce? When does their Atlas Pay subscription expire? How much do they owe this billing cycle?*
+The billing module answers:
+- *Is organization X subscribed to Atlas Pay?* → enforced as an entitlement check
+- *How much does organization X owe AtlasHub this month?* → calculated and invoiced
+- *Has organization X paid their invoice?* → tracked by payment events from `pay`
 
-The Billing module is the **gatekeeper** for access control at the organizational level. When a subscription lapses or is suspended, this module publishes the events that cause other modules (Identity, Pay) to restrict or cut off the organization's access. It does not handle the actual payment processing — that is delegated to the `pay` module. Instead, it handles invoices, subscription state, and the business rules around renewals.
-
----
-
-## 1. How It Fits Into the Platform
-
-### The Subscription Lifecycle
-When an organization subscribes to a product:
-1. `billing` reads the applicable `ProductPricing` from `catalog` (matched by `productId`, `billingCycle`, and the org's base currency from `identity`).
-2. Creates an `OrganizationProduct` (the active subscription record).
-3. Generates the first `BillingInvoice` with the resolved amount and a due date.
-4. Publishes `ProductSubscribedEvent` and `BillingInvoiceGeneratedEvent`.
-
-When payment is made (triggered automatically via a webhook from `pay`):
-1. `PaymentSuccessfulListener` receives a `PaymentSuccessfulEvent` from `atlashub-pay`.
-2. Matches the payment reference to the open invoice.
-3. Calls `PayBillingInvoiceUseCase` → marks invoice PAID, renews the subscription period, publishes `SubscriptionRenewedEvent`.
-
-When payment fails or the subscription period ends without payment:
-1. The subscription transitions to `PAST_DUE`.
-2. After a grace period, `SuspendSubscriptionUseCase` transitions it to `SUSPENDED`.
-3. `SubscriptionSuspendedEvent` is published → Identity restricts org access, Pay may freeze wallet operations.
-
-### Access Control Gate
-The `GetOrganizationContextQuery` is a special read that returns which products an organization actively has access to. Other modules call this (or listen to subscription events) to determine feature availability. For example, the Commerce module only allows POS sales if the org has an active Commerce subscription.
+The billing module does **not** process payments itself — it delegates payment collection to `atlashub-pay` (the organization pays their AtlasHub invoice through the same payment infrastructure they use for their business).
 
 ---
 
-## 2. Domain Entities & Aggregates
+## 1. Business Model Summary
 
-**`OrganizationProduct` (Aggregate Root)**
-Represents an active subscription to a platform product.
-- **Fields**:
-  - `id`: Long
-  - `organizationId`: Long
-  - `productId`: Long (references `HubProduct` in `catalog`)
-  - `status`: `SubscriptionStatus` (ACTIVE, SUSPENDED, CANCELED, PAST_DUE)
-  - `cycle`: `BillingCycle` (MONTHLY, ANNUALLY)
-  - `currentPeriodStart`: ZonedDateTime
-  - `currentPeriodEnd`: ZonedDateTime
-  - `canceledAt`: ZonedDateTime (nullable)
-- **Methods**:
-  - `create(...)` — static factory, publishes `ProductSubscribedEvent`
-  - `activate(ZonedDateTime start, ZonedDateTime end)` — sets the billing period
-  - `suspend(String reason)` — publishes `SubscriptionSuspendedEvent`
-  - `cancel(String reason)` — publishes `SubscriptionCanceledEvent`
-  - `renew(ZonedDateTime newEnd)` — extends the current period, publishes `SubscriptionRenewedEvent`
-  - `isExpired(): Boolean` — checks if `currentPeriodEnd` is in the past
-
-**`BillingInvoice` (Aggregate Root)**
-- **Fields**:
-  - `id`: Long
-  - `organizationProductId`: Long
-  - `amount`: `Money` (in the org's base currency, matched from `ProductPricing`)
-  - `status`: `InvoiceStatus` (DRAFT, PAID, FAILED, VOID)
-  - `dueDate`: ZonedDateTime
-  - `paidAt`: ZonedDateTime (nullable)
-- **Methods**:
-  - `markAsPaid(ZonedDateTime time)` — publishes `BillingInvoicePaidEvent`
-  - `markAsFailed()` — transitions to FAILED for retry or escalation
+| Product | Pricing Model | How Invoice Generated |
+|---|---|---|
+| Atlas Pay | Transaction fee (tiered by volume) | Monthly invoice calculated from actual transaction volume |
+| Atlas Commerce | Flat monthly subscription | Invoice generated at the start of each billing period |
+| Atlas Logistics | Flat monthly subscription | Invoice generated at the start of each billing period |
+| Atlas HR | Free | No invoice generated |
+| Atlas Accounting | Flat monthly subscription | Invoice generated at the start of each billing period |
 
 ---
 
-## 3. Domain Events
+## 2. Features
+
+### Subscription Management
+Organizations subscribe to one or more AtlasHub products. Each subscription tracks:
+- Which product + pricing plan they are on
+- The current billing period (start + end dates)
+- The subscription status
+
+### Invoice Generation
+At the start of each billing period (for subscriptions) or end of period (for transaction-fee products), `GenerateInvoiceUseCase` creates a `BillingInvoice`. The invoice is sent to the organization via `notifications`.
+
+### Payment Collection
+Organizations pay their AtlasHub invoices by:
+1. Receiving the invoice (via email)
+2. Clicking the payment link → redirected to a Paystack checkout initialized by `pay`
+3. On payment success, `PaymentSuccessfulEvent` is received → `MarkInvoicePaidUseCase` closes the invoice
+
+### Entitlement Checking
+Other modules verify that an org has an active subscription before granting access. They call `EntitlementQueryPort.hasActiveSubscription(orgId, "ATLAS_COMMERCE")`. This is a synchronous check — no Kafka involved.
+
+### Access Suspension & Restoration
+- If an invoice is overdue beyond the grace period (7 days), `SuspendSubscriptionUseCase` suspends the subscription → `SubscriptionSuspendedEvent` → `iam` suspends non-owner member access
+- When the overdue invoice is paid, `RestoreSubscriptionUseCase` restores access → `SubscriptionRestoredEvent`
+
+### Maker-Checker for Large Invoices
+If a transaction-fee invoice exceeds a configured threshold (₦1M), it requires a secondary AtlasHub admin approval before being dispatched to the organization.
+
+---
+
+## 3. Domain Entities & Aggregates
+
+### `Subscription` (Aggregate Root)
+
+```
+Subscription
+├── id: Long
+├── organizationId: Long
+├── productCode: String              ← "ATLAS_PAY", "ATLAS_COMMERCE", etc.
+├── pricingPlanId: Long              ← nullable for FREE and TRANSACTION_FEE products
+├── status: SubscriptionStatus       ← PENDING_PAYMENT, ACTIVE, SUSPENDED, CANCELLED, EXPIRED
+├── currentPeriodStart: LocalDate
+├── currentPeriodEnd: LocalDate
+├── nextBillingDate: LocalDate
+├── billingCurrency: Currency        ← determined from org's baseCurrency
+├── trialEndsAt: LocalDate           ← nullable
+├── cancelledAt: ZonedDateTime       ← nullable
+├── cancelReason: String             ← nullable
+├── createdAt: ZonedDateTime
+└── updatedAt: ZonedDateTime
+```
+
+**Business Methods:**
+- `activate(LocalDate periodStart, LocalDate periodEnd)` → sets ACTIVE, sets billing dates → registers `SubscriptionActivatedEvent`
+- `suspend(String reason)` → sets SUSPENDED → registers `SubscriptionSuspendedEvent`
+- `restore()` → sets ACTIVE → registers `SubscriptionRestoredEvent`
+- `cancel(String reason, ZonedDateTime when)` → sets CANCELLED → registers `SubscriptionCancelledEvent`
+- `renew(LocalDate newPeriodStart, LocalDate newPeriodEnd)` → advances billing period → registers `SubscriptionRenewedEvent`
+
+**Domain Rules:**
+- A FREE product (Atlas HR) is immediately ACTIVE on creation, never generates an invoice
+- A subscription can only be suspended if it has at least one overdue unpaid invoice
+- Cancellation takes effect at the end of the current billing period — the org retains access until `currentPeriodEnd`
+
+---
+
+### `BillingInvoice` (Aggregate Root)
+
+```
+BillingInvoice
+├── id: Long
+├── organizationId: Long
+├── subscriptionId: Long
+├── invoiceNumber: String          ← unique, e.g., "INV-2026-09-00123"
+├── productCode: String
+├── periodStart: LocalDate
+├── periodEnd: LocalDate
+├── lineItems: List<InvoiceLineItem>
+├── subtotal: Money
+├── tax: Money                     ← VAT where applicable
+├── totalAmount: Money
+├── currency: Currency
+├── status: InvoiceStatus          ← DRAFT, ISSUED, PAID, OVERDUE, VOID
+├── dueDate: LocalDate             ← 7 days from issue for subscription invoices
+├── issuedAt: ZonedDateTime        ← nullable
+├── paidAt: ZonedDateTime          ← nullable
+├── paymentReference: String       ← pay module's payment reference, nullable
+├── paymentCheckoutUrl: String     ← Paystack checkout URL, nullable
+└── createdAt: ZonedDateTime
+```
+
+**Business Methods:**
+- `issue()` → transitions DRAFT → ISSUED → registers `InvoiceIssuedEvent`
+- `markPaid(String paymentRef, ZonedDateTime paidAt)` → transitions → PAID → registers `InvoicePaidEvent`
+- `markOverdue()` → called by scheduler → registers `InvoiceOverdueEvent`
+- `void(String reason)` → for corrections/cancellations → registers `InvoiceVoidedEvent`
+
+---
+
+### `InvoiceLineItem` (Entity)
+
+```
+InvoiceLineItem
+├── id: Long
+├── invoiceId: Long
+├── description: String            ← e.g., "Atlas Commerce — Starter Plan (Sep 2026)"
+├── quantity: Integer              ← 1 for subscriptions, transaction count for fee invoices
+├── unitPrice: Money
+├── totalAmount: Money
+└── lineItemType: LineItemType     ← SUBSCRIPTION, TRANSACTION_FEE, TAX, DISCOUNT, CREDIT
+```
+
+---
+
+### `TransactionVolumeLedger` (Aggregate Root)
+
+For `ATLAS_PAY`, billing needs to know the total monthly transaction volume to determine the fee tier. This is a billing-owned read model, updated by consuming `PaymentSuccessfulEvent` from `pay`.
+
+```
+TransactionVolumeLedger
+├── id: Long
+├── organizationId: Long
+├── month: YearMonth               ← e.g., "2026-09"
+├── totalVolume: Money             ← cumulative transaction volume in the org's billing currency
+├── totalTransactionCount: Long
+└── lastUpdatedAt: ZonedDateTime
+```
+
+**Domain Logic:**
+- `recordTransaction(Money amount)` → increments `totalVolume` and `totalTransactionCount`
+- `deriveTier(FeeStructure feeStructure): FeeTier` → returns the applicable tier for the current volume
+
+---
+
+## 4. Domain Events
 
 | Event | Published When | Consumed By |
 |---|---|---|
-| `ProductSubscribedEvent` | Organization subscribes to a product | `pay:accounts` (ensure wallet is funded), `notifications` (welcome email) |
-| `BillingInvoiceGeneratedEvent` | New invoice created | `notifications` (send invoice email), `accounting` (record receivable) |
-| `BillingInvoicePaidEvent` | Invoice marked paid | `accounting` (record payment), subscription is auto-renewed |
-| `SubscriptionRenewedEvent` | Subscription period extended after payment | `identity` (restore access if was suspended), `notifications` |
-| `SubscriptionSuspendedEvent` | Subscription suspended due to non-payment | `identity` (restrict org access), `pay` (optionally freeze wallet) |
-| `SubscriptionCanceledEvent` | Subscription canceled by org | `pay:accounts` (begin offboarding), `accounting` (record cancellation) |
+| `SubscriptionCreatedEvent` | Org subscribes to a product | `notifications` (confirmation email) |
+| `SubscriptionActivatedEvent` | Payment received, subscription goes ACTIVE | `iam` (grant product entitlements), `notifications` |
+| `SubscriptionSuspendedEvent` | Invoice overdue past grace period | `iam` (suspend non-owner member access), `notifications` |
+| `SubscriptionRestoredEvent` | Overdue invoice paid | `iam` (restore member access), `notifications` |
+| `SubscriptionRenewedEvent` | Billing period renewed | `notifications` (renewal confirmation) |
+| `SubscriptionCancelledEvent` | Org cancels subscription | `iam` (schedule access removal at period end), `notifications` |
+| `InvoiceIssuedEvent` | Invoice sent to org | `notifications` (email with payment link), `pay` (initialize Paystack checkout) |
+| `InvoicePaidEvent` | Invoice marked paid | `subscription` (activate/renew subscription) |
+| `InvoiceOverdueEvent` | Due date passed without payment | `notifications` (reminder), triggers suspension after grace period |
 
 ---
 
-## 4. Exceptions & Errors
+## 5. Outbound Port (Open Host Service)
 
-**`BillingErrorCode`** (implements `ErrorCode`):
-- `SUBSCRIPTION_ALREADY_EXISTS`
-- `SUBSCRIPTION_NOT_FOUND`
-- `INVALID_SUBSCRIPTION_STATE`
-- `INVOICE_NOT_FOUND`
-- `INVOICE_ALREADY_PAID`
-
----
-
-## 5. Commands & Use Cases
-
-- `SubscribeToProductCommand(Long organizationId, Long productId, BillingCycle cycle)` → `SubscribeToProductUseCase`
-  Validates that the product is ACTIVE in `catalog`, checks no existing active subscription, creates `OrganizationProduct` and initial `BillingInvoice`, publishes `ProductSubscribedEvent`.
-- `CancelSubscriptionCommand(Long subscriptionId, String reason)` → `CancelSubscriptionUseCase`
-  Transitions status to CANCELED, publishes `SubscriptionCanceledEvent`.
-- `SuspendSubscriptionCommand(Long subscriptionId, String reason)` → `SuspendSubscriptionUseCase`
-- `PayBillingInvoiceCommand(Long invoiceId, String paymentReference)` → `PayBillingInvoiceUseCase`
-  Marks invoice as PAID, calls `subscription.renew(newEnd)` to extend the period, publishes `BillingInvoicePaidEvent` and `SubscriptionRenewedEvent`.
+```java
+// In atlashub-shared
+public interface EntitlementQueryPort {
+    boolean hasActiveSubscription(Long orgId, String productCode);
+    SubscriptionStatus getSubscriptionStatus(Long orgId, String productCode);
+    boolean isSubscriptionSuspended(Long orgId);
+}
+```
 
 ---
 
-## 6. Queries
+## 6. Exceptions & Errors
 
-- `GetOrganizationContextQuery(Long organizationId)` → `OrganizationContextResult(List<String> activeProductKeys, Map<String, Object> featureFlags)`
-  Critical read used by other modules to gate feature access. Returns which product keys the org currently has ACTIVE subscriptions for.
-- `ListSubscriptionsQuery(Long organizationId)` → `List<SubscriptionResult>`
-- `ListBillingInvoicesQuery(Long organizationId, Long subscriptionId)` → `List<InvoiceResult>`
-
----
-
-## 7. Listeners
-
-- **`PaymentSuccessfulListener`**: Listens to `PaymentSuccessfulEvent` (from `atlashub-pay`). Matches the `paymentReference` to an open `BillingInvoice`. On match, dispatches `PayBillingInvoiceCommand` to automatically mark the invoice paid and renew the subscription. Uses Inbox pattern to guarantee exactly-once processing — a duplicate `PaymentSuccessfulEvent` will not double-renew the subscription.
+**`BillingErrorCode`**:
+- `SUBSCRIPTION_NOT_FOUND`, `INVOICE_NOT_FOUND`
+- `SUBSCRIPTION_ALREADY_ACTIVE`, `SUBSCRIPTION_SUSPENDED`, `SUBSCRIPTION_CANCELLED`
+- `INVOICE_ALREADY_PAID`, `INVOICE_VOIDED`
+- `PRODUCT_NOT_AVAILABLE` — product is deactivated in catalog
+- `INVALID_INVOICE_STATE`
 
 ---
 
-## 8. Distributed Architecture & Transaction Guarantees
+## 7. Commands & Use Cases
 
-### Locking Strategy
-- **Optimistic Locking (`@Version`)**: Applied to `OrganizationProduct` to prevent race conditions during concurrent renewals or cancellations (e.g., a scheduled renewal job and a manual cancellation request arriving simultaneously).
+### Subscriptions
+- `SubscribeCommand(orgId, productCode, pricingPlanId)` → `SubscribeUseCase`
+  - Creates subscription in PENDING_PAYMENT state (or ACTIVE immediately for FREE products)
+  - For paid products, triggers invoice generation
+- `ActivateSubscriptionCommand(subscriptionId)` → `ActivateSubscriptionUseCase` ← called when invoice paid
+- `SuspendSubscriptionCommand(subscriptionId, reason)` → `SuspendSubscriptionUseCase` ← called by overdue scheduler
+- `RestoreSubscriptionCommand(subscriptionId)` → `RestoreSubscriptionUseCase` ← called when overdue invoice paid
+- `CancelSubscriptionCommand(subscriptionId, reason)` → `CancelSubscriptionUseCase`
+- `RenewSubscriptionCommand(subscriptionId)` → `RenewSubscriptionUseCase` ← scheduled job, called at billing period end
 
-### Inbox & Outbox Patterns
-- **Outbox**: Reliably publishes `SubscriptionRenewedEvent` so Identity restores org access after payment, even if the event bus is temporarily down.
-- **Inbox (`EventDeliveryTracker`)**: Checks incoming `PaymentSuccessfulEvent`s by `(eventId, consumerId)` composite key to guarantee a subscription is renewed **exactly once** per payment, preventing double-renewals from duplicate webhook deliveries.
+### Invoices
+- `GenerateSubscriptionInvoiceCommand(subscriptionId, period)` → `GenerateSubscriptionInvoiceUseCase`
+- `GenerateTransactionFeeInvoiceCommand(orgId, month)` → `GenerateTransactionFeeInvoiceUseCase`
+  - Reads `TransactionVolumeLedger` → determines tier → calculates fee → creates invoice
+- `MarkInvoicePaidCommand(invoiceId, paymentReference, paidAt)` → `MarkInvoicePaidUseCase`
+- `VoidInvoiceCommand(invoiceId, reason)` → `VoidInvoiceUseCase` ← admin only
+- `MarkInvoiceOverdueCommand(invoiceId)` → `MarkInvoiceOverdueUseCase` ← scheduler
+
+---
+
+## 8. Queries
+
+- `GetSubscriptionQuery(orgId, productCode)` → `SubscriptionResult`
+- `ListSubscriptionsQuery(orgId)` → `List<SubscriptionResult>`
+- `ListInvoicesQuery(orgId, status, dateFrom, dateTo)` → `List<InvoiceSummaryResult>`
+- `GetInvoiceDetailsQuery(invoiceId)` → `InvoiceDetailsResult`
+- `GetCurrentBillingPeriodQuery(subscriptionId)` → `BillingPeriodResult`
+- `GetTransactionVolumeQuery(orgId, month)` → `TransactionVolumeResult`
+
+---
+
+## 9. Listeners
+
+- **`OrganizationComplianceApprovedListener`**: Listens to `OrganizationComplianceApprovedEvent` from `compliance`. Activates any PENDING_PAYMENT subscriptions that were blocked on compliance approval.
+- **`PaymentSuccessfulListener`**: Listens to `PaymentSuccessfulEvent` from `pay`. If the payment reference matches a billing invoice, calls `MarkInvoicePaidUseCase`. Also calls `TransactionVolumeLedger.recordTransaction()` for Pay fee calculation.
+- **`SubscriptionCancelledListener`** (internal): Schedules member access removal for the end of the current billing period.
+
+---
+
+## 10. Distributed Architecture
+
+### Scheduled Jobs
+- **Invoice Generation Job** (runs on 1st of every month, 00:05 AM): For all ACTIVE subscriptions with `nextBillingDate = today`, generates invoices.
+- **Overdue Check Job** (runs daily, 08:00 AM): For all ISSUED invoices with `dueDate < today`, calls `MarkInvoiceOverdueUseCase`.
+- **Suspension Job** (runs daily, 08:05 AM): For all OVERDUE invoices older than 7 days (grace period), calls `SuspendSubscriptionUseCase`.
+
+### Locking
+- **Optimistic Locking**: `Subscription`, `BillingInvoice`
+- **Pessimistic Locking**: `TransactionVolumeLedger` during `recordTransaction()` — prevents concurrent updates corrupting the running total
+
+### Outbox & Inbox
+- **Outbox**: `SubscriptionSuspendedEvent`, `InvoiceIssuedEvent` — both trigger downstream actions that must be delivered reliably
+- **Inbox**: `PaymentSuccessfulEvent` — idempotent. A duplicate delivery of this event must not mark the same invoice paid twice, which would attempt to activate an already-active subscription.

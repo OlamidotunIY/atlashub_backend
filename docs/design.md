@@ -2,53 +2,100 @@
 
 ## What Is AtlasHub?
 
-AtlasHub is an **all-in-one business operating platform** for African businesses. It gives organizations a single place to manage their payments, commerce operations, logistics, HR, and accounting — with all modules communicating seamlessly through a shared event infrastructure.
+AtlasHub is an **all-in-one business operating platform** for African businesses. It gives organizations a single place to manage their payments, commerce operations, logistics, HR, and accounting — with every module communicating through a shared, event-driven infrastructure.
 
-Unlike point solutions (e.g., "just a POS app" or "just an HR tool"), AtlasHub's modules are deeply integrated. A sale made at a POS terminal automatically updates stock, triggers an accounting entry, and if payment was via card, reconciles to the organization's virtual account — all without the organization configuring any integration.
+Unlike point solutions ("just a POS app" or "just an HR tool"), AtlasHub modules are deeply integrated by design. A sale made at a POS terminal automatically updates stock, triggers an accounting entry, and if payment was by card, reconciles to the organization's virtual account — without any manual configuration. At the same time, each module stands completely alone: a business can subscribe to just Atlas Pay without touching Commerce or HR.
+
+AtlasHub is also a **B2B2C platform**. Businesses don't just use AtlasHub for their own operations — they can expose AtlasHub's payment infrastructure to their own end-customers (e.g., a merchant accepting card payments from shoppers through AtlasHub Pay).
+
+---
+
+## Geographic Scope
+
+- **MVP**: Nigeria-first (NGN as primary currency, Anchor/Paystack/Moniepoint as primary infrastructure)
+- **Architecture**: Multi-country from day one — all money types are `Money(amount, currency)`, all organizations carry a `country` and `baseCurrency`, all modules are currency-aware
+- **Near-future**: Kenya (KES), Ghana (GHS), South Africa (ZAR)
+
+---
+
+## Core Architectural Principles
+
+AtlasHub is a **Modular Monolith** using:
+- **Hexagonal Architecture** (Ports and Adapters) — business logic is isolated from infrastructure
+- **Domain-Driven Design (DDD)** — strict bounded contexts, aggregate roots, domain events
+- **CQRS** — commands mutate state through use cases; queries are served from separate read models
+- **Event-Driven Architecture** — all significant state changes publish domain events through a transactional outbox; modules react via Kafka consumers
+- **Open Host Service + Published Language** — the only way modules communicate is through stable public port interfaces (for sync reads) or domain events (for async state changes)
+
+No module ever directly calls another module's repository, internal use case, or database table.
+
+---
+
+## The Module Problem — Why We Split `identity`
+
+A common mistake in platform design is creating a "god module" that owns too many concepts. The previous `identity` module owned: User profiles, Organizations, KYC, API keys, custom roles, and memberships — seven distinct bounded contexts in one module.
+
+The correct split (following Stripe's internal architecture principles) is:
+
+| Concept | Module | Why Separate |
+|---|---|---|
+| Who you are | `accounts` | Pure identity — User + Organization records |
+| How you log in | `auth` | Authentication mechanisms — tokens, passwords |
+| Whether you're verified | `compliance` | KYC is a regulatory workflow, not an identity fact |
+| What you can access | `iam` | Authorization is a separate concern from identity |
+| Which platform product you're paying for | `billing` | Billing is a commercial concern |
 
 ---
 
 ## Platform Architecture
 
-AtlasHub is a **Modular Monolith** following Hexagonal Architecture (Ports and Adapters) and Domain-Driven Design (DDD) with CQRS. All modules share a single deployment unit but maintain strict domain boundaries — no module directly calls another module's database or internal classes.
-
-Cross-module communication happens exclusively through:
-1. **Domain Events** (async, via Outbox/Inbox pattern)
-2. **Shared Kernel Interfaces** (sync, via Spring dependency injection for same-JVM calls — e.g., `AccountQueryPort`)
-
 ```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                         atlashub-platform                               │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐ │
-│  │ identity │  │   auth   │  │  admin   │  │ catalog  │  │ billing  │ │
-│  └──────────┘  └──────────┘  └──────────┘  └──────────┘  └──────────┘ │
-└─────────────────────────────────────────────────────────────────────────┘
-┌──────────────┐  ┌──────────────────┐  ┌──────────────┐  ┌──────────────┐
-│ atlashub-pay │  │atlashub-commerce │  │atlashub-     │  │ atlashub-hr  │
-│              │  │                  │  │ logistics    │  │              │
-│ accounts     │  │ catalog          │  │ shipping     │  │ staff        │
-│ ledger       │  │ storefront (POS) │  │ warehousing  │  │ payroll      │
-│ charges      │  │ inventory        │  │ returns      │  │ leave        │
-│ transfers    │  │                  │  │              │  │ attendance   │
-│ splits       │  │                  │  │              │  │ loans        │
-│ subscriptions│  │                  │  │              │  │              │
-│ settlement   │  │                  │  │              │  │              │
-│ tx-query     │  │                  │  │              │  │              │
-└──────────────┘  └──────────────────┘  └──────────────┘  └──────────────┘
-┌─────────────────────────────────────────────────────────────────────────┐
-│                       atlashub-accounting                               │
-│         gl (General Ledger)  │  ap/ar  │  assets  │  cash  │  budget   │
-└─────────────────────────────────────────────────────────────────────────┘
-┌─────────────────────────────────────────────────────────────────────────┐
-│                      atlashub-infrastructure                            │
-│          eventbus (Outbox/Inbox)  │  notifications  │  audit            │
-│          rate-limiter             │  file-storage                       │
-└─────────────────────────────────────────────────────────────────────────┘
-┌─────────────────────────────────────────────────────────────────────────┐
-│                          atlashub-shared                                │
-│      Money, AggregateRoot, DomainEvent, BaseUseCase, Exceptions,        │
-│      Shared Ports (AccountQueryPort), Value Objects                     │
-└─────────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────────────────┐
+│                              atlashub-platform                                        │
+│                                                                                       │
+│  ┌──────────┐  ┌──────┐  ┌────────────┐  ┌─────┐  ┌─────────┐  ┌─────────────────┐ │
+│  │ accounts │  │ auth │  │ compliance │  │ iam │  │ catalog │  │    billing      │ │
+│  └──────────┘  └──────┘  └────────────┘  └─────┘  └─────────┘  └─────────────────┘ │
+│                                                                                       │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐                               │
+│  │    admin     │  │notifications │  │   support    │                               │
+│  └──────────────┘  └──────────────┘  └──────────────┘                               │
+└──────────────────────────────────────────────────────────────────────────────────────┘
+
+┌───────────────┐  ┌──────────────────┐  ┌───────────────────┐  ┌──────────────────┐
+│  atlashub-pay │  │atlashub-commerce │  │atlashub-logistics │  │   atlashub-hr    │
+│               │  │                  │  │                   │  │                  │
+│ accounts      │  │ catalog          │  │ shipping          │  │ staff            │
+│ ledger        │  │ storefront (POS) │  │ fleet             │  │ payroll          │
+│ charges       │  │ marketplace      │  │ warehousing       │  │ leave            │
+│ transfers     │  │ inventory        │  │ 3pl               │  │ attendance       │
+│ splits        │  │ vendors          │  │ returns           │  │ loans            │
+│ mandates      │  │ online           │  │                   │  │                  │
+│ settlement    │  │                  │  │                   │  │                  │
+│ tx-query      │  │                  │  │                   │  │                  │
+└───────────────┘  └──────────────────┘  └───────────────────┘  └──────────────────┘
+
+┌───────────────────────────────────────────────────────────────────────┐
+│                         atlashub-accounting                            │
+│    gl (General Ledger) │ ap/ar │ assets │ cash │ budget │ reports     │
+└───────────────────────────────────────────────────────────────────────┘
+
+┌───────────────────────────────────────────────────────────────────────┐
+│                          atlashub-analytics                            │
+│    projections (CQRS) │ timeseries (TimescaleDB) │ dashboards          │
+└───────────────────────────────────────────────────────────────────────┘
+
+┌───────────────────────────────────────────────────────────────────────┐
+│                       atlashub-infrastructure                          │
+│    eventbus (Outbox/Inbox) │ audit │ rate-limiter │ file-storage      │
+│    webhooks (outbound delivery)                                        │
+└───────────────────────────────────────────────────────────────────────┘
+
+┌───────────────────────────────────────────────────────────────────────┐
+│                          atlashub-shared                               │
+│    Money, AggregateRoot, DomainEvent, BaseUseCase, Repository,        │
+│    Exceptions, Value Objects, Shared Ports                             │
+└───────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -57,133 +104,132 @@ Cross-module communication happens exclusively through:
 
 | Module | Package | Purpose |
 |---|---|---|
-| [identity](modules/identity-design.md) | `atlashub-platform:identity` | Organizations, Users, Members, Invitations, Compliance (KYC) |
-| [auth](modules/auth-design.md) | `atlashub-platform:auth` | Passwords, Sessions, JWT, Email Verification |
-| [admin](modules/admin-design.md) | `atlashub-platform:admin` | AtlasHub staff management, KYC review, catalog management |
-| [catalog](modules/catalog-design.md) | `atlashub-platform:catalog` | Platform product catalog (Atlas Pay, Commerce, etc.) and pricing |
-| [billing](modules/billing-design.md) | `atlashub-platform:billing` | Organizational subscriptions, invoices, and access control |
-| [pay](modules/pay-design.md) | `atlashub-pay` | All money movement: virtual accounts, ledger, charges, payouts, splits |
-| [commerce](modules/commerce-design.md) | `atlashub-commerce` | POS, inventory, product catalog, hospitality, suppliers |
-| [logistics](modules/logistics-design.md) | `atlashub-logistics` | Shipments, fleet, riders, stock transfers, returns |
+| [accounts](modules/accounts-design.md) | `atlashub-platform:accounts` | User and Organization records — who you are |
+| [auth](modules/auth-design.md) | `atlashub-platform:auth` | Authentication — JWT, refresh tokens, passwords, HMAC API signing |
+| [compliance](modules/compliance-design.md) | `atlashub-platform:compliance` | KYC journey — document verification, compliance status |
+| [iam](modules/iam-design.md) | `atlashub-platform:iam` | Authorization — custom roles, permissions, memberships, API keys |
+| [catalog](modules/catalog-design.md) | `atlashub-platform:catalog` | Platform product catalog and pricing plans |
+| [billing](modules/billing-design.md) | `atlashub-platform:billing` | Subscriptions, invoices, access entitlements |
+| [admin](modules/admin-design.md) | `atlashub-platform:admin` | AtlasHub internal admin portal — multi-tier staff access |
+| [notifications](modules/notifications-design.md) | `atlashub-platform:notifications` | Email, SMS, push, WhatsApp, in-app WebSocket delivery |
+| [support](modules/support-design.md) | `atlashub-platform:support` | Support ticketing for businesses |
+| [pay](modules/pay-design.md) | `atlashub-pay` | All money movement — virtual accounts, ledger, charges, payouts, splits |
+| [commerce](modules/commerce-design.md) | `atlashub-commerce` | POS, inventory, marketplace, vendors, online storefront |
+| [logistics](modules/logistics-design.md) | `atlashub-logistics` | Shipments, fleet, drivers, 3PL integrations, marketplace dispatch |
 | [hr](modules/hr-design.md) | `atlashub-hr` | Employees, payroll, leave, attendance, loans |
-| [accounting](modules/accounting-design.md) | `atlashub-accounting` | General ledger, journal entries, reports, assets, budgets |
-| [infrastructure](modules/infrastructure-design.md) | `atlashub-infrastructure` | Outbox/Inbox, notifications, audit, rate limiting |
+| [accounting](modules/accounting-design.md) | `atlashub-accounting` | General ledger, journal entries, financial reports |
+| [analytics](modules/analytics-design.md) | `atlashub-analytics` | CQRS projections, time-series metrics, dashboards |
+| [hotel](modules/hotel-design.md) | `atlashub-hotel` | **Future** — Hotel PMS, room management, front desk |
+| [infrastructure](modules/infrastructure-design.md) | `atlashub-infrastructure` | Outbox/Inbox, audit, rate limiting, outbound webhooks |
 
 ---
 
-## The Organization Journey
+## Cross-Module Communication Rules
 
-Here is how a real organization interacts with AtlasHub end-to-end:
+**Rule 1 — No direct calls between module internals.**
+Module A never calls Module B's repository, entity, or use case class directly.
 
-### 1. Onboarding (Identity + Auth + Billing)
-1. Business owner registers → `identity` creates `User` + `Organization` + `OrganizationMember(OWNER)`.
-2. `auth` creates `AuthAccount`, sends setup email.
-3. Owner logs in, completes 5-step KYC compliance form.
-4. Submits compliance → `admin` reviews → **ApproveCompliance**.
-5. On approval: `pay:accounts` issues a live NUBAN (via Anchor). Organization can now receive bank transfers.
-6. Owner subscribes to Atlas Pay + Atlas Commerce via `billing` → invoices generated.
+**Rule 2 — Sync reads use Open Host Service ports.**
+If Module B needs to read data owned by Module A synchronously (e.g., commerce checking if an org's compliance is approved), Module A exposes a stable port interface in `atlashub-shared`. Module B injects and calls it. This port is injected by Spring (same JVM), avoiding network calls.
 
-### 2. Daily Commerce Operations (Commerce + Pay + Accounting)
-1. Manager opens the till → `CloseTillUseCase` posts opening float to ledger (Debit Till Account, Credit Operating Account).
-2. Cashier processes sales → `SalesOrder` created → stock reserved.
-3. Customer pays by card → Paystack checkout → webhook received → `PaymentSuccessfulEvent` → sale completed.
-4. Ledger posts: Debit Cash/Clearing, Credit Sales Revenue.
-5. `accounting` listener posts journal entry automatically.
-6. End of day: till closed → `ReconcileTillCommand` sweeps till cash to Operating Account.
+```
+// In atlashub-shared — owned by the accounts module
+public interface OrganizationQueryPort {
+    Optional<OrganizationDto> findById(Long orgId);
+    boolean isComplianceApproved(Long orgId);
+}
 
-### 3. Supplier Replenishment (Commerce + Logistics + Accounting)
-1. Manager raises a `PurchaseOrder` → sent to supplier.
-2. Supplier ships goods → logistics creates inbound `Shipment`.
-3. Delivery confirmed with POD → `ShipmentDeliveredEvent` → Commerce receives the purchase order.
-4. Stock added to inventory at outlet.
-5. Accounting posts: Debit Inventory Asset, Credit Accounts Payable.
-6. When supplier is paid: pay initiates bank transfer payout → Debit Accounts Payable, Credit Bank Account.
+// In atlashub-platform:accounts — implements the port
+@Component
+public class OrganizationQueryAdapter implements OrganizationQueryPort { ... }
 
-### 4. Monthly Payroll (HR + Pay + Accounting)
-1. HR initiates payroll for "2026-09" → calculates gross, allowances, deductions for all employees.
-2. Manager reviews and approves → `PayrollApprovedEvent`.
-3. Accounting auto-posts: Debit Salary Expense, Credit Payroll Payable.
-4. Org must ensure Payroll Reserve Account is funded (via `FundPayrollReserveCommand` in Pay).
-5. Disbursement runs: bulk payouts to employee banks via Paystack.
-6. On success: `PayrollDisbursedEvent` → Accounting posts: Debit Payroll Payable, Credit Payroll Reserve Account.
-7. Each employee gets an SMS: "Your salary of ₦X has been paid."
+// In atlashub-commerce — injects the port, no import of accounts internals
+@Service
+public class ProcessPosCheckoutUseCase {
+    private final OrganizationQueryPort orgQueryPort;
+    ...
+}
+```
 
-### 5. Stock Transfer Between Outlets (Commerce + Logistics + Pay + Accounting)
-1. Outlet A has excess stock; Outlet B is low. Manager initiates `StockTransfer`.
-2. Logistics assigns rider, dispatches goods.
-3. Outlet B receives and confirms delivery.
-4. Commerce: `addStock(Outlet B)`, `deductStock(Outlet A)`.
-5. Pay posts inter-outlet ledger transaction:
-   ```
-   DEBIT  Till Account (Outlet B)   [cost value]
-   CREDIT Till Account (Outlet A)   [cost value]
-   ```
-6. Accounting posts: Debit Inventory Asset (Outlet B), Credit Inventory Asset (Outlet A).
+**Rule 3 — State changes use domain events via Kafka.**
+If Module A needs to tell Module B that something happened (e.g., payment succeeded, compliance approved), Module A publishes a domain event through the Outbox. Module B consumes it via a Kafka listener. Events are the only mechanism for cross-module state propagation.
+
+**Rule 4 — No shared database tables.**
+Every module owns its own tables. Cross-module references are by ID only (e.g., `organizationId: Long`), never by foreign key join.
+
+See [architecture/module-communication.md](architecture/module-communication.md) for the complete guide.
 
 ---
 
-## Key Cross-Module Event Flows
+## Data Store Stack
 
-```
-ORGANIZATION ONBOARDING
-identity: OrganizationRegistered ──────→ billing (prepare for subscriptions)
-identity: OrganizationComplianceApproved ─→ pay:accounts (issue NUBAN)
-identity: UserCreated ─────────────────→ auth (create AuthAccount)
-identity: InvitationAccepted ──────────→ auth (activate account), hr (draft employee)
+| Store | Purpose | Used By |
+|---|---|---|
+| **PostgreSQL** | Primary OLTP database — all aggregate state, outbox, audit | All modules |
+| **Redis** | JWT refresh token store, revocation list, rate-limit counters, distributed locks | Auth, IAM, Infrastructure |
+| **Kafka** | Async event bus — event delivery between modules | All modules |
+| **Elasticsearch** | Full-text search — products, customers, transactions | Commerce, Pay, Analytics |
+| **TimescaleDB** | Time-series analytics — revenue per hour, orders per day | Analytics |
 
-POS SALE
-commerce: ProcessPosCheckoutUseCase
-  → pay: InitializePaymentUseCase (sync)
-  → [customer pays externally]
-  → pay: PaymentSuccessfulEvent
-    → commerce: complete sale, deduct stock
-    → billing: match invoice if platform billing ref
-    → pay:ledger: post DEBIT Clearing, CREDIT Operating Account
-    → accounting: post DEBIT Cash, CREDIT Sales Revenue
-    → notifications: send receipt
+---
 
-PAYROLL
-hr: PayrollApprovedEvent ──────────────→ pay (execute bulk payouts)
-pay: BulkPayoutCompletedEvent ─────────→ hr (mark DISBURSED)
-hr: PayrollDisbursedEvent ─────────────→ accounting (post final journal)
-                                        → notifications (SMS employees)
+## The Organization Journey (End-to-End)
 
-SUBSCRIPTION RENEWAL
-pay: PaymentSuccessfulEvent ───────────→ billing (mark invoice paid)
-billing: SubscriptionRenewedEvent ─────→ identity (restore access)
-                                        → notifications (renewal confirmation)
-```
+### 1. Onboarding
+1. Business owner registers → `accounts` creates `User` + `Organization`.
+2. `UserCreated` event → `auth` creates `AuthAccountJpa`, sends welcome email via `notifications`.
+3. `OrganizationCreated` event → `iam` creates default member record (OWNER), `billing` initializes subscription state.
+4. Owner logs in, submits 5-step KYC form → `compliance` module tracks the journey.
+5. Submitted → `compliance` publishes `ComplianceSubmittedEvent` → `admin` creates KYC review task.
+6. Admin approves → `OrganizationComplianceApprovedEvent` → `pay:accounts` issues live NUBAN.
+7. Owner subscribes to Atlas Pay + Atlas Commerce → `billing` generates invoices, `iam` grants entitlements.
+
+### 2. Daily Commerce Operations
+1. Manager opens the till → `OpenTillUseCase` posts opening float to ledger.
+2. Cashier processes a sale → `SalesOrder` created → stock reserved in `inventory`.
+3. Customer pays by card → `pay` initializes Paystack checkout.
+4. Paystack webhook → `pay` confirms payment → `PaymentSuccessfulEvent`.
+5. `commerce` completes sale, deducts stock → `PosSaleCompletedEvent`.
+6. `accounting` posts journal entry. `notifications` sends receipt. `analytics` updates sales projection.
+
+### 3. Monthly Payroll
+1. HR initiates payroll run → calculates all payslips → `PayrollRun` in DRAFT.
+2. Manager (maker) submits for approval.
+3. Owner/Director (checker) approves → `PayrollApprovedEvent`.
+4. `pay` executes bulk payouts to employee bank accounts.
+5. `BulkPayoutCompletedEvent` → HR marks DISBURSED → `accounting` posts final journal → `notifications` SMSes each employee.
+
+### 4. Logistics Delivery (B2B2C)
+1. Customer places order via merchant's app → merchant calls AtlasHub Pay API.
+2. Payment confirmed → `commerce` creates delivery request → `logistics` creates `Shipment`.
+3. Nearest rider assigned (manual in MVP) → `ShipmentAssignedEvent` → rider notified.
+4. Rider delivers, submits POD photo → `ShipmentDeliveredEvent` → merchant's webhook called → merchant's server confirmed.
 
 ---
 
 ## Two Ledgers — One Source of Truth
 
-AtlasHub operates two complementary ledgers:
-
 | | `atlashub-pay:ledger` | `atlashub-accounting:gl` |
 |---|---|---|
 | **Purpose** | Real-time cash tracking | Financial reporting |
 | **Model** | Double-entry, balance snapshots | Journal entries, Chart of Accounts |
-| **Granularity** | Every money movement | Business event-level |
+| **Granularity** | Every money movement | Business-event level |
 | **Users** | Treasury / cash management | Finance / accounting team |
 | **Drives** | Wallet balances, available funds | P&L, Balance Sheet, Cash Flow |
 
-The `LedgerBridgeListener` in accounting maps every `LedgerTransactionPostedEvent` from Pay to the corresponding accounting journal entry using the organization's `LedgerAccountMapping` configuration.
-
 ---
 
-## Internal Account Structure (Per Organization)
+## Security Model
 
-On onboarding, every organization gets these ledger accounts bootstrapped in `atlashub-pay:ledger`:
-
-| Account | Type | Purpose |
-|---|---|---|
-| Operating Account | Asset | Daily transactions — revenue in, payments out |
-| Payroll Reserve Account | Asset | Funds locked for upcoming payroll disbursement |
-| Tax Holding Account | Liability | PAYE, VAT collected but not yet remitted |
-| Escrow Account | Asset | Funds held during commerce transactions pending delivery |
-| Suspense Account | Asset | Inter-outlet transfer clearing (in-transit) |
-| Till Accounts (per outlet) | Asset | Cash at each physical POS till |
+| Layer | Mechanism |
+|---|---|
+| Human auth | JWT (15-min access token) + refresh token (Redis-backed, revocable) |
+| B2B machine auth | API Key + HMAC-SHA256 request signing (replay-proof via timestamp + nonce) |
+| Authorization | Custom RBAC — permission claims embedded in JWT, enforced per endpoint |
+| Data isolation | `organization_id` on every table + PostgreSQL Row-Level Security as defense-in-depth |
+| Financial controls | Maker-Checker on payroll disbursement, fund transfers > threshold, manual journal entries |
+| Rate limiting | IP-based + org-level sliding window (Redis) |
+| Webhook integrity | HMAC-SHA256 on all outbound webhook payloads |
 
 ---
 
@@ -191,48 +237,52 @@ On onboarding, every organization gets these ledger accounts bootstrapped in `at
 
 | Provider | Module | What It Does |
 |---|---|---|
-| **Anchor** | `pay:accounts` | Issues real NUBAN bank accounts per organization. Webhooks notify AtlasHub of incoming transfers. |
-| **Paystack** | `pay:charges` | Card, bank transfer, USSD payment collection. Webhooks notify of payment outcomes. Settlement of collected funds to org's bank. |
-| **Moniepoint** | `pay:charges` | Physical POS terminal transactions. Webhooks notify of transaction outcomes. |
-| **Paystack / Moniepoint** | `pay:transfers` | Outbound bank transfers (salary payouts, supplier payments, refunds). |
-| **SendGrid / AWS SES** | `infrastructure:notifications` | Transactional email delivery. |
-| **Termii / Twilio** | `infrastructure:notifications` | SMS delivery. |
-| **Firebase FCM** | `infrastructure:notifications` | In-app push notifications. |
-| **Redis** | `infrastructure:rate-limiter` | Sliding window rate limiting counters. |
-| **Kafka / RabbitMQ** | `infrastructure:eventbus` | Async event delivery between modules. |
+| **Anchor** | `pay:accounts` | Issues real NUBAN bank accounts. Webhooks notify of incoming transfers. |
+| **Paystack** | `pay:charges`, `pay:transfers` | Card/USSD/bank transfer collection. Payout to bank accounts. |
+| **Moniepoint** | `pay:charges` | Physical POS terminal transactions. |
+| **SendGrid / AWS SES** | `notifications` | Transactional email. |
+| **Termii / Twilio** | `notifications` | SMS delivery. |
+| **Firebase FCM** | `notifications` | In-app push notifications. |
+| **WhatsApp Business API** | `notifications` | Transactional WhatsApp messages. |
+| **DHL / GIG Logistics** | `logistics:3pl` | Third-party logistics carrier integration. |
+| **Redis** | `infrastructure` | Sessions, rate limiting, revocation. |
+| **Kafka** | `infrastructure:eventbus` | Async event delivery between modules. |
+| **Elasticsearch** | `commerce`, `pay`, `analytics` | Product, customer, transaction search. |
+| **TimescaleDB** | `analytics` | Time-series metrics. |
 
 ---
 
 ## Folder Structure Convention
 
-Each module follows this structure:
-
 ```
 {module}/
-├── src/main/java/com/atlashub/{module}/
+├── src/main/java/com/atlashub/{module-name}/
 │   ├── domain/
-│   │   ├── model/          (Aggregates, Entities)
-│   │   ├── valueobject/    (Value Objects, Enums)
-│   │   ├── events/         (Domain Events — records)
-│   │   ├── exception/      (ErrorCode enum)
-│   │   └── repository/     (Repository interfaces)
+│   │   ├── model/          ← Aggregates, Entities
+│   │   ├── valueobject/    ← Enums, Value Objects
+│   │   ├── event/          ← Domain Events (records, past-tense names)
+│   │   ├── exception/      ← ErrorCode enum
+│   │   └── repository/     ← Repository interfaces (no Spring imports)
 │   ├── application/
-│   │   ├── command/        (Command DTOs)
-│   │   ├── query/          (Query DTOs)
-│   │   ├── result/         (Result DTOs)
-│   │   ├── usecase/        (Use Cases extending BaseUseCase<I,O>)
-│   │   └── port/out/       (Outbound port interfaces)
+│   │   ├── command/        ← Write input DTOs (suffixed Command)
+│   │   ├── query/          ← Read input DTOs (suffixed Query)
+│   │   ├── result/         ← Output DTOs from use cases
+│   │   ├── usecase/        ← Use case implementations (extend BaseUseCase)
+│   │   └── port/
+│   │       ├── in/         ← Inbound ports (Open Host Service contracts)
+│   │       └── out/        ← Outbound ports (external API interfaces)
 │   └── adapter/
 │       ├── in/
 │       │   ├── web/
-│       │   │   ├── controller/     (REST Controllers)
-│       │   │   ├── request/        (Web Request DTOs)
-│       │   │   └── response/       (Web Response DTOs — if different from result)
-│       │   └── messaging/          (Event Listeners / Saga Handlers)
+│       │   │   ├── controller/     ← REST Controllers
+│       │   │   ├── request/        ← Web Request DTOs
+│       │   │   └── response/       ← Web Response DTOs
+│       │   └── messaging/          ← Kafka Listeners
 │       └── out/
-│           ├── entity/             (JPA Entities)
-│           ├── mapper/             (Domain ↔ JPA Mappers)
-│           ├── repository/         (Spring Data JPA interfaces + Adapters)
-│           ├── query/              (Query-side adapters)
-│           └── external/           (External API adapters — Anchor, Paystack, etc.)
+│           ├── persistence/
+│           │   ├── entity/         ← JPA Entities
+│           │   ├── mapper/         ← Domain ↔ Entity Mappers
+│           │   └── repository/     ← Spring Data JPA + Repository Adapters
+│           ├── external/           ← External API adapters
+│           └── catalog/            ← Cross-module query adapters
 ```

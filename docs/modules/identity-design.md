@@ -73,7 +73,7 @@ Organizations are issued `ApiKey` records (PUBLIC and SECRET types) per environm
   - `activeOrganizationId`: Long (nullable)
   - `createdAt`: ZonedDateTime
   - `updatedAt`: ZonedDateTime
-- **Note**: There is no `status` or `UserStatus` field on `User`. User activation state is managed by `AuthAccount` in the `auth` module.
+- **Note**: There is no `status` or `UserStatus` field on `User`. User activation state is managed by `AuthAccountJpa` in the `auth` module.
 - **Methods**:
   - `updateProfile(String firstName, String lastName, PhoneNumber phone)` — raises `UserProfileUpdated`
   - `updateImageUrl(String imageUrl)`
@@ -181,5 +181,5 @@ Organizations are issued `ApiKey` records (PUBLIC and SECRET types) per environm
 - **Optimistic Locking (`@Version`)**: Applied to `Organization` and `Invitation`. Prevents double-acceptance of the same invitation token under concurrent requests.
 
 ### Inbox & Outbox Patterns
-- **Outbox**: Publishes `UserCreated` (triggers `AuthAccount` creation in auth) and `InvitationCreated` (triggers notification email). All events go through the Outbox to guarantee delivery even if the downstream consumer is temporarily unavailable.
+- **Outbox**: Publishes `UserCreated` (triggers `AuthAccountJpa` creation in auth) and `InvitationCreated` (triggers notification email). All events go through the Outbox to guarantee delivery even if the downstream consumer is temporarily unavailable.
 - **Inbox**: Consumes `SubscriptionSuspendedEvent` idempotently via `EventDeliveryTracker`.

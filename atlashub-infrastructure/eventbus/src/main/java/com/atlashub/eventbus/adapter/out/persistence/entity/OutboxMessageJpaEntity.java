@@ -46,6 +46,5 @@ public class OutboxMessageJpaEntity {
         this.status = status;
         this.processedAt = processedAt;
     }
-
 }
 

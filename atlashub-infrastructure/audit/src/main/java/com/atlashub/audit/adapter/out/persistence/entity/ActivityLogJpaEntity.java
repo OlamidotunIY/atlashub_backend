@@ -44,7 +44,7 @@ public class ActivityLogJpaEntity {
     private String entityId;
     
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(columnDefinition = "jsonb")
+    @Column(columnDefinition = "json")
     private Map<String, Object> metadata;
     
     @Column(name = "occurred_at", nullable = false)

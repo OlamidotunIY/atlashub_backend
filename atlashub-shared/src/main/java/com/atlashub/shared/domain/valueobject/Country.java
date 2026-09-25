@@ -1,39 +1,19 @@
 package com.atlashub.shared.domain.valueobject;
 
-import com.atlashub.shared.domain.money.CurrencyCode;
-import lombok.Getter;
+import com.atlashub.shared.domain.exception.UnsupportedCountryException;
 
-@Getter
-public enum Country {
-    NIGERIA(CurrencyCode.NGN),
-    KENYA(CurrencyCode.KES),
-    USA(CurrencyCode.USD),
-    UNITED_KINGDOM(CurrencyCode.GBP);
+import java.util.Set;
 
-    private final CurrencyCode defaultCurrency;
-
-    Country(CurrencyCode defaultCurrency) {
-        this.defaultCurrency = defaultCurrency;
+public record Country(String code) {
+    private static final Set<String> SUPPORTED = Set.of("NG");
+    public Country {
+        if (!SUPPORTED.contains(code))
+            throw new UnsupportedCountryException("UnSupported Country");
     }
-
-    public static Country fromString(String countryStr) {
-        if (countryStr == null) return null;
-        if (countryStr.equalsIgnoreCase("NG") || countryStr.equalsIgnoreCase("Nigeria")) {
-            return Country.NIGERIA;
-        }
-        if (countryStr.equalsIgnoreCase("KE") || countryStr.equalsIgnoreCase("Kenya")) {
-            return Country.KENYA;
-        }
-        if (countryStr.equalsIgnoreCase("US") || countryStr.equalsIgnoreCase("USA")) {
-            return Country.USA;
-        }
-        if (countryStr.equalsIgnoreCase("UK") || countryStr.equalsIgnoreCase("United Kingdom")) {
-            return Country.UNITED_KINGDOM;
-        }
-        try {
-            return Country.valueOf(countryStr.toUpperCase());
-        } catch (IllegalArgumentException e) {
-            return null; // Or throw a domain exception depending on context
-        }
+    public CurrencyCode deriveCurrency() {
+        return switch (code) {
+            case "NG" -> CurrencyCode.NGN;
+            default -> throw new UnsupportedCountryException("UnSupported Country");
+        };
     }
 }

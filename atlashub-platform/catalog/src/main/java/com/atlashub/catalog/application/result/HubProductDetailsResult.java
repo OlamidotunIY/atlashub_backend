@@ -5,7 +5,7 @@ import com.atlashub.catalog.domain.model.ProductPricing;
 import com.atlashub.catalog.domain.valueobject.BillingCycle;
 import com.atlashub.catalog.domain.valueobject.ProductKey;
 import com.atlashub.catalog.domain.valueobject.ProductStatus;
-import com.atlashub.shared.domain.money.Money;
+import com.atlashub.shared.domain.valueobject.Money;
 
 import java.time.ZonedDateTime;
 import java.util.List;

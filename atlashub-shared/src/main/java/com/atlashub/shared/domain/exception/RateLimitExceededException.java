@@ -1,27 +1,20 @@
 package com.atlashub.shared.domain.exception;
 
-public class RateLimitExceededException extends AtlasHubException {
-    
+import lombok.Getter;
+
+@Getter
+public class RateLimitExceededException extends ApplicationException {
     private final long retryAfterSeconds;
     private final long limit;
-
-    public RateLimitExceededException(ErrorCode errorCode, String message) {
-        super(errorCode, message);
+    public RateLimitExceededException(String message) {
+        super(message);
         this.retryAfterSeconds = 0;
         this.limit = 0;
     }
-
-    public RateLimitExceededException(ErrorCode errorCode, String message, long retryAfterSeconds, long limit) {
-        super(errorCode, message);
+    public RateLimitExceededException(String message, long retryAfterSeconds, long limit) {
+        super(message);
         this.retryAfterSeconds = retryAfterSeconds;
         this.limit = limit;
     }
-    
-    public long getRetryAfterSeconds() {
-        return retryAfterSeconds;
-    }
-    
-    public long getLimit() {
-        return limit;
-    }
 }
+

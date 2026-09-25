@@ -1,0 +1,17 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: atlashub-ingress
+spec:
+  ingressClassName: traefik
+  rules:
+  - host: api.atlashub.name.ng
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: atlashub-app
+            port:
+              number: 8080

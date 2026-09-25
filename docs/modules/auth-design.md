@@ -1,135 +1,254 @@
-# Platform Auth Module Design (`atlashub-platform:auth`)
+# Auth Module Design (`atlashub-platform:auth`)
 
 ## Role & Purpose
 
-The Auth module is the **security gateway** of the platform. While the `identity` module knows *who* someone is, the Auth module decides *whether they can get in*. It owns every aspect of credential management and session lifecycle: password hashing and verification, email verification, account locking, login session tracking, JWT issuance, and token rotation.
+The `auth` module is the **authentication engine** of AtlasHub. It owns the complete lifecycle of how a user proves their identity to the platform: passwords, login sessions, JWT tokens, token refresh, logout, and password recovery. It also owns **machine-to-machine authentication** — the API key + HMAC signing mechanism that external systems use to call AtlasHub APIs on behalf of an organization.
 
-No other module owns passwords or session tokens. When any part of the system needs to verify a user's identity (e.g., "is this refresh token valid?"), it goes through `auth`. When identity needs to send a user their first password setup link, it publishes a `UserCreated` event and Auth reacts by creating the verification code.
-
-Auth does **not** enforce what a user can do — that is the job of RBAC (enforced in each module at the use case level). Auth only answers: *"Is this the right person?"*
+The `auth` module does **not** decide what a user is allowed to do (that is `iam`) or whether their organization is verified (that is `compliance`). It answers one question: *are you who you say you are?*
 
 ---
 
 ## 1. Features
 
-### Standard Authentication Flow
-When a user logs in with email and password:
-1. Auth looks up the `AuthAccount` by email.
-2. Validates the password hash.
-3. Checks account status (LOCKED, REQUIRE_PASSWORD_CHANGE).
-4. On success, creates a `Session` record, issues a signed JWT and a hashed refresh token.
-5. If the device fingerprint is new, publishes `AuthNewDeviceLoginEvent` to trigger a "new device login" security email.
-6. On failure, increments `failedLoginAttempts`. After 5 consecutive failures, the account is automatically locked until unlocked by the user via password reset or by an admin.
+### Human Authentication — JWT + Refresh Tokens
+AtlasHub uses a two-token model:
+- **Access Token** (JWT, 15-minute expiry): Stateless, signed with RS256. Carries user claims (`userId`, `activeOrganizationId`, `permissions`). Verified locally — no database hit on every request.
+- **Refresh Token** (opaque UUID, 30-day expiry): Stored in Redis with metadata (device fingerprint, IP, user agent). Used once to obtain a new access token + refresh token pair (rotation).
 
-### Invitation-Based Password Setup
-When a user is invited via the `identity` module's `InviteMemberUseCase`, they do not yet have a password. The `UserCreated` event (consumed by Auth) automatically creates a skeleton `AuthAccount` with `status = REQUIRE_PASSWORD_CHANGE` and issues a one-time `SETUP_TOKEN` via the `Verification` aggregate. The invited user clicks the email link, which calls `SetupPasswordUseCase` to set their initial password and activate their account.
+### Session Fingerprinting
+Every refresh token is bound to a **device fingerprint** (hash of user agent + device type). If a refresh token is presented from a different device fingerprint, it is rejected and an alert is sent. This detects token theft.
 
-### Password Reset
-A user who forgets their password triggers `ForgotPasswordUseCase`, which creates a `Verification` of type `PASSWORD_RESET`. An email is sent with a secure reset link. The user clicks the link and submits a new password via `ResetPasswordUseCase`, which validates and consumes the verification token before updating the hash.
+### Token Revocation (Logout)
+On logout, the refresh token is deleted from Redis. The current access token is added to a **Redis revocation list** (TTL = remaining access token lifetime). Every incoming request checks the revocation list. This gives AtlasHub the security of session-based auth with the scalability of stateless JWTs.
+
+### Password Management
+- Passwords are hashed with **bcrypt (cost factor 12)** before storage
+- Password reset via time-limited secure token (emailed via `notifications`)
+- Forced password change after admin reset
 
 ### Email Verification
-On first registration, a `Verification` of type `EMAIL_VERIFICATION` is issued. Until verified, certain features (e.g., inviting members, submitting compliance) are gated. `CompleteVerificationUseCase` validates the code, calls `AuthAccount.verifyEmail()`, and marks the account verified.
+New accounts require email verification before login is permitted. A verification token is sent via `notifications`. The `AuthAccount.emailVerified` flag gates access.
 
-### Session & Token Management
-Every successful login creates a `Session` record tracking the device info, IP address, and refresh token hash. Sessions expire and can be revoked individually (logout from one device) or in bulk (logout from all devices). The `RefreshTokenUseCase` rotates refresh tokens on each use, invalidating the old token immediately to prevent replay attacks.
-
----
-
-## 2. Domain Entities & Aggregates
-
-**`AuthAccount` (Aggregate Root)**
-- **Fields**:
-  - `id`: Long
-  - `userId`: Long (references `User` in Identity)
-  - `email`: String
-  - `passwordHash`: String (nullable — null until `SetupPasswordUseCase` is called for invited users)
-  - `isEmailVerified`: Boolean
-  - `failedLoginAttempts`: Integer
-  - `lastFailedLoginAt`: ZonedDateTime (nullable)
-  - `lockedUntil`: ZonedDateTime (nullable — for time-based unlock)
-  - `status`: `AuthStatus` (ACTIVE, LOCKED, REQUIRE_PASSWORD_CHANGE)
-- **Methods**:
-  - `setupPassword(String hash)`
-  - `changePassword(String currentHash, String newHash)`
-  - `incrementFailedAttempts()` — auto-locks after threshold (5 failures)
-  - `resetFailedAttempts()`
-  - `lock()`, `unlock()`, `verifyEmail()`, `requirePasswordChange()`
-
-**`Session` (Entity)**
-- **Fields**: `id`, `userId`, `refreshTokenHash`, `deviceInfo`, `ipAddress`, `expiresAt`, `isRevoked`, `createdAt`
-- **Methods**: `revoke()`
-
-**`Verification` (Aggregate Root)**
-Single-use codes for email verification, password resets, and 2FA.
-- **Fields**: `id`, `userId`, `code` (hashed), `type` (`VerificationType`: EMAIL_VERIFICATION, PASSWORD_RESET, SETUP_TOKEN, TWO_FACTOR), `expiresAt`, `isUsed`
-- **Methods**: `consume()` — marks `isUsed = true`, throws if already used or expired
+### Device Trust & Suspicious Login Detection
+Login from a new device/IP triggers a verification challenge (email OTP). Trusted devices are recorded and do not require re-verification for 90 days.
 
 ---
 
-## 3. Domain Events
+## 2. Machine-to-Machine Authentication (B2B API)
+
+Businesses that integrate with AtlasHub APIs (e.g., a merchant's e-commerce store initiating payments) use **API Key + HMAC-SHA256 request signing**.
+
+This is more secure than a plain API key because:
+1. The API key is never sent in plaintext in the request body
+2. The HMAC signature covers the full request (method + URL + body + timestamp) — a captured request cannot be replayed
+3. A nonce prevents the same request from being replayed even within the timestamp window
+
+### How It Works
+
+**Step 1 — API Key Issuance** (managed by `iam` module, but the key hash and signing logic live in `auth`):
+```
+publicKey:  atlas_pk_live_abc123...   (shown once, safe to expose — identifies the org)
+secretKey:  atlas_sk_live_xyz789...   (shown once only, used for signing — never transmitted)
+```
+
+**Step 2 — Building the Signature** (done by the merchant's server):
+```
+timestamp = current Unix timestamp in seconds (e.g., "1726543200")
+nonce     = random UUID (e.g., "f47ac10b-58cc-4372-a567-0e02b2c3d479")
+bodyHash  = SHA-256(request body as string)       # empty string for no body
+message   = METHOD + "\n" + PATH + "\n" + timestamp + "\n" + nonce + "\n" + bodyHash
+signature = HMAC-SHA256(message, secretKey)       # hex-encoded
+```
+
+**Step 3 — Request Headers**:
+```http
+Authorization: AtlasHmac publicKey=atlas_pk_live_abc123,timestamp=1726543200,nonce=f47ac10b-...,signature=a1b2c3d4...
+Content-Type: application/json
+```
+
+**Step 4 — Server-Side Verification** (`HmacSignatureFilter`):
+1. Extract `publicKey`, `timestamp`, `nonce`, `signature` from the Authorization header
+2. Look up the org's `secretKeyHash` from Redis cache (fallback: DB)
+3. Reject if `|current_time - timestamp| > 300` seconds (5-minute replay window)
+4. Check nonce in Redis: if already seen, reject as replay attack (store nonce with TTL = 10 minutes)
+5. Recompute the HMAC and compare using a constant-time comparison (`MessageDigest.isEqual`)
+6. If valid, inject `HmacAuthPrincipal(orgId, environment)` into the security context
+
+---
+
+## 3. Domain Entities & Aggregates
+
+### `AuthAccountJpa` (Aggregate Root)
+
+Created by reacting to `UserCreatedEvent`. One `AuthAccountJpa` per `User`.
+
+```
+AuthAccount
+├── id: Long
+├── userId: Long                        ← references accounts:User
+├── passwordHash: String                ← bcrypt(cost=12)
+├── emailVerified: Boolean              ← false until verification link clicked
+├── emailVerificationToken: String      ← nullable, short-lived
+├── emailVerificationExpiresAt: ZonedDateTime ← nullable
+├── passwordResetToken: String          ← nullable, hashed, short-lived
+├── passwordResetExpiresAt: ZonedDateTime ← nullable
+├── failedLoginAttempts: Integer        ← resets to 0 on success
+├── lockedUntil: ZonedDateTime          ← nullable, set after 5 failed attempts
+├── lastLoginAt: ZonedDateTime          ← nullable
+├── lastLoginIp: String                 ← nullable
+└── createdAt: ZonedDateTime
+```
+
+**Business Methods:**
+- `setPassword(String rawPassword)` — hashes and stores the password
+- `verifyEmail(String token)` — validates token, sets `emailVerified = true`, clears token
+- `initiatePasswordReset(String token, ZonedDateTime expiresAt)` — stores reset token
+- `resetPassword(String token, String newRawPassword)` — validates token, updates hash, clears token
+- `recordFailedLogin()` — increments counter; locks account at 5 consecutive failures
+- `recordSuccessfulLogin(String ip)` — resets counter, records IP, sets `lastLoginAt`
+- `unlock()` — admin action to unlock an account
+
+**Domain Rules:**
+- Account is locked after 5 consecutive failed login attempts for 30 minutes
+- A locked account cannot log in, even with the correct password
+- Email must be verified before login is permitted
+
+---
+
+### `Session` (Value Object stored in Redis)
+
+Not a JPA entity — stored entirely in Redis.
+
+```
+RefreshToken (Redis key: "refresh:{token}")
+├── token: String          ← opaque UUID, stored as SHA-256 hash in Redis
+├── userId: Long
+├── orgId: Long
+├── deviceFingerprint: String   ← SHA-256(userAgent + deviceType)
+├── issuedAt: ZonedDateTime
+├── expiresAt: ZonedDateTime    ← Redis TTL matches this
+└── lastUsedAt: ZonedDateTime
+```
+
+---
+
+### `TrustedDevice` (Entity)
+
+```
+TrustedDevice
+├── id: Long
+├── userId: Long
+├── deviceFingerprint: String
+├── deviceName: String           ← e.g., "Chrome on Windows"
+├── lastSeenIp: String
+├── trustedAt: ZonedDateTime
+└── expiresAt: ZonedDateTime     ← 90 days from trustedAt
+```
+
+---
+
+## 4. JWT Structure
+
+Access tokens are signed with RS256 (asymmetric). The private key is held only by the auth service. All other modules verify using the public key (available at `/.well-known/jwks.json`).
+
+**JWT Claims:**
+```json
+{
+  "sub": "12345",                         // userId
+  "org": "67890",                         // activeOrganizationId
+  "jti": "a1b2c3d4-...",                  // unique token ID (for revocation)
+  "permissions": ["pay:charges:create",   // RBAC permission claims from iam
+                   "commerce:orders:read"],
+  "env": "LIVE",                          // API environment (LIVE or TEST)
+  "iat": 1726543200,
+  "exp": 1726544100                       // 15 minutes
+}
+```
+
+---
+
+## 5. Domain Events
 
 | Event | Published When | Consumed By |
 |---|---|---|
-| `AuthVerificationCreatedEvent` | Verification code issued | `notifications` (send OTP/reset/setup email) |
-| `AuthNewDeviceLoginEvent` | Login from unrecognized device | `notifications` (send security alert email) |
-| `AuthAccountLockedEvent` | Account locked after failed attempts | `notifications` (alert user), `audit` (log security event) |
-| `AuthSessionCreatedEvent` | Successful login | `audit` (log) |
-| `AuthSessionRevokedEvent` | Session revoked (logout) | `audit` (log) |
-| `AuthPasswordChangedEvent` | Password updated | `notifications` (send confirmation email) |
+| `AuthAccountCreatedEvent` | `UserCreatedEvent` received from accounts | `notifications` (send verification email) |
+| `EmailVerifiedEvent` | User clicks verification link | `accounts` (log), `notifications` (welcome message) |
+| `PasswordResetInitiatedEvent` | User requests password reset | `notifications` (send reset email) |
+| `SuspiciousLoginDetectedEvent` | Login from new device/IP | `notifications` (email security alert), `audit` |
+| `AccountLockedEvent` | 5 failed login attempts | `notifications` (email user), `audit` |
 
 ---
 
-## 4. Exceptions & Errors
+## 6. Exceptions & Errors
 
 **`AuthErrorCode`**:
-- `INVALID_CREDENTIALS`
-- `ACCOUNT_LOCKED`, `ACCOUNT_NOT_FOUND`
-- `TOKEN_EXPIRED`, `INVALID_TOKEN`, `TOKEN_ALREADY_USED`
-- `VERIFICATION_CODE_INVALID`, `VERIFICATION_CODE_EXPIRED`
-- `PASSWORD_NOT_SET` (invited user attempts login before setting password)
-- `CURRENT_PASSWORD_INCORRECT`
-- `EMAIL_NOT_VERIFIED`
-- `SESSION_NOT_FOUND`, `SESSION_REVOKED`
+- `INVALID_CREDENTIALS`, `ACCOUNT_LOCKED`, `ACCOUNT_NOT_FOUND`
+- `EMAIL_NOT_VERIFIED`, `EMAIL_ALREADY_VERIFIED`
+- `INVALID_VERIFICATION_TOKEN`, `VERIFICATION_TOKEN_EXPIRED`
+- `INVALID_RESET_TOKEN`, `RESET_TOKEN_EXPIRED`
+- `INVALID_REFRESH_TOKEN`, `REFRESH_TOKEN_EXPIRED`, `REFRESH_TOKEN_DEVICE_MISMATCH`
+- `HMAC_SIGNATURE_INVALID`, `HMAC_TIMESTAMP_EXPIRED`, `HMAC_NONCE_REPLAYED`
+- `API_KEY_NOT_FOUND`, `API_KEY_REVOKED`
 
 ---
 
-## 5. Commands & Use Cases
+## 7. Commands & Use Cases
 
-- **`AuthenticateCommand(email, password, deviceInfo, ipAddress)`** → `AuthenticateUseCase`
-  Validates credentials, checks status, creates `Session`, issues JWT + refresh token.
-- **`SetupPasswordCommand(Long userId, String setupToken, String newPassword)`** → `SetupPasswordUseCase`
-  Used by invited members to set their initial password.
-- **`ChangePasswordCommand(Long userId, String currentPassword, String newPassword)`** → `ChangePasswordUseCase`
-- **`ForgotPasswordCommand(String email)`** → `ForgotPasswordUseCase`
-  Creates a `Verification` of type `PASSWORD_RESET`, publishes `AuthVerificationCreatedEvent`.
-- **`ResetPasswordCommand(Long userId, String resetToken, String newPassword)`** → `ResetPasswordUseCase`
-- **`ResendVerificationCommand(Long userId, VerificationType type)`** → `ResendVerificationUseCase`
-- **`CompleteVerificationCommand(Long userId, String code, VerificationType type)`** → `CompleteVerificationUseCase`
-- **`RevokeSessionCommand(Long sessionId, Long userId)`** → `RevokeSessionUseCase`
-- **`RevokeAllSessionsCommand(Long userId)`** → `RevokeAllSessionsUseCase`
-- **`RefreshTokenCommand(String refreshToken, String ipAddress)`** → `RefreshTokenUseCase`
-  Validates and rotates the refresh token, returns new JWT + refresh token pair.
+### Login & Sessions
+- `LoginCommand(email, password, deviceFingerprint, ipAddress, userAgent)` → `LoginUseCase`
+  - Flow: find `AuthAccountJpa` → check lock → verify password → if new device, challenge → issue access token + refresh token
+- `RefreshTokenCommand(refreshToken, deviceFingerprint)` → `RefreshTokenUseCase`
+  - Flow: look up token in Redis → verify device fingerprint → rotate (delete old, issue new pair)
+- `LogoutCommand(userId, refreshToken, accessTokenJti)` → `LogoutUseCase`
+  - Flow: delete refresh token from Redis → add access token JTI to revocation set (TTL = remaining lifetime)
+- `LogoutAllDevicesCommand(userId)` → `LogoutAllDevicesUseCase`
+  - Flow: delete all Redis keys matching `refresh:userId:*` → add all active access token JTIs to revocation set
 
----
+### Password Management
+- `InitiatePasswordResetCommand(email)` → `InitiatePasswordResetUseCase`
+- `ResetPasswordCommand(token, newPassword)` → `ResetPasswordUseCase`
+- `ChangePasswordCommand(userId, currentPassword, newPassword)` → `ChangePasswordUseCase`
 
-## 6. Queries
+### Email Verification
+- `SendVerificationEmailCommand(userId)` → `SendVerificationEmailUseCase`
+- `VerifyEmailCommand(token)` → `VerifyEmailUseCase`
 
-- `GetAuthenticatedUserQuery(String jwtToken)` → Decodes and validates JWT, returns principal context (userId, orgId, roles).
-- `ListActiveSessionsQuery(Long userId)` → `List<SessionResult>` (Active, non-expired, non-revoked sessions.)
-
----
-
-## 7. Listeners
-
-- **`UserCreatedListener`**: Listens to `UserCreated` (from Identity). Creates a skeleton `AuthAccount` with `status = REQUIRE_PASSWORD_CHANGE` and no `passwordHash`. Creates a `Verification` of type `SETUP_TOKEN` and publishes `AuthVerificationCreatedEvent` to trigger the welcome/setup email. Uses Inbox to guarantee exactly one `AuthAccount` per user.
+### Trusted Devices
+- `TrustDeviceCommand(userId, deviceFingerprint, deviceName)` → `TrustDeviceUseCase`
+- `RevokeTrustedDeviceCommand(userId, deviceId)` → `RevokeTrustedDeviceUseCase`
 
 ---
 
-## 8. Distributed Architecture & Transaction Guarantees
+## 8. Queries
 
-### Locking Strategy
-- **Optimistic Locking (`@Version`)**: Applied to `AuthAccount` when modifying password hashes, status, or `failedLoginAttempts` to prevent concurrent login races from corrupting the attempt counter.
+- `GetActiveSessions(userId)` → `List<SessionResult>` — all active devices/refresh tokens
+- `GetTrustedDevicesQuery(userId)` → `List<TrustedDeviceResult>`
 
-### Inbox & Outbox Patterns
-- **Outbox**: Publishes `AuthVerificationCreatedEvent` and `AuthNewDeviceLoginEvent` to trigger notification emails reliably.
-- **Inbox (`EventDeliveryTracker`)**: Idempotent processing of `UserCreated` events to guarantee exactly one `AuthAccount` is created per user. Without this, a retry storm could create duplicate auth accounts.
+---
+
+## 9. Listeners
+
+- **`UserCreatedListener`**: Listens to `UserCreatedEvent` from `accounts`. Creates `AuthAccountJpa` with a hashed temporary password (or no password if SSO-only). Triggers email verification.
+- **`InvitationAcceptedListener`**: Listens to `InvitationAcceptedEvent` from `iam`. If the invited user is new, sets their `emailVerified = true` (invitation acceptance implies email confirmation).
+
+---
+
+## 10. Security Design
+
+### Constant-Time Comparison
+All token comparisons (HMAC verification, password reset token matching) use `MessageDigest.isEqual()` to prevent timing side-channel attacks.
+
+### Redis Key Design
+```
+refresh:{sha256(token)}          → RefreshToken JSON (TTL: 30 days)
+revoke:{jti}                     → "1" (TTL: remaining access token lifetime)
+nonce:{nonce}                    → "1" (TTL: 10 minutes, HMAC replay prevention)
+lock:{userId}                    → failedAttemptCount (TTL: 30 minutes)
+device:trust:{userId}:{fp}       → TrustedDevice JSON (TTL: 90 days)
+```
+
+### Token Rotation Security
+Refresh token rotation means every use of a refresh token creates a new token and invalidates the old one. If an attacker steals a refresh token and uses it AFTER the legitimate user, the legitimate user's next refresh attempt will fail (old token is gone). This triggers `SuspiciousLoginDetectedEvent` and forces re-authentication.
+
+### HMAC Signing
+See [setup/api-key-hmac-auth.md](../setup/api-key-hmac-auth.md) for the complete implementation guide.

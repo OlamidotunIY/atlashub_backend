@@ -1,7 +1,7 @@
 package com.atlashub.shared.application.usecase;
 
-import com.atlashub.shared.domain.AggregateRoot;
-import com.atlashub.shared.application.port.out.DomainEventPublisher;
+import com.atlashub.shared.domain.entities.AggregateRoot;
+import com.atlashub.shared.application.port.DomainEventPublisher;
 import com.atlashub.shared.domain.event.EnvelopedDomainEvent;
 
 /**

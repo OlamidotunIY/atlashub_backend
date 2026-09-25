@@ -5,11 +5,13 @@ import com.atlashub.catalog.application.result.HubProductResult;
 import com.atlashub.catalog.domain.model.HubProduct;
 import com.atlashub.catalog.domain.repository.HubProductRepository;
 import com.atlashub.shared.application.usecase.BaseUseCase;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Service
 public class ListHubProductUseCase extends BaseUseCase<ListHubProductsQuery, List<HubProductResult>> {
 
     private final HubProductRepository hubProductRepository;

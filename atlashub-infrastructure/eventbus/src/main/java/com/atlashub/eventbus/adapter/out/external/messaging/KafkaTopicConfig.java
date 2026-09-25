@@ -44,4 +44,53 @@ public class KafkaTopicConfig {
                 .config("retention.ms", RETENTION_MS)
                 .build();
     }
+
+    @Bean
+    public NewTopic payEventsTopic() {
+        return TopicBuilder.name("pay-events")
+                .config("retention.ms", RETENTION_MS)
+                .build();
+    }
+
+    @Bean
+    public NewTopic organizationMemberEventsTopic() {
+        return TopicBuilder.name("organization-member-events")
+                .config("retention.ms", RETENTION_MS)
+                .build();
+    }
+
+    @Bean
+    public NewTopic invitationEventsTopic() {
+        return TopicBuilder.name("invitation-events")
+                .config("retention.ms", RETENTION_MS)
+                .build();
+    }
+
+    @Bean
+    public NewTopic catalogEventsTopic() {
+        return TopicBuilder.name("catalog-events")
+                .config("retention.ms", RETENTION_MS)
+                .build();
+    }
+
+    @Bean
+    public NewTopic userEventsTopic() {
+        return TopicBuilder.name("user-events")
+                .config("retention.ms", RETENTION_MS)
+                .build();
+    }
+
+    @Bean
+    public NewTopic billingEventsTopic() {
+        return TopicBuilder.name("billing-events")
+                .config("retention.ms", RETENTION_MS)
+                .build();
+    }
+
+    @Bean
+    public NewTopic organizationEventsTopic() {
+        return TopicBuilder.name("organization-events")
+                .config("retention.ms", RETENTION_MS)
+                .build();
+    }
 }

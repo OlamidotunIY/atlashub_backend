@@ -1,5 +1,7 @@
 package com.atlashub.ratelimiter.web;
 
+import com.atlashub.shared.domain.exception.RateLimitExceededException;
+
 import com.atlashub.ratelimiter.core.RateLimitRuleProvider;
 import com.atlashub.ratelimiter.core.EvaluateRateLimitUseCase;
 import com.atlashub.ratelimiter.core.RateLimitRule;
@@ -44,3 +46,4 @@ public class GlobalRateLimitInterceptor implements HandlerInterceptor {
         return xfHeader.split(",")[0];
     }
 }
+

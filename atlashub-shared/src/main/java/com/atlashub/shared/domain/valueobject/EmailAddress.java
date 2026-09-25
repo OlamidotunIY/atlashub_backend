@@ -1,6 +1,7 @@
 package com.atlashub.shared.domain.valueobject;
 
-import com.atlashub.shared.domain.exception.SharedErrorCode;
+import com.atlashub.shared.domain.exception.InvalidEmailFormatException;
+
 import com.atlashub.shared.domain.exception.ValidationException;
 
 import java.util.regex.Pattern;
@@ -11,13 +12,17 @@ public record EmailAddress(String value) {
 
     public EmailAddress {
         if (value == null || value.isBlank()) {
-            throw new ValidationException(SharedErrorCode.INVALID_EMAIL_FORMAT, "Email address cannot be empty");
+            throw new InvalidEmailFormatException("Email address cannot be empty");
         }
         if (value.length() > 254) {
-            throw new ValidationException(SharedErrorCode.INVALID_EMAIL_FORMAT, "Email address cannot exceed 254 characters");
+            throw new InvalidEmailFormatException("Email address cannot exceed 254 characters");
         }
         if (!EMAIL_PATTERN.matcher(value).matches()) {
-            throw new ValidationException(SharedErrorCode.INVALID_EMAIL_FORMAT, "Invalid email address format");
+            throw new InvalidEmailFormatException("Invalid email address format");
         }
     }
 }
+
+
+
+

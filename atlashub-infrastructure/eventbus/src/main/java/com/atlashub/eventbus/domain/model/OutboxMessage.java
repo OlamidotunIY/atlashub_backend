@@ -1,7 +1,7 @@
 package com.atlashub.eventbus.domain.model;
 
 import com.atlashub.eventbus.domain.valueobject.OutboxStatus;
-import com.atlashub.shared.domain.AggregateRoot;
+import com.atlashub.shared.domain.entities.AggregateRoot;
 import java.time.ZonedDateTime;
 
 public class OutboxMessage extends AggregateRoot<String> {
