@@ -5,7 +5,7 @@ metadata:
 spec:
   ingressClassName: traefik
   rules:
-  - host: atlashub.name.ng
+  - host: api.atlashub.name.ng
     http:
       paths:
       - path: /
