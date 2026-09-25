@@ -18,6 +18,17 @@ This skill supports processing a list or table of multiple entities simultaneous
 1. You MUST process every entity iteratively. Do not skip any.
 2. **Execution Strategy:** Because Domain Entities contain complex business logic, processing many sequentially in one turn can overwhelm context limits. You are strongly encouraged to use `invoke_subagent` to spawn a concurrent team of subagents to process or audit them simultaneously, isolating the context for each entity.
 
+## Pre-Requisites (Events Discovery & Errors)
+Before generating or updating an entity, analyze its Domain Rules and Business Methods.
+
+**Handling Domain Events:**
+1. **Check Existing:** Check the module's `domain/events` folder. If events already exist that perfectly fit the entity and its business methods, you will simply register them later.
+2. **Check Docs:** If events are missing, do not match the entity, or do not cover all business methods, read the module's markdown documentation (specifically the "4. Domain Events" section/table). Use the "Published When" and "Consumed By" details from that table to trigger the `create-domain-event` skill to generate the missing events.
+3. **Proactive Creation:** If you personally identify a valid business use case that *should* publish an event, but it is missing from the docs, you are empowered to proactively create that event using the `create-domain-event` skill.
+
+**Handling Domain Errors:**
+- If a method implies throwing a custom domain error (e.g., "deactivating the last owner throws LastOwnerDeactivationException"), you MUST first use the **`create-domain-error`** skill to generate it.
+
 ## Generation Mode (Creating New)
 **Step 1: Scaffold Skeleton**
 Run the PowerShell script to safely generate the baseline file structure and prevent accidental overwrites:
