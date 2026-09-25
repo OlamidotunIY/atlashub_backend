@@ -12,21 +12,29 @@ Application Queries live in `application/queries/<QueryName>/` (or `application/
 Before writing the handler, analyze the required dependencies:
 1. **Cross-Module Queries:** If the query needs data from an entity belonging to a *different* module, it MUST NOT use that module's repository. It must use a Query Port from the `shared` module. Trigger the `create-shared-query-port` skill if it doesn't exist.
 
-## Rule 1: Scaffold Skeleton or Update Existing
-Check if the query package (`application/queries/<QueryName>` or `query`) already exists.
-- **If it exists:** Do NOT run the scaffold script. Do NOT recreate the package. Proceed directly to updating the existing files.
-- **If it does not exist:** Use the provided PowerShell script to safely generate the package and files.
+## Rule 1: Scaffold Base Structure
+You MUST use the provided PowerShell script to safely generate the baseline package structure and boilerplate files.
 ```powershell
-.agents\skills\create-application-query\scripts\scaffold-query.ps1 -Module "<module_name>" -QueryName "<QueryName>" -ResponseType "<QueryNameResponse | List<UserDto>>"
+.agents\skills\create-application-query\scripts\scaffold-query.ps1 -Module "<module_name>" -QueryName "<QueryName>" -ResponseType "<QueryNameResponse | PageResult<UserDto>>"
 ```
 
-## Rule 2: Inject Handler Logic
-Use `replace_file_content` to inject the dependencies and read logic into the generated `<QueryName>Handler.java` file.
+**CRITICAL RETURN TYPE RULE (PAGINATION):**
+- You must dynamically determine if a list query should return a paginated list or a raw list based on its parameters.
+- **Paginated:** If the query request explicitly includes `page` and `size` parameters, you MUST return `PageResult<T>` from `com.atlashub.shared.domain.valueobject.PageResult`.
+- **Raw List:** If the query request does NOT include `page` and `size` parameters, you MUST return a standard `List<T>`. Do not return `PageResult` and do not hardcode fake pagination parameters.
+
+## Rule 2: Full Logic Implementation Requirement
+After the scaffold script creates the baseline files, you MUST use `replace_file_content` to replace the `// TODO` comments and `return null;` placeholders in `<QueryName>Handler.java` with the **FULL, COMPLETE orchestration logic**. 
+- You MUST inject the actual Repositories or Ports.
+- You MUST fetch the necessary data.
+- You MUST manually map the Entities to the Result records and return them.
+- **NEVER** leave the generated `// TODO` comments in your final code.
+- **NEVER** leave `return null;` as a placeholder.
 
 **Strict Architecture Rules:**
-- **No Inline Imports:** You MUST NOT use wildcard imports (`import java.util.*`). You MUST NOT use inline fully qualified class names inside the code (e.g., `java.util.List<String>`). Always import explicitly at the top of the file.
-- **No Business Logic:** The handler MUST NOT contain business logic. 
-- **Logging:** Ensure manual logging using `org.slf4j.LoggerFactory` is retained (do not use `@Slf4j`).
+- **No Inline Imports:** You MUST NOT use wildcard imports (`import java.util.*`). You MUST NOT use inline fully qualified class names. Always import explicitly at the top of the file.
+- **No Business Logic:** The handler MUST NOT contain domain business logic. It should only fetch data and map it to DTOs/Results.
+- **Logging:** Ensure manual logging using `org.slf4j.LoggerFactory` is retained.
 - **Component:** The handler must be annotated with Spring's `@Component`.
 
 ## Batch Processing (Multiple Queries)

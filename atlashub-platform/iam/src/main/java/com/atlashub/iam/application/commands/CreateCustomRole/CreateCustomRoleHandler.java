@@ -30,8 +30,8 @@ public class CreateCustomRoleHandler extends Command<CreateCustomRoleCommand, Vo
                 command.name(), 
                 command.description(), 
                 command.permissionIds(), 
-                false, 
-                null // createdBy not in command, defaulting to null for now (or a system user)
+                false,
+                command.createdBy()
         );
         
         roleRepository.save(newRole);

@@ -89,6 +89,26 @@ public class CustomRole extends AggregateRoot<Long> {
         this.touch();
     }
 
+    public void updateDescription(String newDescription) {
+        if (this.isBuiltIn) {
+            throw new RoleModificationException("Cannot modify built-in OWNER role");
+        }
+        this.description = newDescription;
+        this.touch();
+    }
+
+    public void updatePermissions(Set<Long> newPermissions) {
+        if (this.isBuiltIn) {
+            throw new RoleModificationException("Cannot modify built-in OWNER role");
+        }
+        if (newPermissions == null || newPermissions.isEmpty()) {
+            throw new InvalidRolePermissionCountException("Minimum 1 permission per custom role");
+        }
+        this.permissions = new HashSet<>(newPermissions);
+        this.touch();
+        this.publishPermissionsChangedEvent();
+    }
+
     public void delete(boolean hasActiveMembers) {
         if (this.isBuiltIn) {
             throw new RoleModificationException("Cannot delete built-in OWNER role");

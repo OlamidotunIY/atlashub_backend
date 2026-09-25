@@ -6,5 +6,6 @@ public record CreateCustomRoleCommand(
     Long orgId,
     String name,
     String description,
-    Set<Long> permissionIds
+    Set<Long> permissionIds,
+    Long createdBy
 ) {}
