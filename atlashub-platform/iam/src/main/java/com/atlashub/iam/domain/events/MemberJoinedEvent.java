@@ -1,6 +1,6 @@
 package com.atlashub.iam.domain.events;
 
-import com.atlashub.shared.domain.events.DomainEvent;
+import com.atlashub.shared.domain.event.DomainEvent;
 import java.time.ZonedDateTime;
 
 public record MemberJoinedEvent(

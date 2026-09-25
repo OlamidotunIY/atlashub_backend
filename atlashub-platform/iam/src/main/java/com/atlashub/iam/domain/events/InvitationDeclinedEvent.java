@@ -3,17 +3,17 @@ package com.atlashub.iam.domain.events;
 import com.atlashub.shared.domain.event.DomainEvent;
 import java.time.ZonedDateTime;
 
-public record MemberDeactivatedEvent(
+public record InvitationDeclinedEvent(
         String eventId,
         Long aggregateId,
         ZonedDateTime occurredAt,
         String correlationId,
         Payload payload
-) implements DomainEvent<MemberDeactivatedEvent.Payload> {
+) implements DomainEvent<InvitationDeclinedEvent.Payload> {
 
     public record Payload(
         Long organizationId,
-        Long userId
+        String invitedEmail
     ) {
     }
 }
