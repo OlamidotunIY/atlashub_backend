@@ -44,6 +44,12 @@ atlashub:
 
 firebase:
   credentials:
-    path: ${FIREBASE_CREDENTIALS_PATH:/secrets/firebase-service-account.json}
+    path: ${FIREBASE_CREDENTIALS_PATH}
   storage:
-    bucket: ${FIREBASE_STORAGE_BUCKET:your-project-id.appspot.com}
+    bucket: ${FIREBASE_STORAGE_BUCKET}
+
+logging:
+  level:
+    root: INFO
+    org.apache.kafka: ERROR
+    org.springframework.kafka: ERROR
