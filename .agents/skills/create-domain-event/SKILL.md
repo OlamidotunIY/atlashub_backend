@@ -11,10 +11,17 @@ You are responsible for generating Domain Event records in the Atlashub backend 
 To eliminate human/AI error and ensure perfectly structured, compliant Java files, you MUST use the provided PowerShell helper script instead of writing the code manually.
 
 ## Inputs Required from User
-If the user does not provide all of these, ask for the missing ones:
-1. **Event Name** (e.g., `MemberJoinedEvent`)
+If the user does not provide these, ask for the missing information:
+1. **Event Name(s)** (e.g., `MemberJoinedEvent`)
 2. **Trigger / Consumers** (e.g., "Invitation accepted, used by notifications and hr")
 3. **Module Name** (e.g., `iam`, `accounts`)
+
+## Batch Processing (Multiple Events)
+If the user pastes a list or table of multiple events at once:
+1. Deduce the target module from context, or ask the user if it's missing.
+2. You MUST process every event iteratively. Do not skip any.
+3. For **every single event** in the list, independently perform **Step 1 (Deep Domain Analysis)** to deduce its unique payload.
+4. You can execute the PowerShell script multiple times in a single turn to generate all the files at once.
 
 ## Step 1: Deep Domain Analysis (Payload Discovery)
 Before writing any code, you MUST figure out the optimal payload by analyzing the domain:
