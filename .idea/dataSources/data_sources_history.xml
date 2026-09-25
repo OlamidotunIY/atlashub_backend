@@ -12,7 +12,7 @@
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
   </DataSourceFromHistory>
-  <DataSourceFromHistory isRemovedFromProject="false">
+  <DataSourceFromHistory isRemovedFromProject="true">
     <data-source source="LOCAL" name="atlashub@localhost" uuid="41589cab-ab15-43df-a6a7-63dbd77e6080">
       <database-info product="MySQL" version="8.0.46" jdbc-version="4.2" driver-name="MySQL Connector/J" driver-version="mysql-connector-j-9.7.0 (Revision: 0aade1f13bcc98faf7dda5c02e782481eb291f62)" dbms="MYSQL" exact-version="8.0.46" exact-driver-version="9.7">
         <extra-name-characters>$</extra-name-characters>
@@ -40,7 +40,7 @@
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
   </DataSourceFromHistory>
-  <DataSourceFromHistory isRemovedFromProject="false">
+  <DataSourceFromHistory isRemovedFromProject="true">
     <data-source source="LOCAL" name="atlashub-redis@localhost" uuid="409781a2-9992-4e0b-8111-c7e77d94aded">
       <database-info product="Redis Standalone" version="7.2.16" jdbc-version="4.2" driver-name="Redis JDBC Driver" driver-version="1.5" dbms="REDIS" exact-version="7.2.16" exact-driver-version="1.5" />
       <case-sensitivity plain-identifiers="mixed" quoted-identifiers="mixed" />
@@ -64,7 +64,7 @@
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
   </DataSourceFromHistory>
-  <DataSourceFromHistory isRemovedFromProject="false">
+  <DataSourceFromHistory isRemovedFromProject="true">
     <data-source source="LOCAL" name="atlashub@localhost" uuid="e716987c-d470-4e7f-959f-34b19b2b02ad">
       <database-info product="MySQL" version="8.0.46" jdbc-version="4.2" driver-name="MySQL Connector/J" driver-version="mysql-connector-j-9.7.0 (Revision: 0aade1f13bcc98faf7dda5c02e782481eb291f62)" dbms="MYSQL" exact-version="8.0.46" exact-driver-version="9.7">
         <extra-name-characters>$</extra-name-characters>
