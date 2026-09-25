@@ -21,7 +21,12 @@ Before generating the JPA entity, you must figure out:
 3. **Locking Strategy**: Check the `docs/` folder (specifically the "Distributed Architecture" section for the module). Determine if the entity uses Optimistic Locking. Only add `@Version` if optimistic locking is specified!
 
 ## Step 2: Write the JPA Entity
-Use `write_to_file` to create the JPA Entity at `atlashub-platform/<module>/src/main/java/com/atlashub/<module>/infrastructure/persistence/entities/<EntityName>Jpa.java`.
+You MUST use the provided PowerShell script to safely generate the baseline file structure and boilerplate files:
+```powershell
+.\.agents\skills\create-jpa-entity\scripts\scaffold-jpa-entity.ps1 -Module "<module_name>" -EntityName "<EntityName>"
+```
+
+After scaffolding, use `replace_file_content` to implement the JPA Entity class at `atlashub-platform/<module>/src/main/java/com/atlashub/<module>/infrastructure/persistence/entities/<EntityName>Jpa.java`.
 
 ### Naming & Structure Rules:
 - The class name MUST be the domain entity name with `Jpa` appended (e.g. `AuthAccountJpa`).
