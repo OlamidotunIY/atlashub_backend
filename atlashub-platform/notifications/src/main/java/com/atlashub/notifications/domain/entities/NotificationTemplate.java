@@ -35,10 +35,10 @@ public class NotificationTemplate extends AggregateRoot<Long> {
         this.updatedAt = updatedAt;
     }
 
-    private NotificationTemplate(String code, NotificationCategory category,
+    private NotificationTemplate(Long id, String code, NotificationCategory category,
                                  NotificationChannel channel, String subject,
                                  String bodyTemplate) {
-        this.id = null;
+        this.id = id;
         this.code = code;
         this.category = category;
         this.channel = channel;
@@ -49,10 +49,10 @@ public class NotificationTemplate extends AggregateRoot<Long> {
         this.updatedAt = ZonedDateTime.now();
     }
 
-    public static NotificationTemplate create(String code, NotificationCategory category,
+    public static NotificationTemplate create(Long id, String code, NotificationCategory category,
                                               NotificationChannel channel, String subject,
                                               String bodyTemplate) {
-        return new NotificationTemplate(code, category, channel, subject, bodyTemplate);
+        return new NotificationTemplate(id, code, category, channel, subject, bodyTemplate);
     }
 
     public void updateTemplate(String subject, String bodyTemplate) {

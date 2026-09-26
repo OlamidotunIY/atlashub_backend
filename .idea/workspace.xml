@@ -9,14 +9,8 @@
   <component name="ChangeListManager">
     <list default="true" id="174f3fac-956e-4ce4-b2e2-bac8d3e75c4d" name="Changes" comment="fix: file system">
       <changelist_data name="Iyanda Olamidotun" email="olamidotun225@gmail.com" automatic="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources/data_sources_history.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources/data_sources_history.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/gradle.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/gradle.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/iam/src/main/java/com/atlashub/iam/application/queries/ListCustomRoles/CustomRoleResult.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/iam/src/main/java/com/atlashub/iam/application/queries/ListCustomRoles/CustomRoleResult.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/iam/src/main/java/com/atlashub/iam/application/queries/ListCustomRoles/ListCustomRolesHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/iam/src/main/java/com/atlashub/iam/application/queries/ListCustomRoles/ListCustomRolesHandler.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/iam/src/main/java/com/atlashub/iam/application/queries/ListPermissions/PermissionResult.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/iam/src/main/java/com/atlashub/iam/application/queries/ListPermissions/PermissionResult.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/iam/src/main/java/com/atlashub/iam/domain/entities/CustomRole.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/iam/src/main/java/com/atlashub/iam/domain/entities/CustomRole.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/iam/src/main/java/com/atlashub/iam/domain/entities/Permission.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/iam/src/main/java/com/atlashub/iam/domain/entities/Permission.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/settings.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/settings.gradle" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -132,61 +126,61 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.0" />
-      <entry key="MS500" value="1.0" />
-      <entry key="S2" value="1.0" />
-      <entry key="S5" value="1.0" />
-      <entry key="S10" value="1.0" />
-      <entry key="S30" value="1.0" />
-      <entry key="S60" value="1.0" />
-      <entry key="M2" value="1.0" />
-      <entry key="M5" value="1.0" />
-      <entry key="M10" value="1.0000000032948937" />
-      <entry key="M15" value="1.0000034814817682" />
-      <entry key="M30" value="1.0073473587691222" />
-      <entry key="H1" value="1.915435309538177" />
-      <entry key="H2" value="14.626844515789005" />
-      <entry key="H4" value="61.64150330256207" />
-      <entry key="D1" value="613.6013352539121" />
-      <entry key="W1" value="1686.268675807223" />
+      <entry key="MS100" value="1.3368083942164226" />
+      <entry key="MS500" value="1.8044083709419159" />
+      <entry key="S2" value="1.9470417940418547" />
+      <entry key="S5" value="1.9784703232069214" />
+      <entry key="S10" value="1.9891765884850496" />
+      <entry key="S30" value="1.9963791010770988" />
+      <entry key="S60" value="1.9981879087011116" />
+      <entry key="M2" value="1.99909354351888" />
+      <entry key="M5" value="1.999637318760254" />
+      <entry key="M10" value="1.999818646229231" />
+      <entry key="M15" value="1.9998825726960026" />
+      <entry key="M30" value="2.0072864585672505" />
+      <entry key="H1" value="2.915377408875057" />
+      <entry key="H2" value="15.626623440612816" />
+      <entry key="H4" value="62.6410374653242" />
+      <entry key="D1" value="614.6005624000287" />
+      <entry key="W1" value="1687.268372390115" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
       <entry key="MS500" value="0.0" />
       <entry key="S2" value="0.0" />
-      <entry key="S5" value="1.1999774387646094E-251" />
-      <entry key="S10" value="4.4969834729379676E-126" />
-      <entry key="S30" value="2.5615666373772585E-42" />
-      <entry key="S60" value="2.2567645461149588E-21" />
-      <entry key="M2" value="6.713300167128514E-11" />
-      <entry key="M5" value="1.2921562322142498E-4" />
-      <entry key="M10" value="0.016075910407226165" />
-      <entry key="M15" value="0.08033961927244843" />
-      <entry key="M30" value="0.4190028157563106" />
-      <entry key="H1" value="1.9143613160448993" />
-      <entry key="H2" value="14.559134473333323" />
-      <entry key="H4" value="61.814030333914346" />
-      <entry key="D1" value="860.485660850204" />
-      <entry key="W1" value="2157.8088697370995" />
+      <entry key="S5" value="1.1741423123490211E-251" />
+      <entry key="S10" value="4.4483107702344295E-126" />
+      <entry key="S30" value="2.5522914634990395E-42" />
+      <entry key="S60" value="2.252675082717304E-21" />
+      <entry key="M2" value="6.707214852682314E-11" />
+      <entry key="M5" value="1.291687591390005E-4" />
+      <entry key="M10" value="0.016072994927296455" />
+      <entry key="M15" value="0.0803299055404515" />
+      <entry key="M30" value="0.41897748451794264" />
+      <entry key="H1" value="1.9143034478469503" />
+      <entry key="H2" value="14.558914421550083" />
+      <entry key="H4" value="61.81356319285501" />
+      <entry key="D1" value="860.4845770362577" />
+      <entry key="W1" value="2157.808481473867" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="3.537616386826327E-17" />
-      <entry key="MS500" value="5.125569744253259E-4" />
-      <entry key="S2" value="0.15046501641551097" />
-      <entry key="S5" value="0.4687855482285549" />
-      <entry key="S10" value="0.6846791571448301" />
-      <entry key="S30" value="0.8813783312079954" />
-      <entry key="S60" value="0.9388175175229717" />
-      <entry key="M2" value="0.9689259608715235" />
-      <entry key="M5" value="0.9875808737755606" />
-      <entry key="M10" value="1.0097268039477176" />
-      <entry key="M15" value="1.0759579550555078" />
-      <entry key="M30" value="1.4237699712777785" />
-      <entry key="H1" value="3.8276392268208608" />
-      <entry key="H2" value="29.18095649298832" />
-      <entry key="H4" value="123.44563998649124" />
-      <entry key="D1" value="1474.0637101918944" />
-      <entry key="W1" value="3844.0687361612663" />
+      <entry key="MS100" value="0.33680839421642256" />
+      <entry key="MS500" value="0.8048206760627281" />
+      <entry key="S2" value="1.0895384531285375" />
+      <entry key="S5" value="1.4371630700968496" />
+      <entry key="S10" value="1.666445181356392" />
+      <entry key="S30" value="1.8745660504349548" />
+      <entry key="S60" value="1.9353042031693362" />
+      <entry key="M2" value="1.9671412151734458" />
+      <entry key="M5" value="1.9868600154801648" />
+      <entry key="M10" value="2.0093623257929707" />
+      <entry key="M15" value="2.0757069543737154" />
+      <entry key="M30" value="2.4236234398164545" />
+      <entry key="H1" value="4.827493294712819" />
+      <entry key="H2" value="30.1805003275955" />
+      <entry key="H4" value="124.44469952576122" />
+      <entry key="D1" value="1475.0618522938566" />
+      <entry key="W1" value="3845.0680443025767" />
     </decayedShown>
   </component>
   <component name="ProblemsViewState">

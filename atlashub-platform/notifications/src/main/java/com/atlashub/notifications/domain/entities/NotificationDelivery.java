@@ -63,6 +63,7 @@ public class NotificationDelivery extends AggregateRoot<Long> {
     }
 
     public static NotificationDelivery create(
+            Long id,
             String templateCode,
             Integer templateVersion,
             RecipientType recipientType,
@@ -73,7 +74,7 @@ public class NotificationDelivery extends AggregateRoot<Long> {
             String renderedSubject,
             String renderedBody) {
         return new NotificationDelivery(
-                null,
+                id,
                 templateCode,
                 templateVersion,
                 recipientType,

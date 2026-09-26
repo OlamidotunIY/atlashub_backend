@@ -19,6 +19,12 @@ This skill supports processing a list or table of multiple entities simultaneous
 2. **Execution Strategy:** Because Domain Entities contain complex business logic, processing many sequentially in one turn can overwhelm context limits. You are strongly encouraged to use `invoke_subagent` to spawn a concurrent team of subagents to process or audit them simultaneously, isolating the context for each entity.
 
 
+## Module-Wide Generation
+If the user asks you to "create entities for all entities in `<module>`", or pastes a schema and says "create these entities in `<module>`", you MUST:
+1. Parse the requested entities and their dependencies.
+2. Use `invoke_subagent` to spawn a concurrent team of subagents to process EVERY requested entity simultaneously.
+3. You MUST NEVER attempt to create multiple entities in a single turn. Always use subagents for concurrency.
+
 ## Subagent Separation of Concerns (Vertical Slicing)
 When using invoke_subagent to process multiple items, you MUST adhere to strict Separation of Concerns (SoC) via **Vertical Slicing**:
 1. **One Subagent per Item**: Assign each subagent exactly ONE item (e.g., one entity, one command, one mapper).
@@ -46,7 +52,7 @@ Before generating or updating an entity, analyze its Domain Rules and Business M
 **Step 1: Scaffold Skeleton**
 Run the PowerShell script to safely generate the baseline file structure and prevent accidental overwrites:
 ```powershell
-.agents\skills\create-domain-entity\scripts\scaffold-entity.ps1 -Module "<module>" -EntityName "<EntityName>" -IsAggregateRoot $<true/false>
+.\.agents\skills\create-domain-entity\scripts\scaffold-entity.ps1 -Module "<module>" -EntityName "<EntityName>" -IsAggregateRoot $<true/false>
 ```
 
 **Step 2: Inject Business Logic**
@@ -54,7 +60,8 @@ Once the skeleton is scaffolded, use `replace_file_content` to inject the fields
 
 1. **Final Fields:** ID fields (`id`, `organizationId`) MUST be `final Long`.
 2. **Static Factory Method (`create`):**
-   - Accept ONLY fields the system cannot deduce.
+   - **CRITICAL ID RULE:** ID generation happens in the Application Layer! You MUST ALWAYS accept `Long id` as the FIRST parameter in your static `create(...)` method and assign it to `this.id`. NEVER hardcode `id` to `null` or omit it.
+   - Accept ONLY fields the system cannot deduce (including the required `id`).
    - Do NOT accept `createdAt`, `updatedAt`, or default statuses. Set them internally.
 3. **Mutator Methods & `touch()`:**
    - Any method that updates state MUST call `this.touch();`.
