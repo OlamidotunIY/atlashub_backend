@@ -38,6 +38,7 @@ After scaffolding, use `replace_file_content` to implement the interface.
    - If the Domain Entity uses nested records, collections of custom Value Objects, or enums, MapStruct cannot automatically map them to the flat database columns without help.
    - The `uses = {ValueObjectMapper.class}` property hooks it into the global/local `ValueObjectMapper` to handle these.
    - You MUST ensure `ValueObjectMapper.class` is properly imported.
+   - **CRITICAL VO RULE:** If the entity uses a Value Object that is a **`record`** (this rule applies *only* to records, not enums), you MUST check if the `ValueObjectMapper` already implements mapping methods for it. If it is not yet implemented, you MUST update the `ValueObjectMapper` to include the appropriate conversion methods (e.g., mapping the record to/from its database representation, such as a JSON String) before proceeding.
 5. **No Inline Imports**: All imports must be explicitly declared at the top.
 
 ## CRITICAL: Self-Correction & Verification Before Gradle
