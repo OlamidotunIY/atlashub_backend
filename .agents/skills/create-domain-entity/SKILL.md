@@ -58,7 +58,9 @@ Run the PowerShell script to safely generate the baseline file structure and pre
 **Step 2: Inject Business Logic**
 Once the skeleton is scaffolded, use `replace_file_content` to inject the fields, constructor, `create` method, and business mutators into the file, adhering to these rules:
 
-1. **Final Fields:** ID fields (`id`, `organizationId`) MUST be `final Long`.
+1. **Final Fields:** 
+   - ID fields (`id`, `organizationId`) MUST be `final Long`.
+   - **Immutability Rule:** Any field that is not updated or modified by the entity's business mutator methods MUST be declared as `final`. (e.g., if a `code` or `userId` is set on creation and never changes, it must be `final`).
 2. **Static Factory Method (`create`):**
    - **CRITICAL ID RULE:** ID generation happens in the Application Layer! You MUST ALWAYS accept `Long id` as the FIRST parameter in your static `create(...)` method and assign it to `this.id`. NEVER hardcode `id` to `null` or omit it.
    - Accept ONLY fields the system cannot deduce (including the required `id`).
