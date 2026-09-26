@@ -9,8 +9,9 @@ public record CustomRoleResult(
     String name,
     String description,
     Set<Long> permissions,
-    boolean isBuiltIn,
+    boolean builtIn,
     Long createdBy,
     ZonedDateTime createdAt,
     ZonedDateTime updatedAt
 ) {}
+

@@ -21,37 +21,37 @@ public class CustomRole extends AggregateRoot<Long> {
     private String name;
     private String description;
     private Set<Long> permissions;
-    private final boolean isBuiltIn;
+    private final boolean builtIn;
     private final Long createdBy;
     private final ZonedDateTime createdAt;
     private ZonedDateTime updatedAt;
 
-    public CustomRole(Long id, Long organizationId, String name, String description, Set<Long> permissions, boolean isBuiltIn, Long createdBy, ZonedDateTime createdAt, ZonedDateTime updatedAt) {
+    public CustomRole(Long id, Long organizationId, String name, String description, Set<Long> permissions, boolean builtIn, Long createdBy, ZonedDateTime createdAt, ZonedDateTime updatedAt) {
         this.id = id;
         this.organizationId = organizationId;
         this.name = name;
         this.description = description;
         this.permissions = permissions;
-        this.isBuiltIn = isBuiltIn;
+        this.builtIn = builtIn;
         this.createdBy = createdBy;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
 
-    public static CustomRole create(Long id, Long organizationId, String name, String description, Set<Long> permissions, boolean isBuiltIn, Long createdBy) {
-        if (!isBuiltIn && (permissions == null || permissions.isEmpty())) {
+    public static CustomRole create(Long id, Long organizationId, String name, String description, Set<Long> permissions, boolean builtIn, Long createdBy) {
+        if (!builtIn && (permissions == null || permissions.isEmpty())) {
             throw new InvalidRolePermissionCountException("Minimum 1 permission per custom role");
         }
 
         ZonedDateTime now = ZonedDateTime.now();
 
         return new CustomRole(
-                id, organizationId, name, description, permissions != null ? new HashSet<>(permissions) : new HashSet<>(), isBuiltIn, createdBy, now, now
+                id, organizationId, name, description, permissions != null ? new HashSet<>(permissions) : new HashSet<>(), builtIn, createdBy, now, now
         );
     }
 
     public void addPermission(Long permissionId) {
-        if (this.isBuiltIn) {
+        if (this.builtIn) {
             throw new RoleModificationException("Cannot modify built-in OWNER role");
         }
         permissions.add(permissionId);
@@ -60,7 +60,7 @@ public class CustomRole extends AggregateRoot<Long> {
     }
 
     public void addPermissions(Set<Long> permissionIds) {
-        if (this.isBuiltIn) {
+        if (this.builtIn) {
             throw new RoleModificationException("Cannot modify built-in OWNER role");
         }
         permissions.addAll(permissionIds);
@@ -69,7 +69,7 @@ public class CustomRole extends AggregateRoot<Long> {
     }
 
     public void removePermission(Long permissionId) {
-        if (this.isBuiltIn) {
+        if (this.builtIn) {
             throw new RoleModificationException("Cannot modify built-in OWNER role");
         }
         if (permissions.size() <= 1 && permissions.contains(permissionId)) {
@@ -82,7 +82,7 @@ public class CustomRole extends AggregateRoot<Long> {
     }
 
     public void rename(String newName) {
-        if (this.isBuiltIn) {
+        if (this.builtIn) {
             throw new RoleModificationException("Cannot modify built-in OWNER role");
         }
         this.name = newName;
@@ -90,7 +90,7 @@ public class CustomRole extends AggregateRoot<Long> {
     }
 
     public void updateDescription(String newDescription) {
-        if (this.isBuiltIn) {
+        if (this.builtIn) {
             throw new RoleModificationException("Cannot modify built-in OWNER role");
         }
         this.description = newDescription;
@@ -98,7 +98,7 @@ public class CustomRole extends AggregateRoot<Long> {
     }
 
     public void updatePermissions(Set<Long> newPermissions) {
-        if (this.isBuiltIn) {
+        if (this.builtIn) {
             throw new RoleModificationException("Cannot modify built-in OWNER role");
         }
         if (newPermissions == null || newPermissions.isEmpty()) {
@@ -110,7 +110,7 @@ public class CustomRole extends AggregateRoot<Long> {
     }
 
     public void delete(boolean hasActiveMembers) {
-        if (this.isBuiltIn) {
+        if (this.builtIn) {
             throw new RoleModificationException("Cannot delete built-in OWNER role");
         }
         if (hasActiveMembers) {
@@ -137,3 +137,5 @@ public class CustomRole extends AggregateRoot<Long> {
         return id;
     }
 }
+
+

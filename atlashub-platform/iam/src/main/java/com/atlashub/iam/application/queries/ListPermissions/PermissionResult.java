@@ -10,7 +10,7 @@ public record PermissionResult(
     String action,
     String displayName,
     String description,
-    boolean isActive
+    boolean active
 ) {
     public static PermissionResult fromEntity(Permission permission) {
         return new PermissionResult(
@@ -25,3 +25,4 @@ public record PermissionResult(
         );
     }
 }
+

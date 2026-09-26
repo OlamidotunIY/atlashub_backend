@@ -16,11 +16,11 @@ public class Permission extends AggregateRoot<Long> {
     private PermissionAction action;
     private String displayName;
     private String description;
-    private boolean isActive;
+    private boolean active;
     private ZonedDateTime createdAt;
     private ZonedDateTime updatedAt;
 
-    public Permission(Long id, String code, String module, String resource, PermissionAction action, String displayName, String description, boolean isActive, ZonedDateTime createdAt, ZonedDateTime updatedAt) {
+    public Permission(Long id, String code, String module, String resource, PermissionAction action, String displayName, String description, boolean active, ZonedDateTime createdAt, ZonedDateTime updatedAt) {
         this.id = id;
         this.code = code;
         this.module = module;
@@ -28,7 +28,7 @@ public class Permission extends AggregateRoot<Long> {
         this.action = action;
         this.displayName = displayName;
         this.description = description;
-        this.isActive = isActive;
+        this.active = active;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
@@ -65,3 +65,4 @@ public class Permission extends AggregateRoot<Long> {
         return id;
     }
 }
+

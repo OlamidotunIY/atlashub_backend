@@ -44,3 +44,4 @@ public class ListCustomRolesHandler extends Query<ListCustomRolesQuery, List<Cus
         return results;
     }
 }
+
