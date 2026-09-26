@@ -6,19 +6,31 @@ description: >-
 
 # Create Repository Adapter Workflow
 
-Repository adapters live in the infrastructure layer under `infrastructure/persistence/repositories/`.
+Repository adapters live in the infrastructure layer under `infrastructure/persistence/adapters/`.
 They map the domain entity methods to the Spring Data JPA layer.
 
-## Pre-Requisites (Dependencies)
-Before generating a Repository Adapter, you MUST verify that the following exist:
-1. **JPA Entity**: The `*Jpa` entity must exist. If not, trigger `create-jpa-entity`.
-2. **Spring Data Repository**: The `SpringData*Repository` interface must exist. If not, trigger `create-spring-data-repository`.
-3. **Domain Mapper**: The `*Mapper` interface must exist. If not, trigger `create-domain-mapper`.
+## Pre-Requisites (Dependencies) & Subagent Separation of Concerns
+When generating Repository Adapters for multiple entities, you MUST adhere to strict Separation of Concerns (SoC).
+Each subagent MUST be assigned an individual, end-to-end flow for a single entity (e.g. one subagent focused entirely on User).
+The subagent in charge of that entity MUST follow this exact flow:
+1. **Check Pre-requisites**: Verify if the *Jpa entity, SpringData*Repository, and *Mapper exist for its assigned entity.
+2. **Generate Missing Pieces**: If any are missing, the subagent MUST execute the instructions of the respective skills (create-jpa-entity, create-spring-data-repository, create-domain-mapper) to create them.
+3. **Generate Adapter**: Once all pre-requisites exist, scaffold and implement the *RepositoryAdapter.
+4. **Verification**: Run .\gradlew compileJava for the target module to verify the entire flow is perfect.
+5. **Commit and Finish**: Once the flow is fully complete and verified, commit the changes for this specific entity and end the subagent turn.
 
 ## Batch Processing (Multiple Adapters)
 This skill supports processing a list of multiple adapters simultaneously.
 1. You MUST process every adapter iteratively. Do not skip any.
 2. **Execution Strategy:** You MUST ALWAYS use `invoke_subagent` to spawn a concurrent team of subagents when processing multiple items.
+
+
+## Subagent Separation of Concerns (Vertical Slicing)
+When using invoke_subagent to process multiple items, you MUST adhere to strict Separation of Concerns (SoC) via **Vertical Slicing**:
+1. **One Subagent per Item**: Assign each subagent exactly ONE item (e.g., one entity, one command, one mapper).
+2. **End-to-End Flow**: The subagent is responsible for checking its own pre-requisites. If any dependencies (e.g., Value Objects, Events, Entities, Mappers) are missing, the subagent MUST execute the instructions of those respective skills to generate them before proceeding.
+3. **Independent Verification**: The subagent MUST run its own verification (e.g., .\gradlew compileJava for the module) to ensure its specific slice is perfect.
+4. **Independent Commit**: Once verified, the subagent MUST commit its own changes to Git and end its turn. Do not wait for a parent agent to commit.
 
 ## Module-Wide Generation
 If the user asks you to "create adapters for all domain repositories in `<module>`", you MUST:
@@ -75,3 +87,5 @@ After your code successfully compiles and passes all verification rules, you (an
 2. Commit your changes using standard Conventional Commits formatting (e.g., "feat(<module>): add <feature>", "refactor(<module>): ...").
 3. Push to the remote repository: "git push origin HEAD"
 **CRITICAL:** If you are a subagent, you MUST commit and push your own specific work independently as soon as it passes compilation. Do not wait for the parent agent.
+
+

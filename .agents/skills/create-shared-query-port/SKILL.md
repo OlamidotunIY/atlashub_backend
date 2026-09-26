@@ -37,6 +37,14 @@ You MUST NOT use wildcard imports (`import java.util.*`). You MUST NOT use inlin
 This skill supports processing multiple query ports simultaneously. You can use `invoke_subagent` for large batches.
 
 
+
+## Subagent Separation of Concerns (Vertical Slicing)
+When using invoke_subagent to process multiple items, you MUST adhere to strict Separation of Concerns (SoC) via **Vertical Slicing**:
+1. **One Subagent per Item**: Assign each subagent exactly ONE item (e.g., one entity, one command, one mapper).
+2. **End-to-End Flow**: The subagent is responsible for checking its own pre-requisites. If any dependencies (e.g., Value Objects, Events, Entities, Mappers) are missing, the subagent MUST execute the instructions of those respective skills to generate them before proceeding.
+3. **Independent Verification**: The subagent MUST run its own verification (e.g., .\gradlew compileJava for the module) to ensure its specific slice is perfect.
+4. **Independent Commit**: Once verified, the subagent MUST commit its own changes to Git and end its turn. Do not wait for a parent agent to commit.
+
 ## CRITICAL: Self-Correction & Verification Before Gradle
 Before you (or your dedicated subagents) run the Gradle compiler check, you MUST ALWAYS perform a strict self-review of all created and modified files. 
 - Read back the files you just wrote using "cat" or "view_file".

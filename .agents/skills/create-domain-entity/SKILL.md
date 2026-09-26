@@ -18,6 +18,14 @@ This skill supports processing a list or table of multiple entities simultaneous
 1. You MUST process every entity iteratively. Do not skip any.
 2. **Execution Strategy:** Because Domain Entities contain complex business logic, processing many sequentially in one turn can overwhelm context limits. You are strongly encouraged to use `invoke_subagent` to spawn a concurrent team of subagents to process or audit them simultaneously, isolating the context for each entity.
 
+
+## Subagent Separation of Concerns (Vertical Slicing)
+When using invoke_subagent to process multiple items, you MUST adhere to strict Separation of Concerns (SoC) via **Vertical Slicing**:
+1. **One Subagent per Item**: Assign each subagent exactly ONE item (e.g., one entity, one command, one mapper).
+2. **End-to-End Flow**: The subagent is responsible for checking its own pre-requisites. If any dependencies (e.g., Value Objects, Events, Entities, Mappers) are missing, the subagent MUST execute the instructions of those respective skills to generate them before proceeding.
+3. **Independent Verification**: The subagent MUST run its own verification (e.g., .\gradlew compileJava for the module) to ensure its specific slice is perfect.
+4. **Independent Commit**: Once verified, the subagent MUST commit its own changes to Git and end its turn. Do not wait for a parent agent to commit.
+
 ## Pre-Requisites (Events Discovery & Errors)
 Before generating or updating an entity, analyze its Domain Rules and Business Methods.
 
