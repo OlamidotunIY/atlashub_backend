@@ -13,27 +13,23 @@ import java.util.Map;
 public class NotificationDelivery extends AggregateRoot<Long> {
 
     private final Long id;
-    private String templateCode;
-    private Integer templateVersion;
-    private RecipientType recipientType;
-    private String recipientId;
-    private NotificationChannel channel;
-    private String provider;
-    private Map<String, String> variables;
-    private String renderedSubject;
-    private String renderedBody;
+    private final String templateCode;
+    private final Integer templateVersion;
+    private final RecipientType recipientType;
+    private final String recipientId;
+    private final NotificationChannel channel;
+    private final String provider;
+    private final Map<String, String> variables;
+    private final String renderedSubject;
+    private final String renderedBody;
     private DeliveryStatus status;
     private Integer attemptCount;
     private String providerMessageId;
     private String failureReason;
     private ZonedDateTime nextRetryAt;
     private ZonedDateTime deliveredAt;
-    private ZonedDateTime createdAt;
+    private final ZonedDateTime createdAt;
     private ZonedDateTime updatedAt;
-
-    protected NotificationDelivery() {
-        this.id = null;
-    }
 
     private NotificationDelivery(
             Long id,

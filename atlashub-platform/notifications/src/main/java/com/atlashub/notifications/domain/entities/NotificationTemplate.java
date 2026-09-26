@@ -11,9 +11,9 @@ import java.time.ZonedDateTime;
 public class NotificationTemplate extends AggregateRoot<Long> {
 
     private final Long id;
-    private String code;
-    private NotificationCategory category;
-    private NotificationChannel channel;
+    private final String code;
+    private final NotificationCategory category;
+    private final NotificationChannel channel;
     private String subject;
     private String bodyTemplate;
     private Integer version;
