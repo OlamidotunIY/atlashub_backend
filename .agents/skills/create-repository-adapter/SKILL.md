@@ -20,6 +20,13 @@ This skill supports processing a list of multiple adapters simultaneously.
 1. You MUST process every adapter iteratively. Do not skip any.
 2. **Execution Strategy:** You MUST ALWAYS use `invoke_subagent` to spawn a concurrent team of subagents when processing multiple items.
 
+## Module-Wide Generation
+If the user asks you to "create adapters for all domain repositories in `<module>`", you MUST:
+1. Locate all Domain Repository interfaces in `atlashub-platform/<module>/src/main/java/com/atlashub/<module>/domain/repositories/` (e.g., using `find_by_name` or `list_dir`).
+2. Identify the core Domain Entity for each repository (e.g., `AuthAccountRepository` manages `AuthAccount`).
+3. Use `invoke_subagent` to spawn a concurrent team of subagents to process EVERY repository found simultaneously.
+4. Each subagent will be responsible for fulfilling the Pre-Requisites (JPA Entity, Spring Data Repo, Mapper) and implementing the Adapter for its assigned entity.
+
 ## Rule 1: Scaffold Base Structure
 You MUST use the provided PowerShell script to safely generate the baseline file structure and boilerplate files:
 ```powershell

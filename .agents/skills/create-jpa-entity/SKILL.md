@@ -14,6 +14,12 @@ This skill supports processing a list of multiple entities simultaneously.
 1. You MUST process every entity iteratively. Do not skip any.
 2. **Execution Strategy:** Because processing many sequentially can overwhelm context limits, you MUST ALWAYS use `invoke_subagent` to spawn a concurrent team of subagents when processing multiple items.
 
+## Module-Wide Generation
+If the user asks you to "create JPA entities for all entities in `<module>`", you MUST:
+1. Locate all Domain Entity classes in `atlashub-platform/<module>/src/main/java/com/atlashub/<module>/domain/entities/` (e.g., using `find_by_name` or `list_dir`).
+2. Ignore standard records or value objects; focus only on the actual Domain Entities / Aggregate Roots.
+3. Use `invoke_subagent` to spawn a concurrent team of subagents to process EVERY entity found simultaneously.
+
 ## Step 1: Analyze Domain Entity & Repository
 Before generating the JPA entity, you must figure out:
 1. **Fields and Nullability**: Read the corresponding Domain Entity. Check the static `create` method: required parameters are `nullable = false`. 

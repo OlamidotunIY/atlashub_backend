@@ -13,6 +13,12 @@ This skill supports processing a list of multiple mappers simultaneously.
 1. You MUST process every mapper iteratively. Do not skip any.
 2. **Execution Strategy:** You MUST ALWAYS use `invoke_subagent` to spawn a concurrent team of subagents when processing multiple items.
 
+## Module-Wide Generation
+If the user asks you to "create mappers for all entities in `<module>`", you MUST:
+1. Locate all Domain Entity classes in `atlashub-platform/<module>/src/main/java/com/atlashub/<module>/domain/entities/` (e.g., using `find_by_name` or `list_dir`).
+2. Ignore standard records or value objects; focus only on the actual Domain Entities / Aggregate Roots.
+3. Use `invoke_subagent` to spawn a concurrent team of subagents to process EVERY entity found simultaneously.
+
 ## Rule 1: Scaffold Base Structure
 You MUST use the provided PowerShell script to safely generate the baseline file structure and boilerplate files:
 ```powershell
