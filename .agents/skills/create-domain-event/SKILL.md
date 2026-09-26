@@ -64,3 +64,12 @@ Example: `.\gradlew :atlashub-platform:iam:compileJava`
 
 ## Step 4: Final Verification
 Confirm to the user that the file was created. Show them the successful output of the Gradle build to prove it compiled flawlessly.
+
+
+## Final Step: Git Commit & Push
+Verification is NOT the final step; committing your work is.
+After your code successfully compiles and passes all verification rules, you (and every individual subagent) MUST commit and push your changes to GitHub.
+1. Stage your specific files: "git add <paths_to_your_files>"
+2. Commit your changes using standard Conventional Commits formatting (e.g., "feat(<module>): add <feature>", "refactor(<module>): ...").
+3. Push to the remote repository: "git push origin HEAD"
+**CRITICAL:** If you are a subagent, you MUST commit and push your own specific work independently as soon as it passes compilation. Do not wait for the parent agent.

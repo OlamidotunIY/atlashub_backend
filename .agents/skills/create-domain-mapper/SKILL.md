@@ -58,3 +58,16 @@ Before you (or your dedicated subagents) run the Gradle compiler check, you MUST
 You MUST run the Gradle compiler to prove to the user that your generated code compiles properly.
 **CRITICAL RULE:** NEVER run `.\gradlew compileJava` globally. You MUST strictly target the module you are working on.
 Example: `.\gradlew :atlashub-platform:iam:compileJava`
+
+## CRITICAL RULES
+- **Avoid Manual Overrides:** Do not manually override 	oDomain or 	oPersistence just to configure mappings for boolean fields or ersion fields. If you encounter an Unmapped target property error for a boolean field starting with 'is', the correct fix is to rename the field in BOTH the Domain Entity and the JPA Entity to remove the 'is' prefix (e.g., rename isBuiltIn to uiltIn). MapStruct and Lombok will then automatically map it.
+- **Version Field Errors:** If you encounter an Unknown property "version" in result type error, DO NOT override mappings. The correct fix is to add @Version private Long version; to the JPA Entity, which satisfies the DomainMapper's inherited @Mapping(target = "version", ignore = true) requirement.
+
+
+## Final Step: Git Commit & Push
+Verification is NOT the final step; committing your work is.
+After your code successfully compiles and passes all verification rules, you (and every individual subagent) MUST commit and push your changes to GitHub.
+1. Stage your specific files: "git add <paths_to_your_files>"
+2. Commit your changes using standard Conventional Commits formatting (e.g., "feat(<module>): add <feature>", "refactor(<module>): ...").
+3. Push to the remote repository: "git push origin HEAD"
+**CRITICAL:** If you are a subagent, you MUST commit and push your own specific work independently as soon as it passes compilation. Do not wait for the parent agent.

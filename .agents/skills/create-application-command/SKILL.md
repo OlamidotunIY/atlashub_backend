@@ -57,3 +57,12 @@ Before you (or your dedicated subagents) run the Gradle compiler check, you MUST
 You MUST run the Gradle compiler to prove to the user that your generated command compiles properly.
 **CRITICAL RULE:** NEVER run `.\gradlew compileJava` globally. You MUST strictly target the module you are working on.
 Example: `.\gradlew :atlashub-platform:iam:compileJava`
+
+
+## Final Step: Git Commit & Push
+Verification is NOT the final step; committing your work is.
+After your code successfully compiles and passes all verification rules, you (and every individual subagent) MUST commit and push your changes to GitHub.
+1. Stage your specific files: "git add <paths_to_your_files>"
+2. Commit your changes using standard Conventional Commits formatting (e.g., "feat(<module>): add <feature>", "refactor(<module>): ...").
+3. Push to the remote repository: "git push origin HEAD"
+**CRITICAL:** If you are a subagent, you MUST commit and push your own specific work independently as soon as it passes compilation. Do not wait for the parent agent.
