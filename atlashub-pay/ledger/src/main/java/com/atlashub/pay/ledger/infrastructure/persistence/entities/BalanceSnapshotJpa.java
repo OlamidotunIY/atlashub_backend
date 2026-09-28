@@ -6,7 +6,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
-import jakarta.persistence.Version;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -38,7 +37,4 @@ public class BalanceSnapshotJpa implements BaseJpaEntity {
 
     @Column(name = "snapshot_at", nullable = false)
     private ZonedDateTime snapshotAt;
-
-    @Version
-    private Long version;
 }

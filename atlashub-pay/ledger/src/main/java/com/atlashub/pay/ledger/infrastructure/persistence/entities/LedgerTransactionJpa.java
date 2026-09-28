@@ -6,7 +6,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
-import jakarta.persistence.Version;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -51,7 +50,4 @@ public class LedgerTransactionJpa implements BaseJpaEntity {
 
     @Column(nullable = false)
     private String reference;
-
-    @Version
-    private Long version;
 }

@@ -6,7 +6,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
-import jakarta.persistence.Version;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -44,7 +43,4 @@ public class LedgerEntryJpa implements BaseJpaEntity {
 
     @Column(name = "running_balance", nullable = false)
     private BigDecimal runningBalance;
-
-    @Version
-    private Long version;
 }
