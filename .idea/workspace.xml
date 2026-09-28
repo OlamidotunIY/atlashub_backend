@@ -9,10 +9,7 @@
   <component name="ChangeListManager">
     <list default="true" id="174f3fac-956e-4ce4-b2e2-bac8d3e75c4d" name="Changes" comment="fix: file system">
       <changelist_data name="Iyanda Olamidotun" email="olamidotun225@gmail.com" automatic="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/pay/ledger/domain/entities/BalanceSnapshot.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/pay/ledger/domain/entities/BalanceSnapshot.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/pay/ledger/domain/entities/LedgerEntry.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/pay/ledger/domain/entities/LedgerEntry.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/pay/ledger/domain/entities/LedgerTransaction.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/pay/ledger/domain/entities/LedgerTransaction.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/infrastructure/persistence/mappers/ValueObjectMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-shared/src/main/java/com/atlashub/shared/infrastructure/persistence/mappers/ValueObjectMapper.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/pay/ledger/infrastructure/persistence/adapters/LedgerTransactionRepositoryAdapter.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/pay/ledger/infrastructure/persistence/adapters/LedgerTransactionRepositoryAdapter.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

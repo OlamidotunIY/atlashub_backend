@@ -110,7 +110,7 @@ public class LedgerTransactionRepositoryAdapter implements LedgerTransactionRepo
         return txs.stream().map(tx -> {
             List<LedgerEntryJpa> entries = allEntries.stream()
                     .filter(e -> e.getTransactionId().equals(tx.getId()))
-                    .collect(Collectors.toList());
+                    .toList();
             return txMapper.toDomain(tx, entries.stream().map(entryMapper::toDomain).collect(Collectors.toList()));
         }).collect(Collectors.toList());
     }
@@ -127,7 +127,7 @@ public class LedgerTransactionRepositoryAdapter implements LedgerTransactionRepo
         return txPage.map(tx -> {
             List<LedgerEntryJpa> entries = allEntries.stream()
                     .filter(e -> e.getTransactionId().equals(tx.getId()))
-                    .collect(Collectors.toList());
+                    .toList();
             return txMapper.toDomain(tx, entries.stream().map(entryMapper::toDomain).collect(Collectors.toList()));
         });
     }
@@ -141,7 +141,7 @@ public class LedgerTransactionRepositoryAdapter implements LedgerTransactionRepo
         return txs.stream().map(tx -> {
             List<LedgerEntryJpa> entries = allEntries.stream()
                     .filter(e -> e.getTransactionId().equals(tx.getId()))
-                    .collect(Collectors.toList());
+                    .toList();
             return txMapper.toDomain(tx, entries.stream().map(entryMapper::toDomain).collect(Collectors.toList()));
         }).collect(Collectors.toList());
     }
