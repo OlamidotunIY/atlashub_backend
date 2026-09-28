@@ -9,42 +9,11 @@
   <component name="ChangeListManager">
     <list default="true" id="174f3fac-956e-4ce4-b2e2-bac8d3e75c4d" name="Changes" comment="fix: file system">
       <changelist_data name="Iyanda Olamidotun" email="olamidotun225@gmail.com" automatic="false" />
-      <change beforePath="$PROJECT_DIR$/.agents/skills/create-application-command/SKILL.md" beforeDir="false" afterPath="$PROJECT_DIR$/.agents/skills/create-application-command/SKILL.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.agents/skills/create-application-command/scripts/scaffold-command.ps1" beforeDir="false" afterPath="$PROJECT_DIR$/.agents/skills/create-application-command/scripts/scaffold-command.ps1" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.agents/skills/create-application-query/SKILL.md" beforeDir="false" afterPath="$PROJECT_DIR$/.agents/skills/create-application-query/SKILL.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.agents/skills/create-domain-entity/SKILL.md" beforeDir="false" afterPath="$PROJECT_DIR$/.agents/skills/create-domain-entity/SKILL.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.agents/skills/create-domain-entity/scripts/scaffold-entity.ps1" beforeDir="false" afterPath="$PROJECT_DIR$/.agents/skills/create-domain-entity/scripts/scaffold-entity.ps1" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.agents/skills/create-domain-error/SKILL.md" beforeDir="false" afterPath="$PROJECT_DIR$/.agents/skills/create-domain-error/SKILL.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.agents/skills/create-domain-event/SKILL.md" beforeDir="false" afterPath="$PROJECT_DIR$/.agents/skills/create-domain-event/SKILL.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.agents/skills/create-domain-mapper/SKILL.md" beforeDir="false" afterPath="$PROJECT_DIR$/.agents/skills/create-domain-mapper/SKILL.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.agents/skills/create-domain-mapper/scripts/scaffold-mapper.ps1" beforeDir="false" afterPath="$PROJECT_DIR$/.agents/skills/create-domain-mapper/scripts/scaffold-mapper.ps1" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.agents/skills/create-domain-repository/SKILL.md" beforeDir="false" afterPath="$PROJECT_DIR$/.agents/skills/create-domain-repository/SKILL.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.agents/skills/create-domain-valueobject/SKILL.md" beforeDir="false" afterPath="$PROJECT_DIR$/.agents/skills/create-domain-valueobject/SKILL.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.agents/skills/create-jpa-entity/SKILL.md" beforeDir="false" afterPath="$PROJECT_DIR$/.agents/skills/create-jpa-entity/SKILL.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.agents/skills/create-jpa-entity/scripts/scaffold-jpa-entity.ps1" beforeDir="false" afterPath="$PROJECT_DIR$/.agents/skills/create-jpa-entity/scripts/scaffold-jpa-entity.ps1" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.agents/skills/create-repository-adapter/SKILL.md" beforeDir="false" afterPath="$PROJECT_DIR$/.agents/skills/create-repository-adapter/SKILL.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.agents/skills/create-shared-query-port/SKILL.md" beforeDir="false" afterPath="$PROJECT_DIR$/.agents/skills/create-shared-query-port/SKILL.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.agents/skills/create-spring-data-repository/SKILL.md" beforeDir="false" afterPath="$PROJECT_DIR$/.agents/skills/create-spring-data-repository/SKILL.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/gradle.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/gradle.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-main/src/main/java/com/atlashub/main/config/SecurityConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-main/src/main/java/com/atlashub/main/config/SecurityConfig.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/pay/ledger/application/commands/PostLedgerTransaction/PostLedgerTransactionHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/pay/ledger/application/commands/PostLedgerTransaction/PostLedgerTransactionHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-main/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-main/build.gradle" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-main/src/main/java/com/atlashub/main/config/ApplicationConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-main/src/main/java/com/atlashub/main/config/ApplicationConfig.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/pay/ledger/application/queries/GetAccountBalance/GetAccountBalanceHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/pay/ledger/application/queries/GetAccountBalance/GetAccountBalanceHandler.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/pay/ledger/application/queries/GetWalletBalances/GetWalletBalancesHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/pay/ledger/application/queries/GetWalletBalances/GetWalletBalancesHandler.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/pay/ledger/domain/repositories/BalanceSnapshotRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/pay/ledger/domain/repositories/BalanceSnapshotRepository.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/compliance/src/main/java/com/atlashub/compliance/domain/entities/ComplianceRecord.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/compliance/src/main/java/com/atlashub/compliance/domain/entities/ComplianceRecord.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/notifications/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/notifications/build.gradle" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/architecture/maker-checker.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/architecture/maker-checker.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/architecture/rbac-design.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/architecture/rbac-design.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/architecture/sagas-design.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/architecture/sagas-design.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/modules/admin-design.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/modules/admin-design.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/modules/analytics-design.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/modules/analytics-design.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/modules/hotel-design.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/modules/hotel-design.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/modules/hr-design.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/modules/hr-design.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/modules/identity-design.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/modules/logistics-design.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/modules/logistics-design.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/modules/notifications-design.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/modules/notifications-design.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/modules/support-design.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/modules/support-design.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/settings.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/settings.gradle" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

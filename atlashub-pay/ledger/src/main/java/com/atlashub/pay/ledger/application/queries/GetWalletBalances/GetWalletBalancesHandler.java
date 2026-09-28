@@ -7,6 +7,7 @@ import com.atlashub.pay.ledger.domain.entities.LedgerTransaction;
 import com.atlashub.pay.ledger.domain.repositories.BalanceSnapshotRepository;
 import com.atlashub.pay.ledger.domain.repositories.LedgerAccountRepository;
 import com.atlashub.pay.ledger.domain.repositories.LedgerTransactionRepository;
+import com.atlashub.pay.ledger.domain.services.BalanceCalculator;
 import com.atlashub.pay.ledger.domain.valueobject.EntryType;
 import com.atlashub.shared.application.usecase.Query;
 import org.slf4j.Logger;
@@ -30,13 +31,16 @@ public class GetWalletBalancesHandler extends Query<GetWalletBalancesQuery, Wall
     private final LedgerAccountRepository accountRepository;
     private final BalanceSnapshotRepository snapshotRepository;
     private final LedgerTransactionRepository transactionRepository;
+    private final BalanceCalculator balanceCalculator;
 
     public GetWalletBalancesHandler(LedgerAccountRepository accountRepository,
                                     BalanceSnapshotRepository snapshotRepository,
-                                    LedgerTransactionRepository transactionRepository) {
+                                    LedgerTransactionRepository transactionRepository,
+                                    BalanceCalculator balanceCalculator) {
         this.accountRepository = accountRepository;
         this.snapshotRepository = snapshotRepository;
         this.transactionRepository = transactionRepository;
+        this.balanceCalculator = balanceCalculator;
     }
 
     @Override
@@ -72,17 +76,7 @@ public class GetWalletBalancesHandler extends Query<GetWalletBalancesQuery, Wall
 
             List<LedgerTransaction> transactions = transactionRepository.findByAccountIdAndPostedAtAfter(account.getId(), snapshotDate);
 
-            for (LedgerTransaction tx : transactions) {
-                for (LedgerEntry entry : tx.getEntries()) {
-                    if (entry.getAccountId().equals(account.getId())) {
-                        if (entry.getType() == EntryType.CREDIT) {
-                            balance = balance.add(entry.getAmount().amount());
-                        } else if (entry.getType() == EntryType.DEBIT) {
-                            balance = balance.subtract(entry.getAmount().amount());
-                        }
-                    }
-                }
-            }
+            balance = balanceCalculator.calculateRunningBalance(account.getId(), balance, transactions);
             
             String typeName = account.getAccountType().name();
             BigDecimal currentTotal = balancesByAccountType.getOrDefault(typeName, BigDecimal.ZERO);

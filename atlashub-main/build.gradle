@@ -21,6 +21,9 @@ dependencies {
     implementation project(':atlashub-platform:iam')
     implementation project(':atlashub-platform:storage')
 
+    // Pay Modules
+    implementation project(':atlashub-pay:ledger')
+
     // Infrastructure Modules
     implementation project(':atlashub-infrastructure:eventbus')
     implementation project(':atlashub-infrastructure:rate-limiter')
