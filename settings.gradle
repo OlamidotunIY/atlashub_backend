@@ -3,10 +3,19 @@ rootProject.name = 'atlashub'
 // Shared
 include 'atlashub-shared'
 
+// Pay
+include 'atlashub-pay'
+include 'atlashub-pay:ledger'
+
 // Platform
 include 'atlashub-platform'
 include 'atlashub-platform:catalog'
 include 'atlashub-platform:accounts'
+include 'atlashub-platform:iam'
+include 'atlashub-platform:compliance'
+include 'atlashub-platform:notifications'
+include 'atlashub-platform:authentication'
+include 'atlashub-platform:storage'
 
 // Infrastructure
 include 'atlashub-infrastructure'
@@ -15,10 +24,5 @@ include 'atlashub-infrastructure:rate-limiter'
 include 'atlashub-infrastructure:audit'
 
 // App
-
-include 'atlashub-platform:authentication'
-include 'atlashub-platform:storage'
 include 'atlashub-main'
-include 'atlashub-platform:iam'
-include 'atlashub-platform:compliance'
-include 'atlashub-platform:notifications'
+

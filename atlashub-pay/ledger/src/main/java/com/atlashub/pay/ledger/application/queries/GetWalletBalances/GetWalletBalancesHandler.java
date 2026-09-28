@@ -50,7 +50,7 @@ public class GetWalletBalancesHandler extends Query<GetWalletBalancesQuery, Wall
             return new WalletBalancesResult(query.organizationId(), new HashMap<>(), "USD");
         }
         
-        String currency = accounts.get(0).getCurrency().name();
+        String currency = accounts.getFirst().getCurrency().name();
         List<Long> accountIds = accounts.stream().map(LedgerAccount::getId).collect(Collectors.toList());
         List<BalanceSnapshot> snapshots = snapshotRepository.findAllLatestByAccountIdIn(accountIds);
         
@@ -63,13 +63,12 @@ public class GetWalletBalancesHandler extends Query<GetWalletBalancesQuery, Wall
 
         for (LedgerAccount account : accounts) {
             BalanceSnapshot snapshot = snapshotMap.get(account.getId());
-            BigDecimal balance = BigDecimal.ZERO;
-            ZonedDateTime snapshotDate = ZonedDateTime.of(1970, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC);
-
-            if (snapshot != null) {
-                balance = snapshot.getBalance().amount();
-                snapshotDate = snapshot.getSnapshotAt();
+            if (snapshot == null) {
+                throw new IllegalStateException("Account missing initial balance snapshot: " + account.getId());
             }
+            
+            BigDecimal balance = snapshot.getBalance().amount();
+            ZonedDateTime snapshotDate = snapshot.getSnapshotAt();
 
             List<LedgerTransaction> transactions = transactionRepository.findByAccountIdAndPostedAtAfter(account.getId(), snapshotDate);
 

@@ -1,5 +1,6 @@
 package com.atlashub.pay.ledger.application.commands.PostLedgerTransaction;
 
+import com.atlashub.pay.ledger.domain.entities.BalanceSnapshot;
 import com.atlashub.pay.ledger.domain.entities.LedgerAccount;
 import com.atlashub.pay.ledger.domain.entities.LedgerEntry;
 import com.atlashub.pay.ledger.domain.entities.LedgerTransaction;
@@ -97,12 +98,16 @@ public class PostLedgerTransactionHandler extends Command<PostLedgerTransactionC
         }
 
         // 6. Compute runningBalance and apply entry
-        Map<Long, BigDecimal> currentBalances = accounts.stream().collect(Collectors.toMap(
-                LedgerAccount::getId,
-                acc -> balanceSnapshotRepository.findLatestByAccountId(acc.getId())
-                        .map(snap -> snap.getBalance().amount())
-                        .orElse(BigDecimal.ZERO)
-        ));
+        Map<Long, BigDecimal> currentBalances = balanceSnapshotRepository.findAllLatestByAccountIdIn(sortedIds).stream()
+                .collect(Collectors.toMap(
+                        BalanceSnapshot::getAccountId,
+                        snap -> snap.getBalance().amount()
+                ));
+        
+        // Ensure all locked accounts have a starting balance, defaulting to ZERO
+        for (Long accId : sortedIds) {
+            currentBalances.putIfAbsent(accId, BigDecimal.ZERO);
+        }
 
         List<LedgerEntry> ledgerEntries = new ArrayList<>();
         Long txId = transactionRepository.nextIdentity();

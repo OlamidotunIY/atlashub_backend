@@ -1,0 +1,20 @@
+package com.atlashub.pay.ledger.domain.valueobject;
+
+public enum SourceSystem {
+    COMMERCE_CHECKOUT,
+    COMMERCE_REFUND,
+    PLATFORM_BILLING,
+    PAYROLL,
+    LOAN_DISBURSEMENT,
+    INTER_OUTLET_TRANSFER,
+    CASH_BANKING,
+    EXTERNAL_COLLECTION,
+    CARD_CHARGE,
+    PAYOUT,
+    SETTLEMENT,
+    SPLIT,
+    ESCROW_RELEASE,
+    ESCROW_REFUND,
+    MANUAL,
+    SYSTEM
+}

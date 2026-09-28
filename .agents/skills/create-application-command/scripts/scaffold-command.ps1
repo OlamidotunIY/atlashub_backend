@@ -6,15 +6,26 @@ param (
 
 $ErrorActionPreference = "Stop"
 
-$ModulePath = "atlashub-platform\$Module\src\main\java\com\atlashub\$Module"
-$CommandDir = "$ModulePath\application\commands\$CommandName"
+# Dynamic module discovery — resolve the actual src path, not a hardcoded assumption
+$FoundModulePath = Get-ChildItem -Path . -Recurse -Directory |
+    Where-Object { $_.FullName -match [regex]::Escape("src\\main\\java\\com\\atlashub\\$Module") } |
+    Select-Object -First 1
+
+if (-not $FoundModulePath) {
+    Write-Host "ERROR: Module '$Module' not found under any src\main\java\com\atlashub\$Module path."
+    exit 1
+}
+
+$ModulePath = $FoundModulePath.FullName
+$CommandDir = Join-Path -Path $ModulePath -ChildPath "application\commands\$CommandName"
 
 if (-Not (Test-Path $CommandDir)) {
     New-Item -ItemType Directory -Force -Path $CommandDir | Out-Null
 }
 
-$CommandFile = "$CommandDir\${CommandName}Command.java"
-$HandlerFile = "$CommandDir\${CommandName}Handler.java"
+$CommandFile  = Join-Path $CommandDir "${CommandName}Command.java"
+$HandlerFile  = Join-Path $CommandDir "${CommandName}Handler.java"
+$ResponseFile = Join-Path $CommandDir "${CommandName}Response.java"
 
 if (Test-Path $HandlerFile) {
     Write-Host "WARNING: Command Handler already exists at $HandlerFile. Skipping to prevent overwrite."
@@ -29,20 +40,31 @@ public record ${CommandName}Command() {}
 "@
 Set-Content -Path $CommandFile -Value $CommandContent
 
-# 2. Response Record (if not Void)
-$ResponseImport = ""
-$ResponseGeneric = $ResponseType
-if ($ResponseType -eq "${CommandName}Response") {
-    $ResponseFile = "$CommandDir\${CommandName}Response.java"
-    $ResponseContent = @"
+# 2. Response Record — create whenever ResponseType is not void
+$isVoid = ($ResponseType -eq "void" -or $ResponseType -eq "Void")
+
+if (-not $isVoid) {
+    if (Test-Path $ResponseFile) {
+        Write-Host "WARNING: Response file already exists at $ResponseFile. Skipping."
+    } else {
+        $ResponseContent = @"
 package com.atlashub.${Module}.application.commands.${CommandName};
 
 public record ${CommandName}Response() {}
 "@
-    Set-Content -Path $ResponseFile -Value $ResponseContent
+        Set-Content -Path $ResponseFile -Value $ResponseContent
+    }
 }
 
-# 3. Handler Class
+# 3. Handler Class — no 'return null' for void
+if ($isVoid) {
+    $ReturnStatement = ""
+    $ReturnType = "void"
+} else {
+    $ReturnStatement = "`n        return null; // TODO: replace with actual result"
+    $ReturnType = $ResponseType
+}
+
 $HandlerContent = @"
 package com.atlashub.${Module}.application.commands.${CommandName};
 
@@ -52,7 +74,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Component
-public class ${CommandName}Handler extends Command<${CommandName}Command, ${ResponseGeneric}> {
+public class ${CommandName}Handler extends Command<${CommandName}Command, ${ReturnType}> {
 
     private static final Logger log = LoggerFactory.getLogger(${CommandName}Handler.class);
 
@@ -61,16 +83,14 @@ public class ${CommandName}Handler extends Command<${CommandName}Command, ${Resp
     }
 
     @Override
-    public ${ResponseGeneric} execute(${CommandName}Command command) {
+    public ${ReturnType} execute(${CommandName}Command command) {
         log.info("Executing ${CommandName}Command");
-        
-        // TODO: Implement orchestration logic
-        // DO NOT implement business logic here. Delegate to Entities, Domain Services, or Ports.
 
-        return null;
+        // TODO: Implement orchestration logic
+        // DO NOT implement business logic here. Delegate to Entities, Domain Services, or Ports.$ReturnStatement
     }
 }
 "@
 Set-Content -Path $HandlerFile -Value $HandlerContent
 
-Write-Host "SUCCESS: Scaffolded Command, Handler, and Response at $CommandDir"
+Write-Host "SUCCESS: Scaffolded Command, Handler$(if (-not $isVoid) { ', and Response' }) at $CommandDir"

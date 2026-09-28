@@ -19,7 +19,7 @@ public class ComplianceRecord extends AggregateRoot<Long> {
     private final Long organizationId;
     private ComplianceStatus status;
     private ComplianceStep currentStep;
-    private Set<ComplianceStep> completedSteps;
+    private final Set<ComplianceStep> completedSteps;
     
     private Long reviewedBy;
     private ZonedDateTime reviewedAt;

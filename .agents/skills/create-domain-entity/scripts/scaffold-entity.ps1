@@ -1,17 +1,24 @@
 param (
     [Parameter(Mandatory=$true)][string]$Module,
     [Parameter(Mandatory=$true)][string]$EntityName,
-    [Parameter(Mandatory=$true)][bool]$IsAggregateRoot
+    [Parameter(Mandatory=$true)][bool]$IsAggregateRoot,
+    [Parameter(Mandatory=$false)][string]$SubModule = ""
 )
 
-$SearchPattern = "src\main\java\com\atlashub\$Module"
-$ModulePath = Get-ChildItem -Path . -Recurse -Directory -Filter $Module -ErrorAction SilentlyContinue | Where-Object { $_.FullName -match [regex]::Escape($SearchPattern) } | Select-Object -First 1
+$ErrorActionPreference = "Stop"
 
-if (-not $ModulePath) {
-    $TargetDir = "atlashub-platform\$Module\src\main\java\com\atlashub\$Module\domain\entities"
-} else {
-    $TargetDir = Join-Path -Path $ModulePath.FullName -ChildPath "domain\entities"
+# Dynamic module discovery — works regardless of project layout
+$FoundModulePath = Get-ChildItem -Path . -Recurse -Directory |
+    Where-Object { $_.FullName -match [regex]::Escape("src\\main\\java\\com\\atlashub\\$Module") } |
+    Select-Object -First 1
+
+if (-not $FoundModulePath) {
+    Write-Host "ERROR: Module '$Module' not found under any src\main\java\com\atlashub\$Module path."
+    exit 1
 }
+
+$ModulePath = $FoundModulePath.FullName
+$TargetDir = Join-Path -Path $ModulePath -ChildPath "domain\entities"
 
 if (-not (Test-Path -Path $TargetDir)) {
     New-Item -ItemType Directory -Force -Path $TargetDir | Out-Null
@@ -19,25 +26,31 @@ if (-not (Test-Path -Path $TargetDir)) {
 
 $TargetFile = Join-Path -Path $TargetDir -ChildPath "$EntityName.java"
 if (Test-Path -Path $TargetFile) {
-    Write-Host "Error: $TargetFile already exists! Aborting."
+    Write-Host "ERROR: $TargetFile already exists! Aborting."
     exit 1
 }
 
-$BaseClass = ""
+# Build package name — include sub-module segment when provided
+if ($SubModule -ne "") {
+    $PackageName = "com.atlashub.$Module.$SubModule.domain.entities"
+} else {
+    $PackageName = "com.atlashub.$Module.domain.entities"
+}
+
+$BaseClass      = ""
 $ImportAggregate = ""
-$IdOverride = ""
+$IdOverride     = ""
 
 if ($IsAggregateRoot) {
-    $BaseClass = " extends AggregateRoot<Long>"
+    $BaseClass       = " extends AggregateRoot<Long>"
     $ImportAggregate = "import com.atlashub.shared.domain.entities.AggregateRoot;`n"
-    $IdOverride = "`n    @Override`n    public Long getId() {`n        return id;`n    }`n"
+    $IdOverride      = "`n    @Override`n    public Long getId() {`n        return id;`n    }`n"
 }
 
 $Content = @"
-package com.atlashub.$Module.domain.entities;
+package $PackageName;
 
-$ImportAggregate
-import lombok.Getter;
+${ImportAggregate}import lombok.Getter;
 import java.time.ZonedDateTime;
 
 @Getter

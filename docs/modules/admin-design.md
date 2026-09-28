@@ -2,103 +2,94 @@
 
 ## Role & Purpose
 
-The `admin` module is the **internal operations portal** for AtlasHub staff. It exposes tools for the platform's own team to manage businesses on the platform — reviewing KYC applications, managing the product catalog, handling support escalations, monitoring platform health, and taking corrective actions on organizations.
+The `admin` module is the **internal operations portal** for AtlasHub staff. It exposes tooling for the platform's own team to manage businesses on the platform — reviewing KYC applications, monitoring organizations, handling support escalations, taking corrective actions, and running platform revenue reports.
 
-Admin is a **multi-tier module**: different AtlasHub staff roles have different levels of access and capability. A support agent can view an organization's compliance details and leave notes, but only a super admin can approve KYC, ban an organization, or modify platform pricing.
+Admin is a **multi-tier module**: different AtlasHub staff roles have different levels of access. A support agent can view an organization's compliance details and leave notes, but only a compliance officer can approve KYC, and only a super admin can ban an organization or manage other staff members.
+
+The `admin` module does **not** own compliance state directly. When an admin approves or rejects a KYC submission, it calls `ComplianceActionPort` (a domain port implemented by a cross-module adapter) to perform the operation within the `compliance` module. This keeps compliance business rules encapsulated in the right bounded context.
 
 ---
 
-## 1. Staff Tiers & Permissions
+## 1. Features
+
+### Staff Tiers & Permissions
 
 | Staff Role | Capabilities |
 |---|---|
-| **SUPER_ADMIN** | Full platform access — approve/reject KYC, ban orgs, manage catalog pricing, manage admin staff, view all data |
+| **SUPER_ADMIN** | Full platform access — manage admin staff, ban/unban orgs, view all data |
 | **COMPLIANCE_OFFICER** | Review and action KYC submissions — approve, reject, request more info |
-| **SUPPORT_AGENT** | View org details and transaction history, leave internal notes, escalate tickets |
-| **FINANCE_ANALYST** | Read-only access to platform financial data, settlement reports, fee revenue reports |
+| **SUPPORT_AGENT** | View org details, leave internal notes, escalate |
+| **FINANCE_ANALYST** | Read-only access to platform financial data, revenue reports |
 | **CATALOG_MANAGER** | Create and update platform products and pricing plans |
 
-Staff roles are fixed (not configurable by admins themselves — unlike org custom roles).
-
----
-
-## 2. Features
+Staff roles are fixed — not configurable by admins themselves.
 
 ### KYC Review Workflow
-When an organization submits their compliance form, `admin` receives a `ComplianceSubmittedEvent` and creates a `KycReviewTask`. A compliance officer picks it up, reviews all submitted documents (ID, selfie, settlement account), and either:
-- **Approves** → `ApproveComplianceUseCase` → `OrganizationComplianceApprovedEvent` → NUBAN issuance begins
-- **Rejects** → `RejectComplianceUseCase` with a detailed reason → org is notified and can re-submit
-- **Requests More Info** → a status that places the task in a "Waiting on Org" state
+When `ComplianceSubmittedEvent` is received, a `KycReviewTask` is created. A compliance officer picks it up, reviews documents, and takes one of three actions: **Approve** (via `ComplianceActionPort.approve()`), **Reject** (via `ComplianceActionPort.reject()`), or **Request More Info** (transitions task to `WAITING_ON_ORG`).
 
 ### Organization Management
-Admins can view any organization's full profile, compliance status, subscription history, and recent transactions. Actions available:
-- **Ban Organization** → terminates all subscriptions, freezes virtual accounts, logs reason
+Admins can view any organization's full profile and take corrective actions:
+- **Ban Organization** → terminates subscriptions, freezes virtual accounts, notifies org
 - **Unban Organization** → reverses a ban (super admin only)
-- **Manually Activate Subscription** → override for special cases (super admin only)
-
-### Platform Catalog Management
-Catalog managers can create and update platform products and pricing plans via the admin portal. These actions go through `catalog` module use cases internally.
-
-### Platform Fee & Revenue Analytics
-Finance analysts can view:
-- Total transaction volume across all organizations for any period
-- Platform fee revenue (AtlasHub's cut) per period
-- Settlement totals from Paystack/Moniepoint
-- Organization-level transaction summaries
 
 ### Internal Notes
-Support agents can leave internal notes on any organization's record (`AdminNote`). Notes are visible only to admin staff, not to the organization.
+Support agents can attach `AdminNote` records to any organization's record. Notes are internal-only — never visible to the organization.
 
-### Audit Log Access
-Super admins can query the full platform audit log — every state-changing action, who performed it, and when.
+### Platform Revenue Analytics
+Finance analysts query `GetPlatformRevenueReport` for total transaction volume, platform fee revenue, and settlement summaries across a date range.
 
 ---
 
-## 3. Domain Entities & Aggregates
+## 2. Domain Layer
 
-### `AdminStaff` (Aggregate Root)
+### 2.1 Aggregates & Entities
+
+#### `AdminStaff` (Aggregate Root)
 
 ```
 AdminStaff
 ├── id: Long
-├── userId: Long                     ← references accounts:User
-├── staffRole: AdminStaffRole        ← SUPER_ADMIN, COMPLIANCE_OFFICER, SUPPORT_AGENT, FINANCE_ANALYST, CATALOG_MANAGER
-├── isActive: Boolean
+├── userId: Long                     ← references auth:User
+├── staffRole: AdminStaffRole        ← SUPER_ADMIN | COMPLIANCE_OFFICER | SUPPORT_AGENT | FINANCE_ANALYST | CATALOG_MANAGER
+├── active: Boolean
 ├── onboardedAt: ZonedDateTime
 └── deactivatedAt: ZonedDateTime     ← nullable
 ```
 
 **Business Methods:**
-- `deactivate()` — only a SUPER_ADMIN can deactivate another admin
-- `changeRole(AdminStaffRole newRole)` — only SUPER_ADMIN
+- `deactivate()` → sets `active = false`, records `deactivatedAt` — guard: staff must currently be active
+- `changeRole(AdminStaffRole newRole)` → updates `staffRole`
 
 ---
 
-### `KycReviewTask` (Aggregate Root)
+#### `KycReviewTask` (Aggregate Root)
 
 ```
 KycReviewTask
 ├── id: Long
 ├── organizationId: Long
-├── status: ReviewTaskStatus         ← OPEN, IN_REVIEW, WAITING_ON_ORG, APPROVED, REJECTED
+├── status: ReviewTaskStatus         ← OPEN | IN_REVIEW | WAITING_ON_ORG | APPROVED | REJECTED
 ├── assignedTo: Long                 ← adminStaffId, nullable
-├── assignedAt: ZonedDateTime        ← nullable
-├── reviewNotes: String              ← internal notes from reviewer
+├── reviewNotes: String              ← internal notes from reviewer, nullable
 ├── rejectionReason: String          ← nullable
-├── submissionCount: Integer         ← how many times org has submitted (re-submissions tracked)
+├── submissionCount: Integer         ← increments on each org re-submission
 ├── createdAt: ZonedDateTime
 └── resolvedAt: ZonedDateTime        ← nullable
 ```
 
 **Business Methods:**
-- `assign(Long staffId)` → sets OPEN → IN_REVIEW
-- `approve(Long staffId)` → IN_REVIEW → APPROVED → delegates to `compliance:ApproveComplianceUseCase`
-- `reject(Long staffId, String reason)` → IN_REVIEW → REJECTED → delegates to `compliance:RejectComplianceUseCase`
-- `requestMoreInfo(Long staffId, String notes)` → IN_REVIEW → WAITING_ON_ORG
+- `assign(Long staffId)` → transitions `OPEN → IN_REVIEW`, sets `assignedTo`
+- `approve(Long staffId)` → transitions `IN_REVIEW → APPROVED`, records `resolvedAt` → registers `KycApprovedEvent`
+- `reject(Long staffId, String reason)` → transitions `IN_REVIEW → REJECTED`, records `resolvedAt` and `rejectionReason` → registers `KycRejectedEvent`
+- `requestMoreInfo(Long staffId, String notes)` → transitions `IN_REVIEW → WAITING_ON_ORG`, records `reviewNotes`
+
+**Domain Rules:**
+- A task can only be approved or rejected from `IN_REVIEW` status — guard throws `ReviewTaskAlreadyResolvedException` if already `APPROVED` or `REJECTED`
+- Only the `assignedTo` staff member can take action on an `IN_REVIEW` task (or a SUPER_ADMIN)
 
 ---
 
-### `AdminNote` (Entity)
+#### `AdminNote` (Entity)
 
 ```
 AdminNote
@@ -106,55 +97,766 @@ AdminNote
 ├── organizationId: Long
 ├── createdBy: Long                  ← adminStaffId
 ├── content: String
-├── category: NoteCategory           ← COMPLIANCE, SUPPORT, FINANCIAL, GENERAL
+├── category: NoteCategory           ← COMPLIANCE | SUPPORT | FINANCIAL | GENERAL
 └── createdAt: ZonedDateTime
 ```
 
 ---
 
-## 4. Domain Events
+### 2.2 Domain Port
+
+```java
+// com.atlashub.admin.domain.ports/
+public interface ComplianceActionPort {
+    void approve(Long organizationId, Long adminUserId);
+    void reject(Long organizationId, Long adminUserId, String reason);
+}
+```
+
+Implemented in `infrastructure/services/ComplianceActionAdapter`, which calls the `compliance` module's `ApproveComplianceCommand` and `RejectComplianceCommand` handlers cross-module. This port prevents the `admin` domain from importing compliance internals.
+
+---
+
+### 2.3 Value Objects
+
+| Type | Kind | Values |
+|---|---|---|
+| `AdminStaffRole` | Enum | `SUPER_ADMIN`, `COMPLIANCE_OFFICER`, `SUPPORT_AGENT`, `FINANCE_ANALYST`, `CATALOG_MANAGER` |
+| `ReviewTaskStatus` | Enum | `OPEN`, `IN_REVIEW`, `WAITING_ON_ORG`, `APPROVED`, `REJECTED` |
+| `NoteCategory` | Enum | `COMPLIANCE`, `SUPPORT`, `FINANCIAL`, `GENERAL` |
+
+---
+
+### 2.4 Domain Events
 
 | Event | Published When | Consumed By |
 |---|---|---|
-| `KycReviewTaskCreatedEvent` | Compliance submitted | `notifications` (alert compliance officers) |
-| `KycApprovedEvent` | Admin approves KYC | `compliance` (approve), `notifications` (email org) |
-| `KycRejectedEvent` | Admin rejects KYC | `compliance` (reject), `notifications` (email org with reason) |
-| `OrganizationBannedEvent` | Admin bans org | `pay:accounts` (freeze virtual accounts), `billing` (cancel all subscriptions), `notifications` |
+| `KycReviewTaskCreatedEvent` | `ComplianceSubmittedEvent` received → task created | `notifications` (alert compliance officers) |
+| `KycApprovedEvent` | Admin approves KYC task | `compliance` (approve record via port), `notifications` (email org) |
+| `KycRejectedEvent` | Admin rejects KYC task | `compliance` (reject record via port), `notifications` (email org with reason) |
+| `OrganizationBannedEvent` | Admin bans org | `pay:accounts` (freeze virtual accounts), `billing` (cancel subscriptions), `notifications` |
+| `OrganizationUnbannedEvent` | Super admin unbans org | `billing` (restore subscriptions), `notifications` |
 
 ---
 
-## 5. Exceptions & Errors
+### 2.5 Domain Exceptions
 
-**`AdminErrorCode`**:
-- `STAFF_NOT_FOUND`, `STAFF_ALREADY_ACTIVE`, `INSUFFICIENT_ADMIN_PRIVILEGES`
-- `REVIEW_TASK_NOT_FOUND`, `REVIEW_TASK_ALREADY_RESOLVED`
-- `ORGANIZATION_ALREADY_BANNED`, `ORGANIZATION_NOT_BANNED`
+```java
+public class AdminStaffNotFoundException extends NotFoundException {
+    public AdminStaffNotFoundException(Long staffId) {
+        super("Admin staff not found: " + staffId);
+    }
+}
+
+public class InsufficientAdminPrivilegesException extends AuthorizationException {
+    public InsufficientAdminPrivilegesException(String message) { super(message); }
+}
+
+public class ReviewTaskNotFoundException extends NotFoundException {
+    public ReviewTaskNotFoundException(Long taskId) {
+        super("KYC review task not found: " + taskId);
+    }
+}
+
+public class ReviewTaskAlreadyResolvedException extends BusinessRuleException {
+    public ReviewTaskAlreadyResolvedException(Long taskId) {
+        super("KYC review task " + taskId + " is already resolved");
+    }
+}
+
+public class OrganizationAlreadyBannedException extends ConflictException {
+    public OrganizationAlreadyBannedException(Long orgId) {
+        super("Organization " + orgId + " is already banned");
+    }
+}
+```
 
 ---
 
-## 6. Commands & Use Cases
+## 3. Application Layer
 
-- `OnboardAdminStaffCommand(userId, staffRole)` → `OnboardAdminStaffUseCase`
-- `AssignKycReviewTaskCommand(taskId, staffId)` → `AssignKycReviewTaskUseCase`
-- `ApproveKycCommand(taskId, staffId)` → `ApproveKycUseCase`
-- `RejectKycCommand(taskId, staffId, reason)` → `RejectKycUseCase`
-- `RequestMoreKycInfoCommand(taskId, staffId, notes)` → `RequestMoreKycInfoUseCase`
-- `BanOrganizationCommand(orgId, staffId, reason)` → `BanOrganizationUseCase`
-- `UnbanOrganizationCommand(orgId, staffId)` → `UnbanOrganizationUseCase`
-- `AddAdminNoteCommand(orgId, staffId, content, category)` → `AddAdminNoteUseCase`
+### 3.1 Commands
 
----
+#### `OnboardAdminStaffCommand`
 
-## 7. Queries
+```java
+public record OnboardAdminStaffCommand(
+    Long userId,
+    AdminStaffRole staffRole
+) {}
+```
 
-- `ListKycReviewTasksQuery(status, assignedTo)` → `Page<KycReviewTaskResult>`
-- `GetOrganizationAdminViewQuery(orgId)` → `OrganizationAdminViewResult` — full org details for admin
-- `ListAdminNotesQuery(orgId)` → `List<AdminNoteResult>`
-- `GetPlatformRevenueReportQuery(dateFrom, dateTo)` → `PlatformRevenueReport`
-- `ListAdminStaffQuery(role, isActive)` → `List<AdminStaffResult>`
+**Handler:** `OnboardAdminStaffHandler extends Command<OnboardAdminStaffCommand, OnboardAdminStaffResponse>`
+- Creates `AdminStaff` aggregate
+- Returns `OnboardAdminStaffResponse(Long staffId)`
+- **RBAC:** `@PreAuthorize("hasAuthority('admin:staff:manage')")`
 
 ---
 
-## 8. Listeners
+#### `DeactivateAdminStaffCommand`
 
-- **`ComplianceSubmittedListener`**: `ComplianceSubmittedEvent` from `compliance`. Creates a `KycReviewTask` and notifies compliance officers via `notifications`.
+```java
+public record DeactivateAdminStaffCommand(Long staffId) {}
+```
+
+**Handler:** `DeactivateAdminStaffHandler extends Command<DeactivateAdminStaffCommand, Void>`
+- Loads `AdminStaff` → throws `AdminStaffNotFoundException`
+- Calls `staff.deactivate()`
+- **RBAC:** `@PreAuthorize("hasAuthority('admin:staff:manage')")`
+
+---
+
+#### `ChangeAdminStaffRoleCommand`
+
+```java
+public record ChangeAdminStaffRoleCommand(
+    Long staffId,
+    AdminStaffRole newRole
+) {}
+```
+
+**Handler:** `ChangeAdminStaffRoleHandler extends Command<ChangeAdminStaffRoleCommand, Void>`
+- **RBAC:** `@PreAuthorize("hasAuthority('admin:staff:manage')")`
+
+---
+
+#### `AssignKycReviewTaskCommand`
+
+```java
+public record AssignKycReviewTaskCommand(
+    Long taskId,
+    Long staffId
+) {}
+```
+
+**Handler:** `AssignKycReviewTaskHandler extends Command<AssignKycReviewTaskCommand, Void>`
+- Loads `KycReviewTask` → throws `ReviewTaskNotFoundException`
+- Calls `task.assign(staffId)`
+- **RBAC:** `@PreAuthorize("hasAuthority('admin:kyc:approve')")`
+
+---
+
+#### `ApproveKycCommand`
+
+```java
+public record ApproveKycCommand(
+    Long taskId,
+    Long staffId
+) {}
+```
+
+**Handler:** `ApproveKycHandler extends Command<ApproveKycCommand, Void>`
+- Loads task → throws `ReviewTaskNotFoundException`, `ReviewTaskAlreadyResolvedException`
+- Calls `task.approve(staffId)` → registers `KycApprovedEvent`
+- Calls `complianceActionPort.approve(task.organizationId(), staffId)` — cross-module
+- Publishes domain events
+- **RBAC:** `@PreAuthorize("hasAuthority('admin:kyc:approve')")`
+
+---
+
+#### `RejectKycCommand`
+
+```java
+public record RejectKycCommand(
+    Long taskId,
+    Long staffId,
+    String reason
+) {}
+```
+
+**Handler:** `RejectKycHandler extends Command<RejectKycCommand, Void>`
+- Loads task → validates state
+- Calls `task.reject(staffId, reason)` → registers `KycRejectedEvent`
+- Calls `complianceActionPort.reject(task.organizationId(), staffId, reason)`
+- **RBAC:** `@PreAuthorize("hasAuthority('admin:kyc:reject')")`
+
+---
+
+#### `RequestMoreKycInfoCommand`
+
+```java
+public record RequestMoreKycInfoCommand(
+    Long taskId,
+    Long staffId,
+    String notes
+) {}
+```
+
+**Handler:** `RequestMoreKycInfoHandler extends Command<RequestMoreKycInfoCommand, Void>`
+- Calls `task.requestMoreInfo(staffId, notes)`
+- **RBAC:** `@PreAuthorize("hasAuthority('admin:kyc:approve')")`
+
+---
+
+#### `BanOrganizationCommand`
+
+```java
+public record BanOrganizationCommand(
+    Long organizationId,
+    Long staffId,
+    String reason
+) {}
+```
+
+**Handler:** `BanOrganizationHandler extends Command<BanOrganizationCommand, Void>`
+- Validates org is not already banned → throws `OrganizationAlreadyBannedException`
+- Records ban with reason, publishes `OrganizationBannedEvent`
+- **RBAC:** `@PreAuthorize("hasAuthority('admin:organizations:ban')")`
+
+---
+
+#### `UnbanOrganizationCommand`
+
+```java
+public record UnbanOrganizationCommand(
+    Long organizationId,
+    Long staffId
+) {}
+```
+
+**Handler:** `UnbanOrganizationHandler extends Command<UnbanOrganizationCommand, Void>`
+- Validates org is currently banned
+- Publishes `OrganizationUnbannedEvent`
+- **RBAC:** `@PreAuthorize("hasAuthority('admin:organizations:ban')")`
+
+---
+
+#### `AddAdminNoteCommand`
+
+```java
+public record AddAdminNoteCommand(
+    Long organizationId,
+    Long staffId,
+    String content,
+    NoteCategory category
+) {}
+```
+
+**Handler:** `AddAdminNoteHandler extends Command<AddAdminNoteCommand, AddAdminNoteResponse>`
+- Creates `AdminNote`, persists
+- Returns `AddAdminNoteResponse(Long noteId)`
+- **RBAC:** any authenticated admin staff member
+
+---
+
+### 3.2 Queries
+
+#### `ListKycReviewTasksQuery`
+
+```java
+public record ListKycReviewTasksQuery(
+    ReviewTaskStatus status,     // nullable — filter
+    Long assignedTo,             // nullable — filter by staff
+    int page,
+    int size
+) {}
+```
+
+**Handler:** `ListKycReviewTasksHandler extends Query<ListKycReviewTasksQuery, PageResult<KycReviewTaskResult>>`
+**Returns:** `PageResult<KycReviewTaskResult>` — compliance officers work through potentially many tasks from multiple organizations; this is a user-facing pageable queue view.
+
+---
+
+#### `GetOrganizationAdminViewQuery`
+
+```java
+public record GetOrganizationAdminViewQuery(Long organizationId) {}
+```
+
+**Handler:** `GetOrganizationAdminViewHandler extends Query<GetOrganizationAdminViewQuery, OrganizationAdminViewResult>`
+**Returns:** single composite result — pulls org profile, compliance status, ban status, and recent KYC task history.
+
+---
+
+#### `ListAdminNotesQuery`
+
+```java
+public record ListAdminNotesQuery(Long organizationId) {}
+```
+
+**Handler:** `ListAdminNotesHandler extends Query<ListAdminNotesQuery, List<AdminNoteResult>>`
+**Returns:** `List<AdminNoteResult>` — notes on a given org are a small bounded set; never paginated in admin tooling.
+
+---
+
+#### `GetPlatformRevenueReportQuery`
+
+```java
+public record GetPlatformRevenueReportQuery(
+    LocalDate dateFrom,
+    LocalDate dateTo
+) {}
+```
+
+**Handler:** `GetPlatformRevenueReportHandler extends Query<GetPlatformRevenueReportQuery, PlatformRevenueReportResult>`
+**Returns:** single report result.
+**RBAC:** `@PreAuthorize("hasAuthority('admin:kyc:approve') or hasAuthority('admin:staff:manage')")`
+
+---
+
+#### `ListAdminStaffQuery`
+
+```java
+public record ListAdminStaffQuery(
+    AdminStaffRole role,    // nullable
+    Boolean isActive        // nullable
+) {}
+```
+
+**Handler:** `ListAdminStaffHandler extends Query<ListAdminStaffQuery, List<AdminStaffResult>>`
+**Returns:** `List<AdminStaffResult>` — the platform's internal staff list is a small bounded set.
+
+---
+
+## 4. Infrastructure Layer
+
+### 4.1 Persistence
+
+#### JPA Entities
+
+| JPA Entity | Domain Type | Table |
+|---|---|---|
+| `AdminStaffJpaEntity` | `AdminStaff` | `admin_staff` |
+| `KycReviewTaskJpaEntity` | `KycReviewTask` | `kyc_review_tasks` |
+| `AdminNoteJpaEntity` | `AdminNote` | `admin_notes` |
+
+`KycReviewTaskJpaEntity` uses `@Version` for optimistic locking (concurrent assignment prevention).
+
+#### Spring Data Repositories
+
+```java
+// infrastructure/persistence/repositories/
+AdminStaffJpaRepository extends JpaRepository<AdminStaffJpaEntity, Long> {
+    Optional<AdminStaffJpaEntity> findByUserId(Long userId);
+    List<AdminStaffJpaEntity> findByStaffRoleAndActive(AdminStaffRole, Boolean);
+}
+KycReviewTaskJpaRepository extends JpaRepository<KycReviewTaskJpaEntity, Long> {
+    Page<KycReviewTaskJpaEntity> findByStatusAndAssignedTo(ReviewTaskStatus, Long, Pageable);
+    Optional<KycReviewTaskJpaEntity> findByOrganizationIdAndStatusNotIn(Long, List<ReviewTaskStatus>);
+}
+AdminNoteJpaRepository extends JpaRepository<AdminNoteJpaEntity, Long> {
+    List<AdminNoteJpaEntity> findByOrganizationIdOrderByCreatedAtDesc(Long organizationId);
+}
+```
+
+#### Persistence Adapters
+
+```java
+// infrastructure/persistence/adapters/
+AdminStaffPersistenceAdapter        // implements AdminStaffRepository (domain)
+KycReviewTaskPersistenceAdapter     // implements KycReviewTaskRepository (domain)
+AdminNotePersistenceAdapter         // implements AdminNoteRepository (domain)
+```
+
+#### Mappers
+
+```java
+// infrastructure/persistence/mappers/
+AdminStaffMapper
+KycReviewTaskMapper
+AdminNoteMapper
+```
+
+---
+
+### 4.2 Kafka Listeners
+
+#### `ComplianceSubmittedListener`
+
+| Property | Value |
+|---|---|
+| Topic | `compliance-events` |
+| Group ID | `admin-compliance-group` |
+| Event handled | `ComplianceSubmittedEvent` |
+| Command invoked | Creates `KycReviewTask` directly (no command — task is a new aggregate) |
+
+```java
+@Component
+public class ComplianceSubmittedListener extends BaseKafkaEventListener {
+    private static final String GROUP_ID = "admin-compliance-group";
+
+    @PostConstruct
+    public void init() { registerSubscription("ComplianceSubmittedEvent", GROUP_ID); }
+
+    @KafkaListener(topics = "compliance-events", groupId = GROUP_ID)
+    public void listen(String messagePayload) {
+        processEventIfMatches(messagePayload, "ComplianceSubmittedEvent",
+            ComplianceSubmittedEvent.class, log, GROUP_ID,
+            e -> e instanceof TimeoutException,
+            event -> {
+                // Creates KycReviewTask for the organization
+                kycReviewTaskRepository.save(KycReviewTask.open(event.payload().organizationId()));
+            });
+    }
+}
+```
+
+---
+
+### 4.3 Infrastructure Services
+
+```java
+// infrastructure/services/
+ComplianceActionAdapter    // implements ComplianceActionPort (domain)
+                           // calls compliance module's ApproveComplianceHandler and RejectComplianceHandler
+```
+
+---
+
+## 5. Presentation Layer
+
+### 5.1 Controllers
+
+#### `AdminStaffController` — `/api/v1/admin/staff`
+
+| Method | Path | Auth | RBAC | Description |
+|---|---|---|---|---|
+| `POST` | `/` | Bearer | `admin:staff:manage` | Onboard a new admin staff member |
+| `DELETE` | `/{staffId}` | Bearer | `admin:staff:manage` | Deactivate admin staff |
+| `PUT` | `/{staffId}/role` | Bearer | `admin:staff:manage` | Change admin staff role |
+| `GET` | `/` | Bearer | `admin:staff:manage` | List admin staff (filterable by role, isActive) |
+
+---
+
+#### `KycReviewController` — `/api/v1/admin/kyc`
+
+| Method | Path | Auth | RBAC | Description |
+|---|---|---|---|---|
+| `GET` | `/tasks` | Bearer | `admin:kyc:approve` | List review tasks (paged, filterable) |
+| `POST` | `/tasks/{taskId}/assign` | Bearer | `admin:kyc:approve` | Assign task to a staff member |
+| `POST` | `/tasks/{taskId}/approve` | Bearer | `admin:kyc:approve` | Approve KYC submission |
+| `POST` | `/tasks/{taskId}/reject` | Bearer | `admin:kyc:reject` | Reject KYC with reason |
+| `POST` | `/tasks/{taskId}/request-info` | Bearer | `admin:kyc:approve` | Set task to WAITING_ON_ORG |
+
+---
+
+#### `AdminOrganizationController` — `/api/v1/admin/organizations`
+
+| Method | Path | Auth | RBAC | Description |
+|---|---|---|---|---|
+| `GET` | `/{orgId}` | Bearer | any admin staff | Get org admin view (compliance + bans + notes) |
+| `POST` | `/{orgId}/ban` | Bearer | `admin:organizations:ban` | Ban an organization |
+| `POST` | `/{orgId}/unban` | Bearer | `admin:organizations:ban` | Unban an organization |
+| `GET` | `/{orgId}/notes` | Bearer | any admin staff | List internal notes for org |
+| `POST` | `/{orgId}/notes` | Bearer | any admin staff | Add internal note to org |
+
+---
+
+#### `AdminReportController` — `/api/v1/admin/reports`
+
+| Method | Path | Auth | RBAC | Description |
+|---|---|---|---|---|
+| `GET` | `/revenue` | Bearer | `admin:staff:manage` or `admin:kyc:approve` | Platform revenue report |
+
+---
+
+### 5.2 Request/Response DTOs
+
+#### `OnboardAdminStaffRequest`
+```java
+public record OnboardAdminStaffRequest(
+    @NotNull Long userId,
+    @NotNull AdminStaffRole staffRole
+) {}
+```
+
+#### `OnboardAdminStaffResponse`
+```java
+public record OnboardAdminStaffResponse(Long staffId) {}
+```
+
+#### `ChangeAdminRoleRequest`
+```java
+public record ChangeAdminRoleRequest(@NotNull AdminStaffRole newRole) {}
+```
+
+#### `AdminStaffResult`
+```java
+public record AdminStaffResult(
+    Long id,
+    Long userId,
+    AdminStaffRole staffRole,
+    Boolean active,
+    ZonedDateTime onboardedAt,
+    ZonedDateTime deactivatedAt
+) {}
+```
+
+#### `AssignTaskRequest`
+```java
+public record AssignTaskRequest(@NotNull Long staffId) {}
+```
+
+#### `RejectKycRequest`
+```java
+public record RejectKycRequest(@NotBlank String reason) {}
+```
+
+#### `RequestMoreInfoRequest`
+```java
+public record RequestMoreInfoRequest(@NotBlank String notes) {}
+```
+
+#### `KycReviewTaskResult`
+```java
+public record KycReviewTaskResult(
+    Long id,
+    Long organizationId,
+    ReviewTaskStatus status,
+    Long assignedTo,
+    String reviewNotes,
+    String rejectionReason,
+    Integer submissionCount,
+    ZonedDateTime createdAt,
+    ZonedDateTime resolvedAt
+) {}
+```
+
+#### `BanOrganizationRequest`
+```java
+public record BanOrganizationRequest(@NotBlank String reason) {}
+```
+
+#### `AddAdminNoteRequest`
+```java
+public record AddAdminNoteRequest(
+    @NotBlank String content,
+    @NotNull NoteCategory category
+) {}
+```
+
+#### `AdminNoteResult`
+```java
+public record AdminNoteResult(
+    Long id,
+    Long organizationId,
+    Long createdBy,
+    String content,
+    NoteCategory category,
+    ZonedDateTime createdAt
+) {}
+```
+
+#### `OrganizationAdminViewResult`
+```java
+public record OrganizationAdminViewResult(
+    Long organizationId,
+    String organizationName,
+    String complianceStatus,
+    Boolean isBanned,
+    String banReason,
+    KycReviewTaskResult latestReviewTask
+) {}
+```
+
+#### `PlatformRevenueReportResult`
+```java
+public record PlatformRevenueReportResult(
+    LocalDate dateFrom,
+    LocalDate dateTo,
+    BigDecimal totalTransactionVolume,
+    BigDecimal totalPlatformFeeRevenue,
+    String currency
+) {}
+```
+
+---
+
+## 6. RBAC Table
+
+| Operation | Permission Required | Notes |
+|---|---|---|
+| Onboard admin staff | `admin:staff:manage` | SUPER_ADMIN only in practice |
+| Deactivate admin staff | `admin:staff:manage` | |
+| Change admin staff role | `admin:staff:manage` | |
+| List admin staff | `admin:staff:manage` | |
+| List/assign KYC review tasks | `admin:kyc:approve` | COMPLIANCE_OFFICER |
+| Approve KYC | `admin:kyc:approve` | |
+| Reject KYC | `admin:kyc:reject` | Separate permission from approve |
+| Request more KYC info | `admin:kyc:approve` | |
+| View organization admin view | any authenticated admin | |
+| Add internal note | any authenticated admin | |
+| Ban organization | `admin:organizations:ban` | |
+| Unban organization | `admin:organizations:ban` | |
+| View revenue report | `admin:staff:manage` or `admin:kyc:approve` | |
+
+---
+
+## 7. Maker-Checker
+
+The admin module does not enforce Maker-Checker directly. However, by design:
+- KYC approval requires a **different staff member** to approve than whoever submitted the compliance data (enforced by `compliance` module when `complianceActionPort.approve()` is called)
+- The KYC task `assignedTo` field tracks who last acted on the task for auditability
+
+---
+
+## 8. Socket Events
+
+The `admin` module does not push WebSocket events directly. However, the following domain events published by `admin` may result in WebSocket pushes handled by `SelectiveWebSocketBroadcaster` in the `notifications` module:
+
+| Domain Event | Possible WS Push | Notes |
+|---|---|---|
+| `KycReviewTaskCreatedEvent` | None — email notification only | No human is watching the admin dashboard live for this |
+| `OrganizationBannedEvent` | None — processed async | Downstream modules handle via Kafka |
+
+---
+
+## 9. Domain Events Table
+
+| Event | Published When | Consumed By |
+|---|---|---|
+| `KycReviewTaskCreatedEvent` | `ComplianceSubmittedEvent` received | `notifications` (alert compliance officers) |
+| `KycApprovedEvent` | Admin approves KYC task | `compliance` (via port), `notifications` |
+| `KycRejectedEvent` | Admin rejects KYC task | `compliance` (via port), `notifications` |
+| `OrganizationBannedEvent` | Admin bans org | `pay:accounts`, `billing`, `notifications` |
+| `OrganizationUnbannedEvent` | Super admin unbans org | `billing`, `notifications` |
+
+---
+
+## 10. Distributed Architecture
+
+### Locking
+- **Optimistic Locking (`@Version`)**: `KycReviewTaskJpaEntity` — prevents two compliance officers from simultaneously assigning the same open task
+
+### Outbox & Inbox
+- **Outbox**: `OrganizationBannedEvent` and `KycApprovedEvent` — must be delivered reliably as they trigger subscription cancellations and NUBAN issuance in downstream modules
+- **Inbox**: `ComplianceSubmittedEvent` — processed idempotently. If replayed, the listener checks whether a task already exists for the `organizationId` before creating another
+
+### Cross-Module Call
+The `ComplianceActionAdapter` calls compliance module handlers synchronously within the same JVM (intra-service call, no HTTP). This is acceptable because `admin` and `compliance` are in the same deployment unit (`atlashub-platform`). The domain port boundary ensures the `admin` domain model remains decoupled from compliance internals.
+
+---
+
+## 11. Complete File List
+
+```
+atlashub-platform/admin/src/main/java/com/atlashub/admin/
+│
+├── domain/
+│   ├── entities/
+│   │   ├── AdminNote.java
+│   │   ├── AdminStaff.java
+│   │   └── KycReviewTask.java
+│   ├── events/
+│   │   ├── KycApprovedEvent.java
+│   │   ├── KycRejectedEvent.java
+│   │   ├── KycReviewTaskCreatedEvent.java
+│   │   ├── OrganizationBannedEvent.java
+│   │   └── OrganizationUnbannedEvent.java
+│   ├── exceptions/
+│   │   ├── AdminStaffNotFoundException.java
+│   │   ├── InsufficientAdminPrivilegesException.java
+│   │   ├── OrganizationAlreadyBannedException.java
+│   │   ├── ReviewTaskAlreadyResolvedException.java
+│   │   └── ReviewTaskNotFoundException.java
+│   ├── ports/
+│   │   └── ComplianceActionPort.java
+│   ├── repositories/
+│   │   ├── AdminNoteRepository.java
+│   │   ├── AdminStaffRepository.java
+│   │   └── KycReviewTaskRepository.java
+│   └── valueobject/
+│       ├── AdminStaffRole.java
+│       ├── NoteCategory.java
+│       └── ReviewTaskStatus.java
+│
+├── application/
+│   ├── commands/
+│   │   ├── AddAdminNote/
+│   │   │   ├── AddAdminNoteCommand.java
+│   │   │   ├── AddAdminNoteHandler.java
+│   │   │   └── AddAdminNoteResponse.java
+│   │   ├── ApproveKyc/
+│   │   │   ├── ApproveKycCommand.java
+│   │   │   └── ApproveKycHandler.java
+│   │   ├── AssignKycReviewTask/
+│   │   │   ├── AssignKycReviewTaskCommand.java
+│   │   │   └── AssignKycReviewTaskHandler.java
+│   │   ├── BanOrganization/
+│   │   │   ├── BanOrganizationCommand.java
+│   │   │   └── BanOrganizationHandler.java
+│   │   ├── ChangeAdminStaffRole/
+│   │   │   ├── ChangeAdminStaffRoleCommand.java
+│   │   │   └── ChangeAdminStaffRoleHandler.java
+│   │   ├── DeactivateAdminStaff/
+│   │   │   ├── DeactivateAdminStaffCommand.java
+│   │   │   └── DeactivateAdminStaffHandler.java
+│   │   ├── OnboardAdminStaff/
+│   │   │   ├── OnboardAdminStaffCommand.java
+│   │   │   ├── OnboardAdminStaffHandler.java
+│   │   │   └── OnboardAdminStaffResponse.java
+│   │   ├── RejectKyc/
+│   │   │   ├── RejectKycCommand.java
+│   │   │   └── RejectKycHandler.java
+│   │   ├── RequestMoreKycInfo/
+│   │   │   ├── RequestMoreKycInfoCommand.java
+│   │   │   └── RequestMoreKycInfoHandler.java
+│   │   └── UnbanOrganization/
+│   │       ├── UnbanOrganizationCommand.java
+│   │       └── UnbanOrganizationHandler.java
+│   └── queries/
+│       ├── GetOrganizationAdminView/
+│       │   ├── GetOrganizationAdminViewQuery.java
+│       │   ├── GetOrganizationAdminViewHandler.java
+│       │   └── OrganizationAdminViewResult.java
+│       ├── GetPlatformRevenueReport/
+│       │   ├── GetPlatformRevenueReportQuery.java
+│       │   ├── GetPlatformRevenueReportHandler.java
+│       │   └── PlatformRevenueReportResult.java
+│       ├── ListAdminNotes/
+│       │   ├── ListAdminNotesQuery.java
+│       │   ├── ListAdminNotesHandler.java
+│       │   └── AdminNoteResult.java
+│       ├── ListAdminStaff/
+│       │   ├── ListAdminStaffQuery.java
+│       │   ├── ListAdminStaffHandler.java
+│       │   └── AdminStaffResult.java
+│       └── ListKycReviewTasks/
+│           ├── ListKycReviewTasksQuery.java
+│           ├── ListKycReviewTasksHandler.java
+│           └── KycReviewTaskResult.java
+│
+├── infrastructure/
+│   ├── messaging/
+│   │   └── listeners/
+│   │       └── ComplianceSubmittedListener.java
+│   ├── persistence/
+│   │   ├── adapters/
+│   │   │   ├── AdminNotePersistenceAdapter.java
+│   │   │   ├── AdminStaffPersistenceAdapter.java
+│   │   │   └── KycReviewTaskPersistenceAdapter.java
+│   │   ├── entities/
+│   │   │   ├── AdminNoteJpaEntity.java
+│   │   │   ├── AdminStaffJpaEntity.java
+│   │   │   └── KycReviewTaskJpaEntity.java
+│   │   ├── mappers/
+│   │   │   ├── AdminNoteMapper.java
+│   │   │   ├── AdminStaffMapper.java
+│   │   │   └── KycReviewTaskMapper.java
+│   │   └── repositories/
+│   │       ├── AdminNoteJpaRepository.java
+│   │       ├── AdminStaffJpaRepository.java
+│   │       └── KycReviewTaskJpaRepository.java
+│   └── services/
+│       └── ComplianceActionAdapter.java
+│
+└── presentation/
+    ├── dto/
+    │   ├── AddAdminNoteRequest.java
+    │   ├── AdminNoteResult.java
+    │   ├── AdminStaffResult.java
+    │   ├── AssignTaskRequest.java
+    │   ├── BanOrganizationRequest.java
+    │   ├── ChangeAdminRoleRequest.java
+    │   ├── KycReviewTaskResult.java
+    │   ├── OnboardAdminStaffRequest.java
+    │   ├── OrganizationAdminViewResult.java
+    │   ├── PlatformRevenueReportResult.java
+    │   ├── RejectKycRequest.java
+    │   └── RequestMoreInfoRequest.java
+    └── rest/
+        ├── AdminOrganizationController.java
+        ├── AdminReportController.java
+        ├── AdminStaffController.java
+        └── KycReviewController.java
+```

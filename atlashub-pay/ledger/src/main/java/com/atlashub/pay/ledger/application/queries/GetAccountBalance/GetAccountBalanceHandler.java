@@ -49,15 +49,11 @@ public class GetAccountBalanceHandler extends Query<GetAccountBalanceQuery, Acco
             throw new IllegalArgumentException("Account does not belong to the given organization");
         }
 
-        BalanceSnapshot snapshot = snapshotRepository.findLatestByAccountId(account.getId()).orElse(null);
+        BalanceSnapshot snapshot = snapshotRepository.findLatestByAccountId(account.getId())
+                .orElseThrow(() -> new IllegalStateException("Account missing initial balance snapshot"));
 
-        BigDecimal balance = BigDecimal.ZERO;
-        ZonedDateTime snapshotDate = ZonedDateTime.of(1970, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC);
-
-        if (snapshot != null) {
-            balance = snapshot.getBalance().amount();
-            snapshotDate = snapshot.getSnapshotAt();
-        }
+        BigDecimal balance = snapshot.getBalance().amount();
+        ZonedDateTime snapshotDate = snapshot.getSnapshotAt();
 
         List<LedgerTransaction> transactions = transactionRepository.findByAccountIdAndPostedAtAfter(account.getId(), snapshotDate);
 

@@ -9,7 +9,42 @@
   <component name="ChangeListManager">
     <list default="true" id="174f3fac-956e-4ce4-b2e2-bac8d3e75c4d" name="Changes" comment="fix: file system">
       <changelist_data name="Iyanda Olamidotun" email="olamidotun225@gmail.com" automatic="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-platform/notifications/src/main/java/com/atlashub/notifications/domain/entities/NotificationDelivery.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/notifications/src/main/java/com/atlashub/notifications/domain/entities/NotificationDelivery.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.agents/skills/create-application-command/SKILL.md" beforeDir="false" afterPath="$PROJECT_DIR$/.agents/skills/create-application-command/SKILL.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.agents/skills/create-application-command/scripts/scaffold-command.ps1" beforeDir="false" afterPath="$PROJECT_DIR$/.agents/skills/create-application-command/scripts/scaffold-command.ps1" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.agents/skills/create-application-query/SKILL.md" beforeDir="false" afterPath="$PROJECT_DIR$/.agents/skills/create-application-query/SKILL.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.agents/skills/create-domain-entity/SKILL.md" beforeDir="false" afterPath="$PROJECT_DIR$/.agents/skills/create-domain-entity/SKILL.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.agents/skills/create-domain-entity/scripts/scaffold-entity.ps1" beforeDir="false" afterPath="$PROJECT_DIR$/.agents/skills/create-domain-entity/scripts/scaffold-entity.ps1" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.agents/skills/create-domain-error/SKILL.md" beforeDir="false" afterPath="$PROJECT_DIR$/.agents/skills/create-domain-error/SKILL.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.agents/skills/create-domain-event/SKILL.md" beforeDir="false" afterPath="$PROJECT_DIR$/.agents/skills/create-domain-event/SKILL.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.agents/skills/create-domain-mapper/SKILL.md" beforeDir="false" afterPath="$PROJECT_DIR$/.agents/skills/create-domain-mapper/SKILL.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.agents/skills/create-domain-mapper/scripts/scaffold-mapper.ps1" beforeDir="false" afterPath="$PROJECT_DIR$/.agents/skills/create-domain-mapper/scripts/scaffold-mapper.ps1" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.agents/skills/create-domain-repository/SKILL.md" beforeDir="false" afterPath="$PROJECT_DIR$/.agents/skills/create-domain-repository/SKILL.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.agents/skills/create-domain-valueobject/SKILL.md" beforeDir="false" afterPath="$PROJECT_DIR$/.agents/skills/create-domain-valueobject/SKILL.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.agents/skills/create-jpa-entity/SKILL.md" beforeDir="false" afterPath="$PROJECT_DIR$/.agents/skills/create-jpa-entity/SKILL.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.agents/skills/create-jpa-entity/scripts/scaffold-jpa-entity.ps1" beforeDir="false" afterPath="$PROJECT_DIR$/.agents/skills/create-jpa-entity/scripts/scaffold-jpa-entity.ps1" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.agents/skills/create-repository-adapter/SKILL.md" beforeDir="false" afterPath="$PROJECT_DIR$/.agents/skills/create-repository-adapter/SKILL.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.agents/skills/create-shared-query-port/SKILL.md" beforeDir="false" afterPath="$PROJECT_DIR$/.agents/skills/create-shared-query-port/SKILL.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.agents/skills/create-spring-data-repository/SKILL.md" beforeDir="false" afterPath="$PROJECT_DIR$/.agents/skills/create-spring-data-repository/SKILL.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/gradle.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/gradle.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-main/src/main/java/com/atlashub/main/config/SecurityConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-main/src/main/java/com/atlashub/main/config/SecurityConfig.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/pay/ledger/application/commands/PostLedgerTransaction/PostLedgerTransactionHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/pay/ledger/application/commands/PostLedgerTransaction/PostLedgerTransactionHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/pay/ledger/application/queries/GetWalletBalances/GetWalletBalancesHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/pay/ledger/application/queries/GetWalletBalances/GetWalletBalancesHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/pay/ledger/domain/repositories/BalanceSnapshotRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/pay/ledger/domain/repositories/BalanceSnapshotRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/compliance/src/main/java/com/atlashub/compliance/domain/entities/ComplianceRecord.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/compliance/src/main/java/com/atlashub/compliance/domain/entities/ComplianceRecord.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/notifications/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/notifications/build.gradle" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/architecture/maker-checker.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/architecture/maker-checker.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/architecture/rbac-design.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/architecture/rbac-design.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/architecture/sagas-design.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/architecture/sagas-design.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/modules/admin-design.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/modules/admin-design.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/modules/analytics-design.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/modules/analytics-design.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/modules/hotel-design.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/modules/hotel-design.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/modules/hr-design.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/modules/hr-design.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/modules/identity-design.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/modules/logistics-design.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/modules/logistics-design.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/modules/notifications-design.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/modules/notifications-design.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/modules/support-design.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/modules/support-design.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/settings.gradle" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -124,61 +159,61 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.3368083942164226" />
-      <entry key="MS500" value="1.8044083709419159" />
-      <entry key="S2" value="1.9470417940418547" />
-      <entry key="S5" value="1.9784703232069214" />
-      <entry key="S10" value="1.9891765884850496" />
-      <entry key="S30" value="1.9963791010770988" />
-      <entry key="S60" value="1.9981879087011116" />
-      <entry key="M2" value="1.99909354351888" />
-      <entry key="M5" value="1.999637318760254" />
-      <entry key="M10" value="1.999818646229231" />
-      <entry key="M15" value="1.9998825726960026" />
-      <entry key="M30" value="2.0072864585672505" />
-      <entry key="H1" value="2.915377408875057" />
-      <entry key="H2" value="15.626623440612816" />
-      <entry key="H4" value="62.6410374653242" />
-      <entry key="D1" value="614.6005624000287" />
-      <entry key="W1" value="1687.268372390115" />
+      <entry key="MS100" value="1.002824627687409" />
+      <entry key="MS500" value="1.661322552212976" />
+      <entry key="S2" value="3.042841011477388" />
+      <entry key="S5" value="3.571301849849259" />
+      <entry key="S10" value="3.7771654437339577" />
+      <entry key="S30" value="3.923750017484396" />
+      <entry key="S60" value="3.9616229442096627" />
+      <entry key="M2" value="3.980748028734495" />
+      <entry key="M5" value="3.9922839300581647" />
+      <entry key="M10" value="3.996139416813214" />
+      <entry key="M15" value="3.9974291862973272" />
+      <entry key="M30" value="4.006056209550136" />
+      <entry key="H1" value="4.91455977290841" />
+      <entry key="H2" value="17.62479761538576" />
+      <entry key="H4" value="64.63750398961558" />
+      <entry key="D1" value="616.5948457397182" />
+      <entry key="W1" value="1689.2661321236678" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
       <entry key="MS500" value="0.0" />
       <entry key="S2" value="0.0" />
-      <entry key="S5" value="1.1741423123490211E-251" />
-      <entry key="S10" value="4.4483107702344295E-126" />
-      <entry key="S30" value="2.5522914634990395E-42" />
-      <entry key="S60" value="2.252675082717304E-21" />
-      <entry key="M2" value="6.707214852682314E-11" />
-      <entry key="M5" value="1.291687591390005E-4" />
-      <entry key="M10" value="0.016072994927296455" />
-      <entry key="M15" value="0.0803299055404515" />
-      <entry key="M30" value="0.41897748451794264" />
-      <entry key="H1" value="1.9143034478469503" />
-      <entry key="H2" value="14.558914421550083" />
-      <entry key="H4" value="61.81356319285501" />
-      <entry key="D1" value="860.4845770362577" />
-      <entry key="W1" value="2157.808481473867" />
+      <entry key="S5" value="1.0000050471131918E-251" />
+      <entry key="S10" value="4.105214432341299E-126" />
+      <entry key="S30" value="2.4849091204355058E-42" />
+      <entry key="S60" value="2.2227400577773865E-21" />
+      <entry key="M2" value="6.662500872229367E-11" />
+      <entry key="M5" value="1.288236238276713E-4" />
+      <entry key="M10" value="0.01605150726766204" />
+      <entry key="M15" value="0.08025829530213628" />
+      <entry key="M30" value="0.41879069376504996" />
+      <entry key="H1" value="1.91387667784344" />
+      <entry key="H2" value="14.557291467180127" />
+      <entry key="H4" value="61.810117764660085" />
+      <entry key="D1" value="860.4765830876619" />
+      <entry key="W1" value="2157.8056177255594" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="0.33680839421642256" />
-      <entry key="MS500" value="0.8048206760627281" />
-      <entry key="S2" value="1.0895384531285375" />
-      <entry key="S5" value="1.4371630700968496" />
-      <entry key="S10" value="1.666445181356392" />
-      <entry key="S30" value="1.8745660504349548" />
-      <entry key="S60" value="1.9353042031693362" />
-      <entry key="M2" value="1.9671412151734458" />
-      <entry key="M5" value="1.9868600154801648" />
-      <entry key="M10" value="2.0093623257929707" />
-      <entry key="M15" value="2.0757069543737154" />
-      <entry key="M30" value="2.4236234398164545" />
-      <entry key="H1" value="4.827493294712819" />
-      <entry key="H2" value="30.1805003275955" />
-      <entry key="H4" value="124.44469952576122" />
-      <entry key="D1" value="1475.0618522938566" />
-      <entry key="W1" value="3845.0680443025767" />
+      <entry key="MS100" value="0.8954617293230144" />
+      <entry key="MS500" value="1.3405138770233795" />
+      <entry key="S2" value="2.3932649399880863" />
+      <entry key="S5" value="3.073491347942677" />
+      <entry key="S10" value="3.459674965801733" />
+      <entry key="S30" value="3.798305814704151" />
+      <entry key="S60" value="3.8961131322978675" />
+      <entry key="M2" value="3.9472682057566097" />
+      <entry key="M5" value="3.978842241900499" />
+      <entry key="M10" value="4.005320686823308" />
+      <entry key="M15" value="4.0729527873542715" />
+      <entry key="M30" value="4.422090940660392" />
+      <entry key="H1" value="6.826191047342166" />
+      <entry key="H2" value="32.17702294231312" />
+      <entry key="H4" value="126.4377065894402" />
+      <entry key="D1" value="1477.0481394704793" />
+      <entry key="W1" value="3847.0629399522527" />
     </decayedShown>
   </component>
   <component name="ProblemsViewState">

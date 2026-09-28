@@ -29,10 +29,10 @@ This skill supports processing a list or table of multiple events simultaneously
 
 
 ## Subagent Separation of Concerns (Vertical Slicing)
-When using invoke_subagent to process multiple items, you MUST adhere to strict Separation of Concerns (SoC) via **Vertical Slicing**:
-1. **One Subagent per Item**: Assign each subagent exactly ONE item (e.g., one entity, one command, one mapper).
-2. **End-to-End Flow**: The subagent is responsible for checking its own pre-requisites. If any dependencies (e.g., Value Objects, Events, Entities, Mappers) are missing, the subagent MUST execute the instructions of those respective skills to generate them before proceeding.
-3. **Independent Verification**: The subagent MUST run its own verification (e.g., .\gradlew compileJava for the module) to ensure its specific slice is perfect.
+When using invoke_subagent to process multiple items, group related work into a small number of subagents instead of spawning many to avoid Gradle lock contentions and context fragmentation.
+1. **Group by Feature/Entity**: Assign each subagent a primary entity and ALL of its related components (e.g., its Value Objects, Exceptions, Events, Mappers, Repositories). NEVER create one subagent per single file.
+2. **End-to-End Flow**: The subagent is responsible for checking its own pre-requisites and generating all missing dependencies sequentially within its own turn.
+3. **Independent Verification**: The subagent MUST run its own verification (e.g., .\gradlew compileJava for the module) once for the entire group of files to ensure its specific slice is perfect.
 4. **Independent Commit**: Once verified, the subagent MUST commit its own changes to Git and end its turn. Do not wait for a parent agent to commit.
 
 ## Step 1: Deep Domain Analysis (Payload Discovery)
@@ -81,3 +81,4 @@ After your code successfully compiles and passes all verification rules, you (an
 2. Commit your changes using standard Conventional Commits formatting (e.g., "feat(<module>): add <feature>", "refactor(<module>): ...").
 3. Push to the remote repository: "git push origin HEAD"
 **CRITICAL:** If you are a subagent, you MUST commit and push your own specific work independently as soon as it passes compilation. Do not wait for the parent agent.
+
