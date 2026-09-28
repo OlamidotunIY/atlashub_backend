@@ -28,7 +28,7 @@ public class LedgerTransaction extends AggregateRoot<Long> {
     private final ZonedDateTime postedAt;
     private final String reference;
 
-    private LedgerTransaction(Long id, Long organizationId, List<LedgerEntry> entries, SourceSystem sourceSystem, String sourceReferenceId, String description, CurrencyCode currency, ZonedDateTime postedAt, String reference) {
+    public LedgerTransaction(Long id, Long organizationId, List<LedgerEntry> entries, SourceSystem sourceSystem, String sourceReferenceId, String description, CurrencyCode currency, ZonedDateTime postedAt, String reference) {
         this.id = id;
         this.organizationId = organizationId;
         this.entries = entries;

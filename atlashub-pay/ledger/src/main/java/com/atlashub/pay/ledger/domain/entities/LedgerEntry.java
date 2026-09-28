@@ -15,7 +15,7 @@ public class LedgerEntry {
     private final Money amount;
     private final Money runningBalance;
 
-    private LedgerEntry(Long id, Long transactionId, Long accountId, EntryType type, Money amount, Money runningBalance) {
+    public LedgerEntry(Long id, Long transactionId, Long accountId, EntryType type, Money amount, Money runningBalance) {
         this.id = id;
         this.transactionId = transactionId;
         this.accountId = accountId;

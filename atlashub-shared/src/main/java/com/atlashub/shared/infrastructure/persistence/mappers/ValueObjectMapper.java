@@ -1,10 +1,6 @@
 package com.atlashub.shared.infrastructure.persistence.mappers;
 
-import com.atlashub.shared.domain.valueobject.Country;
-import com.atlashub.shared.domain.valueobject.CurrencyCode;
-import com.atlashub.shared.domain.valueobject.EmailAddress;
-import com.atlashub.shared.domain.valueobject.NUBAN;
-import com.atlashub.shared.domain.valueobject.PhoneNumber;
+import com.atlashub.shared.domain.valueobject.*;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -59,5 +55,15 @@ public class ValueObjectMapper {
     }
     public String fromCurrencyCode(CurrencyCode currency) {
         return currency != null ? currency.name() : null;
+    }
+
+    // ==========================================
+    // Money -> BigDecimal (Assuming default currency NGN)
+    // ==========================================
+    public Money toMoney(java.math.BigDecimal amount) {
+        return amount != null ? Money.of(amount, CurrencyCode.NGN) : null;
+    }
+    public java.math.BigDecimal fromMoney(Money money) {
+        return money != null ? money.amount() : null;
     }
 }

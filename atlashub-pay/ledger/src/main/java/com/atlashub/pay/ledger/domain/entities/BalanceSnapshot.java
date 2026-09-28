@@ -9,7 +9,7 @@ import lombok.Getter;
 import java.time.ZonedDateTime;
 
 @Getter
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@AllArgsConstructor(access = AccessLevel.PUBLIC)
 public class BalanceSnapshot {
 
     private final Long id;
