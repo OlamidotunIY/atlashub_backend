@@ -9,11 +9,6 @@
   <component name="ChangeListManager">
     <list default="true" id="174f3fac-956e-4ce4-b2e2-bac8d3e75c4d" name="Changes" comment="fix: file system">
       <changelist_data name="Iyanda Olamidotun" email="olamidotun225@gmail.com" automatic="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-main/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-main/build.gradle" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-main/src/main/java/com/atlashub/main/config/ApplicationConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-main/src/main/java/com/atlashub/main/config/ApplicationConfig.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/pay/ledger/application/queries/GetAccountBalance/GetAccountBalanceHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/pay/ledger/application/queries/GetAccountBalance/GetAccountBalanceHandler.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/pay/ledger/application/queries/GetWalletBalances/GetWalletBalancesHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-pay/ledger/src/main/java/com/atlashub/pay/ledger/application/queries/GetWalletBalances/GetWalletBalancesHandler.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

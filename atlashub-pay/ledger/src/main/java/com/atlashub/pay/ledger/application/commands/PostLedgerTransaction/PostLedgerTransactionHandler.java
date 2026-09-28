@@ -10,6 +10,7 @@ import com.atlashub.pay.ledger.domain.exceptions.LedgerAccountNotFoundException;
 import com.atlashub.pay.ledger.domain.repositories.BalanceSnapshotRepository;
 import com.atlashub.pay.ledger.domain.repositories.LedgerAccountRepository;
 import com.atlashub.pay.ledger.domain.repositories.LedgerTransactionRepository;
+import com.atlashub.pay.ledger.domain.services.BalanceCalculator;
 import com.atlashub.pay.ledger.domain.valueobject.EntryType;
 import com.atlashub.pay.ledger.domain.valueobject.LedgerAccountStatus;
 import com.atlashub.pay.ledger.domain.valueobject.SourceSystem;
@@ -34,14 +35,17 @@ public class PostLedgerTransactionHandler extends Command<PostLedgerTransactionC
     private final LedgerTransactionRepository transactionRepository;
     private final LedgerAccountRepository accountRepository;
     private final BalanceSnapshotRepository balanceSnapshotRepository;
+    private final BalanceCalculator balanceCalculator;
 
     public PostLedgerTransactionHandler(
             LedgerTransactionRepository transactionRepository,
             LedgerAccountRepository accountRepository,
-            BalanceSnapshotRepository balanceSnapshotRepository) {
+            BalanceSnapshotRepository balanceSnapshotRepository,
+            BalanceCalculator balanceCalculator) {
         this.transactionRepository = transactionRepository;
         this.accountRepository = accountRepository;
         this.balanceSnapshotRepository = balanceSnapshotRepository;
+        this.balanceCalculator = balanceCalculator;
     }
 
     @Override
@@ -98,15 +102,21 @@ public class PostLedgerTransactionHandler extends Command<PostLedgerTransactionC
         }
 
         // 6. Compute runningBalance and apply entry
-        Map<Long, BigDecimal> currentBalances = balanceSnapshotRepository.findAllLatestByAccountIdIn(sortedIds).stream()
-                .collect(Collectors.toMap(
-                        BalanceSnapshot::getAccountId,
-                        snap -> snap.getBalance().amount()
-                ));
-        
-        // Ensure all locked accounts have a starting balance, defaulting to ZERO
+        Map<Long, BalanceSnapshot> snapshots = balanceSnapshotRepository.findAllLatestByAccountIdIn(sortedIds).stream()
+                .collect(Collectors.toMap(BalanceSnapshot::getAccountId, Function.identity()));
+
+        Map<Long, BigDecimal> currentBalances = new java.util.HashMap<>();
         for (Long accId : sortedIds) {
-            currentBalances.putIfAbsent(accId, BigDecimal.ZERO);
+            BalanceSnapshot snapshot = snapshots.get(accId);
+            if (snapshot == null) {
+                throw new IllegalStateException("Account missing initial balance snapshot: " + accId);
+            }
+            BigDecimal startingBalance = snapshot.getBalance().amount();
+            ZonedDateTime snapshotDate = snapshot.getSnapshotAt();
+            
+            List<LedgerTransaction> recentTxs = transactionRepository.findByAccountIdAndPostedAtAfter(accId, snapshotDate);
+            BigDecimal exactBalance = balanceCalculator.calculateRunningBalance(accId, startingBalance, recentTxs);
+            currentBalances.put(accId, exactBalance);
         }
 
         List<LedgerEntry> ledgerEntries = new ArrayList<>();
