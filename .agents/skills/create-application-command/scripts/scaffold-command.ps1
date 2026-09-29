@@ -1,18 +1,29 @@
 param (
     [Parameter(Mandatory=$true)][string]$Module,
     [Parameter(Mandatory=$true)][string]$CommandName,
-    [Parameter(Mandatory=$true)][string]$ResponseType
+    [Parameter(Mandatory=$true)][string]$ResponseType,
+    [Parameter(Mandatory=$false)][string]$SubModule = ""
 )
 
 $ErrorActionPreference = "Stop"
 
-# Dynamic module discovery — resolve the actual src path, not a hardcoded assumption
+# Build the Java package sub-path to search for
+# If SubModule is provided: com.atlashub.<Module>.<SubModule>
+# Else:                     com.atlashub.<Module>
+if ($SubModule -ne "") {
+    $JavaSubPath = "src\main\java\com\atlashub\$Module\$SubModule"
+    $JavaPackage = "com.atlashub.$Module.$SubModule"
+} else {
+    $JavaSubPath = "src\main\java\com\atlashub\$Module"
+    $JavaPackage = "com.atlashub.$Module"
+}
+
 $FoundModulePath = Get-ChildItem -Path . -Recurse -Directory |
-    Where-Object { $_.FullName -match [regex]::Escape("src\\main\\java\\com\\atlashub\\$Module") } |
+    Where-Object { $_.FullName -match [regex]::Escape($JavaSubPath) } |
     Select-Object -First 1
 
 if (-not $FoundModulePath) {
-    Write-Host "ERROR: Module '$Module' not found under any src\main\java\com\atlashub\$Module path."
+    Write-Host "ERROR: Path '$JavaSubPath' not found in this workspace."
     exit 1
 }
 
@@ -32,41 +43,47 @@ if (Test-Path $HandlerFile) {
     exit 0
 }
 
+$isVoid = ($ResponseType -eq "void" -or $ResponseType -eq "Void")
+
 # 1. Command Record
 $CommandContent = @"
-package com.atlashub.${Module}.application.commands.${CommandName};
+package $JavaPackage.application.commands.${CommandName};
 
-public record ${CommandName}Command() {}
+public record ${CommandName}Command() {
+    // TODO: Add command fields here
+}
 "@
 Set-Content -Path $CommandFile -Value $CommandContent
 
-# 2. Response Record — create whenever ResponseType is not void
-$isVoid = ($ResponseType -eq "void" -or $ResponseType -eq "Void")
-
+# 2. Response Record — only when not void
 if (-not $isVoid) {
     if (Test-Path $ResponseFile) {
         Write-Host "WARNING: Response file already exists at $ResponseFile. Skipping."
     } else {
         $ResponseContent = @"
-package com.atlashub.${Module}.application.commands.${CommandName};
+package $JavaPackage.application.commands.${CommandName};
 
-public record ${CommandName}Response() {}
+public record ${CommandName}Response() {
+    // TODO: Add response fields here
+}
 "@
         Set-Content -Path $ResponseFile -Value $ResponseContent
     }
 }
 
-# 3. Handler Class — no 'return null' for void
+# 3. Handler Class
 if ($isVoid) {
-    $ReturnStatement = ""
-    $ReturnType = "void"
+    $ReturnType    = "Void"
+    $ReturnComment = "// TODO: Implement orchestration logic. Return null for Void handlers."
+    $ReturnLine    = "        return null;"
 } else {
-    $ReturnStatement = "`n        return null; // TODO: replace with actual result"
-    $ReturnType = $ResponseType
+    $ReturnType    = "${CommandName}Response"
+    $ReturnComment = "// TODO: Implement orchestration logic and return the response."
+    $ReturnLine    = "        // TODO: replace with actual result`n        throw new UnsupportedOperationException(`"${CommandName}Handler not implemented`");"
 }
 
 $HandlerContent = @"
-package com.atlashub.${Module}.application.commands.${CommandName};
+package $JavaPackage.application.commands.${CommandName};
 
 import com.atlashub.shared.application.usecase.Command;
 import org.springframework.stereotype.Component;
@@ -78,19 +95,20 @@ public class ${CommandName}Handler extends Command<${CommandName}Command, ${Retu
 
     private static final Logger log = LoggerFactory.getLogger(${CommandName}Handler.class);
 
-    public ${CommandName}Handler() {
-        // TODO: Inject dependencies (Repositories, Ports)
-    }
+    public ${CommandName}Handler(
+        // TODO: Inject repositories and ports
+    ) {}
 
     @Override
     public ${ReturnType} execute(${CommandName}Command command) {
         log.info("Executing ${CommandName}Command");
-
-        // TODO: Implement orchestration logic
-        // DO NOT implement business logic here. Delegate to Entities, Domain Services, or Ports.$ReturnStatement
+        $ReturnComment
+$ReturnLine
     }
 }
 "@
 Set-Content -Path $HandlerFile -Value $HandlerContent
 
-Write-Host "SUCCESS: Scaffolded Command, Handler$(if (-not $isVoid) { ', and Response' }) at $CommandDir"
+$createdFiles = "Command, Handler"
+if (-not $isVoid) { $createdFiles += ", Response" }
+Write-Host "SUCCESS: Scaffolded $createdFiles at $CommandDir"

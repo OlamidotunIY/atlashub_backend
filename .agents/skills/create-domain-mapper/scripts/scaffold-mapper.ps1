@@ -1,17 +1,25 @@
 param (
     [Parameter(Mandatory=$true)][string]$Module,
-    [Parameter(Mandatory=$true)][string]$EntityName
+    [Parameter(Mandatory=$true)][string]$EntityName,
+    [Parameter(Mandatory=$false)][string]$SubModule = ""
 )
 
 $ErrorActionPreference = "Stop"
 
-# Dynamic module discovery
+if ($SubModule -ne "") {
+    $JavaSubPath = "src\main\java\com\atlashub\$Module\$SubModule"
+    $JavaPackage = "com.atlashub.$Module.$SubModule"
+} else {
+    $JavaSubPath = "src\main\java\com\atlashub\$Module"
+    $JavaPackage = "com.atlashub.$Module"
+}
+
 $FoundModulePath = Get-ChildItem -Path . -Recurse -Directory |
-    Where-Object { $_.FullName -match [regex]::Escape("src\\main\\java\\com\\atlashub\\$Module") } |
+    Where-Object { $_.FullName -match [regex]::Escape($JavaSubPath) } |
     Select-Object -First 1
 
 if (-not $FoundModulePath) {
-    Write-Host "ERROR: Module '$Module' not found under any src\main\java\com\atlashub\$Module path."
+    Write-Host "ERROR: Path '$JavaSubPath' not found in this workspace."
     exit 1
 }
 
@@ -29,22 +37,33 @@ if (Test-Path $TargetFile) {
     exit 1
 }
 
+# JPA entity class name uses "JpaEntity" suffix per project convention
+$JpaEntityName = "${EntityName}JpaEntity"
+
 $Content = @"
-package com.atlashub.$Module.infrastructure.persistence.mappers;
+package $JavaPackage.infrastructure.persistence.mappers;
 
+import com.atlashub.shared.infrastructure.persistence.mappers.DomainMapper;
 import com.atlashub.shared.infrastructure.persistence.mappers.ValueObjectMapper;
-import com.atlashub.$Module.domain.entities.$EntityName;
-import com.atlashub.$Module.infrastructure.persistence.entities.${EntityName}Jpa;
+import $JavaPackage.domain.entities.$EntityName;
+import $JavaPackage.infrastructure.persistence.entities.$JpaEntityName;
 import org.mapstruct.Mapper;
-import org.mapstruct.MappingConstants;
+import org.mapstruct.ReportingPolicy;
 
-@Mapper(componentModel = MappingConstants.ComponentModel.SPRING, uses = {ValueObjectMapper.class})
-public interface ${EntityName}Mapper {
-
-    // TODO: Agent must inject mapping methods here
+@Mapper(
+    componentModel = "spring",
+    unmappedTargetPolicy = ReportingPolicy.ERROR,
+    uses = {ValueObjectMapper.class}
+)
+public interface ${EntityName}Mapper extends DomainMapper<$EntityName, $JpaEntityName> {
+    // DomainMapper<TDomain, TJpa> already declares:
+    //   TJpa   toJpa(TDomain domain);
+    //   TDomain toDomain(TJpa jpa);
+    //
+    // If MapStruct cannot auto-map any fields, add @Mapping annotations here.
     // Example:
-    //   ${EntityName}Jpa toJpa($EntityName domain);
-    //   $EntityName toDomain(${EntityName}Jpa jpa);
+    //   @Mapping(target = "someField", source = "anotherField")
+    //   $JpaEntityName toJpa($EntityName domain);
 }
 "@
 

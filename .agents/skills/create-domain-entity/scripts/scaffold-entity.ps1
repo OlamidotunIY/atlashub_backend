@@ -7,18 +7,28 @@ param (
 
 $ErrorActionPreference = "Stop"
 
-# Dynamic module discovery — works regardless of project layout
+# Build the Java sub-path.
+# With SubModule: src\main\java\com\atlashub\<Module>\<SubModule>
+# Without:        src\main\java\com\atlashub\<Module>
+if ($SubModule -ne "") {
+    $JavaSubPath = "src\main\java\com\atlashub\$Module\$SubModule"
+    $PackageName = "com.atlashub.$Module.$SubModule.domain.entities"
+} else {
+    $JavaSubPath = "src\main\java\com\atlashub\$Module"
+    $PackageName = "com.atlashub.$Module.domain.entities"
+}
+
 $FoundModulePath = Get-ChildItem -Path . -Recurse -Directory |
-    Where-Object { $_.FullName -match [regex]::Escape("src\\main\\java\\com\\atlashub\\$Module") } |
+    Where-Object { $_.FullName -match [regex]::Escape($JavaSubPath) } |
     Select-Object -First 1
 
 if (-not $FoundModulePath) {
-    Write-Host "ERROR: Module '$Module' not found under any src\main\java\com\atlashub\$Module path."
+    Write-Host "ERROR: Path '$JavaSubPath' not found in this workspace."
     exit 1
 }
 
 $ModulePath = $FoundModulePath.FullName
-$TargetDir = Join-Path -Path $ModulePath -ChildPath "domain\entities"
+$TargetDir  = Join-Path -Path $ModulePath -ChildPath "domain\entities"
 
 if (-not (Test-Path -Path $TargetDir)) {
     New-Item -ItemType Directory -Force -Path $TargetDir | Out-Null
@@ -30,21 +40,35 @@ if (Test-Path -Path $TargetFile) {
     exit 1
 }
 
-# Build package name — include sub-module segment when provided
-if ($SubModule -ne "") {
-    $PackageName = "com.atlashub.$Module.$SubModule.domain.entities"
-} else {
-    $PackageName = "com.atlashub.$Module.domain.entities"
-}
-
-$BaseClass      = ""
+$BaseClass       = ""
 $ImportAggregate = ""
-$IdOverride     = ""
+$IdOverride      = ""
+$ExtendsClause   = ""
+$StaticFactory   = "    // TODO: Add public static create(...) factory method enforcing invariants"
 
 if ($IsAggregateRoot) {
     $BaseClass       = " extends AggregateRoot<Long>"
     $ImportAggregate = "import com.atlashub.shared.domain.entities.AggregateRoot;`n"
-    $IdOverride      = "`n    @Override`n    public Long getId() {`n        return id;`n    }`n"
+    $IdOverride      = @"
+
+    @Override
+    public Long getId() {
+        return id;
+    }
+"@
+    $StaticFactory = @"
+    // All-args constructor (used by MapStruct — keep package-private or public)
+    public ${EntityName}(Long id /*, TODO: other fields */) {
+        this.id = id;
+        // TODO: assign other fields
+    }
+
+    // Static factory — enforces creation invariants
+    public static ${EntityName} create(/* TODO: creation params */) {
+        // TODO: validate invariants, then:
+        return new ${EntityName}(null /*, TODO: other fields */);
+    }
+"@
 }
 
 $Content = @"
@@ -56,19 +80,15 @@ import java.time.ZonedDateTime;
 @Getter
 public class $EntityName$BaseClass {
 
-    // TODO: Agent must use replace_file_content to inject final ID fields, custom fields, and constructors
     private final Long id;
+    // TODO: Add domain fields here (all final)
 
-    // TODO: Agent must implement public static create(...) method here
+$StaticFactory
 
-    // TODO: Agent must implement business mutator methods and invariants here
-
-    private void touch() {
-        // TODO: Agent must inject 'this.updatedAt = ZonedDateTime.now();' if updatedAt exists
-    }
+    // TODO: Add business methods here (state transitions, invariant enforcement, registerEvent(...))
 $IdOverride
 }
 "@
 
 Set-Content -Path $TargetFile -Value $Content
-Write-Host "SUCCESS: Entity Skeleton created at $TargetFile"
+Write-Host "SUCCESS: Entity skeleton created at $TargetFile"
