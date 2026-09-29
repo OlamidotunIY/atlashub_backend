@@ -1,0 +1,82 @@
+---
+name: create-domain-mapper
+description: >-
+  Use this skill to create MapStruct Domain Mappers for converting between Domain Entities and JPA Entities.
+---
+
+# Create Domain Mapper Workflow
+
+Domain Mappers live in the infrastructure layer under `infrastructure/persistence/mappers/`.
+
+## Batch Processing (Multiple Mappers)
+This skill supports processing a list of multiple mappers simultaneously.
+1. You MUST process every mapper iteratively. Do not skip any.
+2. **Execution Strategy:** You MUST ALWAYS use `invoke_subagent` to spawn a concurrent team of subagents when processing multiple items.
+
+
+## Subagent Separation of Concerns (Vertical Slicing)
+When using invoke_subagent to process multiple items, group related work into a small number of subagents instead of spawning many to avoid Gradle lock contentions and context fragmentation.
+1. **Group by Feature/Entity**: Assign each subagent a primary entity and ALL of its related components (e.g., its Value Objects, Exceptions, Events, Mappers, Repositories). NEVER create one subagent per single file.
+2. **End-to-End Flow**: The subagent is responsible for checking its own pre-requisites and generating all missing dependencies sequentially within its own turn.
+3. **Independent Verification**: The subagent MUST run its own verification (e.g., .\gradlew compileJava for the module) once for the entire group of files to ensure its specific slice is perfect.
+4. **Independent Commit**: Once verified, the subagent MUST commit its own changes to Git and end its turn. Do not wait for a parent agent to commit.
+
+## Module-Wide Generation
+If the user asks you to "create mappers for all entities in `<module>`", you MUST:
+1. Locate all Domain Entity classes in `atlashub-platform/<module>/src/main/java/com/atlashub/<module>/domain/entities/` (e.g., using `find_by_name` or `list_dir`).
+2. Ignore standard records or value objects; focus only on the actual Domain Entities / Aggregate Roots.
+3. Use `invoke_subagent` to spawn a concurrent team of subagents to process EVERY entity found simultaneously.
+
+## Rule 1: Scaffold Base Structure
+You MUST use the provided PowerShell script to safely generate the baseline file structure and boilerplate files:
+```powershell
+.\.agents\skills\create-domain-mapper\scripts\scaffold-mapper.ps1 -Module "<module_name>" -EntityName "<EntityName>"
+```
+
+## Rule 2: Full Logic Implementation Requirement
+After scaffolding, use `replace_file_content` to implement the interface.
+
+**Implementation Rules:**
+1. **Naming**: The interface MUST be named `<EntityName>Mapper`.
+2. **Inheritance**: MUST extend `com.atlashub.shared.infrastructure.persistence.mappers.DomainMapper<<EntityName>, <EntityName>Jpa>`.
+3. **Annotations**:
+   You MUST include the following `@Mapper` annotation precisely:
+   ```java
+   @Mapper(
+           componentModel = "spring",
+           unmappedTargetPolicy = ReportingPolicy.ERROR,
+           uses = {ValueObjectMapper.class}
+   )
+   ```
+4. **Value Objects (`uses = {ValueObjectMapper.class}`)**:
+   - If the Domain Entity uses nested records, collections of custom Value Objects, or enums, MapStruct cannot automatically map them to the flat database columns without help.
+   - The `uses = {ValueObjectMapper.class}` property hooks it into the global/local `ValueObjectMapper` to handle these.
+   - You MUST ensure `ValueObjectMapper.class` is properly imported.
+   - **CRITICAL VO RULE:** If the entity uses a Value Object that is a **`record`** (this rule applies *only* to records, not enums), you MUST check if the `ValueObjectMapper` already implements mapping methods for it. If it is not yet implemented, you MUST update the `ValueObjectMapper` to include the appropriate conversion methods (e.g., mapping the record to/from its database representation, such as a JSON String) before proceeding.
+5. **No Inline Imports**: All imports must be explicitly declared at the top.
+
+## CRITICAL: Self-Correction & Verification Before Gradle
+Before you (or your dedicated subagents) run the Gradle compiler check, you MUST ALWAYS perform a strict self-review of all created and modified files. 
+- Read back the files you just wrote using `cat` or `view_file`.
+- Check against ALL rules (e.g., absolutely NO inline imports, NO wildcard imports, NO leftover `// TODO`s, NO `return null;` placeholders).
+- If ANY rule is violated, you MUST fix it immediately using `replace_file_content`.
+- Only after this explicit re-confirmation are you allowed to run `.\gradlew compileJava`. Dedicated subagents MUST also follow this rule.
+
+## Step 3: Gradle Compilation Check
+You MUST run the Gradle compiler to prove to the user that your generated code compiles properly.
+**CRITICAL RULE:** NEVER run `.\gradlew compileJava` globally. You MUST strictly target the module you are working on.
+Example: `.\gradlew :atlashub-platform:iam:compileJava`
+
+## CRITICAL RULES
+- **Avoid Manual Overrides:** Do not manually override 	oDomain or 	oPersistence just to configure mappings for boolean fields or ersion fields. If you encounter an Unmapped target property error for a boolean field starting with 'is', the correct fix is to rename the field in BOTH the Domain Entity and the JPA Entity to remove the 'is' prefix (e.g., rename isBuiltIn to uiltIn). MapStruct and Lombok will then automatically map it.
+- **Version Field Errors:** If you encounter an Unknown property "version" in result type error, DO NOT override mappings. The correct fix is to add @Version private Long version; to the JPA Entity, which satisfies the DomainMapper's inherited @Mapping(target = "version", ignore = true) requirement.
+
+
+## Final Step: Git Commit & Push
+Verification is NOT the final step; committing your work is.
+After your code successfully compiles and passes all verification rules, you (and every individual subagent) MUST commit and push your changes to GitHub.
+1. Stage your specific files: "git add <paths_to_your_files>"
+2. Commit your changes using standard Conventional Commits formatting (e.g., "feat(<module>): add <feature>", "refactor(<module>): ...").
+3. Push to the remote repository: "git push origin HEAD"
+**CRITICAL:** If you are a subagent, you MUST commit and push your own specific work independently as soon as it passes compilation. Do not wait for the parent agent.
+

@@ -62,6 +62,26 @@ ssh:
 	@echo "=> Connecting to VM..."
 	$(SSH) -i $(SSH_KEY) -o StrictHostKeyChecking=no ubuntu@$(VM_IP)
 
+# 4. Update Cloudflare DNS
+update-dns:
+	@echo "=> Updating Cloudflare DNS for api.atlashub.name.ng to $(VM_IP)..."
+	@$(SSH) -i $(SSH_KEY) -o StrictHostKeyChecking=no ubuntu@$(VM_IP) "\
+		CF_TOKEN=\$$(grep CLOUDFLARE_API_TOKEN /tmp/.env | cut -d '=' -f2 | tr -d '\r') && \
+		CF_ZONE=\$$(grep CLOUDFLARE_ZONE_ID /tmp/.env | cut -d '=' -f2 | tr -d '\r') && \
+		if [ -z \"\$$CF_TOKEN\" ] || [ -z \"\$$CF_ZONE\" ]; then \
+			echo 'ERROR: CLOUDFLARE_API_TOKEN or CLOUDFLARE_ZONE_ID not found in .env'; exit 1; \
+		fi && \
+		sudo apt-get update >/dev/null 2>&1 && sudo apt-get install -y jq >/dev/null 2>&1 && \
+		echo 'Fetching existing DNS Record ID...' && \
+		RECORD_ID=\$$(curl -s -X GET \"https://api.cloudflare.com/client/v4/zones/\$$CF_ZONE/dns_records?name=api.atlashub.name.ng&type=A\" -H \"Authorization: Bearer \$$CF_TOKEN\" -H \"Content-Type: application/json\" | jq -r '.result[0].id') && \
+		if [ \"\$$RECORD_ID\" = \"null\" ] || [ -z \"\$$RECORD_ID\" ]; then \
+			echo 'Creating new DNS record...' && \
+			curl -s -X POST \"https://api.cloudflare.com/client/v4/zones/\$$CF_ZONE/dns_records\" -H \"Authorization: Bearer \$$CF_TOKEN\" -H \"Content-Type: application/json\" --data '{\"type\":\"A\",\"name\":\"api.atlashub.name.ng\",\"content\":\"$(VM_IP)\",\"ttl\":1,\"proxied\":true}' >/dev/null; \
+		else \
+			echo 'Updating existing DNS record...' && \
+			curl -s -X PUT \"https://api.cloudflare.com/client/v4/zones/\$$CF_ZONE/dns_records/\$$RECORD_ID\" -H \"Authorization: Bearer \$$CF_TOKEN\" -H \"Content-Type: application/json\" --data '{\"type\":\"A\",\"name\":\"api.atlashub.name.ng\",\"content\":\"$(VM_IP)\",\"ttl\":1,\"proxied\":true}' >/dev/null; \
+		fi && echo '\n=> DNS Update Complete!'"
+
 # -----------------------------------------------------------------------------
 # DATABASE BACKUP & RESTORE COMMANDS
 # -----------------------------------------------------------------------------

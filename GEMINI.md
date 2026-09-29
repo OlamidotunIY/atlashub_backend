@@ -8,7 +8,7 @@
 
 ## 0. Non-Negotiable Directives
 
-- **Do nothing you were not asked to do.** If something is unclear, ask before acting.
+- **Do nothing you were not asked to do.** If something is unclear, ask before acting. Most importantly, **you MUST NEVER do anything without a skill**. If the skill does not exist, you MUST do nothing!!
 - **Never guess at structure.** If a pattern is unclear, read the existing auth module and copy it.
 - **Do not duplicate or rename layers.** Package names are exact — do not create variations.
 - **The repository `save()` publishes domain events automatically** via `JpaBaseRepository`.

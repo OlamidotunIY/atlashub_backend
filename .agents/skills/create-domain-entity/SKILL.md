@@ -1,0 +1,102 @@
+---
+name: create-domain-entity
+description: >-
+  Use this skill to create, audit, check, or update Domain Entities / Aggregate Roots.
+---
+
+# Create Domain Entity
+
+## Audit / Update Mode
+If the user asks you to "check", "verify", or "update" an existing Entity:
+1. Read the existing entity file using your tools.
+2. Verify it meets ALL rules below (e.g., ID fields are final, `touch()` exists and is called, invariants are checked, events are registered).
+3. If it perfectly matches, tell the user "Everything is structurally perfect" and do nothing.
+4. If it violates ANY rules, do not recreate it. Use the `replace_file_content` tool to safely inject the missing pieces. Then compile it via Gradle.
+
+## Batch Processing (Multiple Entities)
+This skill supports processing a list or table of multiple entities simultaneously for BOTH Generation Mode and Audit/Update Mode.
+1. You MUST process every entity iteratively. Do not skip any.
+2. **Execution Strategy:** Because Domain Entities contain complex business logic, processing many sequentially in one turn can overwhelm context limits. You are strongly encouraged to use `invoke_subagent` to spawn a concurrent team of subagents to process or audit them simultaneously, isolating the context for each entity.
+
+
+## Module-Wide Generation
+If the user asks you to "create entities for all entities in `<module>`", or pastes a schema and says "create these entities in `<module>`", you MUST:
+1. Parse the requested entities and their dependencies.
+2. Use `invoke_subagent` to spawn a concurrent team of subagents to process EVERY requested entity simultaneously.
+3. You MUST NEVER attempt to create multiple entities in a single turn. Always use subagents for concurrency.
+
+## Subagent Separation of Concerns (Vertical Slicing)
+When using invoke_subagent to process multiple items, group related work into a small number of subagents instead of spawning many to avoid Gradle lock contentions and context fragmentation.
+1. **Group by Feature/Entity**: Assign each subagent a primary entity and ALL of its related components (e.g., its Value Objects, Exceptions, Events, Mappers, Repositories). NEVER create one subagent per single file.
+2. **End-to-End Flow**: The subagent is responsible for checking its own pre-requisites and generating all missing dependencies sequentially within its own turn.
+3. **Independent Verification**: The subagent MUST run its own verification (e.g., .\gradlew compileJava for the module) once for the entire group of files to ensure its specific slice is perfect.
+4. **Independent Commit**: Once verified, the subagent MUST commit its own changes to Git and end its turn. Do not wait for a parent agent to commit.
+
+## Pre-Requisites (Events Discovery & Errors)
+Before generating or updating an entity, analyze its Domain Rules and Business Methods.
+
+**Handling Domain Events:**
+1. **Check Existing:** Check the module's `domain/events` folder. If events already exist that perfectly fit the entity and its business methods, you will simply register them later.
+2. **Check Docs:** If events are missing, do not match the entity, or do not cover all business methods, read the module's markdown documentation (specifically the "4. Domain Events" section/table). Use the "Published When" and "Consumed By" details from that table to trigger the `create-domain-event` skill to generate the missing events.
+3. **Proactive Creation:** If you personally identify a valid business use case that *should* publish an event, but it is missing from the docs, you are empowered to proactively create that event using the `create-domain-event` skill.
+
+**Handling Domain Errors:**
+- **CRITICAL RULE:** NEVER throw exceptions from the `shared` module directly inside an entity (e.g., do NOT `throw new BusinessRuleException("...")`). 
+- You MUST create module-specific, semantically named custom errors (e.g., `LastOwnerDeactivationException`) using the **`create-domain-error`** skill, and throw those custom errors instead.
+
+**Handling Value Objects:**
+- If a field is a custom complex type or enum (e.g., `MemberStatus`), first check if it exists in the `shared` module.
+- If it does not exist globally or locally, you MUST use the **`create-domain-valueobject`** skill to generate it before writing the entity.
+
+## Generation Mode (Creating New)
+**Step 1: Scaffold Skeleton**
+Run the PowerShell script to safely generate the baseline file structure and prevent accidental overwrites:
+```powershell
+.\.agents\skills\create-domain-entity\scripts\scaffold-entity.ps1 -Module "<module>" -EntityName "<EntityName>" -IsAggregateRoot $<true/false>
+```
+
+**Step 2: Inject Business Logic**
+Once the skeleton is scaffolded, use `replace_file_content` to inject the fields, constructor, `create` method, and business mutators into the file, adhering to these rules:
+
+1. **Final Fields:** 
+   - ID fields (`id`, `organizationId`) MUST be `final Long`.
+   - **Immutability Rule:** Any field that is not updated or modified by the entity's business mutator methods MUST be declared as `final`. (e.g., if a `code` or `userId` is set on creation and never changes, it must be `final`).
+2. **Static Factory Method (`create`):**
+   - **CRITICAL ID RULE:** ID generation happens in the Application Layer! You MUST ALWAYS accept `Long id` as the FIRST parameter in your static `create(...)` method and assign it to `this.id`. NEVER hardcode `id` to `null` or omit it.
+   - Accept ONLY fields the system cannot deduce (including the required `id`).
+   - Do NOT accept `createdAt`, `updatedAt`, or default statuses. Set them internally.
+3. **Mutator Methods & `touch()`:**
+   - Any method that updates state MUST call `this.touch();`.
+   - Implement `private void touch() { this.updatedAt = ZonedDateTime.now(); }`.
+4. **Events & Errors:**
+   - Enforce all requested invariants.
+   - **CRITICAL:** If an invariant fails, throw a custom Domain Error (created via `create-domain-error`). NEVER throw a `shared` module base exception directly.
+   - Use `this.registerEvent(...)` with `CorrelationId.getOrCreate()` for domain events.
+
+## Step 3: Gradle Verification
+**CRITICAL RULE:** NEVER run `.\gradlew compileJava` globally, as it will compile the entire app and take too long.
+You MUST strictly target the module you are working on.
+Example: `.\gradlew :atlashub-platform:iam:compileJava`
+
+
+
+## CRITICAL: Self-Correction & Verification Before Gradle
+Before you (or your dedicated subagents) run the Gradle compiler check, you MUST ALWAYS perform a strict self-review of all created and modified files. 
+- Read back the files you just wrote using `cat` or \iew_file\.
+- Check against ALL rules (e.g., absolutely NO inline imports, NO wildcard imports, NO leftover `// TODO`s, NO \eturn null;\ placeholders).
+- If ANY rule is violated, you MUST fix it immediately using \eplace_file_content\.
+- Only after this explicit re-confirmation are you allowed to run \.\gradlew compileJava\. Dedicated subagents MUST also follow this rule.
+
+
+## CRITICAL RULES
+- **Boolean Field Naming (MapStruct Compatibility):** NEVER prefix boolean fields with 'is' (e.g., use private boolean builtIn; instead of private boolean isBuiltIn;). Using 'is' as a prefix breaks MapStruct and Lombok auto-mapping generation.
+
+
+## Final Step: Git Commit & Push
+Verification is NOT the final step; committing your work is.
+After your code successfully compiles and passes all verification rules, you (and every individual subagent) MUST commit and push your changes to GitHub.
+1. Stage your specific files: "git add <paths_to_your_files>"
+2. Commit your changes using standard Conventional Commits formatting (e.g., "feat(<module>): add <feature>", "refactor(<module>): ...").
+3. Push to the remote repository: "git push origin HEAD"
+**CRITICAL:** If you are a subagent, you MUST commit and push your own specific work independently as soon as it passes compilation. Do not wait for the parent agent.
+

@@ -76,6 +76,11 @@ public class ApplicationConfig {
         return new OtpVerificationIssuer(otpGenerator, passwordEncoderPort);
     }
 
+    @Bean
+    public com.atlashub.pay.ledger.domain.services.BalanceCalculator balanceCalculator() {
+        return new com.atlashub.pay.ledger.domain.services.BalanceCalculator();
+    }
+
     // ── Swagger / OpenAPI ─────────────────────────────────────────────────────
 
     @Bean

@@ -8,161 +8,244 @@
 
 A saga is a sequence of local transactions — each owned by a different bounded context — coordinated by domain events. Unlike a distributed transaction (2-phase commit), a saga does not hold locks across services. Each step commits locally and publishes an event. If a later step fails, compensating transactions undo the earlier committed steps.
 
-**Sagas replace distributed ACID transactions in AtlasHub.** Because each module owns its own database, there is no shared transaction boundary. Sagas provide the only correct approach to multi-step cross-module consistency.
+**Sagas replace distributed ACID transactions in AtlasHub.** Because each module owns its own database schema, there is no shared transaction boundary. Sagas provide the only correct approach to multi-step cross-module consistency.
 
-There are two saga styles:
-- **Choreography**: Each step publishes an event; the next step listens and reacts. Simple, no central coordinator.
-- **Orchestration**: A central saga orchestrator sends commands to participants and reacts to their outcomes.
+### Style Used in AtlasHub
 
-AtlasHub uses **choreography** for simple, linear sagas (2–3 steps) and **orchestration** for complex, conditional sagas (4+ steps or branching failure handling).
+AtlasHub uses **choreography-based sagas exclusively**. There is no central saga orchestrator class. Each module listens for domain events on Kafka, invokes its own Handler, and publishes the next domain event. The "saga" is the emergent chain of these event→handler→event hops.
+
+```
+Module A: Handler publishes EventA
+    ↓ (Kafka topic)
+Module B: Listener receives EventA → invokes HandlerB → publishes EventB
+    ↓ (Kafka topic)
+Module C: Listener receives EventB → invokes HandlerC → publishes EventC
+    ...
+```
+
+Compensation works in reverse: a failure event triggers compensating handlers in previously committed modules.
 
 ---
 
-## Saga 1: POS Checkout (Choreography)
+## Saga 1: Commerce Checkout (Choreography)
 
-**Steps:**
-1. Commerce: Create `SalesOrder` (PENDING)
-2. Commerce: Reserve stock in `Inventory`
-3. Pay: Initialize charge → PAYMENT_PENDING
-4a. Pay: Charge succeeds → `ChargeSuccessfulEvent`
-   → Commerce: Deduct stock, complete sale → `PosSaleCompletedEvent`
-   → Accounting: Post journal entry
-   → Notifications: Send receipt
-4b. Pay: Charge fails / times out → `ChargeFailedEvent`
-   → Commerce: Release reserved stock, fail sale → `PosSaleFailedEvent`
+### Trigger
+`POST /api/v1/commerce/pos/checkout` — cashier completes a sale.
 
-**Compensations:**
-- Stock reservation timeout (15 minutes): Scheduled job releases reservation → `PosSaleFailedEvent`
-- Charge success received after order already failed: Idempotency guard on `CompletePosSaleUseCase` prevents double-processing; refund issued automatically
+### Steps
 
-**State transition diagram:**
 ```
-SalesOrder: PENDING → PAYMENT_PENDING → COMPLETED
-                                    └→ FAILED
+1. Commerce: CreateSalesOrderHandler
+   → SalesOrder created (PENDING)
+   → Stock reservation placed (Inventory)
+   → SalesOrderCreatedEvent published
 
-Inventory:  available → reserved → deducted (on success)
-                               └→ available (on failure / compensation)
+2. Pay: InitializeChargeHandler (listens on SalesOrderCreatedEvent)
+   → Charge record created (PAYMENT_PENDING)
+   → Payment gateway called
+   → ChargeInitializedEvent published
+
+3a. SUCCESS PATH — Pay: HandleChargeSuccessHandler (listens on gateway webhook)
+    → Charge transitions to SUCCESSFUL
+    → ChargeSuccessfulEvent published
+    → Commerce: CompletePosSaleHandler (listens on ChargeSuccessfulEvent)
+        → SalesOrder → COMPLETED
+        → Stock permanently deducted
+        → PosSaleCompletedEvent published
+    → Accounting: PostSaleJournalEntryHandler (listens on PosSaleCompletedEvent)
+    → Notifications: SendReceiptHandler (listens on PosSaleCompletedEvent)
+    → Analytics: UpdateDailySalesProjectionHandler (listens on PosSaleCompletedEvent)
+
+3b. FAILURE PATH — Pay: HandleChargeFailedHandler (listens on gateway webhook or timeout)
+    → Charge transitions to FAILED
+    → ChargeFailedEvent published
+    → Commerce: FailPosSaleHandler (listens on ChargeFailedEvent)
+        → SalesOrder → FAILED
+        → Stock reservation released
+        → PosSaleFailedEvent published
 ```
+
+### Compensation
+- **Stock reservation timeout (15 minutes)**: `StockReservationExpiryScheduler` in Commerce releases reservation → publishes `PosSaleFailedEvent`.
+- **Charge success received after order already failed**: `CompletePosSaleHandler` is idempotent — if `SalesOrder.status == COMPLETED`, skip without error. If `FAILED`, issue automatic refund via Pay.
+
+### State Transitions
+```
+SalesOrder:  PENDING → PAYMENT_PENDING → COMPLETED
+                                     └→ FAILED
+
+Inventory:   available → reserved → deducted (on success)
+                                └→ available (on failure / compensation)
+```
+
+### Modules Involved
+`atlashub-commerce` · `atlashub-pay` · `atlashub-accounting` · `atlashub-analytics` · `atlashub-platform:notifications`
 
 ---
 
-## Saga 2: Payroll Disbursement (Orchestration)
+## Saga 2: HR Payroll Disbursement (Choreography)
 
-This is a complex saga because it involves a bulk operation with partial failure handling — some employees may be paid while others fail.
+### Trigger
+`ApprovePayrollRunHandler` — checker approves a payroll run.
 
-**Orchestrator**: `PayrollSagaOrchestrator` (a stateful component in the HR module)
+### Steps
 
-**Steps:**
 ```
-1. HR: ApprovePayroll
-   → PayrollRun transitions APPROVED
-   → PayrollApprovedEvent emitted
+1. HR: ApprovePayrollRunHandler
+   → PayrollRun → APPROVED (maker-checker: SelfApprovalNotAllowedException if same user)
+   → repository.save() → PayrollApprovedEvent published
 
-2. Pay: ExecuteBulkPayout (receives PayrollApprovedEvent)
-   → Creates individual Payout per employee
-   → Initiates bank transfers via Moniepoint/Paystack
+2. Pay: ExecuteBulkPayoutHandler (listens on PayrollApprovedEvent)
+   → Creates one Payout record per employee
+   → Initiates bank transfers via Moniepoint/Paystack for each
    → As each transfer resolves:
-       SUCCESS → marks Payslip DISBURSED
-       FAIL    → marks Payslip FAILED, adds to retry queue
-   → When all payouts settled: publishes BulkPayoutSettledEvent
-     (carries: successful count, failed count, failed employee IDs)
+       SUCCESS → marks individual Payslip as DISBURSED
+                 → PayslipDisbursedEvent published
+       FAIL    → marks Payslip as FAILED, adds to retry queue
+   → When all payouts have settled:
+       → BulkPayoutSettledEvent published
+         (carries: successCount, failCount, failedEmployeeIds)
 
-3. HR: HandleBulkPayoutSettled (receives BulkPayoutSettledEvent)
-   SUCCESS (all paid):  PayrollRun → DISBURSED → PayrollDisbursedEvent
-   PARTIAL FAIL:        PayrollRun → PARTIALLY_DISBURSED → alert HR team
-   TOTAL FAIL:          PayrollRun → APPROVED (reverted for retry)
+3. HR: HandleBulkPayoutSettledHandler (listens on BulkPayoutSettledEvent)
+   → ALL SUCCESS:     PayrollRun → DISBURSED → PayrollDisbursedEvent published
+   → PARTIAL FAILURE: PayrollRun → PARTIALLY_DISBURSED → alert HR team
+   → TOTAL FAILURE:   PayrollRun → APPROVED (reverted for retry)
 
-4. Notifications: PayrollDisbursedEvent
-   → SMS to each successfully paid employee
+4. Notifications: (listens on PayrollDisbursedEvent)
+   → SMS to each successfully paid employee: "Your salary of ₦X has been credited"
 ```
 
-**Compensation**: There is no rollback for salary that was already paid. Compensation for over-payment or payment to a wrong account goes through manual correction (refund + re-disbursement), triggered by HR admin.
+### Compensation
+There is no automated rollback for salary already paid — money has left the wallet. Compensation for over-payment or wrong-account payment goes through manual correction:
+1. HR admin raises a correction request
+2. Pay: RecoverPayoutHandler creates a reclaim charge to the employee's account
+3. A corrected PayrollRun is initiated
+
+### Failure Isolation
+- If Pay module is unavailable when `PayrollApprovedEvent` arrives, the Kafka consumer retries. The outbox for `PayrollApprovedEvent` ensures it is not lost.
+- Partial disbursement leaves `PayrollRun` in `PARTIALLY_DISBURSED` until a re-run addresses failed employees.
+
+### Modules Involved
+`atlashub-platform:hr` · `atlashub-pay` · `atlashub-platform:notifications` · `atlashub-accounting`
 
 ---
 
-## Saga 3: Marketplace Order (Choreography)
+## Saga 3: Billing Subscription (Choreography)
 
-When a customer buys from a vendor in marketplace mode:
+### Trigger
+`InvoiceGeneratedEvent` — billing module generates a new subscription invoice.
+
+### Steps
 
 ```
-1. Commerce: CreateOnlineOrder (SalesOrder PENDING, stock reserved)
-2. Pay: InitializeCharge → PAYMENT_PENDING
-3a. SUCCESS: ChargeSuccessfulEvent
-   → Pay: Apply SplitRule
-       - Deduct AtlasHub platform fee (e.g., 1.5%)
-       - Post remainder to Split Holding Account
-       - Queue Payout for vendor share
-   → Commerce: Complete sale, deduct stock
-   → Logistics: Create shipment
-   → Accounting: Post revenue entries
-   → Notifications: Confirm order to customer, notify vendor
-3b. FAIL: ChargeFailedEvent → Commerce releases stock, marks order FAILED
+1. Billing: GenerateSubscriptionInvoiceHandler
+   → Invoice created (UNPAID)
+   → InvoiceGeneratedEvent published
+   → Notifications: sends invoice email to organization owner
+
+2. Pay: InitializeSubscriptionChargeHandler (listens on InvoiceGeneratedEvent)
+   → Charge created against organization's operating wallet
+   → ChargeInitializedEvent published
+
+3a. SUCCESS — Pay: HandleChargeSuccessHandler (listens on gateway webhook)
+    → Charge → SUCCESSFUL
+    → ChargeSuccessfulEvent published
+    → Billing: MarkInvoicePaidHandler (listens on ChargeSuccessfulEvent where purpose=SUBSCRIPTION)
+        → Invoice → PAID
+        → InvoicePaidEvent published
+    → Billing: ActivateSubscriptionHandler (listens on InvoicePaidEvent)
+        → Subscription → ACTIVE (or renewal date extended)
+        → SubscriptionRenewedEvent published
+    → Notifications: sends renewal confirmation email
+
+3b. FAILURE — Pay: HandleChargeFailedHandler
+    → Charge → FAILED
+    → ChargeFailedEvent published
+    → Billing: HandleSubscriptionPaymentFailedHandler (listens on ChargeFailedEvent)
+        → Invoice → PAYMENT_FAILED
+        → Retry scheduled (3 attempts over 3 days)
+        → If all retries exhausted: InvoiceOverdueEvent published
+    → IAM: SuspendMembersHandler (listens on InvoiceOverdueEvent)
+        → Organization members' access suspended
+        → SubscriptionSuspendedEvent published
+    → Notifications: sends suspension warning email
 ```
 
-**Split Rule Application** is a synchronous operation within Pay — no saga step needed. The fund routing happens atomically within `ProcessSplitUseCase`.
+### Compensation
+- **Grace period**: After first payment failure, org retains access for 3 days while retries run.
+- **Reinstatement**: When payment eventually succeeds (manual retry or auto), `ActivateSubscriptionHandler` restores access.
+
+### Modules Involved
+`atlashub-billing` · `atlashub-pay` · `atlashub-platform:iam` · `atlashub-platform:notifications`
 
 ---
 
 ## Saga 4: Stock Transfer (Choreography)
 
 ```
-1. Commerce: RequestStockTransfer
-   → StockTransferRequestedEvent
-   → Commerce: Deduct stock from source outlet immediately
+1. Commerce: RequestStockTransferHandler
+   → Stock deducted from source outlet immediately
+   → StockTransferRequestedEvent published
 
-2. Logistics: Create Shipment (StockTransferRequestedEvent listener)
-   → ShipmentCreatedEvent
+2. Logistics: CreateStockTransferShipmentHandler (listens on StockTransferRequestedEvent)
+   → Shipment created
+   → ShipmentCreatedEvent published
 
-3. Logistics: MarkDelivered (rider confirms POD)
-   → ShipmentDeliveredEvent
+3. Logistics: MarkShipmentDeliveredHandler (rider confirms POD)
+   → Shipment → DELIVERED
+   → ShipmentDeliveredEvent published
 
-4. Commerce: Add stock to destination outlet (ShipmentDeliveredEvent listener)
-   → StockTransferReceivedEvent
+4. Commerce: ReceiveStockTransferHandler (listens on ShipmentDeliveredEvent where type=STOCK_TRANSFER)
+   → Stock added to destination outlet
+   → StockTransferReceivedEvent published
 
-5. Pay: Post inter-outlet ledger entry (StockTransferReceivedEvent listener)
-6. Accounting: Post journal entry (StockTransferReceivedEvent listener)
+5. Accounting: PostStockTransferJournalEntryHandler (listens on StockTransferReceivedEvent)
 ```
 
 **Compensation — transfer goes missing / undelivered:**
 ```
-Logistics: MarkFailed → ShipmentFailedEvent
-→ Commerce: Restore stock to source outlet (compensation)
-→ Notifications: Alert ops team
+Logistics: MarkShipmentFailedHandler → ShipmentFailedEvent
+    → Commerce: ReverseStockTransferHandler
+        → Stock restored to source outlet
+    → Notifications: alert operations team
 ```
 
 ---
 
-## Saga 5: KYC Approval (Choreography)
+## Saga 5: KYC / Compliance Approval (Choreography)
 
 ```
-1. Compliance: Organization submits compliance form
-   → ComplianceSubmittedEvent
-   → Admin: Create KycReviewTask
+1. Compliance: SubmitComplianceHandler
+   → ComplianceRecord → SUBMITTED
+   → ComplianceSubmittedEvent published
+   → Admin: CreateKycReviewTaskHandler creates a review task
 
-2. Admin: Compliance officer approves
-   → KycApprovedEvent
-   → Compliance: Transition to APPROVED → OrganizationComplianceApprovedEvent
+2. Admin: ApproveComplianceHandler
+   → KycApprovedEvent published
+   → Compliance: TransitionToApprovedHandler
+       → ComplianceRecord → APPROVED
+       → OrganizationComplianceApprovedEvent published
 
-3. Pay: Issue virtual accounts (OrganizationComplianceApprovedEvent)
-   → Create NUBAN via Anchor for org
-   → VirtualAccountIssuedEvent
+3. Pay: IssueVirtualAccountHandler (listens on OrganizationComplianceApprovedEvent)
+   → NUBAN created via Anchor
+   → VirtualAccountIssuedEvent published
 
-4. Billing: Activate platform access (OrganizationComplianceApprovedEvent)
-   → Subscription moves to ACTIVE if payment already received
+4. Billing: ActivatePlatformAccessHandler (listens on OrganizationComplianceApprovedEvent)
+   → Subscription → ACTIVE if payment already received
 
-5. Notifications: Welcome email with account details
+5. Notifications: Welcome email with NUBAN details
 ```
 
 ---
 
 ## Failure Isolation Rule
 
-Each saga step must handle the case where a preceding event was never received or was lost. Defensive checks in every `execute()` method:
+Each saga step must handle the case where a preceding event was never received or was received more than once. Every Handler is idempotent — duplicate event delivery produces no side effect.
 
 ```java
-// In CompletePosSaleUseCase — handles ChargeSuccessfulEvent
+// In CompletePosSaleHandler — handles ChargeSuccessfulEvent
 SalesOrder order = orderRepository.findByChargeReference(command.chargeReference())
-    .orElseThrow(() -> new BusinessRuleException(CommerceErrorCode.ORDER_NOT_FOUND));
+    .orElseThrow(() -> new SalesOrderNotFoundException(command.chargeReference()));
 
 // Guard: idempotent — if already completed, skip without error
 if (order.getStatus() == OrderStatus.COMPLETED) {
@@ -172,7 +255,7 @@ if (order.getStatus() == OrderStatus.COMPLETED) {
 
 // Guard: only complete if in the right state
 if (order.getStatus() != OrderStatus.PAYMENT_PENDING) {
-    throw new BusinessRuleException(CommerceErrorCode.INVALID_ORDER_STATE,
+    throw new InvalidSalesOrderStateException(
         "Cannot complete order in state: " + order.getStatus());
 }
 ```
@@ -181,21 +264,111 @@ if (order.getStatus() != OrderStatus.PAYMENT_PENDING) {
 
 ## Saga Timeout Handling
 
-For saga steps that wait on external systems (payment gateway, rider), timeouts are handled by scheduled jobs:
+For saga steps that wait on external systems (payment gateway, rider), timeouts are handled by scheduled jobs.
 
 ```java
-// In Commerce: runs every 5 minutes
-@Scheduled(cron = "*/5 * * * *")
-@Transactional
-public void expireStalePaymentPendingOrders() {
-    ZonedDateTime cutoff = ZonedDateTime.now().minusMinutes(15);
-    List<SalesOrder> stale = orderRepository
-        .findByStatusAndStatusChangedAtBefore(OrderStatus.PAYMENT_PENDING, cutoff);
+// In Commerce — StockReservationExpiryScheduler
+// Runs every 5 minutes — cron "*/5 * * * *"
+@Component
+public class StockReservationExpiryScheduler {
 
-    stale.forEach(order -> {
-        order.failPayment("Payment timeout — no gateway confirmation received");
-        // save() triggers outbox → PosSaleFailedEvent → Inventory releases stock
-        orderRepository.save(order);
-    });
+    private final SalesOrderRepository orderRepository;
+    private final FailPosSaleHandler failHandler;
+
+    @Scheduled(cron = "*/5 * * * *")
+    public void expireStaleReservations() {
+        ZonedDateTime cutoff = ZonedDateTime.now().minusMinutes(15);
+        List<SalesOrder> stale = orderRepository
+            .findByStatusAndStatusChangedAtBefore(OrderStatus.PAYMENT_PENDING, cutoff);
+
+        stale.forEach(order -> {
+            order.failPayment("Payment timeout — no gateway confirmation received");
+            orderRepository.save(order);  // publishes PosSaleFailedEvent via outbox
+        });
+    }
 }
 ```
+
+---
+
+## How to Implement a New Saga
+
+When implementing a new multi-module workflow, follow this pattern:
+
+### 1. Identify the steps
+Map each step to a single module and a single local transaction. A step = one Handler invocation.
+
+### 2. Define the events
+Each step publishes exactly one domain event on success. The event triggers the next step.
+
+### 3. Implement the listener
+```java
+@Component
+public class MyModuleStepTwoListener extends BaseKafkaEventListener {
+    private static final String GROUP_ID = "mymodule-saga-step2";
+
+    @PostConstruct
+    public void init() { registerSubscription("StepOneCompletedEvent", GROUP_ID); }
+
+    @KafkaListener(topics = "other-module-events", groupId = GROUP_ID)
+    public void listen(String payload) {
+        processEventIfMatches(payload, "StepOneCompletedEvent", StepOneCompletedEvent.class,
+            log, GROUP_ID,
+            e -> e instanceof TimeoutException,
+            event -> handler.execute(new StepTwoCommand(
+                event.payload().entityId(),
+                event.payload().relevantField()
+            )));
+    }
+}
+```
+
+### 4. Implement the handler
+```java
+@Component
+public class StepTwoHandler extends Command<StepTwoCommand, Void> {
+
+    @Override
+    public Void execute(StepTwoCommand command) {
+        MyEntity entity = repository.findById(command.entityId())
+            .orElseThrow(() -> new EntityNotFoundException(command.entityId()));
+
+        if (entity.getStatus() == ExpectedStatus.ALREADY_DONE) return null; // idempotent
+
+        entity.performStepTwo(command.relevantField()); // registers StepTwoCompletedEvent
+        repository.save(entity); // publishes event via outbox
+        return null;
+    }
+}
+```
+
+### 5. Add inbox idempotency
+The `BaseKafkaEventListener.processEventIfMatches()` method checks `EventDeliveryTracker` before invoking the handler. Duplicate Kafka delivery will not double-process.
+
+### 6. Design the compensation
+For each step, define a compensating handler that undoes the step if called. Compensating handlers are triggered by failure events.
+
+### 7. Add timeout recovery
+If the saga can stall (e.g., waiting on external payment gateway), add a scheduled job that detects stale records and either retries or compensates.
+
+---
+
+## Domain Events Cross-Reference
+
+| Saga | Event | Published By | Consumed By |
+|---|---|---|---|
+| Checkout | `SalesOrderCreatedEvent` | Commerce | Pay |
+| Checkout | `ChargeSuccessfulEvent` | Pay | Commerce, Accounting, Analytics, Notifications |
+| Checkout | `ChargeFailedEvent` | Pay | Commerce |
+| Checkout | `PosSaleCompletedEvent` | Commerce | Accounting, Analytics, Notifications |
+| Payroll | `PayrollApprovedEvent` | HR | Pay |
+| Payroll | `BulkPayoutSettledEvent` | Pay | HR |
+| Payroll | `PayrollDisbursedEvent` | HR | Notifications, Accounting, Analytics |
+| Subscription | `InvoiceGeneratedEvent` | Billing | Pay, Notifications |
+| Subscription | `InvoicePaidEvent` | Billing | Billing (ActivateSubscription), Notifications |
+| Subscription | `InvoiceOverdueEvent` | Billing | IAM (suspend members), Notifications |
+| Subscription | `SubscriptionRenewedEvent` | Billing | Notifications |
+| Stock Transfer | `StockTransferRequestedEvent` | Commerce | Logistics |
+| Stock Transfer | `ShipmentDeliveredEvent` | Logistics | Commerce, Accounting |
+| KYC | `ComplianceSubmittedEvent` | Compliance | Admin |
+| KYC | `OrganizationComplianceApprovedEvent` | Compliance | Pay, Billing, Notifications |
