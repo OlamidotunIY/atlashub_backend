@@ -26,8 +26,8 @@ public class ListCustomRolesHandler extends Query<ListCustomRolesQuery, List<Cus
         log.info("Executing ListCustomRolesQuery");
         
         List<CustomRole> roles = customRoleRepository.findByOrganizationId(query.orgId());
-        
-        List<CustomRoleResult> results = roles.stream()
+
+        return roles.stream()
             .map(role -> new CustomRoleResult(
                 role.getId(),
                 role.getOrganizationId(),
@@ -40,8 +40,6 @@ public class ListCustomRolesHandler extends Query<ListCustomRolesQuery, List<Cus
                 role.getUpdatedAt()
             ))
             .collect(Collectors.toList());
-            
-        return results;
     }
 }
 
