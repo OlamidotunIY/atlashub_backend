@@ -1,7 +1,9 @@
 package com.atlashub.pay.accounts.domain.exceptions;
 
-public class VirtualAccountNotFoundException extends RuntimeException {
-  public VirtualAccountNotFoundException(String message) {
-    super(message);
-  }
+import com.atlashub.shared.domain.exception.NotFoundException;
+
+public class VirtualAccountNotFoundException extends NotFoundException {
+    public VirtualAccountNotFoundException() { super("Virtual account not found"); }
+    public VirtualAccountNotFoundException(String message) { super(message); }
 }
+

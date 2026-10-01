@@ -1,7 +1,7 @@
 package com.atlashub.pay.accounts.domain.exceptions;
 
-public class VirtualAccountAlreadyClosedException extends RuntimeException {
-  public VirtualAccountAlreadyClosedException(String message) {
-    super(message);
-  }
+import com.atlashub.shared.domain.exception.BusinessRuleException;
+
+public class VirtualAccountAlreadyClosedException extends BusinessRuleException {
+    public VirtualAccountAlreadyClosedException() { super("Virtual account is already closed"); }
 }

@@ -1,0 +1,12 @@
+package com.atlashub.pay.accounts.application.commands.SuspendVirtualAccount;
+
+import com.atlashub.shared.application.usecase.Command;
+
+public class SuspendVirtualAccountHandler extends Command<SuspendVirtualAccountCommand, Void> {
+
+
+    @Override
+    public Void execute(SuspendVirtualAccountCommand command) {
+        return null;
+    }
+}

@@ -1,4 +1,14 @@
 package com.atlashub.pay.accounts.domain.events;
 
-public record VirtualAccountClosedEvent() {
+import com.atlashub.shared.domain.event.DomainEvent;
+
+import java.time.ZonedDateTime;
+
+public record VirtualAccountClosedEvent(
+        String eventId,
+        Long aggregateId,
+        ZonedDateTime occurredAt,
+        String correlationId,
+        Void payload
+) implements DomainEvent<Void> {
 }
