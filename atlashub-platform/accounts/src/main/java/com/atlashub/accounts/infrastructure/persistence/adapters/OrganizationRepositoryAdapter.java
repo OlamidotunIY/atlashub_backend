@@ -1,7 +1,7 @@
 package com.atlashub.accounts.infrastructure.persistence.adapters;
 
-import com.atlashub.accounts.domain.model.Organization;
-import com.atlashub.accounts.domain.repository.OrganizationRepository;
+import com.atlashub.accounts.domain.entities.Organization;
+import com.atlashub.accounts.domain.repositories.OrganizationRepository;
 import com.atlashub.accounts.infrastructure.persistence.entities.OrganizationJPA;
 import com.atlashub.accounts.infrastructure.persistence.mappers.OrganizationMapper;
 import com.atlashub.accounts.infrastructure.persistence.repositories.SpringDataOrganizationRepository;

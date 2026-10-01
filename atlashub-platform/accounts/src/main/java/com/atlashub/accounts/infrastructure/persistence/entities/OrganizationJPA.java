@@ -47,6 +47,9 @@ public class OrganizationJPA implements BaseJpaEntity {
     private String country;
 
     @Column(nullable = false)
+    private boolean posEnabled;
+
+    @Column(nullable = false)
     private ZonedDateTime createdAt;
 
     @Column(nullable = false)

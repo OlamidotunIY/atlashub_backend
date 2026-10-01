@@ -1,6 +1,6 @@
 package com.atlashub.accounts.infrastructure.messaging.listeners;
 
-import com.atlashub.accounts.domain.repository.UserRepository;
+import com.atlashub.accounts.domain.repositories.UserRepository;
 import com.atlashub.accounts.infrastructure.messaging.events.AuthEmailVerified;
 import com.atlashub.shared.application.messaging.BaseKafkaEventListener;
 import com.fasterxml.jackson.databind.ObjectMapper;

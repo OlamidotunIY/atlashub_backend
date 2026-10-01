@@ -1,8 +1,8 @@
 package com.atlashub.accounts.application.command.UpdateOrganizationDetails;
 
-import com.atlashub.accounts.domain.exception.OrganizationNotFoundException;
-import com.atlashub.accounts.domain.model.Organization;
-import com.atlashub.accounts.domain.repository.OrganizationRepository;
+import com.atlashub.accounts.domain.exceptions.OrganizationNotFoundException;
+import com.atlashub.accounts.domain.entities.Organization;
+import com.atlashub.accounts.domain.repositories.OrganizationRepository;
 import com.atlashub.shared.application.usecase.Command;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

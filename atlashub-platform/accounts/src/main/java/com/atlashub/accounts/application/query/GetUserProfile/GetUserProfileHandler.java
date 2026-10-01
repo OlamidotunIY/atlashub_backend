@@ -1,10 +1,10 @@
 package com.atlashub.accounts.application.query.GetUserProfile;
 
-import com.atlashub.accounts.domain.exception.UserNotFoundException;
-import com.atlashub.accounts.domain.model.Organization;
-import com.atlashub.accounts.domain.model.User;
-import com.atlashub.accounts.domain.repository.OrganizationRepository;
-import com.atlashub.accounts.domain.repository.UserRepository;
+import com.atlashub.accounts.domain.exceptions.UserNotFoundException;
+import com.atlashub.accounts.domain.entities.Organization;
+import com.atlashub.accounts.domain.entities.User;
+import com.atlashub.accounts.domain.repositories.OrganizationRepository;
+import com.atlashub.accounts.domain.repositories.UserRepository;
 import com.atlashub.shared.application.port.MembershipQueryPort;
 import com.atlashub.shared.application.usecase.Query;
 import org.springframework.stereotype.Component;

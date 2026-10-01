@@ -1,7 +1,7 @@
 package com.atlashub.accounts.application.command.RegisterOrg;
 
-import com.atlashub.accounts.domain.model.Organization;
-import com.atlashub.accounts.domain.model.User;
+import com.atlashub.accounts.domain.entities.Organization;
+import com.atlashub.accounts.domain.entities.User;
 
 public record RegisterOrganizationResult(
     Organization organization,

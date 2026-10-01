@@ -45,8 +45,14 @@ public class UserJPA implements BaseJpaEntity {
     @Column
     private Long activeOrganizationId;
 
-    @Column(nullable = false)
+    @Column
     private boolean emailVerified;
+
+    @Column
+    private String locale;
+
+    @Column
+    private String timezone;
 
     @Column(nullable = false)
     private ZonedDateTime createdAt;

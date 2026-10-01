@@ -1,8 +1,8 @@
 package com.atlashub.accounts.application.command.SwitchActiveOrganization;
 
-import com.atlashub.accounts.domain.exception.UserNotFoundException;
-import com.atlashub.accounts.domain.model.User;
-import com.atlashub.accounts.domain.repository.UserRepository;
+import com.atlashub.accounts.domain.exceptions.UserNotFoundException;
+import com.atlashub.accounts.domain.entities.User;
+import com.atlashub.accounts.domain.repositories.UserRepository;
 import com.atlashub.shared.application.port.MembershipQueryPort;
 import com.atlashub.shared.application.usecase.Command;
 import com.atlashub.shared.domain.exception.AuthorizationException;

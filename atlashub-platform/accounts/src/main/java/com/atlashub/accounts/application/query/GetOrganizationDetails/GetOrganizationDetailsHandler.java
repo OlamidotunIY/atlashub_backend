@@ -1,8 +1,8 @@
 package com.atlashub.accounts.application.query.GetOrganizationDetails;
 
-import com.atlashub.accounts.domain.exception.OrganizationNotFoundException;
-import com.atlashub.accounts.domain.model.Organization;
-import com.atlashub.accounts.domain.repository.OrganizationRepository;
+import com.atlashub.accounts.domain.exceptions.OrganizationNotFoundException;
+import com.atlashub.accounts.domain.entities.Organization;
+import com.atlashub.accounts.domain.repositories.OrganizationRepository;
 import com.atlashub.shared.application.usecase.Query;
 import org.springframework.stereotype.Component;
 

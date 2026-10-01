@@ -1,10 +1,10 @@
 package com.atlashub.accounts.application.command.RegisterOrg;
 
-import com.atlashub.accounts.domain.exception.EmailAlreadyExistsException;
-import com.atlashub.accounts.domain.model.Organization;
-import com.atlashub.accounts.domain.model.User;
-import com.atlashub.accounts.domain.repository.OrganizationRepository;
-import com.atlashub.accounts.domain.repository.UserRepository;
+import com.atlashub.accounts.domain.exceptions.EmailAlreadyExistsException;
+import com.atlashub.accounts.domain.entities.Organization;
+import com.atlashub.accounts.domain.entities.User;
+import com.atlashub.accounts.domain.repositories.OrganizationRepository;
+import com.atlashub.accounts.domain.repositories.UserRepository;
 import com.atlashub.shared.application.port.PasswordEncoderPort;
 import com.atlashub.shared.application.usecase.Command;
 import com.atlashub.shared.domain.valueobject.EmailAddress;
@@ -57,7 +57,8 @@ public class RegisterOrganizationHandler extends Command<RegisterOrganizationCom
                 command.logoUrl(),
                 command.country(),
                 command.industry(),
-                command.websiteUrl()
+                command.websiteUrl(),
+                user.getId()
         );
 
         organizationRepository.save(organization);
