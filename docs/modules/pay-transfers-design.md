@@ -554,6 +554,33 @@ public class PayoutApprovedListener extends BaseKafkaEventListener {
 
 ---
 
+#### `PayrollApprovedListener`
+
+| Attribute | Value |
+|---|---|
+| **Topic** | `hr-events` |
+| **Group ID** | `pay-transfers-payroll-approved` |
+| **Event** | `PayrollApprovedEvent` |
+| **Payload fields** | `payrollRunId`, `organizationId`, `period`, `totalAmount`, `currency`, `approvedByUserId`, `payslips[]` (each: `employeeId`, `recipientNuban`, `recipientBankCode`, `recipientName`, `netPay`), `approvedAt` |
+| **Command called** | `InitiatePayoutHandler` (called once per payslip in a loop) |
+| **Flow** | For each payslip, call `InitiatePayoutHandler` with `sourceSystem=PAYROLL`, `sourceReferenceId=payrollRunId`, `amount=netPay`, `recipientNuban`, `recipientBankCode`. Each payout starts at PENDING and auto-approves (payroll approval is done at HR level — no second approval in pay). Triggers `ExecutePayoutHandler` immediately via `PayoutApprovedEvent`. |
+| **Idempotency** | `reference` constructed as `payrollRunId + "-" + employeeId` — duplicate replays detected and skipped. |
+
+---
+
+#### `ChargeRefundInitiatedListener`
+
+| Attribute | Value |
+|---|---|
+| **Topic** | `pay-events` |
+| **Group ID** | `pay-transfers-charge-refund` |
+| **Event** | `ChargeRefundInitiatedEvent` |
+| **Payload fields** | `chargeId`, `organizationId`, `customerId`, `reference`, `refundAmount`, `currency`, `recipientNuban`, `recipientBankCode`, `initiatedAt` |
+| **Command called** | `InitiatePayoutHandler` |
+| **Flow** | Creates a PAYOUT record for the refund amount to the customer's bank account. `sourceSystem=COMMERCE_REFUND`, `sourceReferenceId=chargeId`. Payout auto-approves (refund decision was made upstream at the order level). |
+
+---
+
 ### External Service Adapters
 
 #### `PaystackPayoutAdapter implements PaymentGatewayPort`

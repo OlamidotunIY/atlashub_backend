@@ -275,7 +275,7 @@ record CreateCustomerReturnCommand(Long salesOrderId, Long organizationId, Long 
 record ApproveCustomerReturnCommand(Long returnId)
 ```
 **Handler:** `ApproveCustomerReturnHandler` | **Response:** `void`  
-**Invocation source:** Either HTTP (manager approval) or `CustomerReturnShipmentReceivedListener`  
+**Invocation source:** Either HTTP (manager approval) or `ReturnShipmentReceivedListener`  
 **Flow:** Load `CustomerReturn` → `customerReturn.approve()` → for each item: `inventory.addStock(qty)` (pessimistic lock) → `repository.save()` → `CustomerReturnApprovedEvent` published
 
 ---
@@ -369,14 +369,16 @@ CustomerReturnJpaRepository
 | **Payload** | `productId`, `organizationId`, `isService`, `outletIds` |
 | **Action** | Creates `Inventory` record (`quantity = 0`) for each outlet if `isService == false` |
 
-#### `CustomerReturnShipmentReceivedListener`
+#### `ReturnShipmentReceivedListener`
+
 | Attribute | Value |
 |---|---|
 | **Topic** | `logistics-events` |
-| **Group ID** | `commerce-inventory-group` |
-| **Event consumed** | `CustomerReturnShipmentReceivedEvent` |
-| **Payload** | `returnId`, `organizationId` |
-| **Command called** | `ApproveCustomerReturnCommand` |
+| **Group ID** | `commerce-inventory-return-received` |
+| **Event consumed** | `ReturnShipmentReceivedEvent` |
+| **Payload** | `returnShipmentId`, `salesOrderId`, `organizationId`, `outletId`, `items[]` (each: `productId`, `quantity`) |
+| **Command called** | `ApproveCustomerReturnHandler` |
+| **Flow** | Logistics marks the physical shipment as received at the outlet. This listener auto-approves the `CustomerReturn` (no manual approval needed once goods are confirmed received), restores stock for each item, and publishes `CustomerReturnApprovedEvent` → `pay:transfers` initiates the refund payout. |
 
 ---
 

@@ -6,7 +6,133 @@ The `charges` submodule manages **inbound payment collection**. It is the entry 
 
 A `Charge` represents a single payment attempt. The submodule integrates with **Paystack** (card, bank transfer, USSD) and **Moniepoint** (physical POS terminals) via a `PaymentGatewayPort` domain port. Both providers notify AtlasHub of payment outcomes via inbound webhook callbacks, which are validated and processed here.
 
-On a successful charge, this submodule posts the corresponding ledger entry (via `pay:ledger`) and publishes `ChargeSuccessfulEvent`, which drives downstream modules: Commerce (complete sale), Billing (mark invoice paid), Webhooks (notify merchant server), and WebSocket (notify cashier).
+On a successful charge, this submodule publishes `ChargeSuccessfulEvent`. Downstream modules react asynchronously: `pay:ledger` posts the ledger entry, `commerce` completes the sale, `billing` marks the invoice paid, `pay:webhooks` notifies the merchant, and `pay:tx-query` records the transaction. **No synchronous cross-module write calls are made here.**
+
+---
+
+## Domain Layer
+
+### Aggregate Root: `Charge`
+
+**Package**: `com.atlashub.pay.charges.domain.entities`
+
+```
+Charge
+├── id: Long
+├── organizationId: Long
+├── customerId: String             ← nullable; set for B2B2C payments
+├── amount: Money
+├── channel: PaymentChannel        ← CARD, BANK_TRANSFER, USSD, POS_TERMINAL
+├── status: ChargeStatus           ← PENDING, SUCCESSFUL, FAILED, REFUNDED
+├── reference: String              ← unique, caller-supplied; used to correlate gateway webhook
+├── provider: PaymentProvider      ← PAYSTACK, MONIEPOINT
+├── checkoutUrl: String            ← nullable; for redirect-based payments (card, USSD)
+├── gatewayReference: String       ← provider's own transaction reference; nullable until confirmed
+├── gatewayResponse: String        ← raw provider response; nullable
+├── splitId: Long                  ← nullable; which split rule to apply on success
+├── sourceSystem: SourceSystem     ← e.g., CARD_CHARGE, COMMERCE_CHECKOUT
+├── sourceReferenceId: String      ← e.g., salesOrderId, billingInvoiceId — callers MUST set this so consumers can correlate
+├── metadata: Map<String, String>  ← arbitrary key-value for merchant use
+├── cashierId: Long                ← nullable; the POS cashier who initiated (for WS push)
+├── createdAt: ZonedDateTime
+└── completedAt: ZonedDateTime     ← nullable; set by markSuccessful() or markFailed()
+```
+
+**State Machine:**
+```
+PENDING ──markSuccessful()──► SUCCESSFUL ──refund()──► REFUNDED
+        ──markFailed()──────► FAILED
+```
+
+**Invariants:**
+- `reference` must be unique across all charges.
+- `markSuccessful()` may only be called when `status == PENDING`.
+- `markFailed()` may only be called when `status == PENDING`.
+- `refund(amount)` may only be called when `status == SUCCESSFUL`.
+- Refund `amount` must be ≤ original `amount`.
+
+**Business Methods:**
+
+| Method | Inputs | Guard | Effect | Event Registered |
+|---|---|---|---|---|
+| `markSuccessful(gatewayRef, gatewayResponse)` | `String gatewayRef`, `String gatewayResponse` | status must be `PENDING` | sets `gatewayReference`, `gatewayResponse`, `completedAt = now()`, `status = SUCCESSFUL` | `ChargeSuccessfulEvent` |
+| `markFailed(reason)` | `String reason` | status must be `PENDING` | sets `gatewayResponse = reason`, `completedAt = now()`, `status = FAILED` | `ChargeFailedEvent` |
+| `refund(amount)` | `Money amount` | status must be `SUCCESSFUL`; amount ≤ original | sets `status = REFUNDED` | `ChargeRefundInitiatedEvent` |
+
+---
+
+### Value Objects
+
+**Package**: `com.atlashub.pay.charges.domain.valueobject`
+
+| Class | Values | Description |
+|---|---|---|
+| `PaymentChannel` | `CARD`, `BANK_TRANSFER`, `USSD`, `POS_TERMINAL` | How the customer paid |
+| `ChargeStatus` | `PENDING`, `SUCCESSFUL`, `FAILED`, `REFUNDED` | Charge lifecycle state |
+| `PaymentProvider` | `PAYSTACK`, `MONIEPOINT` | Which gateway processed this charge |
+| `Money` | `value: BigDecimal`, `currency: String` | Immutable monetary amount |
+
+---
+
+### Domain Events
+
+**Package**: `com.atlashub.pay.charges.domain.events`
+
+All events published to Kafka topic **`pay-events`**.
+
+| Event | Published When | Consumed By |
+|---|---|---|
+| `ChargeSuccessfulEvent` | Customer payment confirmed by gateway | `commerce` (complete sale via `sourceReferenceId`), `billing` (mark invoice paid), `pay:ledger` (post entry), `pay:webhooks` (notify merchant), `pay:tx-query`, `SelectiveWebSocketBroadcaster` (cashier WS push) |
+| `ChargeFailedEvent` | Payment declined/timed out | `commerce` (release reserved stock via `sourceReferenceId`), `notifications`, `pay:webhooks`, `pay:tx-query`, `SelectiveWebSocketBroadcaster` (cashier WS push) |
+| `ChargeRefundInitiatedEvent` | Refund initiated | `pay:transfers` (create refund payout to customer), `pay:tx-query` |
+
+**`ChargeSuccessfulEvent` payload:**
+```
+ChargeSuccessfulEvent.payload
+├── chargeId           : Long
+├── organizationId     : Long
+├── customerId         : String       ← nullable
+├── amount             : BigDecimal
+├── currency           : String
+├── formattedAmount    : String       ← e.g. "₦25,000.00"
+├── channel            : String
+├── provider           : String
+├── reference          : String       ← idempotency key for ledger listener
+├── gatewayReference   : String
+├── splitId            : Long         ← nullable
+├── sourceSystem       : String       ← consumers use this to route the entry correctly
+├── sourceReferenceId  : String       ← e.g. salesOrderId or invoiceId; consumers use this to find the originating record
+├── cashierId          : Long         ← nullable; for WS push to cashier browser session
+└── succeededAt        : ZonedDateTime
+```
+
+**`ChargeFailedEvent` payload:**
+```
+ChargeFailedEvent.payload
+├── chargeId          : Long
+├── organizationId    : Long
+├── reference         : String
+├── sourceSystem      : String
+├── sourceReferenceId : String        ← e.g. salesOrderId; consumers use this to release reserved stock
+├── failureReason     : String
+└── failedAt          : ZonedDateTime
+```
+
+**`ChargeRefundInitiatedEvent` payload:**
+```
+ChargeRefundInitiatedEvent.payload
+├── chargeId          : Long
+├── organizationId    : Long
+├── customerId        : String        ← nullable
+├── reference         : String
+├── refundAmount      : BigDecimal
+├── currency          : String
+├── recipientNuban    : String        ← bank account to refund to
+├── recipientBankCode : String
+└── initiatedAt       : ZonedDateTime
+```
+
+
 
 ---
 
@@ -394,7 +520,38 @@ public interface SpringDataChargeRepository extends JpaRepository<ChargeJpa, Lon
 
 ---
 
-## Presentation Layer
+### Kafka Listeners — `infrastructure/messaging/listeners/`
+
+#### `SalesOrderPaymentInitiatedListener`
+
+| Attribute | Value |
+|---|---|
+| **Topic** | `commerce-events` |
+| **Group ID** | `pay-charges-sales-order-payment` |
+| **Event** | `SalesOrderPaymentInitiatedEvent` |
+| **Payload fields** | `salesOrderId`, `organizationId`, `outletId`, `chargeReference`, `amount`, `currency`, `paymentMethod`, `cashierId`, `initiatedAt` |
+| **Command called** | `InitializeChargeHandler` |
+| **Flow** | Receives `SalesOrderPaymentInitiatedEvent` from `commerce-storefront`. Calls `InitializeChargeHandler` with `sourceSystem=COMMERCE_CHECKOUT`, `sourceReferenceId=salesOrderId`, `reference=chargeReference`. Charge created → gateway called → `ChargeInitialized` response. Idempotency: if charge with that `reference` already exists, skip. |
+
+> **This replaces the removed `PayInitializeChargePort`.** Commerce publishes the event; this listener creates the Charge record asynchronously.
+
+---
+
+#### `MandateChargeDueListener`
+
+| Attribute | Value |
+|---|---|
+| **Topic** | `pay-events` |
+| **Group ID** | `pay-charges-mandate-charge-due` |
+| **Event** | `MandateChargeDueEvent` |
+| **Payload fields** | `mandateId`, `organizationId`, `customerId`, `chargeReference`, `amount`, `currency`, `paymentChannel`, `provider`, `sourceReferenceId`, `dueAt` |
+| **Command called** | `InitializeChargeHandler` |
+| **Flow** | Receives `MandateChargeDueEvent` from `pay:mandates`. Calls `InitializeChargeHandler` with `sourceSystem=MANDATE_DEBIT`, `sourceReferenceId=mandateId`. Gateway processes the charge. `ChargeSuccessfulEvent` or `ChargeFailedEvent` published → `pay:mandates` listens to advance the next charge date or handle failure. |
+
+> **This replaces the removed sync `ChargePort` call in pay:mandates.**
+
+---
+
 
 ### Controller: `ChargesController`
 

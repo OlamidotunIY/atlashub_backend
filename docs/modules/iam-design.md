@@ -155,14 +155,15 @@ Invitation
 
 ### `ApiKey` (Aggregate Root)
 
+Organizations are issued API key pairs (public + secret) for machine-to-machine access. There is a **single environment** — no TEST/LIVE split. Keys can be named, revoked, and rotated at any time.
+
 ```
 ApiKey
 ├── id: Long
 ├── organizationId: Long
-├── publicKey: String             ← "atlas_pk_live_..." or "atlas_pk_test_..." — stored plaintext
+├── publicKey: String             ← "atlas_pk_..." — stored plaintext
 ├── secretKeyHash: String         ← SHA-256 hash of the secret key — original never stored
-├── name: String                  ← human-readable label (e.g., "Production Server Key")
-├── environment: ApiEnvironment   ← LIVE, TEST
+├── name: String                  ← human-readable label (e.g., "Server Key", "Webhook Processor")
 ├── isRevoked: Boolean
 ├── lastUsedAt: ZonedDateTime     ← nullable
 ├── revokedAt: ZonedDateTime      ← nullable
@@ -176,12 +177,24 @@ ApiKey
 
 **Key Generation** (in `IssueApiKeyUseCase`):
 ```
-publicKey  = "atlas_pk_" + env.lower() + "_" + Base62.random(24)
-secretKey  = "atlas_sk_" + env.lower() + "_" + Base62.random(40)   ← shown ONCE, never stored
-secretHash = SHA-256(secretKey)                                      ← stored in DB
+publicKey  = "atlas_pk_" + Base62.random(24)
+secretKey  = "atlas_sk_" + Base62.random(40)   ← shown ONCE, never stored
+secretHash = SHA-256(secretKey)                  ← stored in DB
 ```
 
----
+**Permissions via API Key:**
+An API key authenticates as the organization. Permissions are derived from:
+1. The organization's active subscription status (checked via `EntitlementQueryPort`)
+2. The requesting user's IAM role (if the request carries a `userId` claim embedded in the key)
+
+For fully automated / server-to-server requests with no user context, the API key grants the organization's base permissions. Fine-grained per-action access can be restricted by associating a `customRoleId` with the key at issuance.
+
+```
+ApiKey (extended)
+└── boundRoleId: Long             ← nullable; if set, limits key to that role's permissions only
+```
+
+
 
 ## 3. Built-In Permissions (Platform-Defined)
 
@@ -206,6 +219,7 @@ secretHash = SHA-256(secretKey)                                      ← stored 
 | `commerce:inventory:read` | View stock levels |
 | `commerce:inventory:update` | Adjust stock |
 | `commerce:suppliers:manage` | Manage suppliers and purchase orders |
+| `commerce:pos:manage` | Enable or disable the POS feature for the organization |
 | `commerce:tills:open` | Open a POS till |
 | `commerce:tills:close` | Close a POS till |
 | `commerce:vendors:manage` | Manage marketplace vendors |
@@ -300,6 +314,10 @@ public interface ApiKeyQueryPort {
 ## 7. Commands & Use Cases
 
 ### Memberships & Invitations
+- `InitializeOrganizationIamCommand(orgId, foundingUserId)` → `InitializeOrganizationIamUseCase`
+  - Triggered internally by `OrganizationCreatedListener`
+  - Bootstraps the built-in `OWNER` role for the organization
+  - Creates the initial `OrganizationMember` entity linking the founding user as the owner
 - `InviteMemberCommand(orgId, invitedByUserId, email, customRoleId)` → `InviteMemberUseCase`
 - `AcceptInvitationCommand(token, acceptingUserId)` → `AcceptInvitationUseCase`
 - `DeclineInvitationCommand(token)` → `DeclineInvitationUseCase`
@@ -313,8 +331,9 @@ public interface ApiKeyQueryPort {
 - `DeleteCustomRoleCommand(roleId, requestedByUserId)` → `DeleteCustomRoleUseCase`
 
 ### API Keys
-- `IssueApiKeyCommand(orgId, name, environment, requestedByUserId)` → `IssueApiKeyUseCase`
+- `IssueApiKeyCommand(orgId, name, requestedByUserId, boundRoleId?)` → `IssueApiKeyUseCase`
   - Returns `IssuedApiKeyResult` containing plaintext `secretKey` — the ONLY time it is returned
+  - `boundRoleId` is optional; if provided, limits the key's permissions to that role
 - `RevokeApiKeyCommand(keyId, orgId, requestedByUserId)` → `RevokeApiKeyUseCase`
 
 ---
@@ -326,16 +345,19 @@ public interface ApiKeyQueryPort {
 - `ListCustomRolesQuery(orgId)` → `List<CustomRoleResult>`
 - `GetCustomRolePermissionsQuery(roleId)` → `CustomRolePermissionsResult`
 - `ListPermissionsQuery(module)` → `List<PermissionResult>` ← for role builder UI
-- `ListApiKeysQuery(orgId, environment)` → `List<ApiKeyResult>` ← never returns key values
+- `ListApiKeysQuery(orgId)` → `List<ApiKeyResult>` ← never returns key values
 - `ListInvitationsQuery(orgId, status)` → `List<InvitationResult>`
 
 ---
 
 ## 9. Listeners
 
-- **`OrganizationCreatedListener`**: Listens to `OrganizationCreatedEvent` from `accounts`. Creates the built-in OWNER role for the org. Creates an `OrganizationMember` record linking the founding user to the org with the OWNER role.
+- **`OrganizationCreatedListener`**: topic=`accounts-events`. Creates the built-in OWNER role for the org. Creates an `OrganizationMember` record linking the founding user to the org with the OWNER role.
 - **`MemberDeactivatedListener`** (internal): After deactivation, publishes `MemberDeactivatedEvent` → `auth` revokes all refresh tokens for this user in this org context.
-- **`SubscriptionSuspendedListener`**: Listens to `SubscriptionSuspendedEvent` from `billing`. Suspends all non-OWNER members for the organization (access cutoff without deleting data).
+- **`SubscriptionSuspendedListener`**: topic=`billing-events`. Suspends all non-OWNER members for the organization (access cutoff without deleting data).
+- **`EmployeeSuspendedListener`**: topic=`hr-events`. Event=`EmployeeSuspendedEvent`. Payload: `employeeId`, `organizationId`, `userId`, `suspendedAt`. Calls `DeactivateMemberHandler` for the suspended employee's corresponding `OrganizationMember` record. Prevents suspended employees from accessing the dashboard or API while HR suspension is active.
+- **`OrganizationBannedListener`**: topic=`admin-events`. Event=`OrganizationBannedEvent`. Payload: `organizationId`, `reason`, `bannedAt`. Deactivates ALL members of the organization (including OWNER). Publishes `MemberDeactivatedEvent` for each, causing `auth` to revoke all tokens for the org.
+
 
 ---
 

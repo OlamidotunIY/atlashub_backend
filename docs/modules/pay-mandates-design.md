@@ -90,30 +90,48 @@ All events are published to Kafka topic **`pay-events`**.
 
 | Event | Published When | Consumed By |
 |---|---|---|
+| `MandateChargeDueEvent` | `MandateChargeScheduler` identifies a mandate due for charge | `pay:charges` (listens → initiates charge using `authorizationCode`) |
 | `MandatePausedEvent` | Customer-initiated pause | `notifications`, `pay:webhooks` |
 | `MandateResumedEvent` | Customer or org resumes paused mandate | `notifications`, `pay:webhooks` |
 | `MandateRevokedEvent` | Mandate permanently revoked | `notifications`, `pay:webhooks` |
-| `MandateExpiredEvent` | Mandate marked expired by scheduler | `notifications` |
-| `MandateChargedEvent` | Scheduler-triggered charge succeeds | `notifications`, `pay:webhooks`, `pay:tx-query` |
+| `MandateExpiredEvent` | Card expired / repeated failures | `notifications`, `pay:webhooks` |
+| `MandateChargedEvent` | Charge confirmed successful | `notifications` (receipt to customer), `pay:webhooks`, `pay:tx-query` |
 
-**Event payload shape (example — `MandateRevokedEvent`):**
-```java
-public record MandateRevokedEvent(
-    String eventId,
-    String aggregateId,         // mandateId as String
-    ZonedDateTime occurredAt,
-    Payload payload
-) {
-    public record Payload(
-        Long mandateId,
-        Long organizationId,
-        String customerId,
-        String email,
-        BigDecimal amount,
-        String currency,
-        String frequency
-    ) {}
-}
+**Event payload shapes:**
+
+```
+MandateChargeDueEvent.payload
+├── mandateId          : Long
+├── organizationId     : Long
+├── customerId         : String
+├── email              : String
+├── chargeReference    : String       ← UUID; used by pay:charges as idempotency key
+├── amount             : BigDecimal
+├── currency           : String
+├── authorizationCode  : String       ← Paystack card auth code
+├── paymentChannel     : String       ← CARD (always for mandates)
+├── provider           : String       ← PAYSTACK
+├── sourceReferenceId  : String       ← mandateId as string
+└── dueAt              : ZonedDateTime
+
+MandateRevokedEvent.payload
+├── mandateId      : Long
+├── organizationId : Long
+├── customerId     : String
+├── email          : String
+├── amount         : BigDecimal
+├── currency       : String
+└── frequency      : String
+
+MandateChargedEvent.payload
+├── mandateId      : Long
+├── organizationId : Long
+├── customerId     : String
+├── email          : String
+├── amount         : BigDecimal
+├── currency       : String
+├── chargeReference: String
+└── chargedAt      : ZonedDateTime
 ```
 
 ---
@@ -294,14 +312,33 @@ public record ChargeMandateCommand(
 
 **Processing steps:**
 1. Load `PaymentMandate` by ID. Throw `MandateNotFoundException` if not found.
-2. Verify `mandate.status == ACTIVE`. If `PAUSED`, log and skip. If `REVOKED` or `EXPIRED`, log and skip.
-3. Call `pay:charges` in-process via `ChargePort` to initiate a charge using `mandate.authorizationCode` (Paystack recurring charge).
-4. On successful charge initiation, call `mandate.advanceNextChargeDate(mandate.frequency)` to set the next charge date.
-5. Publish `MandateChargedEvent` via outbox.
+2. Verify `mandate.status == ACTIVE`. If `PAUSED`, `REVOKED`, or `EXPIRED`, log and skip.
+3. Generate a unique `chargeReference` (UUID prefixed with `mandate-{mandateId}-`).
+4. Publish `MandateChargeDueEvent` to Kafka. `pay:charges` listens and initiates the actual charge using `mandate.authorizationCode`. **No sync cross-module write call.**
+5. `mandate.advanceNextChargeDate(mandate.frequency)` — pre-advance the date to prevent double-charging if scheduler runs twice in the same day.
 6. Save updated mandate.
-7. If the charge fails (card declined, authorization expired), call `mandate.markExpired()` and publish `MandateExpiredEvent`.
+
+> **`ChargePort` was a synchronous cross-module write port and has been removed.** Charge outcome (`ChargeSuccessfulEvent` / `ChargeFailedEvent`) is received by `ChargeSuccessfulListener` / `ChargeFailedListener` in this module.
 
 **Response**: `void`
+
+---
+
+#### `AdvanceMandateDateCommand`
+
+**Package**: `com.atlashub.pay.mandates.application.commands.AdvanceMandateDate`
+
+```java
+public record AdvanceMandateDateCommand(Long mandateId)
+```
+
+**Handler**: `AdvanceMandateDateHandler extends Command<AdvanceMandateDateCommand, Void>`
+
+**RBAC**: System-internal only (triggered by `ChargeSuccessfulListener`).
+
+**Processing steps:**
+1. Load `PaymentMandate`. Confirm `status == ACTIVE`.
+2. Publish `MandateChargedEvent`.
 
 ---
 
@@ -438,6 +475,49 @@ public class MandateChargeScheduler {
 **Cron**: `0 0 9 * * *` — daily at 09:00 server time
 **Command Called**: `ChargeMandateCommand` → `ChargeMandateHandler`
 **Behavior**: Processes each mandate independently; failures are logged and do not abort the batch.
+
+---
+
+### Kafka Listeners — `infrastructure/messaging/listeners/`
+
+#### `MandateChargeSuccessfulListener`
+
+| Attribute | Value |
+|---|---|
+| **Topic** | `pay-events` |
+| **Group ID** | `pay-mandates-charge-successful` |
+| **Event** | `ChargeSuccessfulEvent` |
+| **Filter** | Only processes events where `sourceSystem == "MANDATE_DEBIT"` |
+| **Payload fields** | `chargeId`, `organizationId`, `reference` (= chargeReference), `sourceSystem`, `sourceReferenceId` (= mandateId), `succeededAt` |
+| **Command called** | `AdvanceMandateDateHandler` |
+| **Flow** | Extracts `mandateId` from `sourceReferenceId`. Loads mandate. Publishes `MandateChargedEvent`. Idempotent: checks if `nextChargeDate` already advanced for this reference. |
+
+---
+
+#### `MandateChargeFailedListener`
+
+| Attribute | Value |
+|---|---|
+| **Topic** | `pay-events` |
+| **Group ID** | `pay-mandates-charge-failed` |
+| **Event** | `ChargeFailedEvent` |
+| **Filter** | Only processes events where `sourceSystem == "MANDATE_DEBIT"` |
+| **Payload fields** | `chargeId`, `organizationId`, `reference`, `sourceSystem`, `sourceReferenceId` (= mandateId), `failureReason`, `failedAt` |
+| **Command called** | `ExpireMandateHandler` (if failure is card-level) or logs and skips (if transient failure) |
+| **Flow** | Extracts `mandateId` from `sourceReferenceId`. If `failureReason` indicates expired/invalid card → calls `mandate.markExpired()` → publishes `MandateExpiredEvent`. Otherwise logs for retry on next scheduled day. |
+
+---
+
+#### `EmployeeTerminatedListener`
+
+| Attribute | Value |
+|---|---|
+| **Topic** | `hr-events` |
+| **Group ID** | `pay-mandates-employee-terminated` |
+| **Event** | `EmployeeTerminatedEvent` |
+| **Payload fields** | `employeeId`, `organizationId`, `userId`, `terminatedAt` |
+| **Command called** | `RevokeMandateHandler` (for all active mandates linked to the employee's `customerId`) |
+| **Flow** | Finds all `ACTIVE` mandates for `organizationId` where `customerId` matches the terminated employee's userId. Calls `RevokeMandateHandler` on each. Prevents deduction from terminated staff. |
 
 ---
 

@@ -228,8 +228,19 @@ Access tokens are signed with RS256 (asymmetric). The private key is held only b
 
 ## 9. Listeners
 
-- **`UserCreatedListener`**: Listens to `UserCreatedEvent` from `accounts`. Creates `AuthAccountJpa` with a hashed temporary password (or no password if SSO-only). Triggers email verification.
-- **`InvitationAcceptedListener`**: Listens to `InvitationAcceptedEvent` from `iam`. If the invited user is new, sets their `emailVerified = true` (invitation acceptance implies email confirmation).
+- **`UserAuthenticationListener`** — topic: `user-events`, groupId: `authentication-group`
+  - Listens for `UserCreated` event (published by `accounts` module after registration)
+  - Payload consumed: `aggregateId` (userId), `payload.email`, `payload.hashedPassword`
+  - Calls `AuthAccountHandler` which:
+    1. Checks idempotency — if `AuthAccount` already exists for that email, returns immediately
+    2. Creates `AuthAccount` via `AuthAccount.createCredentialsAccount(id, userId, email, hashedPassword)`
+    3. Issues an email verification OTP via `OtpVerificationIssuer.issue()` → creates a `Verification` aggregate
+    4. Stores OTP for async transmission via `OtpTransmissionPort.storeForTransmission()`
+    5. Saves `AuthAccount` + `Verification` (outbox publishes `OtpVerificationCreated` event)
+  - Note: `isInvited` from `UserCreated.payload` is **not yet handled** — planned: invited users skip OTP verification
+- **`MemberDeactivatedListener`**: topic=`iam-events`. Event=`MemberDeactivatedEvent`. Payload: `userId`, `organizationId`, `deactivatedAt`. Revokes all refresh tokens for this user (adds to Redis revocation set). Forces logout immediately on next request.
+- **`OrganizationBannedListener`**: topic=`admin-events`. Event=`OrganizationBannedEvent`. Payload: `organizationId`, `reason`, `bannedAt`. Revokes ALL active sessions for every user in the banned organization. Users are immediately logged out and cannot re-authenticate until the ban is lifted.
+
 
 ---
 

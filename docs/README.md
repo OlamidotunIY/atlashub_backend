@@ -1,6 +1,6 @@
 # AtlasHub Backend — Documentation
 
-AtlasHub is a B2B multi-product platform combining payments, commerce, logistics, HR, and accounting into a single integrated product suite. Businesses register for the products they need; each product can stand alone or work with others.
+AtlasHub is a B2B multi-product platform combining payments, commerce, logistics, HR, and accounting into a single integrated product suite. Organizations subscribe **once** and gain access to all products — no per-product registration required. Some products are free and always included. When an organization registers, the platform automatically provisions entitlements across every active product.
 
 ---
 

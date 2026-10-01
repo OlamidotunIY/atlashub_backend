@@ -6,7 +6,7 @@ The `admin` module is the **internal operations portal** for AtlasHub staff. It 
 
 Admin is a **multi-tier module**: different AtlasHub staff roles have different levels of access. A support agent can view an organization's compliance details and leave notes, but only a compliance officer can approve KYC, and only a super admin can ban an organization or manage other staff members.
 
-The `admin` module does **not** own compliance state directly. When an admin approves or rejects a KYC submission, it calls `ComplianceActionPort` (a domain port implemented by a cross-module adapter) to perform the operation within the `compliance` module. This keeps compliance business rules encapsulated in the right bounded context.
+The `admin` module does **not** own compliance state directly. When an admin approves or rejects a KYC submission, the `admin` module publishes `KycApprovedEvent` or `KycRejectedEvent` to Kafka. The `compliance` module listens to those events and transitions its own `ComplianceRecord` state. This keeps compliance business rules encapsulated in the right bounded context and preserves strict async event-driven cross-module boundaries — **no synchronous cross-module write calls**.
 
 ---
 
@@ -20,7 +20,6 @@ The `admin` module does **not** own compliance state directly. When an admin app
 | **COMPLIANCE_OFFICER** | Review and action KYC submissions — approve, reject, request more info |
 | **SUPPORT_AGENT** | View org details, leave internal notes, escalate |
 | **FINANCE_ANALYST** | Read-only access to platform financial data, revenue reports |
-| **CATALOG_MANAGER** | Create and update platform products and pricing plans |
 
 Staff roles are fixed — not configurable by admins themselves.
 
@@ -103,21 +102,7 @@ AdminNote
 
 ---
 
-### 2.2 Domain Port
-
-```java
-// com.atlashub.admin.domain.ports/
-public interface ComplianceActionPort {
-    void approve(Long organizationId, Long adminUserId);
-    void reject(Long organizationId, Long adminUserId, String reason);
-}
-```
-
-Implemented in `infrastructure/services/ComplianceActionAdapter`, which calls the `compliance` module's `ApproveComplianceCommand` and `RejectComplianceCommand` handlers cross-module. This port prevents the `admin` domain from importing compliance internals.
-
----
-
-### 2.3 Value Objects
+### 2.2 Value Objects
 
 | Type | Kind | Values |
 |---|---|---|
@@ -127,15 +112,53 @@ Implemented in `infrastructure/services/ComplianceActionAdapter`, which calls th
 
 ---
 
-### 2.4 Domain Events
+### 2.3 Domain Events
+
+**Package**: `com.atlashub.admin.domain.events` | **Kafka topic**: `admin-events`
 
 | Event | Published When | Consumed By |
 |---|---|---|
 | `KycReviewTaskCreatedEvent` | `ComplianceSubmittedEvent` received → task created | `notifications` (alert compliance officers) |
-| `KycApprovedEvent` | Admin approves KYC task | `compliance` (approve record via port), `notifications` (email org) |
-| `KycRejectedEvent` | Admin rejects KYC task | `compliance` (reject record via port), `notifications` (email org with reason) |
-| `OrganizationBannedEvent` | Admin bans org | `pay:accounts` (freeze virtual accounts), `billing` (cancel subscriptions), `notifications` |
-| `OrganizationUnbannedEvent` | Super admin unbans org | `billing` (restore subscriptions), `notifications` |
+| `KycApprovedEvent` | Admin approves KYC task | `compliance` (listens → approves ComplianceRecord), `notifications` (email org) |
+| `KycRejectedEvent` | Admin rejects KYC task | `compliance` (listens → rejects ComplianceRecord), `notifications` (email org with reason) |
+| `KycMoreInfoRequestedEvent` | Admin requests more info | `notifications` (email org with notes) |
+| `OrganizationBannedEvent` | Admin bans org | `pay:accounts` (freeze virtual accounts), `pay:ledger` (freeze all ledger accounts), `billing` (cancel subscriptions), `auth` (revoke all sessions), `notifications` |
+| `OrganizationUnbannedEvent` | Super admin unbans org | `pay:accounts` (unfreeze), `pay:ledger` (unfreeze), `billing` (restore subscriptions), `notifications` |
+
+**Event payload shapes:**
+
+```
+KycApprovedEvent.payload
+├── taskId           : Long
+├── organizationId   : Long
+├── approvedByStaffId: Long
+└── approvedAt       : ZonedDateTime
+
+KycRejectedEvent.payload
+├── taskId           : Long
+├── organizationId   : Long
+├── rejectedByStaffId: Long
+├── reason           : String
+└── rejectedAt       : ZonedDateTime
+
+KycMoreInfoRequestedEvent.payload
+├── taskId         : Long
+├── organizationId : Long
+├── requestedByStaffId : Long
+├── notes          : String
+└── requestedAt    : ZonedDateTime
+
+OrganizationBannedEvent.payload
+├── organizationId : Long
+├── bannedByStaffId: Long
+├── reason         : String
+└── bannedAt       : ZonedDateTime
+
+OrganizationUnbannedEvent.payload
+├── organizationId   : Long
+├── unbannedByStaffId: Long
+└── unbannedAt       : ZonedDateTime
+```
 
 ---
 
@@ -248,9 +271,10 @@ public record ApproveKycCommand(
 **Handler:** `ApproveKycHandler extends Command<ApproveKycCommand, Void>`
 - Loads task → throws `ReviewTaskNotFoundException`, `ReviewTaskAlreadyResolvedException`
 - Calls `task.approve(staffId)` → registers `KycApprovedEvent`
-- Calls `complianceActionPort.approve(task.organizationId(), staffId)` — cross-module
-- Publishes domain events
+- Saves task → `KycApprovedEvent` published via outbox to Kafka
+- `compliance` module listens to `KycApprovedEvent` asynchronously and approves its own `ComplianceRecord` — no sync cross-module call
 - **RBAC:** `@PreAuthorize("hasAuthority('admin:kyc:approve')")`
+
 
 ---
 
@@ -267,8 +291,10 @@ public record RejectKycCommand(
 **Handler:** `RejectKycHandler extends Command<RejectKycCommand, Void>`
 - Loads task → validates state
 - Calls `task.reject(staffId, reason)` → registers `KycRejectedEvent`
-- Calls `complianceActionPort.reject(task.organizationId(), staffId, reason)`
+- Saves task → `KycRejectedEvent` published via outbox to Kafka
+- `compliance` module listens to `KycRejectedEvent` asynchronously and rejects its own `ComplianceRecord` — no sync cross-module call
 - **RBAC:** `@PreAuthorize("hasAuthority('admin:kyc:reject')")`
+
 
 ---
 

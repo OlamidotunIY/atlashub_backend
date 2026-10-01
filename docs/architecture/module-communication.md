@@ -107,9 +107,11 @@ atlashub-pay → atlashub-shared:ComplianceQueryPort ← atlashub-platform:compl
 `pay` depends on the port interface (stable abstraction). `compliance` implements it. Neither knows about the other's internals. Circular dependency is **impossible** because `compliance` never imports `pay`.
 
 ### Anti-Pattern to Avoid
+
 ```java
 // ❌ WRONG — never do this
-import com.atlashub.accounts.domain.repository.OrganizationRepository; // imports accounts internals
+
+import com.atlashub.accounts.domain.repositories.OrganizationRepository; // imports accounts internals
 import com.atlashub.accounts.application.usecase.GetOrgDetailsUseCase;  // imports accounts use case
 ```
 

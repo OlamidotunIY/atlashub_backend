@@ -197,19 +197,19 @@ This port is called synchronously by `pay` and `billing` before allowing financi
 
 ---
 
-## 6. Commands & Use Cases
+## 6. Commands
 
-- `InitializeComplianceRecordCommand(orgId)` → `InitializeComplianceRecordUseCase` ← triggered by `OrganizationCreatedEvent`
-- `UpdateBusinessProfileCommand(orgId, data)` → `UpdateBusinessProfileUseCase`
-- `UpdateContactInfoCommand(orgId, data)` → `UpdateContactInfoUseCase`
-- `UpdateOwnerIdentityCommand(orgId, data)` → `UpdateOwnerIdentityUseCase`
-- `UpdateSettlementAccountCommand(orgId, bankCode, accountNumber)` → `UpdateSettlementAccountUseCase`
+- `InitializeComplianceRecordCommand(orgId)` → `InitializeComplianceRecordHandler` ← triggered by `OrganizationCreatedListener`
+- `UpdateBusinessProfileCommand(orgId, data)` → `UpdateBusinessProfileHandler`
+- `UpdateContactInfoCommand(orgId, data)` → `UpdateContactInfoHandler`
+- `UpdateOwnerIdentityCommand(orgId, data)` → `UpdateOwnerIdentityHandler`
+- `UpdateSettlementAccountCommand(orgId, bankCode, accountNumber)` → `UpdateSettlementAccountHandler`
   - Calls Paystack name enquiry API to verify account name before saving
-- `AcceptServiceAgreementCommand(orgId, ipAddress, termsVersion)` → `AcceptServiceAgreementUseCase`
-- `SubmitComplianceCommand(orgId)` → `SubmitComplianceUseCase`
-- `ApproveComplianceCommand(orgId, adminId)` → `ApproveComplianceUseCase` ← admin action
-- `RejectComplianceCommand(orgId, adminId, reason)` → `RejectComplianceUseCase` ← admin action
-- `ReopenComplianceCommand(orgId, adminId)` → `ReopenComplianceUseCase` ← admin override
+- `AcceptServiceAgreementCommand(orgId, ipAddress, termsVersion)` → `AcceptServiceAgreementHandler`
+- `SubmitComplianceCommand(orgId)` → `SubmitComplianceHandler`
+- `ApproveComplianceCommand(orgId, adminId)` → `ApproveComplianceHandler` ← triggered by `KycApprovedListener`; NOT exposed as direct HTTP endpoint
+- `RejectComplianceCommand(orgId, adminId, reason)` → `RejectComplianceHandler` ← triggered by `KycRejectedListener`; NOT exposed as direct HTTP endpoint
+- `ReopenComplianceCommand(orgId, adminId)` → `ReopenComplianceHandler` ← admin action via HTTP
 
 ---
 
@@ -223,7 +223,13 @@ This port is called synchronously by `pay` and `billing` before allowing financi
 
 ## 8. Listeners
 
-- **`OrganizationCreatedListener`**: Listens to `OrganizationCreatedEvent` from `accounts`. Calls `InitializeComplianceRecordUseCase` to bootstrap the compliance record.
+| Listener | Topic | Group ID | Event Consumed | Event Payload Fields | Command Called | Flow |
+|---|---|---|---|---|---|---|
+| `OrganizationCreatedListener` | `accounts-events` | `compliance-org-created` | `OrganizationCreatedEvent` | `organizationId`, `businessName`, `country`, `createdAt` | `InitializeComplianceRecordHandler` | Bootstraps a new `ComplianceRecord` with status `NOT_STARTED`. Idempotent — skips if record already exists. |
+| `KycApprovedListener` | `admin-events` | `compliance-kyc-approved` | `KycApprovedEvent` | `taskId`, `organizationId`, `approvedByStaffId`, `approvedAt` | `ApproveComplianceHandler` | Loads `ComplianceRecord` by `organizationId` → calls `record.approve(approvedByStaffId)` → saves. Publishes `OrganizationComplianceApprovedEvent`. |
+| `KycRejectedListener` | `admin-events` | `compliance-kyc-rejected` | `KycRejectedEvent` | `taskId`, `organizationId`, `rejectedByStaffId`, `reason`, `rejectedAt` | `RejectComplianceHandler` | Loads `ComplianceRecord` → calls `record.reject(rejectedByStaffId, reason)` → saves. Publishes `OrganizationComplianceRejectedEvent`. |
+
+> **No sync cross-module calls from admin.** The `admin` module publishes events; `compliance` reacts.
 
 ---
 

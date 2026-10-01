@@ -181,7 +181,35 @@ EmployeeLoanJpaRepository
 
 ---
 
-## Presentation Layer
+### Kafka Listeners — `infrastructure/messaging/listeners/`
+
+#### `LoanDisbursementCompletedListener`
+
+| Attribute | Value |
+|---|---|
+| **Topic** | `pay-events` |
+| **Group ID** | `hr-loan-payout-completed` |
+| **Event** | `PayoutCompletedEvent` |
+| **Filter** | Only processes events where `sourceSystem == "LOAN_DISBURSEMENT"` |
+| **Payload fields** | `payoutId`, `organizationId`, `sourceSystem`, `sourceReferenceId` (= loanId), `amount`, `currency`, `completedAt` |
+| **Command called** | `MarkLoanDisbursedHandler` |
+| **Flow** | Extracts `loanId` from `sourceReferenceId`. Loads `EmployeeLoan`. Calls `loan.markDisbursed()`. Saves. Idempotent — checks if loan already in `ACTIVE` status before acting. |
+
+---
+
+#### `EmployeeTerminatedListener`
+
+| Attribute | Value |
+|---|---|
+| **Topic** | `hr-events` |
+| **Group ID** | `hr-loan-employee-terminated` |
+| **Event** | `EmployeeTerminatedEvent` |
+| **Payload fields** | `employeeId`, `organizationId`, `terminatedAt` |
+| **Command called** | None directly — queries active loans for the employee and flags them as `TERMINATION_PENDING` |
+| **Flow** | Marks all `ACTIVE` loans for the terminated employee as `TERMINATION_PENDING`. HR admin is notified to decide: final salary deduction in full, or write-off. This does not auto-close the loan. |
+
+---
+
 
 ### Controller: `HrLoanController`
 

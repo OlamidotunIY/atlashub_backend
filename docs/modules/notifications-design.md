@@ -462,10 +462,47 @@ All listeners extend `BaseKafkaEventListener` and follow the `processEventIfMatc
 |---|---|
 | Topic | `hr-events` |
 | Group ID | `notifications-hr-group` |
-| Events handled | `EmployeeOnboardedEvent`, `PayrollDisbursedEvent`, `LeaveApprovedEvent`, `LeaveRejectedEvent` |
+| Events handled | `EmployeeOnboardedEvent`, `PayrollDisbursedEvent`, `LeaveApprovedEvent`, `LeaveRejectedEvent`, `EmployeeTerminatedEvent`, `EmployeeSuspendedEvent` |
 | Commands invoked | `SendNotificationCommand` |
 
-**Flow:** `PayrollDisbursedEvent` → sends `SALARY_PAID` via SMS to each employee. `LeaveApprovedEvent` → sends `LEAVE_APPROVED` via Email + Push.
+**Flow:**
+- `PayrollDisbursedEvent` → sends `SALARY_PAID` via SMS + Email to each employee with payslip summary
+- `LeaveApprovedEvent` → sends `LEAVE_APPROVED` via Email + Push
+- `EmployeeTerminatedEvent` → sends `EMPLOYMENT_TERMINATED` email to employee and HR manager
+- `EmployeeSuspendedEvent` → sends `EMPLOYMENT_SUSPENDED` email to employee and HR manager
+
+---
+
+#### `PayEventListener`
+
+| Property | Value |
+|---|---|
+| Topic | `pay-events` |
+| Group ID | `notifications-pay-group` |
+| Events handled | `WalletFundedEvent`, `MandateChargedEvent`, `MandatePausedEvent`, `MandateResumedEvent`, `MandateRevokedEvent`, `MandateExpiredEvent`, `SettlementConfirmedEvent` |
+| Commands invoked | `SendNotificationCommand` |
+
+**Flow:**
+- `WalletFundedEvent` → sends `WALLET_FUNDED` email + push to org admin (`orgAdminEmail`) with sender name, amount, and new balance
+- `MandateChargedEvent` → sends `MANDATE_CHARGED` receipt email to customer (`email` field in payload)
+- `MandatePausedEvent` / `MandateResumedEvent` / `MandateRevokedEvent` → sends status update email to customer
+- `MandateExpiredEvent` → sends `MANDATE_EXPIRED` email to customer and org admin
+- `SettlementConfirmedEvent` → sends `SETTLEMENT_CONFIRMED` email to org admin with settlement amount and date
+
+---
+
+#### `AdminEventListener`
+
+| Property | Value |
+|---|---|
+| Topic | `admin-events` |
+| Group ID | `notifications-admin-group` |
+| Events handled | `OrganizationBannedEvent`, `OrganizationUnbannedEvent` |
+| Commands invoked | `SendNotificationCommand` |
+
+**Flow:**
+- `OrganizationBannedEvent` → sends `ACCOUNT_SUSPENDED` email to org owner with reason and next steps
+- `OrganizationUnbannedEvent` → sends `ACCOUNT_REINSTATED` email to org owner
 
 ---
 

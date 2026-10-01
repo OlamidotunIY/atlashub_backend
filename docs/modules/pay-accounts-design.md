@@ -85,31 +85,44 @@ All events are published to Kafka topic **`pay-events`**.
 
 | Event | Published When | Consumed By |
 |---|---|---|
-| `VirtualAccountActivatedEvent` | NUBAN is assigned and account goes ACTIVE | `notifications` (alert org admin), `pay:ledger` (bootstrap ledger accounts for org) |
+| `VirtualAccountActivatedEvent` | NUBAN is assigned and account goes ACTIVE | `notifications` (email org admin or customer), `pay:ledger` (bootstrap 6 standard ledger accounts for org) |
 | `VirtualAccountSuspendedEvent` | Account suspended | `notifications` |
 | `VirtualAccountClosedEvent` | Account closed | `notifications` |
-| `WalletFundedEvent` | Anchor collection webhook received and credited | `accounting`, `notifications`, `pay:tx-query` |
+| `WalletFundedEvent` | Anchor collection webhook received — funds hit NUBAN | `pay:ledger` (post Dr Suspense → Cr Operating/Customer), `notifications` (notify org/customer of inbound transfer), `pay:tx-query` (record transaction), `pay:webhooks` (notify merchant server) |
 
-**Event payload shape (example — `VirtualAccountActivatedEvent`):**
-```java
-public record VirtualAccountActivatedEvent(
-    String eventId,
-    String aggregateId,          // virtualAccountId as String
-    ZonedDateTime occurredAt,
-    Payload payload
-) {
-    public record Payload(
-        Long virtualAccountId,
-        Long organizationId,
-        String ownerType,
-        String customerId,       // nullable
-        String nuban,
-        String bankName,
-        String bankCode,
-        String currency
-    ) {}
-}
+**`VirtualAccountActivatedEvent` payload:**
 ```
+VirtualAccountActivatedEvent.payload
+├── virtualAccountId  : Long
+├── organizationId    : Long
+├── ownerType         : String        ← "ORGANIZATION" | "CUSTOMER"
+├── customerId        : String        ← nullable; only for CUSTOMER accounts
+├── nuban             : String
+├── bankName          : String
+├── bankCode          : String
+├── currency          : String
+├── orgAdminEmail     : String        ← needed by notifications to email the right person
+└── accountName       : String
+```
+
+**`WalletFundedEvent` payload:**
+```
+WalletFundedEvent.payload
+├── virtualAccountId      : Long
+├── organizationId        : Long
+├── ownerType             : String        ← "ORGANIZATION" | "CUSTOMER"
+├── customerId            : String        ← nullable
+├── transactionReference  : String        ← Anchor's transfer reference; idempotency key for ledger
+├── amount                : BigDecimal
+├── currency              : String
+├── senderAccountName     : String
+├── senderBankCode        : String
+├── orgAdminEmail         : String        ← needed by notifications
+├── customerEmail         : String        ← nullable; needed if ownerType=CUSTOMER
+└── fundedAt              : ZonedDateTime
+```
+
+
 
 ---
 
@@ -460,6 +473,32 @@ public class OrganizationComplianceApprovedListener extends BaseKafkaEventListen
 **Event**: `OrganizationComplianceApprovedEvent`
 **Command Called**: `IssueVirtualAccountCommand` → `IssueVirtualAccountHandler`
 **Flow**: Compliance approval → auto-issue org virtual account → Anchor issues NUBAN asynchronously.
+
+---
+
+#### `OrganizationBannedListener`
+
+| Attribute | Value |
+|---|---|
+| **Topic** | `admin-events` |
+| **Group ID** | `pay-accounts-org-banned` |
+| **Event** | `OrganizationBannedEvent` |
+| **Payload fields** | `organizationId`, `reason`, `bannedAt` |
+| **Command called** | `SuspendVirtualAccountHandler` |
+| **Flow** | Finds all `ACTIVE` virtual accounts for the org. Calls `SuspendVirtualAccountHandler` on each → calls Anchor API to suspend the NUBAN → updates `VirtualAccount.status = SUSPENDED`. Any inbound transfers to the suspended NUBAN are rejected at the Anchor level. |
+
+---
+
+#### `OrganizationUnbannedListener`
+
+| Attribute | Value |
+|---|---|
+| **Topic** | `admin-events` |
+| **Group ID** | `pay-accounts-org-unbanned` |
+| **Event** | `OrganizationUnbannedEvent` |
+| **Payload fields** | `organizationId`, `unbannedAt` |
+| **Command called** | `ActivateVirtualAccountHandler` |
+| **Flow** | Finds all `SUSPENDED` virtual accounts for the org that were suspended due to a ban (not a manual suspension). Re-activates each via Anchor API → updates `VirtualAccount.status = ACTIVE`. |
 
 ---
 

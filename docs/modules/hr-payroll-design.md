@@ -124,10 +124,11 @@ Money calculateDeductions(Employee employee, SalaryGrade grade, List<EmployeeDed
 
 ### Application Ports — `com.atlashub.hr.payroll.application.port`
 
-| Port | Responsibility |
-|---|---|
-| `PayBulkPayoutPort` | Trigger bulk salary payout in `atlashub-pay` |
-| `PayrollReserveAccountPort` | Query balance of org's Payroll Reserve Account in `atlashub-pay` |
+| Port | Responsibility | Type |
+|---|---|---|
+| `PayrollReserveAccountPort` | Query balance of org's Payroll Reserve Account in `atlashub-pay:ledger` | **Read-only** sync query — acceptable as sync because it's a guard check before action |
+
+> **Removed:** `PayBulkPayoutPort` was a synchronous cross-module **write** port that violated architecture rules. Payroll disbursement is now fully async via `PayrollApprovedEvent` → `pay:transfers` listener.
 
 ---
 
@@ -136,9 +137,32 @@ Money calculateDeductions(Employee employee, SalaryGrade grade, List<EmployeeDed
 | Event | Published When | Consumed By |
 |---|---|---|
 | `PayrollPendingApprovalEvent` | Payroll submitted for approval | `notifications` (WS push + email to each approver) |
-| `PayrollApprovedEvent` | Approved by checker | `pay` (execute bulk payouts), `accounting` (Dr Salary Expense, Cr Payroll Payable) |
-| `PayrollDisbursedEvent` | All salaries paid | `accounting` (Dr Payroll Payable, Cr Payroll Reserve Account), `notifications` (SMS employees) |
+| `PayrollApprovedEvent` | Approved by checker | `pay:transfers` (listens → creates bulk payout for each payslip), `accounting` (Dr Salary Expense, Cr Payroll Payable) |
+| `PayrollDisbursedEvent` | All salaries paid | `accounting` (Dr Payroll Payable, Cr Payroll Reserve Account), `notifications` (SMS/email each employee with payslip), `analytics` (update payroll cost projection) |
 | `PayrollApprovalExpiredEvent` | 72-hour approval window expired | `notifications` (email maker to re-submit) |
+
+**Event payload shapes:**
+```
+PayrollApprovedEvent.payload
+├── payrollRunId    : Long
+├── organizationId  : Long
+├── period          : String      ← e.g. "2024-01"
+├── totalAmount     : BigDecimal
+├── currency        : String
+├── approvedByUserId: Long
+├── payslips        : List
+│   └── (each) employeeId, recipientNuban, recipientBankCode, recipientName, netPay
+└── approvedAt      : ZonedDateTime
+
+PayrollDisbursedEvent.payload
+├── payrollRunId    : Long
+├── organizationId  : Long
+├── period          : String
+├── totalAmount     : BigDecimal
+├── currency        : String
+└── disbursedAt     : ZonedDateTime
+```
+
 
 ---
 
@@ -228,10 +252,14 @@ record DisbursePayrollCommand(Long payrollRunId)
 **Invocation source:** Called by `ApprovePayrollHandler` after approval, or manually by admin after investigation  
 **Flow:**
 1. Load `PayrollRun` → validate status is APPROVED
-2. `PayrollReserveAccountPort.getBalance(orgId)` → `InsufficientPayrollReserveException`
+2. `PayrollReserveAccountPort.getBalance(orgId)` — sync read-only query against `pay:ledger` balance endpoint → throws `InsufficientPayrollReserveException` if insufficient
 3. `run.markProcessing()` → `repository.save(run)`
-4. `PayBulkPayoutPort.initiateBulkPayout(payslips)` — sends payouts to each employee's primary bank
+4. `PayrollApprovedEvent` is published via outbox → `pay:transfers` listens and creates the bulk payout entries for each payslip. **No sync cross-module write call here.**
 5. Success/failure handled asynchronously via Kafka (`BulkPayoutCompletedEvent` / `BulkPayoutFailedEvent`)
+
+> **Architecture Note:** `PayBulkPayoutPort` was a synchronous cross-module write port and has been removed. `PayrollReserveAccountPort` (a read-only balance query) is retained as a sync read port — querying a balance before committing to disbursement is acceptable as a synchronous read.
+
+
 
 ---
 

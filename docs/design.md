@@ -53,14 +53,14 @@ The correct split (following Stripe's internal architecture principles) is:
 ┌──────────────────────────────────────────────────────────────────────────────────────┐
 │                              atlashub-platform                                        │
 │                                                                                       │
-│  ┌──────────┐  ┌──────┐  ┌────────────┐  ┌─────┐  ┌─────────┐  ┌─────────────────┐ │
-│  │ accounts │  │ auth │  │ compliance │  │ iam │  │ catalog │  │    billing      │ │
-│  └──────────┘  └──────┘  └────────────┘  └─────┘  └─────────┘  └─────────────────┘ │
-│                                                                                       │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐                               │
-│  │    admin     │  │notifications │  │   support    │                               │
-│  └──────────────┘  └──────────────┘  └──────────────┘                               │
-└──────────────────────────────────────────────────────────────────────────────────────┘
+│  ┌──────────┐  ┌──────┐  ┌────────────┐  ┌─────┐  ┌─────────────────┐         │
+│  │ accounts │  │ auth │  │ compliance │  │ iam │  │    billing      │         │
+│  └──────────┘  └──────┘  └────────────┘  └─────┘  └─────────────────┘         │
+│                                                                                  │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐                          │
+│  │    admin     │  │notifications │  │   support    │                          │
+│  └──────────────┘  └──────────────┘  └──────────────┘                          │
+└──────────────────────────────────────────────────────────────────────────────────┘
 
 ┌───────────────┐  ┌──────────────────┐  ┌───────────────────┐  ┌──────────────────┐
 │  atlashub-pay │  │atlashub-commerce │  │atlashub-logistics │  │   atlashub-hr    │
@@ -108,8 +108,7 @@ The correct split (following Stripe's internal architecture principles) is:
 | [auth](modules/auth-design.md) | `atlashub-platform:auth` | Authentication — JWT, refresh tokens, passwords, HMAC API signing |
 | [compliance](modules/compliance-design.md) | `atlashub-platform:compliance` | KYC journey — document verification, compliance status |
 | [iam](modules/iam-design.md) | `atlashub-platform:iam` | Authorization — custom roles, permissions, memberships, API keys |
-| [catalog](modules/catalog-design.md) | `atlashub-platform:catalog` | Platform product catalog and pricing plans |
-| [billing](modules/billing-design.md) | `atlashub-platform:billing` | Subscriptions, invoices, access entitlements |
+| [billing](modules/billing-design.md) | `atlashub-platform:billing` | Subscriptions, invoices, access entitlements — plan config lives here |
 | [admin](modules/admin-design.md) | `atlashub-platform:admin` | AtlasHub internal admin portal — multi-tier staff access |
 | [notifications](modules/notifications-design.md) | `atlashub-platform:notifications` | Email, SMS, push, WhatsApp, in-app WebSocket delivery |
 | [support](modules/support-design.md) | `atlashub-platform:support` | Support ticketing for businesses |

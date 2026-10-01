@@ -6,6 +6,10 @@ The `atlashub-commerce` module is the **retail and marketplace engine** of Atlas
 
 All subpackages share the root package `com.atlashub.commerce`.
 
+> **Subscription:** All organizations automatically get access to Atlas Commerce as part of the universal subscription. No separate registration or opt-in is needed.
+
+> **POS Feature Toggle:** The Point-of-Sale (POS) sub-feature is **opt-in**. It is controlled by the `posEnabled` flag on the `Organization` aggregate in the `accounts` module. When `posEnabled = false`, all POS endpoints (`/pos/*`, `/tills/*`, `/tables/*`, `/kitchen-orders/*`) must return `403 Forbidden`. The `PosFeatureToggledEvent` from `accounts` drives this — `commerce-storefront` caches the org's POS status in Redis. All other Commerce features (online orders, inventory, marketplace) remain available regardless.
+
 ---
 
 ## Subpackage Documentation
@@ -29,7 +33,7 @@ POS/online checkout reserves stock → triggers pay charge → awaits `ChargeSuc
 ### Module Dependencies
 - **Reads from shared:** `EntitlementQueryPort`, `UserQueryPort`
 - **Publishes events to:** `commerce-events` topic consumed by `inventory`, `accounting`, `pay`, `logistics`, `analytics`, `notifications`
-- **Consumes events from:** `pay-events` (`ChargeSuccessfulEvent`, `ChargeFailedEvent`), `logistics-events` (`ShipmentDeliveredEvent`, `CustomerReturnShipmentReceivedEvent`)
+- **Consumes events from:** `pay-events` (`ChargeSuccessfulEvent`, `ChargeFailedEvent`), `logistics-events` (`ShipmentDeliveredEvent`, `CustomerReturnShipmentReceivedEvent`), `accounts-events` (`PosFeatureToggledEvent`)
 
 ---
 
@@ -39,3 +43,4 @@ POS/online checkout reserves stock → triggers pay charge → awaits `ChargeSuc
 // settings.gradle
 include 'atlashub-commerce'
 ```
+

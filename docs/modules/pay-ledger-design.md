@@ -570,6 +570,104 @@ public class LedgerEntryJpa {
 
 ---
 
+### Kafka Listeners — `infrastructure/messaging/listeners/`
+
+The ledger is the **single source of truth** for all money movements on the platform. Every monetary event from any other module triggers a listener here that posts the corresponding `LedgerTransaction`. No module may move money without the ledger knowing.
+
+> Idempotency: Every listener checks `reference` uniqueness before posting. A duplicate event replay returns the existing `LedgerTransactionPostedEvent` without re-posting.
+
+#### `VirtualAccountActivatedListener`
+| Attribute | Value |
+|---|---|
+| **Topic** | `pay-events` |
+| **Group ID** | `pay-ledger-va-activated` |
+| **Event** | `VirtualAccountActivatedEvent` |
+| **Payload fields** | `virtualAccountId`, `organizationId`, `ownerType`, `customerId`, `nuban`, `bankName`, `currency` |
+| **Command called** | `CreateLedgerAccountHandler` (multiple times) |
+| **Flow** | For each account type in `[OPERATING, PAYROLL_RESERVE, TAX_HOLDING, ESCROW, SUSPENSE, SPLIT_HOLDING]`, if the org does not already have one, call `CreateLedgerAccountHandler`. These are the 6 standard internal accounts that every organization needs. Idempotent — skips account types that already exist. |
+
+#### `OutletCreatedListener`
+| Attribute | Value |
+|---|---|
+| **Topic** | `accounts-events` |
+| **Group ID** | `pay-ledger-outlet-created` |
+| **Event** | `OutletCreatedEvent` |
+| **Payload fields** | `outletId`, `organizationId`, `outletName`, `currency` |
+| **Command called** | `CreateLedgerAccountHandler` |
+| **Flow** | Creates one `TILL` ledger account for the new outlet. `outletId` is stored on the `LedgerAccount` for TILL-type accounts. |
+
+#### `ChargeSuccessfulListener`
+| Attribute | Value |
+|---|---|
+| **Topic** | `pay-events` |
+| **Group ID** | `pay-ledger-charge-successful` |
+| **Event** | `ChargeSuccessfulEvent` |
+| **Payload fields** | `chargeId`, `organizationId`, `chargeReference`, `gatewayReference`, `amount`, `currency`, `channel`, `sourceSystem`, `sourceReferenceId`, `customerId`, `succeededAt` |
+| **Command called** | `PostLedgerTransactionHandler` |
+| **Flow** | Posts: `Dr Suspense Account → Cr Operating Account` (funds cleared from gateway to operating). Reference = `chargeReference`. SourceSystem = `CARD_CHARGE`. |
+
+#### `WalletFundedListener`
+| Attribute | Value |
+|---|---|
+| **Topic** | `pay-events` |
+| **Group ID** | `pay-ledger-wallet-funded` |
+| **Event** | `WalletFundedEvent` |
+| **Payload fields** | `virtualAccountId`, `organizationId`, `ownerType`, `customerId`, `transactionReference`, `amount`, `currency`, `senderAccountName`, `senderBankCode`, `fundedAt` |
+| **Command called** | `PostLedgerTransactionHandler` |
+| **Flow** | Posts: `Dr Suspense → Cr Operating Account` (for ORGANIZATION accounts) or `Dr Suspense → Cr Customer Sub-Ledger` (for CUSTOMER-owned virtual accounts). Reference = `transactionReference`. SourceSystem = `EXTERNAL_COLLECTION`. |
+
+#### `PayoutCompletedListener`
+| Attribute | Value |
+|---|---|
+| **Topic** | `pay-events` |
+| **Group ID** | `pay-ledger-payout-completed` |
+| **Event** | `PayoutCompletedEvent` |
+| **Payload fields** | `payoutId`, `organizationId`, `payoutReference`, `amount`, `currency`, `sourceSystem`, `sourceReferenceId`, `recipientName`, `recipientAccountNumber`, `completedAt` |
+| **Command called** | `PostLedgerTransactionHandler` |
+| **Flow** | Posts: `Dr Operating Account (or Payroll Reserve for PAYROLL payouts) → Cr Suspense Account`. Reference = `payoutReference`. SourceSystem = event's `sourceSystem`. |
+
+#### `TillOpenedListener`
+| Attribute | Value |
+|---|---|
+| **Topic** | `commerce-events` |
+| **Group ID** | `pay-ledger-till-opened` |
+| **Event** | `TillOpenedEvent` |
+| **Payload fields** | `tillSessionId`, `organizationId`, `outletId`, `cashierId`, `openingFloat`, `currency`, `openedAt` |
+| **Command called** | `PostLedgerTransactionHandler` |
+| **Flow** | Posts: `Dr TILL Account (outletId) → Cr Operating Account` for the opening float amount. Reference = `tillSessionId + "-open"`. SourceSystem = `INTER_OUTLET_TRANSFER`. |
+
+#### `TillClosedListener`
+| Attribute | Value |
+|---|---|
+| **Topic** | `commerce-events` |
+| **Group ID** | `pay-ledger-till-closed` |
+| **Event** | `TillClosedEvent` |
+| **Payload fields** | `tillSessionId`, `organizationId`, `outletId`, `cashierId`, `closingCash`, `totalSales`, `currency`, `closedAt` |
+| **Command called** | `PostLedgerTransactionHandler` |
+| **Flow** | Posts: `Dr Operating Account → Cr TILL Account` to sweep TILL balance back to operating. Reference = `tillSessionId + "-close"`. SourceSystem = `CASH_BANKING`. |
+
+#### `OrganizationBannedListener`
+| Attribute | Value |
+|---|---|
+| **Topic** | `admin-events` |
+| **Group ID** | `pay-ledger-org-banned` |
+| **Event** | `OrganizationBannedEvent` |
+| **Payload fields** | `organizationId`, `bannedByStaffId`, `reason`, `bannedAt` |
+| **Command called** | `FreezeAccountHandler` (called in a loop for all org's accounts) |
+| **Flow** | Loads all `LedgerAccount` records for `organizationId`. Calls `FreezeAccountHandler` on each ACTIVE account. A banned org cannot move money. |
+
+#### `OrganizationUnbannedListener`
+| Attribute | Value |
+|---|---|
+| **Topic** | `admin-events` |
+| **Group ID** | `pay-ledger-org-unbanned` |
+| **Event** | `OrganizationUnbannedEvent` |
+| **Payload fields** | `organizationId`, `unbannedByStaffId`, `unbannedAt` |
+| **Command called** | `UnfreezeAccountHandler` (called in a loop) |
+| **Flow** | Loads all FROZEN ledger accounts for `organizationId`. Calls `FreezeAccountHandler.unfreeze()` on each. |
+
+---
+
 ## Presentation Layer
 
 ### Controller: `LedgerController`
