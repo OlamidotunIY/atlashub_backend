@@ -17,7 +17,6 @@ dependencies {
     // Platform Modules
     implementation project(':atlashub-platform:authentication')
     implementation project(':atlashub-platform:accounts')
-    implementation project(':atlashub-platform:catalog')
     implementation project(':atlashub-platform:iam')
     implementation project(':atlashub-platform:storage')
 

@@ -1,29 +1,39 @@
 # AtlasHub
 
-AtlasHub is a unified product hub for **Payments**, **Commerce**, and **Logistics**.
+AtlasHub is an **API-first, headless business operating system** for Nigerian businesses — combining Commerce, Payments, HR, Accounting, and Logistics in a single unified API.
 
 ## Pillars
 
-- **Platform**: Core identity, authentication, and the Hub catalog where organizations manage their product subscriptions.
-- **Pay**: The payment engine handling virtual accounts, double-entry ledger, transfers, charges, and settlement.
-- **Commerce**: Digital storefronts, product inventory, and order orchestration.
-- **Logistics**: Shipping and fulfillment integrations.
+- **Platform**: Identity (`auth`), organization management (`accounts`), access control (`iam`), compliance (`compliance`), subscriptions (`billing`), notifications, and admin tools.
+- **Pay**: Virtual accounts, double-entry ledger, card charges, bank transfers, mandates, transaction history, webhooks, and settlement.
+- **Commerce**: POS logic, online storefront, inventory management, customer management.
+- **HR**: Employee management, payroll, leave, attendance, and loans. *(HR is always free — no subscription required.)*
+- **Accounting**: General ledger, accounts payable/receivable, financial reports.
+- **Logistics**: Outbound shipments, inbound GRN, returns, inter-outlet transfers.
 
 ## Tech Stack
+
 - Java 25
 - Spring Boot 3.5.x
 - MySQL 8.x
 - Redis
 - Kafka
+- Anchor (virtual accounts)
+- Paystack / Moniepoint (payment processing)
 
 ## Architecture
-AtlasHub follows a Hexagonal Architecture (Ports and Adapters) combined with Domain-Driven Design (DDD) and CQRS. The project is structured as a Gradle multi-project build with nested subprojects representing the pillars.
 
-Each module adheres to the following structure:
-- `domain/` - Core aggregates, value objects, domain events, domain services, repository interfaces, and exceptions.
-- `application/` - Use cases (extending `BaseUseCase`), commands, queries, DTOs, and outbound ports.
-- `adapter/in/` - Web controllers, webhook receivers, and messaging consumers.
-- `adapter/out/` - Persistence (JPA entities, Spring Data repositories) and external service adapters.
+AtlasHub follows Clean Architecture + Domain-Driven Design (DDD) + CQRS in a modular monolith. Each module is an independent Gradle subproject with strict dependency direction: `Presentation → Application → Domain ← Infrastructure`.
+
+Each module has:
+- `domain/` — Aggregates, value objects, domain events, domain services, repository interfaces, exceptions
+- `application/commands/` and `application/queries/` — CQRS handlers
+- `infrastructure/` — Persistence (JPA), Kafka listeners, external service adapters
+- `presentation/` — REST controllers and DTOs
+
+Cross-module communication is **always async via Kafka**. Synchronous cross-module calls are limited to read-only query ports.
 
 ## Setup
+
 Please review `application.yml` and `.env.example` for required configuration.
+See `docs/design.md` for full architecture documentation.
