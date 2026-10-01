@@ -1,5 +1,6 @@
 package com.atlashub.shared.domain.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -12,4 +13,5 @@ public interface Repository<T> {
     Optional<T> findById(Long id);
     void deleteById(Long id);
     boolean existsById(Long id);
+    List<T> findAll();
 }
