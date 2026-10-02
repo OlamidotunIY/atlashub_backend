@@ -8,4 +8,6 @@ import java.util.List;
 
 public interface SpringDataApiKeyRepository extends JpaRepository<ApiKeyJpa, Long> {
     List<ApiKeyJpa> findByOrganizationIdAndEnvironment(Long organizationId, ApiEnvironment environment);
+    List<ApiKeyJpa> findByOrganizationId(Long organizationId);
+    java.util.Optional<ApiKeyJpa> findByPublicKey(String publicKey);
 }

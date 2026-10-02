@@ -26,13 +26,12 @@ public class SuspendOrganizationSubscriptionHandler extends Command<SuspendOrgan
     @Override
     @Transactional
     public Void execute(SuspendOrganizationSubscriptionCommand command) {
-        organizationRepository.findById(command.organizationId())
-                .orElseThrow(() -> new OrganizationNotFoundException(
-                        "Organization not found: " + command.organizationId()));
+        var organization = organizationRepository.findById(command.organizationId()).orElseThrow(() -> new OrganizationNotFoundException("Organization not found: " + command.organizationId()));
 
-        log.warn("Subscription suspended for organizationId={} reason={}",
-                command.organizationId(), command.reason());
-        // Future: set org suspended flag, disable POS, etc.
+        organization.suspendSubscription(command.reason());
+        organizationRepository.save(organization);
+
+        log.warn("Subscription suspended for organizationId={} reason={}", command.organizationId(), command.reason());
         return null;
     }
 }

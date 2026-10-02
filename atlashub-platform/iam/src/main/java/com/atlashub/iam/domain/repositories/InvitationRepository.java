@@ -9,4 +9,5 @@ import com.atlashub.iam.domain.valueobject.InvitationStatus;
 public interface InvitationRepository extends Repository<Invitation> {
     Optional<Invitation> findByToken(String token);
     List<Invitation> findByOrganizationIdAndStatus(Long organizationId, InvitationStatus status);
+    Optional<Invitation> findPendingByOrganizationIdAndEmail(Long organizationId, String email);
 }

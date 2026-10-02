@@ -1,3 +1,3 @@
 package com.atlashub.iam.application.queries.GetCustomRolePermissions;
 
-public record GetCustomRolePermissionsQuery(Long roleId) {}
+public record GetCustomRolePermissionsQuery(Long roleId, Long organizationId) {}

@@ -9,7 +9,16 @@ public record OrganizationRegistered(
         Long aggregateId,
         ZonedDateTime occurredAt,
         String correlationId,
-        Void payload
-) implements DomainEvent<Void> {
+        Payload payload
+) implements DomainEvent<OrganizationRegistered.Payload> {
+    public record Payload(
+            String businessName,
+            String registrationType,
+            String industry,
+            String country,
+            String currency,
+            Long ownerUserId
+    ) {
+    }
 }
 

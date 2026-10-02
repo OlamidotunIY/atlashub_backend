@@ -17,16 +17,16 @@ import com.atlashub.accounts.presentation.dto.CreateOutletRequest;
 import com.atlashub.accounts.presentation.dto.OutletResponse;
 import com.atlashub.accounts.presentation.dto.UpdateOutletRequest;
 import com.atlashub.shared.application.dto.ApiResponse;
+import com.atlashub.shared.application.security.AuthenticatedPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -65,59 +65,76 @@ public class OutletController {
 
     @PostMapping("/outlets")
     @Operation(summary = "Create a new outlet / branch", security = @SecurityRequirement(name = "bearerAuth"))
-    public ResponseEntity<ApiResponse<Long>> createOutlet(@Valid @RequestBody CreateOutletRequest request) {
+    public ResponseEntity<ApiResponse<Long>> createOutlet(
+            @AuthenticationPrincipal AuthenticatedPrincipal principal,
+            @Valid @RequestBody CreateOutletRequest request) {
         Long outletId = createOutletHandler.execute(new CreateOutletCommand(
-                request.organizationId(),
+                principal.activeOrganizationId(),
                 request.name(),
                 request.address(),
                 request.city(),
                 request.state(),
-                request.country(),
                 request.managerId()
         ));
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new ApiResponse<>(true, "Outlet created", outletId, null));
+        return ok(outletId);
     }
 
     @GetMapping("/outlets")
     @Operation(summary = "Get a single outlet by ID", security = @SecurityRequirement(name = "bearerAuth"))
-    public ResponseEntity<ApiResponse<OutletResponse>> getOutlet(@RequestParam @Positive Long id) {
-        OutletResult result = getOutletHandler.execute(new GetOutletQuery(id));
-        return ResponseEntity.ok(new ApiResponse<>(true, "Success", toOutletResponse(result), null));
+    public ResponseEntity<ApiResponse<OutletResponse>> getOutlet(
+            @AuthenticationPrincipal AuthenticatedPrincipal principal,
+            @RequestParam @Positive Long id) {
+        OutletResult result = getOutletHandler.execute(new GetOutletQuery(principal.activeOrganizationId(), id));
+        return ok(toOutletResponse(result));
     }
 
-    @GetMapping("/organizations/{orgId}/outlets")
+    @GetMapping("/outlets/all")
     @Operation(summary = "List all outlets for an organization", security = @SecurityRequirement(name = "bearerAuth"))
-    public ResponseEntity<ApiResponse<List<OutletResponse>>> listOutlets(@PathVariable Long orgId) {
-        List<OutletResponse> results = listOutletsHandler.execute(new ListOutletsQuery(orgId))
+    public ResponseEntity<ApiResponse<List<OutletResponse>>> listOutlets(
+            @AuthenticationPrincipal AuthenticatedPrincipal principal) {
+        List<OutletResponse> results = listOutletsHandler.execute(
+                        new ListOutletsQuery(principal.activeOrganizationId()))
                 .stream().map(this::toOutletResponse).toList();
-        return ResponseEntity.ok(new ApiResponse<>(true, "Success", results, null));
+        return ok(results);
     }
 
     @PutMapping("/outlets")
     @Operation(summary = "Update outlet details", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<ApiResponse<Void>> updateOutlet(
+            @AuthenticationPrincipal AuthenticatedPrincipal principal,
             @RequestParam @Positive Long id,
             @Valid @RequestBody UpdateOutletRequest request) {
         updateOutletHandler.execute(new UpdateOutletCommand(
-                id, request.name(), request.address(),
+                principal.activeOrganizationId(), id, request.name(), request.address(),
                 request.city(), request.state(), request.managerId()
         ));
-        return ResponseEntity.ok(new ApiResponse<>(true, "Outlet updated", null, null));
+        return done("Outlet updated");
     }
 
     @PostMapping("/outlets/suspend")
     @Operation(summary = "Suspend an outlet", security = @SecurityRequirement(name = "bearerAuth"))
-    public ResponseEntity<ApiResponse<Void>> suspendOutlet(@RequestParam @Positive Long id) {
-        suspendOutletHandler.execute(new SuspendOutletCommand(id));
-        return ResponseEntity.ok(new ApiResponse<>(true, "Outlet suspended", null, null));
+    public ResponseEntity<ApiResponse<Void>> suspendOutlet(
+            @AuthenticationPrincipal AuthenticatedPrincipal principal,
+            @RequestParam @Positive Long id) {
+        suspendOutletHandler.execute(new SuspendOutletCommand(principal.activeOrganizationId(), id));
+        return done("Outlet suspended");
     }
 
     @PostMapping("/outlets/close")
     @Operation(summary = "Permanently close an outlet", security = @SecurityRequirement(name = "bearerAuth"))
-    public ResponseEntity<ApiResponse<Void>> closeOutlet(@RequestParam @Positive Long id) {
-        closeOutletHandler.execute(new CloseOutletCommand(id));
-        return ResponseEntity.ok(new ApiResponse<>(true, "Outlet closed", null, null));
+    public ResponseEntity<ApiResponse<Void>> closeOutlet(
+            @AuthenticationPrincipal AuthenticatedPrincipal principal,
+            @RequestParam @Positive Long id) {
+        closeOutletHandler.execute(new CloseOutletCommand(principal.activeOrganizationId(), id));
+        return done("Outlet closed");
+    }
+
+    private <T> ResponseEntity<ApiResponse<T>> ok(T value) {
+        return ResponseEntity.ok(new ApiResponse<>(true, "Success", value, null));
+    }
+
+    private ResponseEntity<ApiResponse<Void>> done(String message) {
+        return ResponseEntity.ok(new ApiResponse<>(true, message, null, null));
     }
 
     private OutletResponse toOutletResponse(OutletResult result) {

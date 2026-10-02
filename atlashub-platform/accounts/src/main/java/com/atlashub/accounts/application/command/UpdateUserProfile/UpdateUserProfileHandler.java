@@ -24,8 +24,7 @@ public class UpdateUserProfileHandler extends Command<UpdateUserProfileCommand, 
     public UpdateUserProfileResult execute(UpdateUserProfileCommand input) {
         log.info("Updating user profile.....");
 
-        User user = userRepository.findById(input.userId())
-                .orElseThrow(() -> new UserNotFoundException("User not found"));
+        User user = userRepository.findById(input.userId()).orElseThrow(() -> new UserNotFoundException("User not found"));
 
         user.updateProfile(input.firstname(), input.lastname(), input.phone(), input.locale(), input.timezone());
         userRepository.save(user);

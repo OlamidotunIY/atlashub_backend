@@ -2,12 +2,10 @@ package com.atlashub.authentication.infrastructure.security;
 
 import com.atlashub.authentication.application.port.TokenPort;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import javax.crypto.SecretKey;
-import java.nio.charset.StandardCharsets;
+import java.security.PublicKey;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Date;
@@ -16,15 +14,21 @@ import java.util.UUID;
 @Component
 public class JwtTokenAdapter implements TokenPort {
 
-    private final SecretKey secretKey;
+    private final RsaSigningKeyProvider keyProvider;
     private final long expirationMinutes;
+    private final String issuer;
+    private final String audience;
 
     public JwtTokenAdapter(
-            @Value("${jwt.secret}") String secret,
-            @Value("${jwt.expiration-minutes:15}") long expirationMinutes
+            RsaSigningKeyProvider keyProvider,
+            @Value("${jwt.expiration-minutes:15}") long expirationMinutes,
+            @Value("${atlashub.jwt.issuer:atlashub-authentication}") String issuer,
+            @Value("${atlashub.jwt.audience:atlashub-api}") String audience
     ) {
-        this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+        this.keyProvider = keyProvider;
         this.expirationMinutes = expirationMinutes;
+        this.issuer = issuer;
+        this.audience = audience;
     }
 
     @Override
@@ -36,12 +40,17 @@ public class JwtTokenAdapter implements TokenPort {
         String token = Jwts.builder()
                 .id(jti)
                 .subject(payload.userId())
-                .claim("sessionId", payload.sessionId())
-                .claim("orgId", payload.orgId())
+                .issuer(issuer)
+                .audience().add(audience).and()
+                .header().keyId(keyProvider.keyId()).type("at+jwt").and()
+                .claim("sid", payload.sessionId())
+                .claim("org", payload.orgId())
+                .claim("env", payload.environment())
                 .claim("permissions", payload.permissions())
                 .issuedAt(Date.from(now.toInstant()))
+                .notBefore(Date.from(now.toInstant()))
                 .expiration(Date.from(expiresAt.toInstant()))
-                .signWith(secretKey)
+                .signWith(keyProvider.privateKey(), Jwts.SIG.RS256)
                 .compact();
 
         return new AccessTokenResult(token, jti, expiresAt);
@@ -50,7 +59,11 @@ public class JwtTokenAdapter implements TokenPort {
     /**
      * Returns the secret key for use in JWT validation filters.
      */
-    public SecretKey getSecretKey() {
-        return secretKey;
+    public PublicKey getPublicKey() {
+        return keyProvider.publicKey();
     }
+
+    public String issuer() { return issuer; }
+
+    public String audience() { return audience; }
 }

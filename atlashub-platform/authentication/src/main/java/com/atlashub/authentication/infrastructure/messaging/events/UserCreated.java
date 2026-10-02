@@ -14,6 +14,6 @@ public record UserCreated(
     public record Payload(
         String email,
         Boolean isInvited,
-        String hashedPassword
+        String credentialReference
     ) {}
 }

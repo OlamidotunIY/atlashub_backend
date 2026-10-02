@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.Optional;
 
 @Component
 public class OrganizationMemberRepositoryAdapter
@@ -50,6 +51,23 @@ public class OrganizationMemberRepositoryAdapter
                 .stream()
                 .map(mapper::toDomain)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public Optional<OrganizationMember> findByOrganizationIdAndUserId(Long organizationId, Long userId) {
+        return springDataRepo.findByOrganizationIdAndUserId(organizationId, userId).map(mapper::toDomain);
+    }
+
+    @Override
+    public List<OrganizationMember> findAllByUserId(Long userId) {
+        return springDataRepo.findAllByUserId(userId).stream().map(mapper::toDomain).toList();
+    }
+
+    @Override
+    public long countByOrganizationIdAndCustomRoleIdAndStatus(Long organizationId, Long customRoleId,
+                                                               MemberStatus status) {
+        return springDataRepo.countByOrganizationIdAndCustomRoleIdAndStatus(
+                organizationId, customRoleId, status);
     }
 }
 

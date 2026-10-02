@@ -34,24 +34,22 @@ public class GetCustomRolePermissionsHandler extends Query<GetCustomRolePermissi
         log.info("Executing GetCustomRolePermissionsQuery for roleId: {}", query.roleId());
         
         CustomRole customRole = customRoleRepository.findById(query.roleId())
+                .filter(found -> found.getOrganizationId().equals(query.organizationId()))
                 .orElseThrow(() -> new NotFoundException("Custom role not found with id: " + query.roleId()));
 
         List<CustomRolePermissionsResult.PermissionDetail> permissionDetails = new ArrayList<>();
         
         for (Long permissionId : customRole.getPermissions()) {
             Optional<Permission> permissionOpt = permissionRepository.findById(permissionId);
-            if (permissionOpt.isPresent()) {
-                Permission permission = permissionOpt.get();
-                permissionDetails.add(new CustomRolePermissionsResult.PermissionDetail(
-                        permission.getId(),
-                        permission.getCode(),
-                        permission.getModule(),
-                        permission.getResource(),
-                        permission.getAction() != null ? permission.getAction().name() : null,
-                        permission.getDisplayName(),
-                        permission.getDescription()
-                ));
-            }
+            permissionOpt.ifPresent(permission -> permissionDetails.add(new CustomRolePermissionsResult.PermissionDetail(
+                    permission.getId(),
+                    permission.getCode(),
+                    permission.getModule(),
+                    permission.getResource(),
+                    permission.getAction() != null ? permission.getAction().name() : null,
+                    permission.getDisplayName(),
+                    permission.getDescription()
+            )));
         }
         
         return new CustomRolePermissionsResult(customRole.getId(), permissionDetails);

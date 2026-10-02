@@ -30,7 +30,9 @@ public class ListApiKeysHandler extends Query<ListApiKeysQuery, List<ApiKeyResul
             env = ApiEnvironment.valueOf(query.environment().toUpperCase());
         }
 
-        List<ApiKey> keys = apiKeyRepository.findByOrganizationIdAndEnvironment(query.orgId(), env);
+        List<ApiKey> keys = env == null
+                ? apiKeyRepository.findByOrganizationId(query.orgId())
+                : apiKeyRepository.findByOrganizationIdAndEnvironment(query.orgId(), env);
         
         List<ApiKeyResult> results = keys.stream()
             .map(key -> new ApiKeyResult(
@@ -39,7 +41,8 @@ public class ListApiKeysHandler extends Query<ListApiKeysQuery, List<ApiKeyResul
                 key.getPublicKey(),
                 key.getName(),
                 key.getEnvironment().name(),
-                key.getIsRevoked(),
+                key.getRevoked(),
+                key.getBoundRoleId(),
                 key.getLastUsedAt(),
                 key.getCreatedAt()
             ))

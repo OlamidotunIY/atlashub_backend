@@ -5,8 +5,12 @@ import com.atlashub.iam.infrastructure.persistence.entities.OrganizationMemberJp
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface SpringDataOrganizationMemberRepository extends JpaRepository<OrganizationMemberJpa, Long> {
     List<OrganizationMemberJpa> findAllByOrganizationId(Long organizationId);
     List<OrganizationMemberJpa> findAllByOrganizationIdAndStatus(Long organizationId, MemberStatus status);
+    Optional<OrganizationMemberJpa> findByOrganizationIdAndUserId(Long organizationId, Long userId);
+    List<OrganizationMemberJpa> findAllByUserId(Long userId);
+    long countByOrganizationIdAndCustomRoleIdAndStatus(Long organizationId, Long customRoleId, MemberStatus status);
 }

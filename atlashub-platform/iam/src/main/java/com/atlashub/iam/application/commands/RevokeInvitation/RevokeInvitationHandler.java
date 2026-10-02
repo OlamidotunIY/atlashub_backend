@@ -22,6 +22,7 @@ public class RevokeInvitationHandler extends Command<RevokeInvitationCommand, In
         log.info("Executing RevokeInvitationCommand");
         
         Invitation invitation = invitationRepository.findById(command.invitationId())
+                .filter(found -> found.getOrganizationId().equals(command.organizationId()))
                 .orElseThrow(() -> new IllegalArgumentException("Invitation not found"));
 
         invitation.revoke(command.revokedByUserId());

@@ -18,9 +18,7 @@ public class DisablePosHandler extends Command<DisablePosCommand, Void> {
     @Override
     @Transactional
     public Void execute(DisablePosCommand command) {
-        var org = organizationRepository.findById(command.organizationId())
-                .orElseThrow(() -> new OrganizationNotFoundException(
-                        "Organization not found: " + command.organizationId()));
+        var org = organizationRepository.findById(command.organizationId()).orElseThrow(() -> new OrganizationNotFoundException("Organization not found: " + command.organizationId()));
         org.disablePos();
         organizationRepository.save(org);
         return null;

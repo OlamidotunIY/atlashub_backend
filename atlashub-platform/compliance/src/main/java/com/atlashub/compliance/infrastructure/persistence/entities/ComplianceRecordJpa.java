@@ -6,7 +6,9 @@ import com.atlashub.compliance.domain.valueobject.ComplianceStep;
 import com.atlashub.compliance.domain.valueobject.ContactInfoData;
 import com.atlashub.compliance.domain.valueobject.OwnerIdentityData;
 import com.atlashub.compliance.domain.valueobject.ServiceAgreementData;
-import com.atlashub.compliance.domain.valueobject.SettlementAccountData;
+import com.atlashub.compliance.domain.valueobject.AtlasHubEligibilityStatus;
+import com.atlashub.compliance.domain.valueobject.AnchorVerificationStatus;
+import com.atlashub.compliance.domain.valueobject.ComplianceDocumentsData;
 import com.atlashub.shared.infrastructure.persistence.entities.BaseJpaEntity;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
@@ -56,8 +58,22 @@ public class ComplianceRecordJpa implements BaseJpaEntity {
     private ComplianceStep currentStep;
 
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "completed_steps", columnDefinition = "jsonb")
+    @Column(name = "completed_steps", columnDefinition = "json")
     private Set<ComplianceStep> completedSteps;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "eligibility_status", nullable = false)
+    private AtlasHubEligibilityStatus eligibilityStatus;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "anchor_verification_status", nullable = false)
+    private AnchorVerificationStatus anchorVerificationStatus;
+
+    @Column(name = "anchor_business_customer_id", unique = true)
+    private String anchorBusinessCustomerId;
+
+    @Column(name = "failure_code")
+    private String failureCode;
 
     @Column(name = "reviewed_by")
     private Long reviewedBy;
@@ -75,23 +91,23 @@ public class ComplianceRecordJpa implements BaseJpaEntity {
     private ZonedDateTime approvedAt;
 
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "business_profile", columnDefinition = "jsonb")
+    @Column(name = "business_profile", columnDefinition = "json")
     private BusinessProfileData businessProfile;
 
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "contact_info", columnDefinition = "jsonb")
+    @Column(name = "contact_info", columnDefinition = "json")
     private ContactInfoData contactInfo;
 
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "owner_identity", columnDefinition = "jsonb")
+    @Column(name = "owner_identity", columnDefinition = "json")
     private OwnerIdentityData ownerIdentity;
 
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "settlement_account", columnDefinition = "jsonb")
-    private SettlementAccountData settlementAccount;
+    @Column(name = "compliance_documents", columnDefinition = "json")
+    private ComplianceDocumentsData complianceDocuments;
 
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "service_agreement", columnDefinition = "jsonb")
+    @Column(name = "service_agreement", columnDefinition = "json")
     private ServiceAgreementData serviceAgreement;
 
     @Column(name = "created_at", nullable = false, updatable = false)

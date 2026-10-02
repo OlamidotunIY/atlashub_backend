@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
 import java.time.ZonedDateTime;
 
 @Entity
@@ -23,13 +24,16 @@ public class OrganizationJPA implements BaseJpaEntity {
     private String businessName;
 
     @Column(nullable = false)
-    private String businessType;
+    private String registrationType;
 
     @Column(nullable = false)
-    private String businessSize;
+    private String industry;
 
     @Column
-    private String industry;
+    private LocalDate legalRegistrationDate;
+
+    @Column
+    private String businessRegistrationNumber;
 
     @Column
     private String description;
@@ -48,6 +52,12 @@ public class OrganizationJPA implements BaseJpaEntity {
 
     @Column(nullable = false)
     private boolean posEnabled;
+
+    @Column(nullable = false)
+    private boolean subscriptionSuspended;
+
+    @Column
+    private String subscriptionSuspensionReason;
 
     @Column(nullable = false)
     private ZonedDateTime createdAt;

@@ -29,7 +29,10 @@ public class GetComplianceStatusHandler extends Query<GetComplianceStatusQuery, 
         return new ComplianceStatusResult(
             record.getCurrentStep(),
             record.getStatus(),
-            record.getCompletedSteps()
+            record.getCompletedSteps(),
+            record.getEligibilityStatus(),
+            record.getAnchorVerificationStatus(),
+            record.getRejectionReason()
         );
     }
 }

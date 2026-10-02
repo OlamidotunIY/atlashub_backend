@@ -10,4 +10,6 @@ import java.util.List;
 public interface SpringDataInvitationRepository extends JpaRepository<InvitationJpa, Long> {
     Optional<InvitationJpa> findByToken(String token);
     List<InvitationJpa> findByOrganizationIdAndStatus(Long organizationId, InvitationStatus status);
+    Optional<InvitationJpa> findByOrganizationIdAndInvitedEmailIgnoreCaseAndStatus(
+            Long organizationId, String invitedEmail, InvitationStatus status);
 }

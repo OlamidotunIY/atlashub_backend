@@ -24,6 +24,7 @@ public class GetMemberDetailsHandler extends Query<GetMemberDetailsQuery, Member
         log.info("Executing GetMemberDetailsQuery");
         
         OrganizationMember member = organizationMemberRepository.findById(query.memberId())
+                .filter(found -> found.getOrganizationId().equals(query.organizationId()))
                 .orElseThrow(() -> new NotFoundException("Member not found with id: " + query.memberId()));
         
         return new MemberDetailsResult(

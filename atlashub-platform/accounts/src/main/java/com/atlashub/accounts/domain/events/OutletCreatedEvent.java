@@ -12,6 +12,7 @@ public record OutletCreatedEvent(
         Payload payload
 ) implements DomainEvent<OutletCreatedEvent.Payload> {
     public record Payload(
+            Long outletId,
             Long organizationId,
             String name,
             String address,

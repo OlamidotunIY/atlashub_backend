@@ -6,6 +6,5 @@ public record CreateOutletCommand(
         String address,
         String city,
         String state,
-        String country,
         Long managerId
 ) {}

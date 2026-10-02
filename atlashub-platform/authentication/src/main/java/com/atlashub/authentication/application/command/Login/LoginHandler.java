@@ -18,6 +18,7 @@ import com.atlashub.authentication.domain.valueobject.VerificationType;
 import com.atlashub.shared.application.port.MembershipQueryPort;
 import com.atlashub.shared.application.port.PasswordEncoderPort;
 import com.atlashub.shared.application.port.UserQueryPort;
+import com.atlashub.shared.application.service.HashingUtils;
 import com.atlashub.shared.application.usecase.Command;
 import com.atlashub.shared.domain.exception.NotFoundException;
 import com.atlashub.shared.domain.valueobject.CorrelationId;
@@ -43,17 +44,7 @@ public class LoginHandler extends Command<LoginCommand, LoginResponse> {
     final TokenPort tokenPort;
     final TokenRevocationPort revocationPort;
 
-    public LoginHandler(PasswordEncoderPort encoderPort,
-                        AuthAccountRepository accountRepository,
-                        TrustedDeviceRepository deviceRepository,
-                        VerificationRepository verificationRepository,
-                        OtpVerificationIssuer issuer,
-                        OtpTransmissionPort transmissionPort,
-                        MembershipQueryPort membershipQueryPort,
-                        UserQueryPort userQueryPort,
-                        SessionRepository sessionRepository,
-                        TokenPort tokenPort,
-                        TokenRevocationPort revocationPort) {
+    public LoginHandler(PasswordEncoderPort encoderPort, AuthAccountRepository accountRepository, TrustedDeviceRepository deviceRepository, VerificationRepository verificationRepository, OtpVerificationIssuer issuer, OtpTransmissionPort transmissionPort, MembershipQueryPort membershipQueryPort, UserQueryPort userQueryPort, SessionRepository sessionRepository, TokenPort tokenPort, TokenRevocationPort revocationPort) {
         this.encoderPort = encoderPort;
         this.accountRepository = accountRepository;
         this.deviceRepository = deviceRepository;
@@ -69,11 +60,14 @@ public class LoginHandler extends Command<LoginCommand, LoginResponse> {
 
     @Override
     public LoginResponse execute(LoginCommand input) {
-        AuthAccount account = accountRepository.findByAccountId(input.email())
-                .orElseThrow(InvalidCredentials::new);
+        String environment = input.environment().toUpperCase();
+        if (!environment.equals("TEST") && !environment.equals("LIVE")) {
+            throw new InvalidCredentials();
+        }
 
-        UserQueryPort.UserDto user = userQueryPort.findById(account.getUserId())
-                .orElseThrow(() -> new NotFoundException("User not found"));
+        AuthAccount account = accountRepository.findByAccountId(input.email()).orElseThrow(InvalidCredentials::new);
+
+        UserQueryPort.UserDto user = userQueryPort.findById(account.getUserId()).orElseThrow(() -> new NotFoundException("User not found"));
 
         if (account.isLocked()) {
             throw new AuthLocked();
@@ -89,52 +83,44 @@ public class LoginHandler extends Command<LoginCommand, LoginResponse> {
             throw new InvalidCredentials();
         }
 
-        account.recordSuccessfulLogin(input.ipAddress());
-        accountRepository.save(account);
+        boolean firstLogin = account.getLastLoginAt() == null;
 
-        Optional<TrustedDevice> existingDevice = deviceRepository
-                .findByUserIdAndDeviceFingerprint(account.getUserId(), input.deviceFingerprint());
+        Optional<TrustedDevice> existingDevice = deviceRepository.findByUserIdAndDeviceFingerprint(account.getUserId(), input.deviceFingerprint());
         TrustedDevice device;
 
-        if (existingDevice.isEmpty()) {
-            if (account.getLastLoginAt() != null) {
-                OtpVerificationIssuer.IssuedToken issuedToken = issuer.issue(
-                        verificationRepository.nextIdentity(), account.getAccountId(), VerificationType.email_otp);
+        if (existingDevice.isEmpty() || existingDevice.get().getExpiresAt().isBefore(ZonedDateTime.now())) {
+            if (!firstLogin) {
+                OtpVerificationIssuer.IssuedToken issuedToken = issuer.issue(verificationRepository.nextIdentity(), account.getAccountId(), VerificationType.email_otp);
                 transmissionPort.storeForTransmission(CorrelationId.getOrCreate(), issuedToken.rawOtp());
                 verificationRepository.save(issuedToken.token());
                 return LoginResponse.otpRequired("Otp for device authorization sent");
             }
-            device = TrustedDevice.create(
-                    deviceRepository.nextIdentity(), account.getUserId(),
-                    input.deviceFingerprint(), input.userAgent(), input.ipAddress());
+            device = TrustedDevice.create(deviceRepository.nextIdentity(), account.getUserId(), input.deviceFingerprint(), input.userAgent(), input.ipAddress());
         } else {
             device = existingDevice.get();
         }
 
         deviceRepository.save(device);
 
+        account.recordSuccessfulLogin(input.ipAddress());
+        accountRepository.save(account);
+
         Long orgId = user.activeOrganizationId();
+        if (orgId == null || membershipQueryPort.getMemberStatus(account.getUserId(), orgId) != MembershipQueryPort.MembershipStatus.ACTIVE) {
+            throw new InvalidCredentials();
+        }
         Set<String> permissions = membershipQueryPort.getPermissions(account.getUserId(), orgId);
 
         String rawToken = UUID.randomUUID().toString();
         ZonedDateTime now = ZonedDateTime.now();
-        ZonedDateTime sessionExpiresAt = now.plusDays(24);
-        ZonedDateTime accessTokenExpiresAt = now.plusMinutes(30);
+        ZonedDateTime sessionExpiresAt = now.plusDays(30);
         Long sessionId = sessionRepository.nextIdentity();
 
-        TokenPort.AccessTokenResult accessToken = tokenPort.generateAccessToken(
-                new TokenPort.AccessTokenPayload(user.id().toString(), sessionId.toString(), orgId.toString(), permissions));
+        TokenPort.AccessTokenResult accessToken = tokenPort.generateAccessToken(new TokenPort.AccessTokenPayload(user.id().toString(), sessionId.toString(), orgId.toString(), environment, permissions));
 
-        Session session = Session.create(
-                sessionId,
-                rawToken,
-                account.getUserId().toString(),
-                sessionExpiresAt,
-                input.ipAddress(),
-                input.userAgent()
-        );
+        Session session = Session.create(sessionId, HashingUtils.sha256Hex(rawToken), account.getUserId().toString(), orgId, environment, input.deviceFingerprint(), UUID.randomUUID().toString(), sessionExpiresAt, input.ipAddress(), input.userAgent());
         sessionRepository.save(session);
 
-        return LoginResponse.success(accessToken.token(), rawToken, accessTokenExpiresAt, sessionExpiresAt);
+        return LoginResponse.success(accessToken.token(), rawToken, accessToken.expiresAt(), sessionExpiresAt);
     }
 }

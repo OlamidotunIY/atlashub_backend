@@ -9,4 +9,5 @@ import java.util.List;
 public interface PermissionRepository extends Repository<Permission> {
     List<Permission> findAllById(Iterable<Long> ids);
     List<Permission> findByModule(String module);
+    List<Permission> findAllByActiveTrue();
 }

@@ -2,7 +2,6 @@ package com.atlashub.accounts.infrastructure.persistence.adapters;
 
 import com.atlashub.accounts.domain.entities.User;
 import com.atlashub.accounts.domain.repositories.UserRepository;
-import com.atlashub.accounts.infrastructure.services.UserQueryPortAdapter;
 import com.atlashub.accounts.infrastructure.persistence.entities.UserJPA;
 import com.atlashub.accounts.infrastructure.persistence.mappers.UserMapper;
 import com.atlashub.accounts.infrastructure.persistence.repositories.SpringDataUserRepository;

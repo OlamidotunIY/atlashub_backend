@@ -5,8 +5,8 @@ import com.atlashub.accounts.domain.events.OutletCreatedEvent;
 import com.atlashub.accounts.domain.events.OutletSuspendedEvent;
 import com.atlashub.accounts.domain.events.OutletUpdatedEvent;
 import com.atlashub.accounts.domain.valueobject.OutletStatus;
+import com.atlashub.accounts.domain.exceptions.InvalidOutletStateException;
 import com.atlashub.shared.domain.entities.AggregateRoot;
-import com.atlashub.shared.domain.exception.BusinessRuleException;
 import com.atlashub.shared.domain.exception.MissingRequiredFieldException;
 import com.atlashub.shared.domain.valueobject.CorrelationId;
 import com.atlashub.shared.domain.valueobject.Country;
@@ -70,7 +70,7 @@ public class Outlet extends AggregateRoot<Long> {
                 now,
                 CorrelationId.getOrCreate(),
                 new OutletCreatedEvent.Payload(
-                        organizationId, name, address, city, state,
+                        id, organizationId, name, address, city, state,
                         country.code(), currency.name()
                 )
         ));
@@ -85,7 +85,7 @@ public class Outlet extends AggregateRoot<Long> {
         this.city = city;
         this.state = state;
         this.managerId = managerId;
-        this.updatedAt = ZonedDateTime.now();
+        touch();
 
         registerEvent(new OutletUpdatedEvent(
                 UUID.randomUUID().toString(),
@@ -98,10 +98,10 @@ public class Outlet extends AggregateRoot<Long> {
 
     public void suspend() {
         if (this.status != OutletStatus.ACTIVE) {
-            throw new BusinessRuleException("Only ACTIVE outlets can be suspended");
+            throw new InvalidOutletStateException("Only ACTIVE outlets can be suspended");
         }
         this.status = OutletStatus.SUSPENDED;
-        this.updatedAt = ZonedDateTime.now();
+        touch();
 
         registerEvent(new OutletSuspendedEvent(
                 UUID.randomUUID().toString(),
@@ -114,10 +114,10 @@ public class Outlet extends AggregateRoot<Long> {
 
     public void close() {
         if (this.status == OutletStatus.CLOSED) {
-            throw new BusinessRuleException("Outlet is already closed");
+            throw new InvalidOutletStateException("Outlet is already closed");
         }
         this.status = OutletStatus.CLOSED;
-        this.updatedAt = ZonedDateTime.now();
+        touch();
 
         registerEvent(new OutletClosedEvent(
                 UUID.randomUUID().toString(),
@@ -126,6 +126,10 @@ public class Outlet extends AggregateRoot<Long> {
                 CorrelationId.getOrCreate(),
                 new OutletClosedEvent.Payload(this.organizationId)
         ));
+    }
+
+    private void touch() {
+        this.updatedAt = ZonedDateTime.now();
     }
 
     @Override

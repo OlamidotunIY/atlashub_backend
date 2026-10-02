@@ -1,6 +1,7 @@
 package com.atlashub.accounts.domain.events;
 
 import com.atlashub.shared.domain.event.DomainEvent;
+import com.atlashub.accounts.domain.valueobject.SupportedIndustry;
 
 import java.time.ZonedDateTime;
 
@@ -15,7 +16,7 @@ public record OrganizationUpdated(
         String businessName,
         String description,
         String logoUrl,
-        String industry,
+        SupportedIndustry industry,
         String websiteUrl
     ) {}
 }

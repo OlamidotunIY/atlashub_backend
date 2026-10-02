@@ -14,7 +14,7 @@ import java.util.concurrent.TimeoutException;
 import com.atlashub.iam.application.commands.InitializeOrganizationIam.InitializeOrganizationIamHandler;
 import org.springframework.stereotype.Component;
 
-@Component
+@Component("iamOrganizationCreatedListener")
 public class OrganizationCreatedListener extends BaseKafkaEventListener {
 
     private static final Logger log = LoggerFactory.getLogger(OrganizationCreatedListener.class);

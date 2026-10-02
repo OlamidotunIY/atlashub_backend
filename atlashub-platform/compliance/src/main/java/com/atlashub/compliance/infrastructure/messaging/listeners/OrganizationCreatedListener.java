@@ -9,16 +9,18 @@ import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.stereotype.Component;
 
 import java.util.concurrent.TimeoutException;
 
+@Component("complianceOrganizationCreatedListener")
 public class OrganizationCreatedListener extends BaseKafkaEventListener {
 
     private static final Logger log = LoggerFactory.getLogger(OrganizationCreatedListener.class);
     private static final String GROUP_ID = "compliance-org-created";
     private final InitializeComplianceRecordHandler handler;
 
-    protected OrganizationCreatedListener(ObjectMapper objectMapper, InitializeComplianceRecordHandler handler) {
+    public OrganizationCreatedListener(ObjectMapper objectMapper, InitializeComplianceRecordHandler handler) {
         super(objectMapper);
         this.handler = handler;
     }

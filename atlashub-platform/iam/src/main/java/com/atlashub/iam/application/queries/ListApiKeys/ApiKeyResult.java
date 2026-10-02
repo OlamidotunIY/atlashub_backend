@@ -9,6 +9,7 @@ public record ApiKeyResult(
     String name,
     String environment,
     Boolean isRevoked,
+    Long boundRoleId,
     ZonedDateTime lastUsedAt,
     ZonedDateTime createdAt
 ) {}

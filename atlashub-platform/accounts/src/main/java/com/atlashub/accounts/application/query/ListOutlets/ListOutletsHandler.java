@@ -4,6 +4,7 @@ import com.atlashub.accounts.application.query.GetOutlet.OutletResult;
 import com.atlashub.accounts.domain.repositories.OutletRepository;
 import com.atlashub.shared.application.usecase.Query;
 import org.springframework.stereotype.Component;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.List;
 
@@ -17,22 +18,8 @@ public class ListOutletsHandler extends Query<ListOutletsQuery, List<OutletResul
     }
 
     @Override
+    @PreAuthorize("hasAuthority('accounts:outlets:read')")
     public List<OutletResult> execute(ListOutletsQuery query) {
-        return outletRepository.findAllByOrganizationId(query.organizationId()).stream()
-                .map(o -> new OutletResult(
-                        o.getId(),
-                        o.getOrganizationId(),
-                        o.getName(),
-                        o.getAddress(),
-                        o.getCity(),
-                        o.getState(),
-                        o.getCountry().code(),
-                        o.getCurrency().name(),
-                        o.getManagerId(),
-                        o.getStatus(),
-                        o.getCreatedAt(),
-                        o.getUpdatedAt()
-                ))
-                .toList();
+        return outletRepository.findAllByOrganizationId(query.organizationId()).stream().map(o -> new OutletResult(o.getId(), o.getOrganizationId(), o.getName(), o.getAddress(), o.getCity(), o.getState(), o.getCountry().code(), o.getCurrency().name(), o.getManagerId(), o.getStatus(), o.getCreatedAt(), o.getUpdatedAt())).toList();
     }
 }

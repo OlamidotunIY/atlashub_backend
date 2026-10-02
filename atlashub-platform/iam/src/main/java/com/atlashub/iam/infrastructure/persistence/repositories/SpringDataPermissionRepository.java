@@ -6,4 +6,5 @@ import java.util.List;
 
 public interface SpringDataPermissionRepository extends JpaRepository<PermissionJpa, Long> {
     List<PermissionJpa> findByModule(String module);
+    List<PermissionJpa> findAllByActiveTrue();
 }

@@ -11,7 +11,6 @@ import com.atlashub.shared.infrastructure.service.DomainSequenceGenerator;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.Optional;
 
 @Component
 public class OutletRepositoryAdapter extends JpaBaseRepository<Outlet, OutletJpa>
@@ -30,11 +29,6 @@ public class OutletRepositoryAdapter extends JpaBaseRepository<Outlet, OutletJpa
     @Override
     protected String getSequenceName() {
         return "outlet_seq";
-    }
-
-    @Override
-    public Optional<Outlet> findById(Long id) {
-        return springDataRepo.findById(id).map(mapper::toDomain);
     }
 
     @Override

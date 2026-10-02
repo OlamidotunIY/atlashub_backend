@@ -9,8 +9,8 @@ import com.atlashub.authentication.domain.repositories.AuthAccountRepository;
 import com.atlashub.authentication.domain.repositories.SessionRepository;
 import com.atlashub.shared.application.port.MembershipQueryPort;
 import com.atlashub.shared.application.port.UserQueryPort;
+import com.atlashub.shared.application.service.HashingUtils;
 import com.atlashub.shared.application.usecase.Command;
-import com.atlashub.shared.domain.exception.NotFoundException;
 import org.springframework.stereotype.Component;
 
 import java.time.ZonedDateTime;
@@ -49,7 +49,7 @@ public class RefreshTokenHandler extends Command<RefreshTokenCommand, RefreshTok
 
         Session current = existingSession.get();
 
-        if (current.isExpired()) {
+        if (current.isExpired() || !current.getDeviceFingerprint().equals(input.deviceFingerprint())) {
             sessionRepository.deleteByToken(input.refreshToken());
             throw new InvalidTokenException();
         }
@@ -62,30 +62,37 @@ public class RefreshTokenHandler extends Command<RefreshTokenCommand, RefreshTok
             throw new AuthLocked();
         }
 
-        Long orgId = userQueryPort.getActiveOrganizationId(account.getUserId())
-                .orElseThrow(() -> new NotFoundException("Active organization not found"));
+        Long orgId = current.getOrganizationId();
+        if (membershipQueryPort.getMemberStatus(account.getUserId(), orgId)
+                != MembershipQueryPort.MembershipStatus.ACTIVE) {
+            sessionRepository.deleteByToken(input.refreshToken());
+            throw new InvalidTokenException();
+        }
         Set<String> permissions = membershipQueryPort.getPermissions(account.getUserId(), orgId);
-        ZonedDateTime now = ZonedDateTime.now();
-        ZonedDateTime accessTokenExpiresAt = now.plusMinutes(30);
-        ZonedDateTime newSessionExpiresAt = now.plusHours(24);
+        ZonedDateTime newSessionExpiresAt = ZonedDateTime.now().plusDays(30);
         String newRawToken = UUID.randomUUID().toString();
         Long newSessionId = sessionRepository.nextIdentity();
 
         sessionRepository.deleteByToken(input.refreshToken());
 
         TokenPort.AccessTokenResult accessToken = tokenPort.generateAccessToken(
-                new TokenPort.AccessTokenPayload(account.getUserId().toString(), newSessionId.toString(), orgId.toString(), permissions));
+                new TokenPort.AccessTokenPayload(account.getUserId().toString(), newSessionId.toString(),
+                        orgId.toString(), current.getEnvironment(), permissions));
 
         Session newSession = Session.create(
                 newSessionId,
-                newRawToken,
+                HashingUtils.sha256Hex(newRawToken),
                 account.getUserId().toString(),
+                orgId,
+                current.getEnvironment(),
+                current.getDeviceFingerprint(),
+                current.getTokenFamilyId(),
                 newSessionExpiresAt,
                 current.getIpAddress(),
                 current.getUserAgent()
         );
         sessionRepository.save(newSession);
 
-        return new RefreshTokenResponse(accessToken.token(), accessTokenExpiresAt, newRawToken, newSessionExpiresAt);
+        return new RefreshTokenResponse(accessToken.token(), accessToken.expiresAt(), newRawToken, newSessionExpiresAt);
     }
 }

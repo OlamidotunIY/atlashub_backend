@@ -5,8 +5,11 @@ import com.atlashub.compliance.domain.exception.ComplianceRecordNotFoundExceptio
 import com.atlashub.compliance.infrastructure.persistence.mappers.ComplianceRecordMapper;
 import com.atlashub.compliance.infrastructure.persistence.repositories.SpringDataComplianceRecordRepository;
 import com.atlashub.shared.application.port.ComplianceQueryPort;
+import org.springframework.stereotype.Component;
+
 import static com.atlashub.compliance.domain.valueobject.ComplianceStatus.APPROVED;
 
+@Component
 public class ComplianceQueryPortAdapter implements ComplianceQueryPort {
 
     private final SpringDataComplianceRecordRepository repository;

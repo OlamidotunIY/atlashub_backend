@@ -27,14 +27,12 @@ import java.util.stream.Collectors;
  * Dual-write repository adapter for Session.
  * <p>
  * Write strategy: every {@link #save(Session)} writes to both DB (durable audit copy)
- * and Redis (primary read source, keyed by sha256 of the raw token).
+ * and Redis (primary read source, keyed by the already-hashed refresh token).
  * <p>
  * Read strategy: exclusively from Redis. A missing Redis key means the session has expired.
  */
 @Component
-public class SessionRepositoryAdapter
-        extends JpaBaseRepository<Session, SessionJpa>
-        implements SessionRepository {
+public class SessionRepositoryAdapter extends JpaBaseRepository<Session, SessionJpa> implements SessionRepository {
 
     private static final String SESSION_KEY_PREFIX = "session:";
     private static final String SESSION_ID_KEY_PREFIX = "session:id:";
@@ -45,12 +43,7 @@ public class SessionRepositoryAdapter
     private final StringRedisTemplate redisTemplate;
     private final ObjectMapper objectMapper;
 
-    public SessionRepositoryAdapter(SpringDataSessionRepository springDataRepo,
-                                    SessionMapper mapper,
-                                    DomainSequenceGenerator sequenceGenerator,
-                                    DomainEventPublisher eventPublisher,
-                                    StringRedisTemplate redisTemplate,
-                                    ObjectMapper objectMapper) {
+    public SessionRepositoryAdapter(SpringDataSessionRepository springDataRepo, SessionMapper mapper, DomainSequenceGenerator sequenceGenerator, DomainEventPublisher eventPublisher, StringRedisTemplate redisTemplate, ObjectMapper objectMapper) {
         super(springDataRepo, mapper, sequenceGenerator, eventPublisher);
         this.springDataRepo = springDataRepo;
         this.redisTemplate = redisTemplate;
@@ -75,7 +68,7 @@ public class SessionRepositoryAdapter
         // 2. Write to Redis
         long ttlSeconds = Duration.between(ZonedDateTime.now(), session.getExpiresAt()).getSeconds();
         if (ttlSeconds > 0) {
-            String tokenHash = HashingUtils.sha256Hex(session.getToken());
+            String tokenHash = session.getTokenHash();
             String redisKey = SESSION_KEY_PREFIX + tokenHash;
             String sessionIdKey = SESSION_ID_KEY_PREFIX + session.getId();
             String userSetKey = USER_SESSIONS_KEY_PREFIX + session.getUserId() + USER_SESSIONS_KEY_SUFFIX;
@@ -112,6 +105,18 @@ public class SessionRepositoryAdapter
         return Boolean.TRUE.equals(redisTemplate.hasKey(SESSION_ID_KEY_PREFIX + id));
     }
 
+    @Override
+    @Transactional
+    public void deleteById(Long id) {
+        findById(id).ifPresent(session -> {
+            String userSetKey = USER_SESSIONS_KEY_PREFIX + session.getUserId() + USER_SESSIONS_KEY_SUFFIX;
+            redisTemplate.opsForSet().remove(userSetKey, session.getTokenHash());
+            redisTemplate.delete(SESSION_KEY_PREFIX + session.getTokenHash());
+            redisTemplate.delete(SESSION_ID_KEY_PREFIX + id);
+        });
+        springDataRepo.deleteById(id);
+    }
+
     /**
      * Reads exclusively from Redis. Returns empty if not found (session expired).
      */
@@ -136,19 +141,15 @@ public class SessionRepositoryAdapter
         Set<String> tokenHashes = redisTemplate.opsForSet().members(userSetKey);
         if (tokenHashes == null) return new HashSet<>();
 
-        return tokenHashes.stream()
-                .map(hash -> {
-                    try {
-                        String json = redisTemplate.opsForValue().get(SESSION_KEY_PREFIX + hash);
-                        if (json == null) return Optional.<Session>empty();
-                        return Optional.of(objectMapper.readValue(json, Session.class));
-                    } catch (JsonProcessingException e) {
-                        throw new RuntimeException("Failed to deserialize session from Redis", e);
-                    }
-                })
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .collect(Collectors.toSet());
+        return tokenHashes.stream().map(hash -> {
+            try {
+                String json = redisTemplate.opsForValue().get(SESSION_KEY_PREFIX + hash);
+                if (json == null) return Optional.<Session>empty();
+                return Optional.of(objectMapper.readValue(json, Session.class));
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException("Failed to deserialize session from Redis", e);
+            }
+        }).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toSet());
     }
 
     /**

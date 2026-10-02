@@ -13,7 +13,7 @@ import java.time.ZonedDateTime;
 @Table(
         name = "trusted_device",
         indexes = {
-                @Index(name = "Idx_device_user_id", columnList = "user_id", unique = true),
+                @Index(name = "Idx_device_user_fingerprint", columnList = "user_id, device_fingerprint", unique = true),
         }
 )
 @Getter
@@ -26,7 +26,7 @@ public class TrustedDeviceJpa implements BaseJpaEntity {
     @Column(name = "user_id")
     private Long userId;
 
-    @Column()
+    @Column(name = "device_fingerprint", nullable = false)
     private String deviceFingerprint;
 
     @Column()

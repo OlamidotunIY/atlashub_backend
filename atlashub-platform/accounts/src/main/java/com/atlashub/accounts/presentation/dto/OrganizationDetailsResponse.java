@@ -1,13 +1,15 @@
 package com.atlashub.accounts.presentation.dto;
 
+import java.time.LocalDate;
 import java.time.ZonedDateTime;
 
 public record OrganizationDetailsResponse(
         Long id,
         String businessName,
-        String businessType,
-        String businessSize,
+        String registrationType,
         String industry,
+        LocalDate legalRegistrationDate,
+        String businessRegistrationNumber,
         String description,
         String logoUrl,
         String websiteUrl,

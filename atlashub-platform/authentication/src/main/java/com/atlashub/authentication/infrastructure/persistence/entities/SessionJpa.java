@@ -14,7 +14,7 @@ import java.time.ZonedDateTime;
         name = "sessions",
         indexes = {
                 @Index(name = "Idx_session_user_id", columnList = "user_id"),
-                @Index(name = "Idx_session_token", columnList = "token", unique = true)
+                @Index(name = "Idx_session_token_hash", columnList = "token_hash", unique = true)
         }
 )
 @Getter
@@ -25,11 +25,23 @@ public class SessionJpa implements BaseJpaEntity {
     @Id
     private Long id;
 
-    @Column(nullable = false, unique = true)
-    private String token;
+    @Column(name = "token_hash", nullable = false, unique = true, length = 64)
+    private String tokenHash;
 
     @Column(name = "user_id", nullable = false)
     private String userId;
+
+    @Column(name = "organization_id", nullable = false)
+    private Long organizationId;
+
+    @Column(nullable = false)
+    private String environment;
+
+    @Column(name = "device_fingerprint", nullable = false)
+    private String deviceFingerprint;
+
+    @Column(name = "token_family_id", nullable = false)
+    private String tokenFamilyId;
 
     @Column(nullable = false)
     private ZonedDateTime expiresAt;

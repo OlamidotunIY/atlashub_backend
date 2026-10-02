@@ -23,6 +23,7 @@ public class UpdateCustomRoleHandler extends Command<UpdateCustomRoleCommand, Cu
         log.info("Executing UpdateCustomRoleCommand");
         
         CustomRole role = customRoleRepository.findById(command.roleId())
+            .filter(found -> found.getOrganizationId().equals(command.organizationId()))
             .orElseThrow(() -> new IllegalArgumentException("CustomRole not found: " + command.roleId()));
             
         if (command.name() != null) {

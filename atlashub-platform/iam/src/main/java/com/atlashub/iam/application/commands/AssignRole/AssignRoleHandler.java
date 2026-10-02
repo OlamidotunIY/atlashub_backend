@@ -27,9 +27,11 @@ public class AssignRoleHandler extends Command<AssignRoleCommand, OrganizationMe
         log.info("Executing AssignRoleCommand");
         
         OrganizationMember member = organizationMemberRepository.findById(command.memberId())
+                .filter(found -> found.getOrganizationId().equals(command.organizationId()))
                 .orElseThrow(() -> new IllegalArgumentException("OrganizationMember not found"));
 
         CustomRole role = customRoleRepository.findById(command.newRoleId())
+                .filter(found -> found.getOrganizationId().equals(command.organizationId()))
                 .orElseThrow(() -> new IllegalArgumentException("CustomRole not found"));
 
         member.assignRole(role.getId());

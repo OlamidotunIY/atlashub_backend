@@ -43,10 +43,12 @@ public class Invitation extends AggregateRoot<Long> {
         this.updatedAt = updatedAt;
     }
 
-    public static Invitation create(Long id, Long organizationId, EmailAddress invitedEmail, Long invitedByUserId, Long customRoleId, String token) {
+    public static Invitation create(Long id, Long organizationId, EmailAddress invitedEmail, Long invitedByUserId,
+                                    Long customRoleId, String tokenHash, String invitationToken) {
         ZonedDateTime now = ZonedDateTime.now();
         Invitation invitation = new Invitation(
-                id, organizationId, invitedEmail, invitedByUserId, customRoleId, token, InvitationStatus.PENDING, now.plusDays(7), now, now
+                id, organizationId, invitedEmail, invitedByUserId, customRoleId, tokenHash,
+                InvitationStatus.PENDING, now.plusDays(7), now, now
         );
 
         invitation.registerEvent(new InvitationCreatedEvent(
@@ -54,7 +56,7 @@ public class Invitation extends AggregateRoot<Long> {
                 id,
                 now,
                 CorrelationId.getOrCreate(),
-                new InvitationCreatedEvent.Payload(organizationId, invitedEmail.value(), token, invitedByUserId)
+                new InvitationCreatedEvent.Payload(organizationId, invitedEmail.value(), invitationToken, invitedByUserId)
         ));
 
         return invitation;

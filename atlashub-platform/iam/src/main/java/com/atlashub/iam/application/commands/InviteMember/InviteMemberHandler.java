@@ -6,11 +6,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.atlashub.iam.domain.repositories.InvitationRepository;
-import com.atlashub.shared.application.port.OrganizationQueryPort;
-import com.atlashub.shared.application.port.UserQueryPort;
 import com.atlashub.iam.domain.entities.Invitation;
 import com.atlashub.shared.domain.valueobject.EmailAddress;
 import java.util.UUID;
+import com.atlashub.shared.application.service.HashingUtils;
+import com.atlashub.shared.application.port.OrganizationQueryPort;
+import com.atlashub.shared.application.port.UserQueryPort;
+import com.atlashub.iam.domain.repositories.CustomRoleRepository;
+import com.atlashub.iam.domain.repositories.OrganizationMemberRepository;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
 public class InviteMemberHandler extends Command<InviteMemberCommand, Invitation> {
@@ -20,17 +25,25 @@ public class InviteMemberHandler extends Command<InviteMemberCommand, Invitation
     private final InvitationRepository invitationRepository;
     private final OrganizationQueryPort organizationQueryPort;
     private final UserQueryPort userQueryPort;
+    private final CustomRoleRepository roleRepository;
+    private final OrganizationMemberRepository memberRepository;
 
     public InviteMemberHandler(
             InvitationRepository invitationRepository,
             OrganizationQueryPort organizationQueryPort,
-            UserQueryPort userQueryPort) {
+            UserQueryPort userQueryPort,
+            CustomRoleRepository roleRepository,
+            OrganizationMemberRepository memberRepository) {
         this.invitationRepository = invitationRepository;
         this.organizationQueryPort = organizationQueryPort;
         this.userQueryPort = userQueryPort;
+        this.roleRepository = roleRepository;
+        this.memberRepository = memberRepository;
     }
 
     @Override
+    @Transactional
+    @PreAuthorize("hasAuthority('iam:members:invite')")
     public Invitation execute(InviteMemberCommand command) {
         log.info("Executing InviteMemberCommand");
         
@@ -42,8 +55,21 @@ public class InviteMemberHandler extends Command<InviteMemberCommand, Invitation
             throw new IllegalArgumentException("Invited by user does not exist");
         }
 
+        roleRepository.findById(command.customRoleId())
+                .filter(role -> role.getOrganizationId().equals(command.orgId()))
+                .orElseThrow(() -> new IllegalArgumentException("Role does not belong to the organization"));
+        userQueryPort.findByEmail(command.email()).ifPresent(existingUser -> {
+            if (memberRepository.findByOrganizationIdAndUserId(command.orgId(), existingUser.id()).isPresent()) {
+                throw new IllegalArgumentException("User is already a member of the organization");
+            }
+        });
+        if (invitationRepository.findPendingByOrganizationIdAndEmail(command.orgId(), command.email()).isPresent()) {
+            throw new IllegalArgumentException("A pending invitation already exists for this email");
+        }
+
         EmailAddress emailAddress = new EmailAddress(command.email());
         String token = UUID.randomUUID().toString();
+        String tokenHash = HashingUtils.sha256Hex(token);
 
         Invitation invitation = Invitation.create(
                 invitationRepository.nextIdentity(),
@@ -51,6 +77,7 @@ public class InviteMemberHandler extends Command<InviteMemberCommand, Invitation
                 emailAddress,
                 command.invitedByUserId(),
                 command.customRoleId(),
+                tokenHash,
                 token
         );
 

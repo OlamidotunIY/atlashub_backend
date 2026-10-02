@@ -14,16 +14,14 @@ public class ChangePasswordHandler extends Command<ChangePasswordCommand, Void> 
     private final AuthAccountRepository accountRepository;
     private final PasswordEncoderPort passwordEncoderPort;
 
-    public ChangePasswordHandler(AuthAccountRepository accountRepository,
-                                 PasswordEncoderPort passwordEncoderPort) {
+    public ChangePasswordHandler(AuthAccountRepository accountRepository, PasswordEncoderPort passwordEncoderPort) {
         this.accountRepository = accountRepository;
         this.passwordEncoderPort = passwordEncoderPort;
     }
 
     @Override
     public Void execute(ChangePasswordCommand command) {
-        AuthAccount account = accountRepository.findByUserId(command.userId())
-                .orElseThrow(() -> new NotFoundException("Account not found"));
+        AuthAccount account = accountRepository.findByUserId(command.userId()).orElseThrow(() -> new NotFoundException("Account not found"));
 
         if (!passwordEncoderPort.matches(command.currentPassword(), account.getPassword())) {
             throw new InvalidCredentials();

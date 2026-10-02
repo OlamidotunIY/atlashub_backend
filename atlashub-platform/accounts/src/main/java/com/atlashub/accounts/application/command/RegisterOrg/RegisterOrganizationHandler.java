@@ -5,7 +5,7 @@ import com.atlashub.accounts.domain.entities.Organization;
 import com.atlashub.accounts.domain.entities.User;
 import com.atlashub.accounts.domain.repositories.OrganizationRepository;
 import com.atlashub.accounts.domain.repositories.UserRepository;
-import com.atlashub.shared.application.port.PasswordEncoderPort;
+import com.atlashub.shared.application.port.OneTimeSecretStore;
 import com.atlashub.shared.application.usecase.Command;
 import com.atlashub.shared.domain.valueobject.EmailAddress;
 import org.slf4j.Logger;
@@ -13,21 +13,20 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
+
 @Component
 public class RegisterOrganizationHandler extends Command<RegisterOrganizationCommand, RegisterOrganizationResult> {
     private static final Logger log = LoggerFactory.getLogger(RegisterOrganizationHandler.class);
 
     private final OrganizationRepository organizationRepository;
     private final UserRepository userRepository;
-    private final PasswordEncoderPort passwordEncoderPort;
+    private final OneTimeSecretStore oneTimeSecretStore;
 
-    public RegisterOrganizationHandler(
-            OrganizationRepository organizationRepository,
-            UserRepository userRepository,
-            PasswordEncoderPort passwordEncoderPort) {
+    public RegisterOrganizationHandler(OrganizationRepository organizationRepository, UserRepository userRepository, OneTimeSecretStore oneTimeSecretStore) {
         this.organizationRepository = organizationRepository;
         this.userRepository = userRepository;
-        this.passwordEncoderPort = passwordEncoderPort;
+        this.oneTimeSecretStore = oneTimeSecretStore;
     }
 
     @Override
@@ -39,27 +38,14 @@ public class RegisterOrganizationHandler extends Command<RegisterOrganizationCom
             throw new EmailAlreadyExistsException("User with email: %s already exists".formatted(command.email()));
         }
 
-        String hashedPassword = passwordEncoderPort.encode(command.password());
+        String credentialReference = oneTimeSecretStore.store(command.password(), Duration.ofHours(24));
 
-        User user = User.create(userRepository.nextIdentity(), command.firstName(), command.lastName(),
-                new EmailAddress(command.email()), command.country(), command.isInvited(), hashedPassword);
+        User user = User.create(userRepository.nextIdentity(), command.firstName(), command.lastName(), new EmailAddress(command.email()), command.country(), command.isInvited(), command.password(), credentialReference);
 
         userRepository.save(user);
         log.debug("User registered with id: {}", user.getId());
 
-        Organization organization = Organization.create(
-                organizationRepository.nextIdentity(),
-                command.businessName(),
-                command.businessType(),
-                command.businessSize(),
-                command.description(),
-                command.country().deriveCurrency(),
-                command.logoUrl(),
-                command.country(),
-                command.industry(),
-                command.websiteUrl(),
-                user.getId()
-        );
+        Organization organization = Organization.create(organizationRepository.nextIdentity(), command.businessName(), command.registrationType(), command.description(), command.country().deriveCurrency(), command.logoUrl(), command.country(), command.industry(), command.websiteUrl(), user.getId());
 
         organizationRepository.save(organization);
         log.debug("Organization saved with id: {}", organization.getId());

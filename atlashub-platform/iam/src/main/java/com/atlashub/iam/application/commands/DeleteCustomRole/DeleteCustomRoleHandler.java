@@ -12,9 +12,12 @@ public class DeleteCustomRoleHandler extends Command<DeleteCustomRoleCommand, Cu
 
     private static final Logger log = LoggerFactory.getLogger(DeleteCustomRoleHandler.class);
     private final CustomRoleRepository customRoleRepository;
+    private final com.atlashub.iam.domain.repositories.OrganizationMemberRepository memberRepository;
 
-    public DeleteCustomRoleHandler(CustomRoleRepository customRoleRepository) {
+    public DeleteCustomRoleHandler(CustomRoleRepository customRoleRepository,
+            com.atlashub.iam.domain.repositories.OrganizationMemberRepository memberRepository) {
         this.customRoleRepository = customRoleRepository;
+        this.memberRepository = memberRepository;
     }
 
     @Override
@@ -22,8 +25,12 @@ public class DeleteCustomRoleHandler extends Command<DeleteCustomRoleCommand, Cu
         log.info("Executing DeleteCustomRoleCommand");
         
         CustomRole role = customRoleRepository.findById(command.roleId())
+            .filter(found -> found.getOrganizationId().equals(command.organizationId()))
             .orElseThrow(() -> new IllegalArgumentException("CustomRole not found: " + command.roleId()));
             
+        boolean inUse = memberRepository.countByOrganizationIdAndCustomRoleIdAndStatus(
+                command.organizationId(), command.roleId(), com.atlashub.iam.domain.valueobject.MemberStatus.ACTIVE) > 0;
+        role.delete(inUse);
         customRoleRepository.deleteById(command.roleId());
 
         return role;

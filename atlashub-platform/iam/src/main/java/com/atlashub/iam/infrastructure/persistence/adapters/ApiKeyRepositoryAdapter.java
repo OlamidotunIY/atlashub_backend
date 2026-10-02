@@ -40,6 +40,16 @@ public class ApiKeyRepositoryAdapter
                 .map(mapper::toDomain)
                 .toList();
     }
+
+    @Override
+    public java.util.Optional<ApiKey> findByPublicKey(String publicKey) {
+        return springDataRepo.findByPublicKey(publicKey).map(mapper::toDomain);
+    }
+
+    @Override
+    public List<ApiKey> findByOrganizationId(Long organizationId) {
+        return springDataRepo.findByOrganizationId(organizationId).stream().map(mapper::toDomain).toList();
+    }
 }
 
 

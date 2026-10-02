@@ -2,29 +2,26 @@ package com.atlashub.accounts.presentation.rest;
 
 import com.atlashub.accounts.application.command.RegisterOrg.RegisterOrganizationCommand;
 import com.atlashub.accounts.application.command.RegisterOrg.RegisterOrganizationHandler;
-import com.atlashub.accounts.application.command.SwitchActiveOrganization.SwitchActiveOrganizationCommand;
-import com.atlashub.accounts.application.command.SwitchActiveOrganization.SwitchActiveOrganizationHandler;
 import com.atlashub.accounts.application.command.UpdateUserProfile.UpdateUserProfileCommand;
 import com.atlashub.accounts.application.command.UpdateUserProfile.UpdateUserProfileHandler;
 import com.atlashub.accounts.application.query.GetUserProfile.GetUserProfileHandler;
 import com.atlashub.accounts.application.query.GetUserProfile.GetUserProfileQuery;
 import com.atlashub.accounts.application.query.GetUserProfile.UserProfileResult;
-import com.atlashub.accounts.domain.valueobject.BusinessSize;
-import com.atlashub.accounts.domain.valueobject.BusinessType;
+import com.atlashub.accounts.domain.valueobject.AtlasHubRegistrationType;
+import com.atlashub.accounts.domain.valueobject.SupportedIndustry;
 import com.atlashub.accounts.presentation.dto.OrganizationSummaryResponse;
 import com.atlashub.accounts.presentation.dto.RegisterRequest;
-import com.atlashub.accounts.presentation.dto.SwitchOrganizationRequest;
 import com.atlashub.accounts.presentation.dto.UpdateProfileRequest;
 import com.atlashub.accounts.presentation.dto.UserProfileResponse;
 import com.atlashub.shared.application.annotation.PublicEndpoint;
 import com.atlashub.shared.application.dto.ApiResponse;
+import com.atlashub.shared.application.security.AuthenticatedPrincipal;
 import com.atlashub.shared.domain.valueobject.Country;
 import com.atlashub.shared.domain.valueobject.PhoneNumber;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
@@ -43,16 +40,13 @@ public class UserController {
 
     private final RegisterOrganizationHandler registerHandler;
     private final UpdateUserProfileHandler updateProfileHandler;
-    private final SwitchActiveOrganizationHandler switchOrgHandler;
     private final GetUserProfileHandler getUserProfileHandler;
 
     public UserController(RegisterOrganizationHandler registerHandler,
                           UpdateUserProfileHandler updateProfileHandler,
-                          SwitchActiveOrganizationHandler switchOrgHandler,
                           GetUserProfileHandler getUserProfileHandler) {
         this.registerHandler = registerHandler;
         this.updateProfileHandler = updateProfileHandler;
-        this.switchOrgHandler = switchOrgHandler;
         this.getUserProfileHandler = getUserProfileHandler;
     }
 
@@ -62,9 +56,8 @@ public class UserController {
     public ResponseEntity<ApiResponse<Void>> register(@Valid @RequestBody RegisterRequest request) {
         registerHandler.execute(new RegisterOrganizationCommand(
                 request.businessName(),
-                BusinessType.valueOf(request.businessType()),
-                BusinessSize.valueOf(request.businessSize()),
-                request.industry(),
+                AtlasHubRegistrationType.valueOf(request.registrationType()),
+                SupportedIndustry.valueOf(request.industry()),
                 request.description(),
                 request.logoUrl(),
                 request.websiteUrl(),
@@ -75,38 +68,37 @@ public class UserController {
                 request.password(),
                 false
         ));
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new ApiResponse<>(true, "Registration successful. Please verify your email.", null, null));
+        return done("Registration successful. Please verify your email.");
     }
 
     @GetMapping("/me")
     @Operation(summary = "Get current user profile and organizations", security = @SecurityRequirement(name = "bearerAuth"))
-    public ResponseEntity<ApiResponse<UserProfileResponse>> getMe(@AuthenticationPrincipal Long userId) {
-        UserProfileResult result = getUserProfileHandler.execute(new GetUserProfileQuery(userId));
-        return ResponseEntity.ok(new ApiResponse<>(true, "Success", toWebResponse(result), null));
+    public ResponseEntity<ApiResponse<UserProfileResponse>> getMe(
+            @AuthenticationPrincipal AuthenticatedPrincipal principal) {
+        UserProfileResult result = getUserProfileHandler.execute(new GetUserProfileQuery(principal.userId()));
+        return ok(toWebResponse(result));
     }
 
     @PutMapping("/me")
     @Operation(summary = "Update user profile", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<ApiResponse<Void>> updateProfile(
-            @AuthenticationPrincipal Long userId,
+            @AuthenticationPrincipal AuthenticatedPrincipal principal,
             @Valid @RequestBody UpdateProfileRequest request) {
         updateProfileHandler.execute(new UpdateUserProfileCommand(
-                userId, request.firstName(), request.lastName(),
+                principal.userId(), request.firstName(), request.lastName(),
                 request.phone() != null ? new PhoneNumber(request.phone()) : null,
                 request.locale(),
                 request.timezone()
         ));
-        return ResponseEntity.ok(new ApiResponse<>(true, "Profile updated", null, null));
+        return done("Profile updated");
     }
 
-    @PostMapping("/organizations/switch")
-    @Operation(summary = "Switch active organization", security = @SecurityRequirement(name = "bearerAuth"))
-    public ResponseEntity<ApiResponse<Void>> switchOrganization(
-            @AuthenticationPrincipal Long userId,
-            @Valid @RequestBody SwitchOrganizationRequest request) {
-        switchOrgHandler.execute(new SwitchActiveOrganizationCommand(userId, request.organizationId()));
-        return ResponseEntity.ok(new ApiResponse<>(true, "Active organization switched", null, null));
+    private <T> ResponseEntity<ApiResponse<T>> ok(T value) {
+        return ResponseEntity.ok(new ApiResponse<>(true, "Success", value, null));
+    }
+
+    private ResponseEntity<ApiResponse<Void>> done(String message) {
+        return ResponseEntity.ok(new ApiResponse<>(true, message, null, null));
     }
 
     private UserProfileResponse toWebResponse(UserProfileResult result) {

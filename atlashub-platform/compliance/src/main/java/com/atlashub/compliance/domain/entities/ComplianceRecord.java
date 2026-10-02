@@ -20,6 +20,10 @@ public class ComplianceRecord extends AggregateRoot<Long> {
     private ComplianceStatus status;
     private ComplianceStep currentStep;
     private final Set<ComplianceStep> completedSteps;
+    private AtlasHubEligibilityStatus eligibilityStatus;
+    private AnchorVerificationStatus anchorVerificationStatus;
+    private String anchorBusinessCustomerId;
+    private String failureCode;
     
     private Long reviewedBy;
     private ZonedDateTime reviewedAt;
@@ -31,7 +35,7 @@ public class ComplianceRecord extends AggregateRoot<Long> {
     private BusinessProfileData businessProfile;
     private ContactInfoData contactInfo;
     private OwnerIdentityData ownerIdentity;
-    private SettlementAccountData settlementAccount;
+    private ComplianceDocumentsData complianceDocuments;
     private ServiceAgreementData serviceAgreement;
 
     private final ZonedDateTime createdAt;
@@ -41,13 +45,21 @@ public class ComplianceRecord extends AggregateRoot<Long> {
                             Set<ComplianceStep> completedSteps, Long reviewedBy, ZonedDateTime reviewedAt, 
                             String rejectionReason, ZonedDateTime submittedAt, ZonedDateTime approvedAt, 
                             BusinessProfileData businessProfile, ContactInfoData contactInfo, 
-                            OwnerIdentityData ownerIdentity, SettlementAccountData settlementAccount, 
+                            OwnerIdentityData ownerIdentity, ComplianceDocumentsData complianceDocuments,
+                            AtlasHubEligibilityStatus eligibilityStatus,
+                            AnchorVerificationStatus anchorVerificationStatus,
+                            String anchorBusinessCustomerId, String failureCode,
                             ServiceAgreementData serviceAgreement, ZonedDateTime createdAt, ZonedDateTime updatedAt) {
         this.id = id;
         this.organizationId = organizationId;
         this.status = status;
         this.currentStep = currentStep;
         this.completedSteps = completedSteps == null ? new HashSet<>() : new HashSet<>(completedSteps);
+        this.eligibilityStatus = eligibilityStatus == null ? AtlasHubEligibilityStatus.PENDING : eligibilityStatus;
+        this.anchorVerificationStatus = anchorVerificationStatus == null
+                ? AnchorVerificationStatus.NOT_CREATED : anchorVerificationStatus;
+        this.anchorBusinessCustomerId = anchorBusinessCustomerId;
+        this.failureCode = failureCode;
         this.reviewedBy = reviewedBy;
         this.reviewedAt = reviewedAt;
         this.rejectionReason = rejectionReason;
@@ -56,7 +68,7 @@ public class ComplianceRecord extends AggregateRoot<Long> {
         this.businessProfile = businessProfile;
         this.contactInfo = contactInfo;
         this.ownerIdentity = ownerIdentity;
-        this.settlementAccount = settlementAccount;
+        this.complianceDocuments = complianceDocuments;
         this.serviceAgreement = serviceAgreement;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
@@ -68,8 +80,9 @@ public class ComplianceRecord extends AggregateRoot<Long> {
         }
         ComplianceRecord record = new ComplianceRecord(
                 id, organizationId, ComplianceStatus.NOT_STARTED, null, 
-                new HashSet<>(), null, null, null, null, null, null, 
-                null, null, null, null, ZonedDateTime.now(), ZonedDateTime.now()
+                new HashSet<>(), null, null, null, null, null, null,
+                null, null, null, AtlasHubEligibilityStatus.ELIGIBLE, AnchorVerificationStatus.NOT_CREATED,
+                null, null, null, ZonedDateTime.now(), ZonedDateTime.now()
         );
         record.registerEvent(new ComplianceRecordInitializedEvent(
             UUID.randomUUID().toString(),
@@ -98,19 +111,19 @@ public class ComplianceRecord extends AggregateRoot<Long> {
         ensureCanUpdate();
         ensureStepCompleted(ComplianceStep.CONTACT_INFO);
         this.ownerIdentity = data;
-        markStepComplete(ComplianceStep.OWNER_IDENTITY);
+        markStepComplete(ComplianceStep.OWNERS_AND_OFFICERS);
     }
 
-    public void updateSettlementAccount(SettlementAccountData data) {
+    public void updateComplianceDocuments(ComplianceDocumentsData data) {
         ensureCanUpdate();
-        ensureStepCompleted(ComplianceStep.OWNER_IDENTITY);
-        this.settlementAccount = data;
-        markStepComplete(ComplianceStep.SETTLEMENT_ACCOUNT);
+        ensureStepCompleted(ComplianceStep.OWNERS_AND_OFFICERS);
+        this.complianceDocuments = data;
+        markStepComplete(ComplianceStep.COMPLIANCE_DOCUMENTS);
     }
 
     public void acceptServiceAgreement(String ipAddress, ZonedDateTime acceptedAt, String termsVersion) {
         ensureCanUpdate();
-        ensureStepCompleted(ComplianceStep.SETTLEMENT_ACCOUNT);
+        ensureStepCompleted(ComplianceStep.COMPLIANCE_DOCUMENTS);
         this.serviceAgreement = new ServiceAgreementData(acceptedAt, ipAddress, termsVersion);
         markStepComplete(ComplianceStep.SERVICE_AGREEMENT);
     }
@@ -125,6 +138,9 @@ public class ComplianceRecord extends AggregateRoot<Long> {
         if (this.completedSteps.size() != 5) {
             throw new StepNotCompleteException("All 5 steps must be completed before submission");
         }
+        if (this.eligibilityStatus != AtlasHubEligibilityStatus.ELIGIBLE) {
+            throw new StepNotCompleteException("Organization is not eligible for the banking programme");
+        }
         this.status = ComplianceStatus.SUBMITTED;
         this.submittedAt = ZonedDateTime.now();
         this.touch();
@@ -137,23 +153,21 @@ public class ComplianceRecord extends AggregateRoot<Long> {
         ));
     }
 
-    public void markUnderReview(Long adminId) {
+    public void markUnderReview(Long ignoredReviewerId) {
         if (this.status != ComplianceStatus.SUBMITTED) {
             throw new StepOutOfOrderException("Compliance must be SUBMITTED before it can be UNDER_REVIEW");
         }
         this.status = ComplianceStatus.UNDER_REVIEW;
-        this.reviewedBy = adminId;
-        this.reviewedAt = ZonedDateTime.now();
+        this.anchorVerificationStatus = AnchorVerificationStatus.UNDER_REVIEW;
         this.touch();
     }
 
-    public void approve(Long adminId) {
+    public void recordAnchorApproved() {
         if (this.status != ComplianceStatus.UNDER_REVIEW && this.status != ComplianceStatus.SUBMITTED) {
             throw new StepOutOfOrderException("Compliance must be UNDER_REVIEW or SUBMITTED to be APPROVED");
         }
         this.status = ComplianceStatus.APPROVED;
-        this.reviewedBy = adminId;
-        this.reviewedAt = ZonedDateTime.now();
+        this.anchorVerificationStatus = AnchorVerificationStatus.APPROVED;
         this.approvedAt = ZonedDateTime.now();
         this.touch();
         registerEvent(new OrganizationComplianceApprovedEvent(
@@ -161,17 +175,16 @@ public class ComplianceRecord extends AggregateRoot<Long> {
             this.id,
             ZonedDateTime.now(),
             CorrelationId.getOrCreate(),
-            new OrganizationComplianceApprovedEvent.Payload(this.organizationId, this.reviewedBy, this.approvedAt)
+            new OrganizationComplianceApprovedEvent.Payload(this.organizationId, this.anchorBusinessCustomerId, this.approvedAt)
         ));
     }
 
-    public void reject(Long adminId, String reason) {
+    public void recordAnchorRejected(String reason) {
         if (this.status != ComplianceStatus.UNDER_REVIEW && this.status != ComplianceStatus.SUBMITTED) {
             throw new StepOutOfOrderException("Compliance must be UNDER_REVIEW or SUBMITTED to be REJECTED");
         }
         this.status = ComplianceStatus.REJECTED;
-        this.reviewedBy = adminId;
-        this.reviewedAt = ZonedDateTime.now();
+        this.anchorVerificationStatus = AnchorVerificationStatus.REJECTED;
         this.rejectionReason = reason;
         this.touch();
         registerEvent(new OrganizationComplianceRejectedEvent(
@@ -179,8 +192,37 @@ public class ComplianceRecord extends AggregateRoot<Long> {
             this.id,
             ZonedDateTime.now(),
             CorrelationId.getOrCreate(),
-            new OrganizationComplianceRejectedEvent.Payload(this.organizationId, this.reviewedBy, this.rejectionReason, this.reviewedAt)
+            new OrganizationComplianceRejectedEvent.Payload(
+                    this.organizationId, this.anchorBusinessCustomerId, this.rejectionReason, ZonedDateTime.now())
         ));
+    }
+
+    public void markEligible() {
+        ensureCanUpdate();
+        this.eligibilityStatus = AtlasHubEligibilityStatus.ELIGIBLE;
+        touch();
+    }
+
+    public void recordAnchorCustomerCreated(String customerId) {
+        if (customerId == null || customerId.isBlank()) {
+            throw new IllegalArgumentException("Anchor customer id is required");
+        }
+        if (this.anchorBusinessCustomerId != null && !this.anchorBusinessCustomerId.equals(customerId)) {
+            throw new StepOutOfOrderException("Anchor customer has already been created");
+        }
+        this.anchorBusinessCustomerId = customerId;
+        this.anchorVerificationStatus = AnchorVerificationStatus.CUSTOMER_CREATED;
+        this.status = ComplianceStatus.UNDER_REVIEW;
+        touch();
+    }
+
+    public void recordAnchorActionRequired(String reason) {
+        this.anchorVerificationStatus = AnchorVerificationStatus.AWAITING_DOCUMENTS;
+        this.status = ComplianceStatus.ACTION_REQUIRED;
+        this.rejectionReason = reason;
+        this.completedSteps.remove(ComplianceStep.COMPLIANCE_DOCUMENTS);
+        this.currentStep = ComplianceStep.COMPLIANCE_DOCUMENTS;
+        touch();
     }
 
     public void reopen() {

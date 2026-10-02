@@ -7,6 +7,8 @@ import com.atlashub.accounts.application.query.GetOrganizationDetails.GetOrganiz
 import com.atlashub.accounts.application.query.GetOrganizationDetails.OrganizationDetailsResult;
 import com.atlashub.accounts.presentation.dto.OrganizationDetailsResponse;
 import com.atlashub.accounts.presentation.dto.UpdateOrganizationRequest;
+import com.atlashub.accounts.domain.valueobject.SupportedIndustry;
+import com.atlashub.shared.application.security.AuthenticatedPrincipal;
 import com.atlashub.shared.application.dto.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -15,6 +17,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -40,30 +43,41 @@ public class OrganizationController {
     @GetMapping("/organizations")
     @Operation(summary = "Get organization details", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<ApiResponse<OrganizationDetailsResponse>> getOrganization(
-            @RequestParam @Positive Long id) {
-        OrganizationDetailsResult result = getOrgDetailsHandler.execute(new GetOrganizationDetailsQuery(id));
-        return ResponseEntity.ok(new ApiResponse<>(true, "Success", toWebResponse(result), null));
+            @AuthenticationPrincipal AuthenticatedPrincipal principal) {
+        OrganizationDetailsResult result = getOrgDetailsHandler.execute(
+                new GetOrganizationDetailsQuery(principal.activeOrganizationId()));
+        return ok(toWebResponse(result));
     }
 
     @PutMapping("/organizations")
     @Operation(summary = "Update organization details", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<ApiResponse<Void>> updateOrganization(
-            @RequestParam @Positive Long id,
+            @AuthenticationPrincipal AuthenticatedPrincipal principal,
             @Valid @RequestBody UpdateOrganizationRequest request) {
         updateOrgHandler.execute(new UpdateOrganizationDetailsCommand(
-                id, request.businessName(), request.description(),
-                request.logoUrl(), request.industry(), request.websiteUrl()
+                principal.activeOrganizationId(), request.businessName(), request.description(),
+                request.logoUrl(), request.industry() == null ? null : SupportedIndustry.valueOf(request.industry()),
+                request.websiteUrl()
         ));
-        return ResponseEntity.ok(new ApiResponse<>(true, "Organization updated", null, null));
+        return done("Organization updated");
+    }
+
+    private <T> ResponseEntity<ApiResponse<T>> ok(T value) {
+        return ResponseEntity.ok(new ApiResponse<>(true, "Success", value, null));
+    }
+
+    private ResponseEntity<ApiResponse<Void>> done(String message) {
+        return ResponseEntity.ok(new ApiResponse<>(true, message, null, null));
     }
 
     private OrganizationDetailsResponse toWebResponse(OrganizationDetailsResult result) {
         return new OrganizationDetailsResponse(
                 result.id(),
                 result.businessName(),
-                result.businessType(),
-                result.businessSize(),
+                result.registrationType(),
                 result.industry(),
+                result.legalRegistrationDate(),
+                result.businessRegistrationNumber(),
                 result.description(),
                 result.logoUrl(),
                 result.websiteUrl(),

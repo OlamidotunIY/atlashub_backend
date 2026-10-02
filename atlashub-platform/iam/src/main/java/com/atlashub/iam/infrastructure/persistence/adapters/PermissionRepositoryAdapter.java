@@ -49,5 +49,10 @@ public class PermissionRepositoryAdapter
                 .map(mapper::toDomain)
                 .collect(Collectors.toList());
     }
+
+    @Override
+    public List<Permission> findAllByActiveTrue() {
+        return springDataRepo.findAllByActiveTrue().stream().map(mapper::toDomain).toList();
+    }
 }
 

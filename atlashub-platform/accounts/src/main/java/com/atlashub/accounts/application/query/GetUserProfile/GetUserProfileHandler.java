@@ -5,8 +5,8 @@ import com.atlashub.accounts.domain.entities.Organization;
 import com.atlashub.accounts.domain.entities.User;
 import com.atlashub.accounts.domain.repositories.OrganizationRepository;
 import com.atlashub.accounts.domain.repositories.UserRepository;
-import com.atlashub.shared.application.port.MembershipQueryPort;
 import com.atlashub.shared.application.usecase.Query;
+import com.atlashub.shared.application.port.MembershipQueryPort;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -18,9 +18,7 @@ public class GetUserProfileHandler extends Query<GetUserProfileQuery, UserProfil
     private final OrganizationRepository organizationRepository;
     private final MembershipQueryPort membershipQueryPort;
 
-    public GetUserProfileHandler(UserRepository userRepository,
-                                 OrganizationRepository organizationRepository,
-                                 MembershipQueryPort membershipQueryPort) {
+    public GetUserProfileHandler(UserRepository userRepository, OrganizationRepository organizationRepository, MembershipQueryPort membershipQueryPort) {
         this.userRepository = userRepository;
         this.organizationRepository = organizationRepository;
         this.membershipQueryPort = membershipQueryPort;
@@ -28,37 +26,16 @@ public class GetUserProfileHandler extends Query<GetUserProfileQuery, UserProfil
 
     @Override
     public UserProfileResult execute(GetUserProfileQuery query) {
-        User user = userRepository.findById(query.userId())
-                .orElseThrow(() -> new UserNotFoundException("User not found"));
+        User user = userRepository.findById(query.userId()).orElseThrow(() -> new UserNotFoundException("User not found"));
 
         List<Long> orgIds = membershipQueryPort.listOrganizationIds(query.userId());
 
-        List<OrganizationSummary> organizations = organizationRepository.findAllByIds(orgIds)
-                .stream()
-                .map(this::toSummary)
-                .toList();
+        List<OrganizationSummary> organizations = organizationRepository.findAllByIds(orgIds).stream().map(this::toSummary).toList();
 
-        return new UserProfileResult(
-                user.getId(),
-                user.getFirstName(),
-                user.getLastName(),
-                user.getEmail().value(),
-                user.getPhone() != null ? user.getPhone().value() : null,
-                user.getImageUrl(),
-                user.getCountry().code(),
-                user.getActiveOrganizationId(),
-                user.getCreatedAt(),
-                organizations
-        );
+        return new UserProfileResult(user.getId(), user.getFirstName(), user.getLastName(), user.getEmail().value(), user.getPhone() != null ? user.getPhone().value() : null, user.getImageUrl(), user.getCountry().code(), user.getActiveOrganizationId(), user.getCreatedAt(), organizations);
     }
 
     private OrganizationSummary toSummary(Organization org) {
-        return new OrganizationSummary(
-                org.getId(),
-                org.getBusinessName(),
-                org.getCountry().code(),
-                org.getBaseCurrency().name(),
-                org.getLogoUrl()
-        );
+        return new OrganizationSummary(org.getId(), org.getBusinessName(), org.getCountry().code(), org.getBaseCurrency().name(), org.getLogoUrl());
     }
 }

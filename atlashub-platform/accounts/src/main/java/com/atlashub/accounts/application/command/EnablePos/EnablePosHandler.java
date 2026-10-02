@@ -18,9 +18,7 @@ public class EnablePosHandler extends Command<EnablePosCommand, Void> {
     @Override
     @Transactional
     public Void execute(EnablePosCommand command) {
-        var org = organizationRepository.findById(command.organizationId())
-                .orElseThrow(() -> new OrganizationNotFoundException(
-                        "Organization not found: " + command.organizationId()));
+        var org = organizationRepository.findById(command.organizationId()).orElseThrow(() -> new OrganizationNotFoundException("Organization not found: " + command.organizationId()));
         org.enablePos();
         organizationRepository.save(org);
         return null;

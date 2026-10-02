@@ -33,13 +33,8 @@ public class SubscriptionSuspendedListener extends BaseKafkaEventListener {
 
     @KafkaListener(topics = "billing-events", groupId = GROUP_ID)
     public void listen(String messagePayload) {
-        processEventIfMatches(messagePayload, "SubscriptionSuspended", SubscriptionSuspended.class, log, GROUP_ID,
-                e -> e instanceof TimeoutException, event -> {
-                    handler.execute(
-                            new SuspendOrganizationSubscriptionCommand(
-                                    event.payload().organizationId(),
-                                    event.payload().reason()
-                            ));
-                });
+        processEventIfMatches(messagePayload, "SubscriptionSuspended", SubscriptionSuspended.class, log, GROUP_ID, e -> e instanceof TimeoutException, event -> {
+            handler.execute(new SuspendOrganizationSubscriptionCommand(event.payload().organizationId(), event.payload().reason()));
+        });
     }
 }

@@ -1,14 +1,13 @@
 package com.atlashub.accounts.application.command.RegisterOrg;
 
-import com.atlashub.accounts.domain.valueobject.BusinessSize;
-import com.atlashub.accounts.domain.valueobject.BusinessType;
+import com.atlashub.accounts.domain.valueobject.AtlasHubRegistrationType;
+import com.atlashub.accounts.domain.valueobject.SupportedIndustry;
 import com.atlashub.shared.domain.valueobject.Country;
 
 public record RegisterOrganizationCommand(
         String businessName,
-        BusinessType businessType,
-        BusinessSize businessSize,
-        String industry,
+        AtlasHubRegistrationType registrationType,
+        SupportedIndustry industry,
         String description,
         String logoUrl,
         String websiteUrl,

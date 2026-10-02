@@ -34,14 +34,18 @@ public class User extends AggregateRoot<Long> {
     /**
      * Creation constructor — raises UserCreated event. id must be non-null (assign nextIdentity() before calling).
      */
-    public static User create(Long id, String firstName, String lastName, EmailAddress email, Country country, Boolean isInvited, String passwordHash) {
+    public static User create(Long id, String firstName, String lastName, EmailAddress email, Country country,
+                              Boolean invited, String rawPassword, String credentialReference) {
         if (id == null) throw new MissingRequiredFieldException("User id is required");
         if (firstName == null || firstName.isBlank()) throw new MissingRequiredFieldException("First name is required");
         if (lastName == null || lastName.isBlank()) throw new MissingRequiredFieldException("Last name is required");
         if (email == null) throw new MissingRequiredFieldException("Email is required");
         if (country == null) throw new MissingRequiredFieldException("Country is required");
 
-        _validatePassword(passwordHash);
+        validatePassword(rawPassword);
+        if (credentialReference == null || credentialReference.isBlank()) {
+            throw new MissingRequiredFieldException("Credential reference is required");
+        }
 
         User user = new User(id, firstName, lastName, email, null, null, country, null, false,
                 null, null, ZonedDateTime.now(), ZonedDateTime.now());
@@ -53,8 +57,8 @@ public class User extends AggregateRoot<Long> {
                 CorrelationId.getOrCreate(),
                 new UserCreated.Payload(
                         user.email.value(),
-                        isInvited,
-                        passwordHash
+                        invited,
+                        credentialReference
                 )
         ));
 
@@ -135,7 +139,7 @@ public class User extends AggregateRoot<Long> {
         ));
     }
 
-    private static void _validatePassword(String password) {
+    private static void validatePassword(String password) {
         if (password == null || password.isBlank()) {
             throw new WeakPasswordException("Password cannot be empty.");
         }
