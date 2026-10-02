@@ -1,65 +1,17 @@
 ---
 name: create-domain-repository
-description: >-
-  Use this skill to create a new Domain Repository interface for an Aggregate Root/Entity.
+description: Create or audit an AtlasHub aggregate repository contract owned by its domain module.
 ---
 
-# Create Domain Repository Workflow
+# Create domain repository
 
-Domain Repositories belong in the domain layer (`domain/repositories/`) and define the persistence contract for an Entity.
+Load `atlashub-module-workflow`, resolve artifact `repository`, and read the aggregate, callers, and module docs.
 
-## Rule 1: Always check for existence first
-Before creating a repository, check if one already exists for the entity (e.g., `UserRepository.java`). If it exists, update it rather than creating a new one.
+- Expose domain types only and extend `Repository<T>` without redeclaring base methods.
+- Add only methods with real current callers.
+- Scope organization-owned lookups in the contract where required; never load globally and filter later.
+- Express required locking semantics explicitly.
+- Use shared `PageResult` for documented pagination.
+- Cross-module consumers never import this repository; use `create-shared-query-port` for reads.
 
-## Rule 2: Scaffold Skeleton
-Use the provided PowerShell script to safely generate the baseline interface and prevent accidental overwrites:
-```powershell
-.agents\skills\create-domain-repository\scripts\scaffold-repository.ps1 -Module "<module_name>" -EntityName "<EntityName>"
-```
-
-## Rule 3: Do NOT duplicate base methods
-The `Repository<T>` base interface (which you are extending) already provides these exact 5 methods:
-- `Long nextIdentity();`
-- `T save(T entity);`
-- `Optional<T> findById(Long id);`
-- `void deleteById(Long id);`
-- `boolean existsById(Long id);`
-
-**CRITICAL:** Do NOT redefine these methods in your newly generated repository interface. Only add *custom* query methods (e.g., `Optional<AuthAccount> findByEmail(String email);`) if explicitly required.
-
-## Rule 4: No Inline Imports
-You MUST NOT use wildcard imports (`import java.util.*`). You MUST NOT use inline fully qualified class names inside the code (e.g., `java.util.Optional<String>`). Always import explicitly at the top of the file.
-
-## Batch Processing
-This skill supports processing multiple repositories simultaneously. You can use `invoke_subagent` for large batches.
-
-
-
-## Subagent Separation of Concerns (Vertical Slicing)
-When using invoke_subagent to process multiple items, group related work into a small number of subagents instead of spawning many to avoid Gradle lock contentions and context fragmentation.
-1. **Group by Feature/Entity**: Assign each subagent a primary entity and ALL of its related components (e.g., its Value Objects, Exceptions, Events, Mappers, Repositories). NEVER create one subagent per single file.
-2. **End-to-End Flow**: The subagent is responsible for checking its own pre-requisites and generating all missing dependencies sequentially within its own turn.
-3. **Independent Verification**: The subagent MUST run its own verification (e.g., .\gradlew compileJava for the module) once for the entire group of files to ensure its specific slice is perfect.
-4. **Independent Commit**: Once verified, the subagent MUST commit its own changes to Git and end its turn. Do not wait for a parent agent to commit.
-
-## CRITICAL: Self-Correction & Verification Before Gradle
-Before you (or your dedicated subagents) run the Gradle compiler check, you MUST ALWAYS perform a strict self-review of all created and modified files. 
-- Read back the files you just wrote using "cat" or "view_file".
-- Check against ALL rules (e.g., absolutely NO inline imports, NO wildcard imports, NO leftover "// TODO"s, NO "return null;" placeholders).
-- If ANY rule is violated, you MUST fix it immediately using "replace_file_content".
-- Only after this explicit re-confirmation are you allowed to run ".\gradlew compileJava". Dedicated subagents MUST also follow this rule.
-
-## Step 5: Gradle Compilation Check
-You MUST run the Gradle compiler to prove to the user that your generated repository compiles properly.
-**CRITICAL RULE:** NEVER run `.\gradlew compileJava` globally. You MUST strictly target the module you are working on.
-Example: `.\gradlew :atlashub-platform:iam:compileJava`
-
-
-## Final Step: Git Commit & Push
-Verification is NOT the final step; committing your work is.
-After your code successfully compiles and passes all verification rules, you (and every individual subagent) MUST commit and push your changes to GitHub.
-1. Stage your specific files: "git add <paths_to_your_files>"
-2. Commit your changes using standard Conventional Commits formatting (e.g., "feat(<module>): add <feature>", "refactor(<module>): ...").
-3. Push to the remote repository: "git push origin HEAD"
-**CRITICAL:** If you are a subagent, you MUST commit and push your own specific work independently as soon as it passes compilation. Do not wait for the parent agent.
-
+After a contract change, invoke the persistence chain as needed: `create-jpa-entity`, `create-domain-mapper`, `create-spring-data-repository`, `create-repository-adapter`. Compile only when every implementation matches.

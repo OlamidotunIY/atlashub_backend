@@ -1,71 +1,35 @@
-param (
-    [Parameter(Mandatory=$true)][string]$Module,
-    [Parameter(Mandatory=$true)][string]$EntityName,
-    [Parameter(Mandatory=$false)][string]$SubModule = ""
+[CmdletBinding()]
+param(
+    [Parameter(Mandatory = $true)][string]$Module,
+    [string]$SubModule = '',
+    [Parameter(Mandatory = $true)][ValidatePattern('^[A-Z][A-Za-z0-9]*$')][string]$EntityName,
+    [Parameter(Mandatory = $true)][ValidatePattern('^[A-Z][A-Za-z0-9]*(Jpa|JPA)$')][string]$JpaClassName
 )
 
-$ErrorActionPreference = "Stop"
+$ErrorActionPreference = 'Stop'
+$contextScript = Join-Path $PSScriptRoot '..\..\atlashub-module-workflow\scripts\Get-AtlashubContext.ps1'
+$context = (& $contextScript -Module $Module -SubModule $SubModule -Artifact adapter) | ConvertFrom-Json
+$domainFile = Join-Path $context.sourceRoot "domain\entities\$EntityName.java"
+$jpaFile = Join-Path $context.sourceRoot "infrastructure\persistence\entities\$JpaClassName.java"
+if (-not (Test-Path $domainFile)) { throw "Domain entity not found: $domainFile" }
+if (-not (Test-Path $jpaFile)) { throw "JPA entity not found: $jpaFile" }
+$targetDir = Join-Path $context.sourceRoot 'infrastructure\persistence\mappers'
+$targetFile = Join-Path $targetDir "$EntityName`Mapper.java"
+if (Test-Path $targetFile) { throw "Refusing to overwrite: $targetFile" }
 
-if ($SubModule -ne "") {
-    $JavaSubPath = "src\main\java\com\atlashub\$Module\$SubModule"
-    $JavaPackage = "com.atlashub.$Module.$SubModule"
-} else {
-    $JavaSubPath = "src\main\java\com\atlashub\$Module"
-    $JavaPackage = "com.atlashub.$Module"
-}
+New-Item -ItemType Directory -Force -Path $targetDir | Out-Null
+$content = @"
+package $($context.javaPackage).infrastructure.persistence.mappers;
 
-$FoundModulePath = Get-ChildItem -Path . -Recurse -Directory |
-    Where-Object { $_.FullName -match [regex]::Escape($JavaSubPath) } |
-    Select-Object -First 1
-
-if (-not $FoundModulePath) {
-    Write-Host "ERROR: Path '$JavaSubPath' not found in this workspace."
-    exit 1
-}
-
-$ModulePath = $FoundModulePath.FullName
-$TargetDir  = Join-Path -Path $ModulePath -ChildPath "infrastructure\persistence\mappers"
-
-if (-not (Test-Path $TargetDir)) {
-    New-Item -ItemType Directory -Force -Path $TargetDir | Out-Null
-}
-
-$TargetFile = Join-Path -Path $TargetDir -ChildPath "${EntityName}Mapper.java"
-
-if (Test-Path $TargetFile) {
-    Write-Host "ERROR: $TargetFile already exists! Aborting to prevent overwrite."
-    exit 1
-}
-
-# JPA entity class name uses "JpaEntity" suffix per project convention
-$JpaEntityName = "${EntityName}JpaEntity"
-
-$Content = @"
-package $JavaPackage.infrastructure.persistence.mappers;
-
+import $($context.javaPackage).domain.entities.$EntityName;
+import $($context.javaPackage).infrastructure.persistence.entities.$JpaClassName;
 import com.atlashub.shared.infrastructure.persistence.mappers.DomainMapper;
-import com.atlashub.shared.infrastructure.persistence.mappers.ValueObjectMapper;
-import $JavaPackage.domain.entities.$EntityName;
-import $JavaPackage.infrastructure.persistence.entities.$JpaEntityName;
 import org.mapstruct.Mapper;
 import org.mapstruct.ReportingPolicy;
 
-@Mapper(
-    componentModel = "spring",
-    unmappedTargetPolicy = ReportingPolicy.ERROR,
-    uses = {ValueObjectMapper.class}
-)
-public interface ${EntityName}Mapper extends DomainMapper<$EntityName, $JpaEntityName> {
-    // DomainMapper<TDomain, TJpa> already declares:
-    //   TJpa   toJpa(TDomain domain);
-    //   TDomain toDomain(TJpa jpa);
-    //
-    // If MapStruct cannot auto-map any fields, add @Mapping annotations here.
-    // Example:
-    //   @Mapping(target = "someField", source = "anotherField")
-    //   $JpaEntityName toJpa($EntityName domain);
+@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.ERROR)
+public interface $EntityName`Mapper extends DomainMapper<$EntityName, $JpaClassName> {
 }
 "@
-
-Set-Content -Path $TargetFile -Value $Content
-Write-Host "SUCCESS: Mapper created at $TargetFile"
+Set-Content -LiteralPath $targetFile -Value $content -Encoding utf8NoBOM
+Write-Host "CREATED: $targetFile"

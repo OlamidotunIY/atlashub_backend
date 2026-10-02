@@ -1,82 +1,27 @@
 ---
 name: create-controller
-description: >-
-  Use this skill to create a Spring REST controller in the presentation/rest/ layer. Controllers are thin — no business logic, delegate everything to Command/Query handlers.
+description: Create or audit a thin per-resource AtlasHub Spring REST controller using presentation DTOs, principal context, handlers, and ApiResponse envelopes.
 ---
 
-# Create Controller
+# Create controller
 
-## Overview
-Controllers live in `presentation/rest/` and are annotated `@RestController`. They are the entry point for HTTP requests and must be kept thin:
-- No business logic.
-- No direct repository access.
-- All request/response data moves through DTO objects in `presentation/dto/`.
-- Delegate all work to Command or Query Handlers.
+Load `atlashub-module-workflow`, resolve artifact `controller`, and read endpoint docs, handlers, security, and sibling controllers. Invoke command/query skills first, then `create-presentation-dto` for missing DTOs.
 
-## URL Conventions
-- Base path: `/api/v1/<resource>`
-- If the last segment is a resource ID, use it as a **query parameter** (not a path variable) when the endpoint is a single-resource lookup by ID — unless the ID is part of a nested resource (e.g., `/api/v1/organizations/{orgId}/members`).
-- POST → create; PUT/PATCH → update; DELETE → remove; GET → read.
+- One controller per entity/resource. Never create a module-wide god controller.
+- Controllers live in `presentation/rest`; all request/response records live in `presentation/dto`.
+- Delegate every operation to one command/query handler. No repositories, provider clients, transactions, or business rules.
+- For bearer-authenticated operations, accept `@AuthenticationPrincipal AuthenticatedPrincipal` and derive user ID and active organization ID from it. Do not accept those context IDs from request bodies.
+- Use `@Valid`, accurate HTTP methods/statuses, OpenAPI annotations, and documented security requirements.
+- Return `ResponseEntity<ApiResponse<T>>` and keep these helpers when applicable:
 
-## Pre-Requisites
-1. The relevant Command/Query Handlers must already exist (or be created via `create-application-command` / `create-application-query`).
-2. Request/Response DTOs must already exist in `presentation/dto/` (or create via `create-dto`).
-3. Confirm the Swagger `@Tag` name for this controller.
-
-## Generation Mode
-
-**Step 1: Scaffold skeleton**
-```powershell
-.\.agents\skills\create-controller\scripts\scaffold-controller.ps1 `
-    -Module "<module>" `
-    -ControllerName "<ControllerName>" `
-    -TagName "<Swagger Tag Name>"
-```
-
-Example:
-```powershell
-.\.agents\skills\create-controller\scripts\scaffold-controller.ps1 `
-    -Module "iam" `
-    -ControllerName "CustomRole" `
-    -TagName "Custom Roles"
-```
-
-Creates: `presentation/rest/CustomRoleController.java`
-
-**Step 2: Inject endpoints**
-Use `replace_file_content` to add the actual endpoint methods, injecting:
-1. Required handler dependencies in the constructor.
-2. Proper `@Operation`, `@ApiResponse`, and `@SecurityRequirement` annotations per endpoint.
-3. `@PublicEndpoint` for unauthenticated endpoints; `@AuthenticationPrincipal` for authenticated ones.
-
-**Canonical authenticated endpoint pattern:**
 ```java
-@Operation(summary = "Create a custom role")
-@ApiResponse(responseCode = "201", description = "Role created")
-@SecurityRequirement(name = "bearerAuth")
-@PostMapping
-public ResponseEntity<CustomRoleResponse> createRole(
-        @AuthenticationPrincipal AuthenticatedUser user,
-        @Valid @RequestBody CreateCustomRoleRequest request) {
-    CustomRole role = createCustomRoleHandler.execute(new CreateCustomRoleCommand(/* ... */));
-    return ResponseEntity.status(201).body(new CustomRoleResponse(/* ... */));
+private <T> ResponseEntity<ApiResponse<T>> ok(T value) {
+    return ResponseEntity.ok(new ApiResponse<>(true, "Success", value, null));
+}
+
+private ResponseEntity<ApiResponse<Void>> done(String message) {
+    return ResponseEntity.ok(new ApiResponse<>(true, message, null, null));
 }
 ```
 
-## CRITICAL: Self-Correction & Verification Before Gradle
-- No wildcard imports
-- No business logic in controller methods
-- All dependencies constructor-injected
-- DTOs are imported from `presentation.dto` package, not defined inline
-
-## Step 3: Gradle Verification
-```
-.\gradlew :atlashub-platform:<module>:compileJava
-```
-
-## Final Step: Git Commit & Push
-```
-git add <paths>
-git commit -m "feat(<module>): add <ControllerName> REST controller"
-git push origin HEAD
-```
+Use `201` for creates when required while preserving the same envelope. Never return domain/JPA entities directly. Add MVC tests for validation, principal propagation, authorization, delegation, envelope, and status. Run validator and module tests.
