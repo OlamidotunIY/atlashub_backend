@@ -2,714 +2,499 @@
 
 ## Role & Purpose
 
-The `accounts` submodule manages **virtual bank accounts (NUBANs)** issued to organizations and their end-customers via the Anchor banking-as-a-service API. Every organization that passes compliance onboarding is automatically issued an Anchor-backed NUBAN. Organizations offering B2B2C collection products can also provision dedicated NUBANs per end-customer.
+The `accounts` submodule owns AtlasHub's model of Anchor banking resources and their lifecycle. Every banking-enabled AtlasHub organization receives:
 
-This submodule does **not** manage balances — balance tracking is the responsibility of `pay:ledger`. The accounts submodule owns the lifecycle of the virtual account record itself: issuance, activation, suspension, and closure.
+1. An Anchor `CURRENT` **DepositAccount** for the verified business customer.
+2. An Anchor **SubAccount** belonging to that business customer and parented by AtlasHub's FBO deposit account.
+
+Organizations may then issue Anchor **ReservedAccounts** to their customers and marketplace vendors. Each reserved account routes collections to the issuing organization's Anchor subaccount.
+
+AtlasHub is the system of record for ownership, provisioning intent, lifecycle, routing, idempotency, and links to local organizations/customers/vendors. Anchor is the banking execution system and supplies confirmed external identifiers, account numbers, bank details, and externally effective state.
+
+This submodule does **not** own balances. AtlasHub balances and money movement are owned by `pay:ledger`. Anchor balances and transactions are reconciliation evidence.
 
 ---
 
-## Domain Layer
+## 1. Terminology and Boundaries
 
-### Aggregate Root: `VirtualAccount`
-
-**Package**: `com.atlashub.pay.accounts.domain.entities`
-
-```
-VirtualAccount
-├── id: Long
-├── organizationId: Long
-├── ownerType: OwnerType           ← ORGANIZATION | CUSTOMER
-├── customerId: String             ← nullable; only set for CUSTOMER-owned accounts
-├── accountName: String
-├── bankName: String               ← nullable until activated
-├── nuban: String                  ← actual 10-digit bank account number; nullable until activated
-├── bankCode: String
-├── anchorAccountId: String        ← Anchor's internal reference; set on issuance
-├── currency: Currency             ← NGN only for MVP
-├── status: VirtualAccountStatus   ← PENDING_ISSUANCE → ACTIVE → SUSPENDED | CLOSED
-├── createdAt: ZonedDateTime
-└── activatedAt: ZonedDateTime     ← nullable; set by activate()
-```
-
-**State Machine:**
-```
-PENDING_ISSUANCE ──activate()──► ACTIVE ──suspend()──► SUSPENDED
-                                   │                        │
-                                   └────────close()─────────┘
-                                              │
-                                              ▼
-                                           CLOSED
-```
-
-**Invariants:**
-- `nuban` and `bankName` are `null` until `activate()` is called.
-- `activate()` may only be called when `status == PENDING_ISSUANCE`.
-- `suspend()` may only be called when `status == ACTIVE`.
-- `close()` may be called from `ACTIVE` or `SUSPENDED`.
-- Once `CLOSED`, no further transitions are allowed.
-
-**Business Methods:**
-
-| Method | Inputs | Guard | Effect | Event Registered |
-|---|---|---|---|---|
-| `activate(nuban, bankName)` | `String nuban`, `String bankName` | status must be `PENDING_ISSUANCE` | sets `nuban`, `bankName`, `activatedAt = now()`, `status = ACTIVE` | `VirtualAccountActivatedEvent` |
-| `suspend()` | — | status must be `ACTIVE` | sets `status = SUSPENDED` | `VirtualAccountSuspendedEvent` |
-| `close()` | — | status must be `ACTIVE` or `SUSPENDED` | sets `status = CLOSED` | `VirtualAccountClosedEvent` |
-
-**Exceptions thrown inside business methods:**
-
-| Exception | When |
+| Concept | Meaning |
 |---|---|
-| `VirtualAccountAlreadyActiveException` | `activate()` called on non-`PENDING_ISSUANCE` account |
-| `VirtualAccountNotActiveException` | `suspend()` called on non-`ACTIVE` account |
-| `VirtualAccountAlreadyClosedException` | Any transition attempted on a `CLOSED` account |
+| `BusinessDepositAccount` | Full Anchor `DepositAccount` (`CURRENT`) issued to the AtlasHub organization's verified Anchor `BusinessCustomer` |
+| `BusinessSubAccount` | Anchor subledger account for the organization, parented by AtlasHub's FBO root account |
+| `ReservedAccount` | Permanent collection account assigned to an organization's customer or vendor and routed to the organization's subaccount |
+| `VirtualNuban` | Anchor account-number resource/pointer associated with an Anchor account; stored as external banking details, not used as the aggregate name |
+| `LedgerAccount` | AtlasHub-only double-entry account in `pay:ledger`; never interchangeable with an Anchor account/subaccount |
+
+The former generic `VirtualAccount` aggregate is deprecated because it conflated these resources.
 
 ---
 
-### Value Objects
+## 2. Platform Anchor Programme Account
 
-**Package**: `com.atlashub.pay.accounts.domain.valueobject`
+AtlasHub's FBO account is a platform-level resource and the parent of every organization subaccount.
 
-| Class | Fields | Description |
-|---|---|---|
-| `OwnerType` | enum: `ORGANIZATION`, `CUSTOMER` | Distinguishes org-level vs per-customer NUBANs |
-| `VirtualAccountStatus` | enum: `PENDING_ISSUANCE`, `ACTIVE`, `SUSPENDED`, `CLOSED` | Full lifecycle |
+```
+AnchorProgramAccount
+├── id: Long
+├── environment: AnchorEnvironment          SANDBOX | LIVE
+├── currency: Currency                       NGN initially
+├── accountType: ProgramAccountType          FBO
+├── anchorAccountId: String                  unique per environment/currency/type
+├── status: ProgramAccountStatus             ACTIVE | DISABLED
+├── createdAt: ZonedDateTime
+└── updatedAt: ZonedDateTime
+```
+
+The Anchor FBO ID must never be hard-coded or accepted from an organization request. It is secure, environment-aware platform configuration managed by authorized operations staff.
 
 ---
 
-### Domain Events
+## 3. Organization Banking Profile
 
-**Package**: `com.atlashub.pay.accounts.domain.events`
+### `OrganizationBankingProfile` (Aggregate Root)
 
-All events are published to Kafka topic **`pay-events`**.
+Coordinates the two resources every organization must have.
 
-| Event | Published When | Consumed By |
-|---|---|---|
-| `VirtualAccountActivatedEvent` | NUBAN is assigned and account goes ACTIVE | `notifications` (email org admin or customer), `pay:ledger` (bootstrap 6 standard ledger accounts for org) |
-| `VirtualAccountSuspendedEvent` | Account suspended | `notifications` |
-| `VirtualAccountClosedEvent` | Account closed | `notifications` |
-| `WalletFundedEvent` | Anchor collection webhook received — funds hit NUBAN | `pay:ledger` (post Dr Suspense → Cr Operating/Customer), `notifications` (notify org/customer of inbound transfer), `pay:tx-query` (record transaction), `pay:webhooks` (notify merchant server) |
-
-**`VirtualAccountActivatedEvent` payload:**
 ```
-VirtualAccountActivatedEvent.payload
-├── virtualAccountId  : Long
-├── organizationId    : Long
-├── ownerType         : String        ← "ORGANIZATION" | "CUSTOMER"
-├── customerId        : String        ← nullable; only for CUSTOMER accounts
-├── nuban             : String
-├── bankName          : String
-├── bankCode          : String
-├── currency          : String
-├── orgAdminEmail     : String        ← needed by notifications to email the right person
-└── accountName       : String
+OrganizationBankingProfile
+├── id: Long
+├── organizationId: Long                     unique
+├── anchorBusinessCustomerId: String        supplied by approved compliance
+├── businessDepositAccountId: Long          nullable until locally requested
+├── businessSubAccountId: Long              nullable until locally requested
+├── status: BankingProfileStatus
+│   PENDING | PROVISIONING_DEPOSIT | PROVISIONING_SUBACCOUNT
+│   PARTIALLY_PROVISIONED | ACTIVE | SUSPENDED | FAILED
+├── activeRestrictions: Set<BankingRestrictionType>
+├── failureCode: String                     nullable
+├── failureMessage: String                  sanitized, nullable
+├── createdAt: ZonedDateTime
+├── updatedAt: ZonedDateTime
+└── version: Long
 ```
 
-**`WalletFundedEvent` payload:**
-```
-WalletFundedEvent.payload
-├── virtualAccountId      : Long
-├── organizationId        : Long
-├── ownerType             : String        ← "ORGANIZATION" | "CUSTOMER"
-├── customerId            : String        ← nullable
-├── transactionReference  : String        ← Anchor's transfer reference; idempotency key for ledger
-├── amount                : BigDecimal
-├── currency              : String
-├── senderAccountName     : String
-├── senderBankCode        : String
-├── orgAdminEmail         : String        ← needed by notifications
-├── customerEmail         : String        ← nullable; needed if ownerType=CUSTOMER
-└── fundedAt              : ZonedDateTime
-```
+**Rules:**
 
-
+- One profile per organization.
+- Provisioning starts only from an effective `OrganizationComplianceApprovedEvent`.
+- The event's `anchorBusinessCustomerId` is mandatory.
+- `ACTIVE` requires both the deposit account and subaccount to be `ACTIVE`.
+- The profile is usable only when it has no active restriction.
+- Partial success is retained and reconciled; successful Anchor resources are never recreated blindly.
+- `OrganizationBankingActivatedEvent` is emitted only on the first transition to `ACTIVE`.
 
 ---
 
-### Domain Exceptions
+## 4. Business Deposit Account
 
-**Package**: `com.atlashub.pay.accounts.domain.exceptions`
+### `BusinessDepositAccount` (Aggregate Root)
+
+```
+BusinessDepositAccount
+├── id: Long                                  AtlasHub ID
+├── organizationId: Long
+├── bankingProfileId: Long
+├── anchorAccountId: String                  unique, nullable until accepted by Anchor
+├── anchorBusinessCustomerId: String
+├── productType: DepositProductType          CURRENT
+├── accountName: String                      nullable until confirmed
+├── accountNumber: String                    encrypted at rest, nullable until confirmed
+├── maskedAccountNumber: String              safe display value
+├── bankName: String                         nullable until confirmed
+├── bankCode: String                         nullable until confirmed
+├── currency: Currency                       NGN initially
+├── frozen: Boolean
+├── status: ExternalAccountStatus
+│   REQUESTED | PENDING | ACTIVE | SUSPENDED | FROZEN | CLOSED | FAILED
+├── failureReason: String                    nullable
+├── createdAt: ZonedDateTime
+├── activatedAt: ZonedDateTime               nullable
+├── updatedAt: ZonedDateTime
+└── version: Long
+```
+
+The provider request creates an Anchor `DepositAccount` with `productName = CURRENT` and a `BusinessCustomer` relationship using the approved compliance customer ID. A synchronous `200/202` response records acceptance, not necessarily final activation. Confirmed account details arrive through the provider response, webhook, or reconciliation fetch.
+
+Only one non-closed business deposit account is allowed per organization and currency.
+
+---
+
+## 5. Business Subaccount
+
+### `BusinessSubAccount` (Aggregate Root)
+
+```
+BusinessSubAccount
+├── id: Long                                  AtlasHub ID
+├── organizationId: Long
+├── bankingProfileId: Long
+├── anchorSubAccountId: String               unique, nullable until accepted
+├── anchorBusinessCustomerId: String
+├── anchorParentFboAccountId: String
+├── anchorVirtualNubanId: String             nullable
+├── accountName: String                      nullable
+├── accountNumber: String                    encrypted, nullable
+├── maskedAccountNumber: String              nullable
+├── bankName: String                         nullable
+├── bankCode: String                         nullable
+├── currency: Currency                       NGN initially
+├── status: ExternalAccountStatus
+├── failureReason: String                    nullable
+├── createdAt: ZonedDateTime
+├── activatedAt: ZonedDateTime               nullable
+├── updatedAt: ZonedDateTime
+└── version: Long
+```
+
+Anchor request shape:
+
+```json
+{
+  "data": {
+    "type": "SubAccount",
+    "attributes": {
+      "createVirtualNuban": true
+    },
+    "relationships": {
+      "customer": {
+        "data": {
+          "id": "<organization-anchor-business-customer-id>",
+          "type": "BusinessCustomer"
+        }
+      },
+      "parentAccount": {
+        "data": {
+          "id": "<atlashub-fbo-anchor-account-id>",
+          "type": "DepositAccount"
+        }
+      }
+    }
+  }
+}
+```
+
+The parent is always AtlasHub's configured FBO account, **not** the organization's business deposit account.
+
+Only one non-closed business subaccount is allowed per organization and currency.
+
+---
+
+## 6. Reserved Accounts
+
+### `ReservedAccount` (Aggregate Root)
+
+```
+ReservedAccount
+├── id: Long                                  AtlasHub ID
+├── organizationId: Long
+├── ownerType: ReservedAccountOwnerType      CUSTOMER | VENDOR
+├── ownerReferenceId: String                 local customer/vendor ID
+├── anchorReservedAccountId: String          unique, nullable until accepted
+├── anchorCustomerId: String                 customer created/reused by Anchor
+├── businessSubAccountId: Long
+├── anchorPayoutSubAccountId: String
+├── provider: ReservedAccountProvider        NINEPSB | PROVIDUS | ...
+├── accountName: String                      nullable until confirmed
+├── accountNumber: String                    encrypted, nullable until confirmed
+├── maskedAccountNumber: String
+├── bankName: String
+├── bankCode: String                         nullable
+├── currency: Currency                       NGN initially
+├── status: ExternalAccountStatus
+├── activeRestrictions: Set<AccountRestrictionType>
+├── requestReference: String                 unique AtlasHub idempotency/correlation key
+├── failureReason: String                    nullable
+├── createdAt: ZonedDateTime
+├── activatedAt: ZonedDateTime               nullable
+├── updatedAt: ZonedDateTime
+└── version: Long
+```
+
+**Rules:**
+
+- The owner must be an existing customer/vendor belonging to the organization.
+- The organization's banking profile and subaccount must be `ACTIVE`.
+- The reserved account's Anchor `payoutAccount` is the organization's Anchor subaccount.
+- The business deposit account is not used as the reserved-account payout route.
+- Default uniqueness is `(organizationId, ownerType, ownerReferenceId, provider)` for non-closed accounts.
+- Repeating an issuance command with the same idempotency key returns the existing local result.
+- Reserved-account activation never bootstraps organization ledger accounts.
+
+The API supports both individual and business customer identity variants without leaking Anchor request DTOs into the domain.
+
+---
+
+## 7. State Transitions
+
+`ExternalAccountStatus` values are `REQUESTED`, `PENDING`, `ACTIVE`, `SUSPENDED`, `FROZEN`, `CLOSED`, and `FAILED`. `FROZEN` represents an externally frozen banking resource; `SUSPENDED` represents an AtlasHub-blocked resource that may or may not have a matching provider lifecycle operation.
+
+Restriction sources are tracked independently, for example `COMPLIANCE`, `ORGANIZATION_BAN`, `MANUAL`, and `RISK`. Removing an organization ban clears only `ORGANIZATION_BAN`; it must not reactivate an account still restricted by compliance, risk, or a manual action.
+
+```
+REQUESTED → PENDING → ACTIVE → FROZEN/SUSPENDED → ACTIVE
+                         └────────────────────────→ CLOSED
+REQUESTED/PENDING → FAILED → REQUESTED (explicit retry after reconciliation)
+```
+
+Use separate domain methods:
+
+- `markSubmitted(anchorResourceId)`
+- `activate(confirmedBankingDetails)`
+- `freeze(reason)` / `suspend(reason)`
+- `reactivate()`
+- `close()`
+- `fail(code, reason)`
+
+`activate()` is only for initial activation. Reactivating a suspended/frozen account must call `reactivate()`; the old design's reuse of `activate()` for unbanning is invalid.
+
+Platform state can block use even when a particular provider resource lacks an equivalent lifecycle operation. The adapter calls only provider operations confirmed for that resource type; reconciliation records any difference between AtlasHub's desired state and Anchor's effective state.
+
+---
+
+## 8. Anchor Banking Port
 
 ```java
-public class VirtualAccountNotFoundException extends NotFoundException {
-    public VirtualAccountNotFoundException() { super("Virtual account not found"); }
-    public VirtualAccountNotFoundException(String message) { super(message); }
-}
+public interface AnchorBankingPort {
+    DepositAccountProvisioningResult createBusinessDepositAccount(
+        String anchorBusinessCustomerId,
+        String productName,
+        String requestReference);
 
-public class VirtualAccountAlreadyActiveException extends BusinessRuleException {
-    public VirtualAccountAlreadyActiveException() { super("Virtual account is already active"); }
-}
+    SubAccountProvisioningResult createBusinessSubAccount(
+        String anchorBusinessCustomerId,
+        String anchorParentFboAccountId,
+        boolean createVirtualNuban,
+        String requestReference);
 
-public class VirtualAccountNotActiveException extends BusinessRuleException {
-    public VirtualAccountNotActiveException() { super("Virtual account is not active"); }
-}
+    ReservedAccountProvisioningResult createReservedAccount(
+        ReservedAccountCustomer customer,
+        String provider,
+        String anchorPayoutSubAccountId,
+        String requestReference);
 
-public class VirtualAccountAlreadyClosedException extends BusinessRuleException {
-    public VirtualAccountAlreadyClosedException() { super("Virtual account is already closed"); }
-}
+    AnchorDepositAccountDetails fetchDepositAccount(String anchorAccountId);
+    AnchorSubAccountDetails fetchSubAccount(String anchorSubAccountId);
+    AnchorReservedAccountDetails fetchReservedAccount(String anchorReservedAccountId);
 
-public class VirtualAccountInactiveException extends BusinessRuleException {
-    public VirtualAccountInactiveException() { super("Virtual account is not active"); }
-}
-```
-
----
-
-### Domain Ports
-
-**Package**: `com.atlashub.pay.accounts.domain.ports`
-
-```java
-public interface AnchorPort {
-    /**
-     * Calls Anchor API to create a virtual account linked to AtlasHub's pool account.
-     * Returns Anchor's internal account reference ID immediately.
-     * The NUBAN itself arrives asynchronously via Anchor's webhook.
-     */
-    String issueVirtualAccount(String accountName, String currency, String organizationId);
-
-    /**
-     * Issues a dedicated customer virtual account linked to the organization's pool.
-     */
-    String issueCustomerVirtualAccount(String customerName, String email, String organizationId, String customerId);
+    void freezeDepositAccount(String anchorAccountId, FreezeReason reason);
+    void unfreezeDepositAccount(String anchorAccountId);
 }
 ```
 
----
-
-### Domain Repository
-
-**Package**: `com.atlashub.pay.accounts.domain.repositories`
-
-```java
-public interface VirtualAccountRepository {
-    VirtualAccount save(VirtualAccount account);
-    Optional<VirtualAccount> findById(Long id);
-    Optional<VirtualAccount> findByAnchorAccountId(String anchorAccountId);
-    Optional<VirtualAccount> findByOrganizationIdAndOwnerType(Long organizationId, OwnerType ownerType);
-    Optional<VirtualAccount> findByOrganizationIdAndCustomerId(Long organizationId, String customerId);
-    List<VirtualAccount> findAllByOrganizationId(Long organizationId);
-}
-```
+Additional suspend/reactivate/close capabilities are exposed only after the matching Anchor operation is confirmed. Unsupported operations still block the resource locally and create an operations/reconciliation task; infrastructure must not invent provider success.
 
 ---
 
-## Application Layer
+## 9. Provisioning Commands
 
-### Commands
+### `ProvisionOrganizationBankingCommand`
 
-#### `IssueVirtualAccountCommand`
+Triggered only by `OrganizationComplianceApprovedEvent`.
 
-**Package**: `com.atlashub.pay.accounts.application.commands.IssueVirtualAccount`
+1. Create/load `OrganizationBankingProfile` by organization ID.
+2. Verify the event has an Anchor business-customer ID and the compliance decision remains approved.
+3. Create a local `BusinessDepositAccount` in `REQUESTED` and persist the request intent.
+4. Submit the Anchor `CURRENT` deposit-account request through an outbox-driven worker.
+5. After the deposit account is active, create a local `BusinessSubAccount` in `REQUESTED`.
+6. Resolve the active AtlasHub FBO programme account for environment/currency.
+7. Submit the Anchor subaccount request with the business customer and FBO relationships.
+8. Mark the profile `ACTIVE` only after both accounts are active.
+9. Publish `OrganizationBankingActivatedEvent` once.
+
+The workflow is resumable from every persisted state and never wraps a remote API call inside a database transaction.
+
+### `IssueReservedAccountCommand`
 
 ```java
-public record IssueVirtualAccountCommand(
+public record IssueReservedAccountCommand(
     Long organizationId,
-    String accountName,
-    String currency
+    ReservedAccountOwnerType ownerType,
+    String ownerReferenceId,
+    ReservedAccountCustomer customer,
+    String provider,
+    String idempotencyKey
 ) {}
 ```
 
-**Handler**: `IssueVirtualAccountHandler extends Command<IssueVirtualAccountCommand, Void>`
+The handler validates ownership and banking readiness, persists the local `REQUESTED` aggregate, and writes a provider request to the outbox. The worker calls Anchor using the active organization subaccount as `payoutAccount`.
 
-**RBAC**: System-internal only (triggered by listener — no direct RBAC check). Listener is `OrganizationComplianceApprovedListener`.
+### Lifecycle Commands
 
-**Processing steps:**
-1. Verify no existing `ACTIVE` or `PENDING_ISSUANCE` org-level virtual account exists for `organizationId`. If one exists, throw `VirtualAccountAlreadyExistsException`.
-2. Call `anchorPort.issueVirtualAccount(accountName, currency, organizationId)` to get `anchorAccountId`.
-3. Construct `VirtualAccount` with `status = PENDING_ISSUANCE`, `anchorAccountId` set, `nuban = null`.
-4. Save via `VirtualAccountRepository`.
-5. No events published here — activation event is published later by `ActivateVirtualAccountHandler`.
+- `SuspendReservedAccountCommand`
+- `ReactivateReservedAccountCommand`
+- `CloseReservedAccountCommand`
+- `SuspendOrganizationBankingCommand`
+- `ReactivateOrganizationBankingCommand`
+- `ReconcileExternalAccountCommand`
 
-**Response**: `void`
+Organization ban or compliance suspension affects the banking profile and all associated payment capability. It does not delete or automatically close external accounts.
+
+- `OrganizationComplianceSuspendedEvent` adds the `COMPLIANCE` restriction.
+- `OrganizationComplianceReinstatedEvent` removes only the `COMPLIANCE` restriction.
+- `OrganizationBannedEvent` adds the `ORGANIZATION_BAN` restriction.
+- An unban event removes only `ORGANIZATION_BAN` and reactivates capability only when no restrictions remain.
+- Manual reserved-account suspension adds/removes only the `MANUAL` restriction.
 
 ---
 
-#### `ActivateVirtualAccountCommand`
+## 10. Provider Webhooks and Reconciliation
 
-**Package**: `com.atlashub.pay.accounts.application.commands.ActivateVirtualAccount`
+Expected normalized provider facts include:
 
-```java
-public record ActivateVirtualAccountCommand(
-    String anchorAccountId,
-    String nuban,
-    String bankName
-) {}
-```
+- Deposit account accepted/created/failed/frozen/unfrozen
+- Subaccount created/failed and virtual-NUBAN relationship
+- Reserved account created/failed
+- Inbound transfer/collection
 
-**Handler**: `ActivateVirtualAccountHandler extends Command<ActivateVirtualAccountCommand, Void>`
+Webhook processing:
 
-**Triggered by**: `AnchorWebhookAdapter` when Anchor sends the account activation webhook.
+1. Validate the signature against the raw request body.
+2. Deduplicate by `(anchorEventId, consumerName)`.
+3. Resolve an existing local request by Anchor resource ID or AtlasHub request reference.
+4. Apply an idempotent state transition.
+5. Persist the state and outbox events in one local transaction.
+6. Quarantine unknown or contradictory resources for reconciliation.
 
-**Processing steps:**
-1. Load `VirtualAccount` by `anchorAccountId`. If not found, throw `VirtualAccountNotFoundException`.
-2. Call `account.activate(nuban, bankName)` — this transitions status and registers `VirtualAccountActivatedEvent`.
-3. Save the updated account.
-4. Publish domain events via outbox.
-
-**Response**: `void`
+A scheduled reconciler fetches all non-terminal pending/failed-due-to-timeout resources and compares local desired state with Anchor's effective state. Reconciliation never overwrites ownership or routing using untrusted webhook payload fields.
 
 ---
 
-#### `SuspendVirtualAccountCommand`
+## 11. Funding Events
 
-**Package**: `com.atlashub.pay.accounts.application.commands.SuspendVirtualAccount`
+Inbound Anchor transfers are normalized to `ReservedAccountFundedEvent` or `OrganizationAccountFundedEvent` after the destination is resolved locally.
 
-```java
-public record SuspendVirtualAccountCommand(
-    Long virtualAccountId,
-    Long requestedByUserId
-) {}
+`ReservedAccountFundedEvent.payload`:
+
+```
+reservedAccountId
+organizationId
+ownerType
+ownerReferenceId
+businessSubAccountId
+anchorTransferReference
+amount
+currency
+senderAccountName
+senderBankCode
+receivedAt
 ```
 
-**Handler**: `SuspendVirtualAccountHandler extends Command<SuspendVirtualAccountCommand, Void>`
-
-**RBAC**: `pay:accounts:suspend`
-
-**Processing steps:**
-1. Load `VirtualAccount` by `virtualAccountId`. If not found, throw `VirtualAccountNotFoundException`.
-2. Call `account.suspend()` — registers `VirtualAccountSuspendedEvent`.
-3. Save and publish events.
-
-**Response**: `void`
+The Anchor transfer reference is the ledger idempotency key. A reserved-account receipt does not automatically prove revenue: the ledger posts to customer funds, vendor payable, matched commerce transaction, or suspense according to the business context.
 
 ---
 
-#### `CloseVirtualAccountCommand`
+## 12. Domain Events
 
-**Package**: `com.atlashub.pay.accounts.application.commands.CloseVirtualAccount`
+Account-domain events are published on `pay-events` through the transactional outbox.
 
-```java
-public record CloseVirtualAccountCommand(
-    Long virtualAccountId,
-    Long requestedByUserId
-) {}
+| Event | Published When | Consumers |
+|---|---|---|
+| `BusinessDepositAccountActivatedEvent` | Deposit account confirmed active | Banking orchestrator, notifications |
+| `BusinessSubAccountActivatedEvent` | FBO-backed subaccount confirmed active | Banking orchestrator, notifications |
+| `OrganizationBankingActivatedEvent` | Both mandatory business accounts are active | `pay:ledger`, notifications |
+| `OrganizationBankingProvisioningFailedEvent` | Terminal provisioning failure | Operations, notifications |
+| `ReservedAccountRequestedEvent` | Local issuance intent committed | Provider worker |
+| `ReservedAccountActivatedEvent` | Anchor confirms reserved account | Notifications, transaction query |
+| `ReservedAccountProvisioningFailedEvent` | Anchor rejects/fails issuance | Notifications, operations |
+| `ReservedAccountSuspendedEvent` | Account blocked | Notifications |
+| `ReservedAccountReactivatedEvent` | Account restored | Notifications |
+| `ReservedAccountClosedEvent` | Account permanently closed | Notifications |
+| `ReservedAccountFundedEvent` | Confirmed inbound transfer mapped to reserved account | `pay:ledger`, notifications, `pay:tx-query`, `pay:webhooks` |
+
+`OrganizationBankingActivatedEvent.payload`:
+
+```
+organizationId
+bankingProfileId
+businessDepositAccountId
+businessSubAccountId
+currency
+activatedAt
 ```
 
-**Handler**: `CloseVirtualAccountHandler extends Command<CloseVirtualAccountCommand, Void>`
+`ReservedAccountActivatedEvent.payload`:
 
-**RBAC**: `pay:accounts:close`
-
-**Processing steps:**
-1. Load `VirtualAccount` by `virtualAccountId`. If not found, throw `VirtualAccountNotFoundException`.
-2. Call `account.close()` — registers `VirtualAccountClosedEvent`.
-3. Save and publish events.
-
-**Response**: `void`
-
----
-
-#### `IssueCustomerVirtualAccountCommand`
-
-**Package**: `com.atlashub.pay.accounts.application.commands.IssueCustomerVirtualAccount`
-
-```java
-public record IssueCustomerVirtualAccountCommand(
-    Long organizationId,
-    String customerId,
-    String customerName,
-    String email,
-    String currency
-) {}
 ```
-
-**Handler**: `IssueCustomerVirtualAccountHandler extends Command<IssueCustomerVirtualAccountCommand, IssueCustomerVirtualAccountResponse>`
-
-**RBAC**: `pay:accounts:create`
-
-**Processing steps:**
-1. Verify no existing active customer virtual account for `(organizationId, customerId)`. If one exists, return its details (idempotent).
-2. Call `anchorPort.issueCustomerVirtualAccount(customerName, email, organizationId, customerId)`.
-3. Construct `VirtualAccount` with `ownerType = CUSTOMER`, `customerId` set, `status = PENDING_ISSUANCE`.
-4. Save via repository.
-5. Return `IssueCustomerVirtualAccountResponse` with the account ID and pending status.
-
-**Response**: `IssueCustomerVirtualAccountResponse`
-```java
-public record IssueCustomerVirtualAccountResponse(
-    Long virtualAccountId,
-    String status,
-    String anchorAccountId
-) {}
+reservedAccountId
+organizationId
+ownerType
+ownerReferenceId
+businessSubAccountId
+anchorReservedAccountId
+accountName
+maskedAccountNumber
+bankName
+currency
+activatedAt
 ```
 
 ---
+
+## 13. Queries and REST API
 
 ### Queries
 
-#### `GetVirtualAccountQuery`
+- `GetOrganizationBankingProfileQuery(organizationId)`
+- `GetBusinessDepositAccountQuery(organizationId)`
+- `GetBusinessSubAccountQuery(organizationId)`
+- `GetReservedAccountQuery(organizationId, reservedAccountId)`
+- `ListReservedAccountsQuery(organizationId, ownerType, ownerReferenceId, status, page, size)`
 
-**Package**: `com.atlashub.pay.accounts.application.queries.GetVirtualAccount`
+Reserved accounts are pageable; marketplace organizations can have many customers/vendors.
 
-```java
-public record GetVirtualAccountQuery(
-    Long organizationId,
-    Long virtualAccountId
-) {}
-```
+### Endpoints
 
-**Handler**: `GetVirtualAccountHandler extends Query<GetVirtualAccountQuery, VirtualAccountResult>`
-
-**Result**:
-```java
-public record VirtualAccountResult(
-    Long id,
-    Long organizationId,
-    String ownerType,
-    String customerId,
-    String accountName,
-    String bankName,
-    String nuban,
-    String bankCode,
-    String currency,
-    String status,
-    ZonedDateTime createdAt,
-    ZonedDateTime activatedAt
-) {}
-```
-
-**Returns**: `VirtualAccountResult` (single entity — not pageable).
-
----
-
-#### `ListVirtualAccountsQuery`
-
-**Package**: `com.atlashub.pay.accounts.application.queries.ListVirtualAccounts`
-
-```java
-public record ListVirtualAccountsQuery(
-    Long organizationId,
-    String ownerType   // nullable filter
-) {}
-```
-
-**Handler**: `ListVirtualAccountsHandler extends Query<ListVirtualAccountsQuery, List<VirtualAccountResult>>`
-
-**Returns**: `List<VirtualAccountResult>` — bounded per org (orgs do not have thousands of virtual accounts; `PageResult` not needed).
-
----
-
-## Infrastructure Layer
-
-### Persistence
-
-**JPA Entity**: `VirtualAccountJpa`
-**Package**: `com.atlashub.pay.accounts.infrastructure.persistence.entities`
-
-```java
-@Entity
-@Table(name = "virtual_accounts")
-@Version long version;  // optimistic locking
-public class VirtualAccountJpa {
-    @Id @GeneratedValue Long id;
-    Long organizationId;
-    @Enumerated(EnumType.STRING) OwnerType ownerType;
-    String customerId;
-    String accountName;
-    String bankName;
-    String nuban;
-    String bankCode;
-    String anchorAccountId;
-    String currency;
-    @Enumerated(EnumType.STRING) VirtualAccountStatus status;
-    ZonedDateTime createdAt;
-    ZonedDateTime activatedAt;
-    long version;
-}
-```
-
-**Spring Data Repository**: `SpringDataVirtualAccountRepository`
-**Package**: `com.atlashub.pay.accounts.infrastructure.persistence.repositories`
-
-```java
-public interface SpringDataVirtualAccountRepository extends JpaRepository<VirtualAccountJpa, Long> {
-    Optional<VirtualAccountJpa> findByAnchorAccountId(String anchorAccountId);
-    Optional<VirtualAccountJpa> findByOrganizationIdAndOwnerType(Long organizationId, OwnerType ownerType);
-    Optional<VirtualAccountJpa> findByOrganizationIdAndCustomerId(Long organizationId, String customerId);
-    List<VirtualAccountJpa> findAllByOrganizationId(Long organizationId);
-}
-```
-
-**Mapper**: `VirtualAccountMapper`
-**Package**: `com.atlashub.pay.accounts.infrastructure.persistence.mappers`
-
-**Adapter**: `VirtualAccountRepositoryAdapter implements VirtualAccountRepository`
-**Package**: `com.atlashub.pay.accounts.infrastructure.persistence.adapters`
-
----
-
-### Kafka Listeners
-
-#### `OrganizationComplianceApprovedListener`
-
-**Package**: `com.atlashub.pay.accounts.infrastructure.messaging.listeners`
-
-```java
-@Component
-public class OrganizationComplianceApprovedListener extends BaseKafkaEventListener {
-    private static final String GROUP_ID = "pay-accounts-compliance-group";
-
-    @PostConstruct
-    public void init() { registerSubscription("OrganizationComplianceApprovedEvent", GROUP_ID); }
-
-    @KafkaListener(topics = "compliance-events", groupId = GROUP_ID)
-    public void listen(String messagePayload) {
-        processEventIfMatches(messagePayload, "OrganizationComplianceApprovedEvent",
-            OrganizationComplianceApprovedPayload.class, log, GROUP_ID,
-            e -> e instanceof TimeoutException,
-            event -> {
-                issueVirtualAccountHandler.execute(new IssueVirtualAccountCommand(
-                    event.payload().organizationId(),
-                    event.payload().organizationName(),
-                    "NGN"
-                ));
-            });
-    }
-}
-```
-
-**Topic**: `compliance-events`
-**Group ID**: `pay-accounts-compliance-group`
-**Event**: `OrganizationComplianceApprovedEvent`
-**Command Called**: `IssueVirtualAccountCommand` → `IssueVirtualAccountHandler`
-**Flow**: Compliance approval → auto-issue org virtual account → Anchor issues NUBAN asynchronously.
-
----
-
-#### `OrganizationBannedListener`
-
-| Attribute | Value |
-|---|---|
-| **Topic** | `admin-events` |
-| **Group ID** | `pay-accounts-org-banned` |
-| **Event** | `OrganizationBannedEvent` |
-| **Payload fields** | `organizationId`, `reason`, `bannedAt` |
-| **Command called** | `SuspendVirtualAccountHandler` |
-| **Flow** | Finds all `ACTIVE` virtual accounts for the org. Calls `SuspendVirtualAccountHandler` on each → calls Anchor API to suspend the NUBAN → updates `VirtualAccount.status = SUSPENDED`. Any inbound transfers to the suspended NUBAN are rejected at the Anchor level. |
-
----
-
-#### `OrganizationUnbannedListener`
-
-| Attribute | Value |
-|---|---|
-| **Topic** | `admin-events` |
-| **Group ID** | `pay-accounts-org-unbanned` |
-| **Event** | `OrganizationUnbannedEvent` |
-| **Payload fields** | `organizationId`, `unbannedAt` |
-| **Command called** | `ActivateVirtualAccountHandler` |
-| **Flow** | Finds all `SUSPENDED` virtual accounts for the org that were suspended due to a ban (not a manual suspension). Re-activates each via Anchor API → updates `VirtualAccount.status = ACTIVE`. |
-
----
-
-### External Service Adapters
-
-#### `AnchorVirtualAccountAdapter implements AnchorPort`
-
-**Package**: `com.atlashub.pay.accounts.infrastructure.services`
-
-Wraps the Anchor REST API. Uses an HTTP client with OAuth2 bearer tokens to call Anchor endpoints. Translates Anchor API responses into domain primitives.
-
-**Methods:**
-
-| Method | Anchor Endpoint | Description |
-|---|---|---|
-| `issueVirtualAccount(...)` | `POST /v1/accounts` | Creates a pool sub-account for an org |
-| `issueCustomerVirtualAccount(...)` | `POST /v1/customers/{customerId}/accounts` | Issues a dedicated customer NUBAN |
-
----
-
-#### `AnchorWebhookAdapter`
-
-**Package**: `com.atlashub.pay.accounts.infrastructure.services`
-
-Receives and validates inbound webhooks from Anchor (HMAC-SHA256 signature on `X-Anchor-Signature` header).
-
-Handles two webhook types:
-1. **Account activated** → calls `ActivateVirtualAccountHandler`
-2. **Collection (bank transfer received)** → calls `CreditWalletFromTransferHandler` in `pay:ledger`
-
----
-
-## Presentation Layer
-
-### Controller: `VirtualAccountController`
-
-**Package**: `com.atlashub.pay.accounts.presentation.rest`
-
-```java
-@RestController
-@RequestMapping("/api/v1/pay/accounts")
-@Tag(name = "Virtual Accounts")
-public class VirtualAccountController { ... }
-```
-
-| Method | Path | Auth | RBAC | Request DTO | Response DTO |
-|---|---|---|---|---|---|
-| `POST` | `/api/v1/pay/accounts/customer` | Bearer JWT | `pay:accounts:create` | `IssueCustomerVirtualAccountRequest` | `VirtualAccountResponse` |
-| `GET` | `/api/v1/pay/accounts` | Bearer JWT | `pay:accounts:read` | Query params: `ownerType` | `List<VirtualAccountResponse>` |
-| `GET` | `/api/v1/pay/accounts/{id}` | Bearer JWT | `pay:accounts:read` | — | `VirtualAccountResponse` |
-| `POST` | `/api/v1/pay/accounts/{id}/suspend` | Bearer JWT | `pay:accounts:suspend` | — | `ApiResponse<Void>` |
-| `POST` | `/api/v1/pay/accounts/{id}/close` | Bearer JWT | `pay:accounts:close` | — | `ApiResponse<Void>` |
-| `POST` | `/api/v1/webhooks/anchor` | HMAC signature | Public (HMAC-validated) | Raw body | `ApiResponse<Void>` |
-
-### DTOs
-
-**Package**: `com.atlashub.pay.accounts.presentation.dto`
-
-**`IssueCustomerVirtualAccountRequest`**
-```java
-public record IssueCustomerVirtualAccountRequest(
-    @NotBlank String customerId,
-    @NotBlank String customerName,
-    @Email @NotBlank String email,
-    @NotBlank String currency
-) {}
-```
-
-**`VirtualAccountResponse`**
-```java
-public record VirtualAccountResponse(
-    Long id,
-    Long organizationId,
-    String ownerType,
-    String customerId,
-    String accountName,
-    String bankName,
-    String nuban,
-    String bankCode,
-    String currency,
-    String status,
-    ZonedDateTime createdAt,
-    ZonedDateTime activatedAt
-) {}
-```
-
----
-
-## RBAC Table
-
-| Permission | Granted To | Operation |
-|---|---|---|
-| `pay:accounts:create` | `OWNER`, `ADMIN`, `DEVELOPER` | Issue customer virtual accounts |
-| `pay:accounts:read` | `OWNER`, `ADMIN`, `FINANCE`, `DEVELOPER` | List and view virtual accounts |
-| `pay:accounts:suspend` | `OWNER`, `ADMIN` | Suspend an active account |
-| `pay:accounts:close` | `OWNER` | Permanently close an account |
-
----
-
-## Maker-Checker
-
-Not applicable for this submodule. Account issuance is system-initiated (driven by compliance approval). Suspend and Close operations do not require dual authorization.
-
----
-
-## Socket Events
-
-`ChargeSuccessful` and `ChargeFailed` events from `pay:charges` are pushed to cashier sessions via the **`SelectiveWebSocketBroadcaster`**. This submodule does not publish events that trigger WebSocket push. The `WalletFundedEvent` is informational — it updates a balance display on next query, no real-time push.
-
----
-
-## Domain Events Table
-
-| Event | Kafka Topic | Published When | Consumed By |
+| Method | Path | Permission | Purpose |
 |---|---|---|---|
-| `VirtualAccountActivatedEvent` | `pay-events` | Anchor confirms NUBAN assignment | `notifications`, `pay:ledger` |
-| `VirtualAccountSuspendedEvent` | `pay-events` | Account suspended by admin | `notifications` |
-| `VirtualAccountClosedEvent` | `pay-events` | Account permanently closed | `notifications` |
-| `WalletFundedEvent` | `pay-events` | Anchor collection webhook processed | `accounting`, `notifications`, `pay:tx-query` |
+| `GET` | `/api/v1/pay/accounts/business` | `pay:accounts:read` | Banking profile and masked business accounts |
+| `POST` | `/api/v1/pay/accounts/reserved` | `pay:accounts:create` | Issue customer/vendor reserved account |
+| `GET` | `/api/v1/pay/accounts/reserved` | `pay:accounts:read` | Page through reserved accounts |
+| `GET` | `/api/v1/pay/accounts/reserved/{id}` | `pay:accounts:read` | View one reserved account |
+| `POST` | `/api/v1/pay/accounts/reserved/{id}/suspend` | `pay:accounts:suspend` | Block account use |
+| `POST` | `/api/v1/pay/accounts/reserved/{id}/reactivate` | `pay:accounts:reactivate` | Restore suspended account |
+| `POST` | `/api/v1/pay/accounts/reserved/{id}/close` | `pay:accounts:close` | Permanently close after provider capability check |
+
+Organization and requester IDs come from authenticated context, not trusted request bodies. Full account numbers are returned only to authorized operations and are otherwise masked.
 
 ---
 
-## Distributed Architecture
+## 14. RBAC
 
-### Locking
-- **Optimistic locking** (`@Version`) on `VirtualAccountJpa` — sufficient because concurrent modifications to a single account are rare.
-- No pessimistic locking needed (balance operations are in `pay:ledger`).
+| Permission | Operation |
+|---|---|
+| `pay:accounts:create` | Issue customer/vendor reserved accounts |
+| `pay:accounts:read` | View organization banking profile and reserved accounts |
+| `pay:accounts:suspend` | Suspend a reserved account |
+| `pay:accounts:reactivate` | Reactivate a suspended reserved account |
+| `pay:accounts:close` | Permanently close a reserved account |
 
-### Idempotency
-- `AnchorWebhookAdapter` uses `EventDeliveryTracker` keyed on `(anchorWebhookId, "pay-accounts")` to deduplicate Anchor webhook redeliveries.
-- `IssueVirtualAccountHandler` is idempotent: if a `PENDING_ISSUANCE` or `ACTIVE` account already exists for the org, it returns without re-calling Anchor.
-
-### Outbox
-- `VirtualAccountActivatedEvent` and `WalletFundedEvent` are written to the outbox table in the same DB transaction as the state change — never published mid-flight.
+Organization business deposit/subaccount creation is system-only. Organization-wide banking suspension/reactivation is a compliance/admin operation, not an organization self-service permission.
 
 ---
 
-## Complete File List
+## 15. Persistence Constraints
 
-```
-com.atlashub.pay.accounts/
-├── application/
-│   ├── commands/
-│   │   ├── ActivateVirtualAccount/
-│   │   │   ├── ActivateVirtualAccountCommand.java
-│   │   │   └── ActivateVirtualAccountHandler.java
-│   │   ├── CloseVirtualAccount/
-│   │   │   ├── CloseVirtualAccountCommand.java
-│   │   │   └── CloseVirtualAccountHandler.java
-│   │   ├── IssueCustomerVirtualAccount/
-│   │   │   ├── IssueCustomerVirtualAccountCommand.java
-│   │   │   ├── IssueCustomerVirtualAccountHandler.java
-│   │   │   └── IssueCustomerVirtualAccountResponse.java
-│   │   ├── IssueVirtualAccount/
-│   │   │   ├── IssueVirtualAccountCommand.java
-│   │   │   └── IssueVirtualAccountHandler.java
-│   │   └── SuspendVirtualAccount/
-│   │       ├── SuspendVirtualAccountCommand.java
-│   │       └── SuspendVirtualAccountHandler.java
-│   └── queries/
-│       ├── GetVirtualAccount/
-│       │   ├── GetVirtualAccountQuery.java
-│       │   ├── GetVirtualAccountHandler.java
-│       │   └── VirtualAccountResult.java
-│       └── ListVirtualAccounts/
-│           ├── ListVirtualAccountsQuery.java
-│           ├── ListVirtualAccountsHandler.java
-│           └── VirtualAccountResult.java  (shared or same record)
-├── domain/
-│   ├── entities/
-│   │   └── VirtualAccount.java
-│   ├── events/
-│   │   ├── VirtualAccountActivatedEvent.java
-│   │   ├── VirtualAccountClosedEvent.java
-│   │   ├── VirtualAccountSuspendedEvent.java
-│   │   └── WalletFundedEvent.java
-│   ├── exceptions/
-│   │   ├── VirtualAccountAlreadyActiveException.java
-│   │   ├── VirtualAccountAlreadyClosedException.java
-│   │   ├── VirtualAccountAlreadyExistsException.java
-│   │   ├── VirtualAccountInactiveException.java
-│   │   └── VirtualAccountNotFoundException.java
-│   ├── ports/
-│   │   └── AnchorPort.java
-│   ├── repositories/
-│   │   └── VirtualAccountRepository.java
-│   └── valueobject/
-│       ├── OwnerType.java
-│       └── VirtualAccountStatus.java
-├── infrastructure/
-│   ├── messaging/
-│   │   ├── events/
-│   │   │   └── OrganizationComplianceApprovedPayload.java
-│   │   └── listeners/
-│   │       └── OrganizationComplianceApprovedListener.java
-│   ├── persistence/
-│   │   ├── adapters/
-│   │   │   └── VirtualAccountRepositoryAdapter.java
-│   │   ├── entities/
-│   │   │   └── VirtualAccountJpa.java
-│   │   ├── mappers/
-│   │   │   └── VirtualAccountMapper.java
-│   │   └── repositories/
-│   │       └── SpringDataVirtualAccountRepository.java
-│   └── services/
-│       ├── AnchorVirtualAccountAdapter.java
-│       └── AnchorWebhookAdapter.java
-└── presentation/
-    ├── dto/
-    │   ├── IssueCustomerVirtualAccountRequest.java
-    │   └── VirtualAccountResponse.java
-    └── rest/
-        └── VirtualAccountController.java
-```
+- Unique active banking profile per organization.
+- Unique Anchor resource ID per resource table.
+- Unique non-closed deposit account per `(organizationId, currency)`.
+- Unique non-closed subaccount per `(organizationId, currency)`.
+- Unique non-closed reserved account per `(organizationId, ownerType, ownerReferenceId, provider)`.
+- Unique `requestReference`/idempotency key.
+- Optimistic locking on all account aggregates.
+- Store encrypted full account numbers only where operationally required; store masked variants for ordinary reads.
+
+Remote calls are outside database transactions. Local request intent is committed before dispatch. Provider responses/webhooks are applied in new transactions.
+
+---
+
+## 16. Legacy Migration
+
+1. Add the new profile, deposit-account, subaccount, programme-account, and reserved-account tables.
+2. Keep legacy `VirtualAccount` reads behind a compatibility facade.
+3. Query Anchor for every legacy `anchorAccountId` to determine its actual resource type.
+4. Migrate ownership and external IDs only after reconciliation; do not infer type from legacy `ownerType`.
+5. Change ledger bootstrap from `VirtualAccountActivatedEvent` to `OrganizationBankingActivatedEvent`.
+6. Change customer issuance endpoints to create `ReservedAccount` resources.
+7. Stop legacy writes, monitor reconciliation, then remove the old aggregate and routes.
+
+No legacy virtual account is automatically classified as a deposit account, subaccount, or reserved account without provider confirmation.

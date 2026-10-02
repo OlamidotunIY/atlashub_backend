@@ -201,13 +201,19 @@ ApiKey (extended)
 ### `atlashub-pay`
 | Code | Description |
 |---|---|
-| `pay:accounts:read` | View virtual account details |
+| `pay:accounts:create` | Issue customer/vendor reserved accounts |
+| `pay:accounts:read` | View the organization's banking profile and reserved accounts |
+| `pay:accounts:suspend` | Suspend a reserved account |
+| `pay:accounts:reactivate` | Reactivate a suspended reserved account |
+| `pay:accounts:close` | Permanently close a reserved account |
 | `pay:charges:create` | Initiate payment collection |
 | `pay:transfers:create` | Initiate a bank transfer |
 | `pay:transfers:approve` | Approve a bank transfer (maker-checker) |
 | `pay:ledger:read` | View ledger transactions |
 | `pay:splits:manage` | Create and manage split rules |
 | `pay:settlements:read` | View settlement history |
+
+Organization deposit-account and FBO-subaccount provisioning is system-only and has no organization IAM permission. Ledger freeze/unfreeze/close operations use platform-staff payment-operations authorization and are not represented as organization role permissions.
 
 ### `atlashub-commerce`
 | Code | Description |
@@ -263,6 +269,13 @@ ApiKey (extended)
 | `iam:roles:manage` | Create/edit custom roles |
 | `iam:apikeys:manage` | Issue/revoke API keys |
 
+### `atlashub-compliance`
+| Code | Description |
+|---|---|
+| `compliance:read` | View compliance status and outstanding requirements |
+| `compliance:manage` | Update business details, contacts, officers, agreements, and requested documents |
+| `compliance:submit` | Submit the organization's completed KYB application |
+
 ---
 
 ## 4. Domain Events
@@ -315,7 +328,7 @@ public interface ApiKeyQueryPort {
 
 ### Memberships & Invitations
 - `InitializeOrganizationIamCommand(orgId, foundingUserId)` → `InitializeOrganizationIamUseCase`
-  - Triggered internally by `OrganizationCreatedListener`
+  - Triggered internally by `OrganizationRegisteredListener`
   - Bootstraps the built-in `OWNER` role for the organization
   - Creates the initial `OrganizationMember` entity linking the founding user as the owner
 - `InviteMemberCommand(orgId, invitedByUserId, email, customRoleId)` → `InviteMemberUseCase`
@@ -352,7 +365,7 @@ public interface ApiKeyQueryPort {
 
 ## 9. Listeners
 
-- **`OrganizationCreatedListener`**: topic=`accounts-events`. Creates the built-in OWNER role for the org. Creates an `OrganizationMember` record linking the founding user to the org with the OWNER role.
+- **`OrganizationRegisteredListener`**: topic=`accounts-events`, event=`OrganizationRegistered`. Creates the built-in OWNER role for the org and an `OrganizationMember` linking the founding user to the org with the OWNER role.
 - **`MemberDeactivatedListener`** (internal): After deactivation, publishes `MemberDeactivatedEvent` → `auth` revokes all refresh tokens for this user in this org context.
 - **`SubscriptionSuspendedListener`**: topic=`billing-events`. Suspends all non-OWNER members for the organization (access cutoff without deleting data).
 - **`EmployeeSuspendedListener`**: topic=`hr-events`. Event=`EmployeeSuspendedEvent`. Payload: `employeeId`, `organizationId`, `userId`, `suspendedAt`. Calls `DeactivateMemberHandler` for the suspended employee's corresponding `OrganizationMember` record. Prevents suspended employees from accessing the dashboard or API while HR suspension is active.
@@ -388,4 +401,4 @@ When a `CustomRole`'s permissions are changed, all active members using that rol
 
 ### Outbox & Inbox
 - **Outbox**: `InvitationCreatedEvent` (triggers email), `MemberJoinedEvent` (triggers HR draft), `ApiKeyRevokedEvent` (triggers cache invalidation in auth)
-- **Inbox**: `OrganizationCreatedEvent` (bootstrap owner role — idempotent) and `SubscriptionSuspendedEvent` (suspend members — idempotent)
+- **Inbox**: `OrganizationRegistered` (bootstrap owner role — idempotent) and `SubscriptionSuspendedEvent` (suspend members — idempotent)

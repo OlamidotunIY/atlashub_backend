@@ -24,6 +24,10 @@ A `User` represents a human being on the AtlasHub platform. A user can belong to
 ### Organization Registration
 An `Organization` represents a business entity on AtlasHub. On creation, the founding `User` becomes the first member via the `iam` module. An organization carries its `country` and `baseCurrency`, which determine the currency used in billing, pay, and accounting.
 
+`accounts` records the organization's legal registration classification and product-facing industry. It does **not** decide whether the organization is eligible for banking or verified by Anchor; those decisions belong to `compliance`.
+
+For the initial Nigerian banking programme, AtlasHub accepts only `BUSINESS_NAME` and `PRIVATE_INCORPORATED`. Unsupported registration types are rejected during registration so an organization is not allowed to complete an onboarding journey that can never receive an Anchor banking product.
+
 ### Atomic Registration
 `RegisterOrganizationHandler` creates both `User` and `Organization` in a single database transaction. It publishes `UserCreated` and `OrganizationRegistered` domain events, which downstream modules (`auth`, `iam`, `billing`, `compliance`) react to asynchronously.
 
@@ -78,9 +82,11 @@ Represents a registered business entity. Has no separate `status` field — the 
 Organization
 ├── id: Long
 ├── businessName: String
-├── businessType: BusinessType   ← SOLE_PROPRIETOR, LIMITED_LIABILITY, PARTNERSHIP, NGO, ENTERPRISE
+├── legalRegistrationType: LegalRegistrationType
+├── registrationDate: LocalDate
+├── businessRegistrationNumber: String
 ├── businessSize: BusinessSize   ← MICRO (1-9), SMALL (10-49), MEDIUM (50-249), LARGE (250+)
-├── industry: String
+├── industry: SupportedIndustry
 ├── description: String          ← nullable
 ├── logoUrl: String              ← nullable
 ├── websiteUrl: String           ← nullable
@@ -91,12 +97,16 @@ Organization
 ```
 
 **Business Methods:**
-- `create(id, businessName, businessType, businessSize, description, currency, logoUrl, country, industry, websiteUrl, ownerUserId)` — static factory; raises `OrganizationRegistered` event
+- `create(id, businessName, legalRegistrationType, registrationDate, businessRegistrationNumber, businessSize, description, currency, logoUrl, country, industry, websiteUrl, ownerUserId)` — static factory; raises `OrganizationRegistered` event
 - `updateOrganization(businessName, description, logoUrl, industry, websiteUrl)` → registers `OrganizationUpdated` event
 
 **Domain Rules:**
 - `country` and `baseCurrency` are immutable — changing them would invalidate all historical financial records
 - `businessName` must be non-empty
+- `legalRegistrationType` must be enabled by the AtlasHub onboarding policy
+- Initial supported types are `BUSINESS_NAME` and `PRIVATE_INCORPORATED`
+- `industry` must be selected from AtlasHub's supported-industry allowlist; arbitrary strings are not accepted
+- Legal registration fields become immutable after effective compliance approval. Corrections after approval require a compliance amendment workflow.
 
 ---
 
@@ -180,8 +190,40 @@ public record Country(String code) {
 }
 ```
 
-### `BusinessType` (Enum)
-`SOLE_PROPRIETOR`, `LIMITED_LIABILITY`, `PARTNERSHIP`, `NGO`, `ENTERPRISE`
+### `LegalRegistrationType` (Enum)
+
+Legal form is separate from industry. Values map explicitly to Anchor registration codes:
+
+| AtlasHub value | Anchor code | Initial support |
+|---|---|---|
+| `BUSINESS_NAME` | `Business_Name` | Enabled |
+| `PRIVATE_INCORPORATED` | `Private_Incorporated` | Enabled |
+| `INCORPORATED_TRUSTEES` | `Incorporated_Trustees` | Disabled |
+| `FREE_ZONE` | `Free_Zone` | Disabled |
+| `GOVERNMENT` | `Gov` | Disabled |
+| `PRIVATE_INCORPORATED_GOVERNMENT` | `Private_Incorporated_Gov` | Disabled |
+| `COOPERATIVE_SOCIETY` | `Cooperative_Society` | Disabled |
+| `PUBLIC_INCORPORATED` | `Public_Incorporated` | Disabled |
+
+Disabled types are retained as known provider values, but registration rejects them until an explicit compliance policy enables them.
+
+### `SupportedIndustry` (Enum)
+
+The initial allowlist is deliberately limited to AtlasHub's commerce, hospitality, and logistics use cases:
+
+- `COMMERCE_PHYSICAL_GOODS`
+- `COMMERCE_DIGITAL_SERVICES`
+- `COMMERCE_PHYSICAL_SERVICES`
+- `COMMERCE_PROFESSIONAL_SERVICES`
+- `HOSPITALITY_HOTELS`
+- `HOSPITALITY_RESTAURANTS`
+- `LOGISTICS_COURIER_SERVICES`
+- `LOGISTICS_FREIGHT_SERVICES`
+- `RETAIL`
+- `WHOLESALE`
+- `RESTAURANTS`
+
+Each value has an explicit Anchor code. Financial services, gaming, government, political organizations, public companies, and other enhanced-risk categories are not accepted in the initial programme.
 
 ### `BusinessSize` (Enum)
 `MICRO` (1–9 employees), `SMALL` (10–49), `MEDIUM` (50–249), `LARGE` (250+)
@@ -220,8 +262,12 @@ OrganizationRegistered
 ├── aggregateId    : Long    ← the organizationId
 └── payload
     ├── businessName   : String
-    ├── businessType   : BusinessType
+├── legalRegistrationType : LegalRegistrationType
+├── registrationDate : LocalDate
+├── businessRegistrationNumber : String
     ├── businessSize   : BusinessSize
+├── industry       : SupportedIndustry
+├── country        : String
     ├── currency       : CurrencyCode
     └── ownerUserId    : Long
 
@@ -272,10 +318,11 @@ public interface OrganizationQueryPort {
 ## 8. Commands
 
 ### Registration
-- `RegisterOrganizationCommand(firstName, lastName, email, phone, country, businessName, businessType, businessSize, industry)` → `RegisterOrganizationHandler`
+- `RegisterOrganizationCommand(firstName, lastName, email, phone, country, businessName, legalRegistrationType, registrationDate, businessRegistrationNumber, businessSize, industry)` → `RegisterOrganizationHandler`
   - Creates `User`, `Organization` in one transaction
-  - Publishes `UserCreatedEvent` + `OrganizationCreatedEvent`
+  - Publishes `UserCreated` + `OrganizationRegistered`
   - Idempotency: pre-checks email uniqueness before creation
+  - Rejects registration types and industries disabled by the current AtlasHub onboarding policy
 
 ### Profile Updates
 - `UpdateUserProfileCommand(userId, firstName, lastName, phone, timezone)` → `UpdateUserProfileHandler`
