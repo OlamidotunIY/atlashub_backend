@@ -41,6 +41,4 @@ public class LedgerEntryJpa implements BaseJpaEntity {
     @Column(nullable = false)
     private BigDecimal amount;
 
-    @Column(name = "running_balance", nullable = false)
-    private BigDecimal runningBalance;
 }

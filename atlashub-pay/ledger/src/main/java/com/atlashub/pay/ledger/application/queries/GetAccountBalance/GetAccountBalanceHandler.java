@@ -10,6 +10,7 @@ import com.atlashub.pay.ledger.domain.repositories.LedgerAccountRepository;
 import com.atlashub.pay.ledger.domain.repositories.LedgerTransactionRepository;
 import com.atlashub.pay.ledger.domain.services.BalanceCalculator;
 import com.atlashub.pay.ledger.domain.valueobject.EntryType;
+import com.atlashub.pay.ledger.domain.valueobject.LedgerAccountType;
 import com.atlashub.shared.application.usecase.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,14 +45,12 @@ public class GetAccountBalanceHandler extends Query<GetAccountBalanceQuery, Acco
     @Override
     @PreAuthorize("hasAuthority('pay:wallets:read')")
     public AccountBalanceResult execute(GetAccountBalanceQuery query) {
-        log.info("Executing GetAccountBalanceQuery for accountId={}", query.accountId());
+        log.info("Executing GetAccountBalanceQuery for accountType={}", query.accountType());
 
-        LedgerAccount account = accountRepository.findById(query.accountId())
-                .orElseThrow(() -> new LedgerAccountNotFoundException("LedgerAccount not found: " + query.accountId()));
-
-        if (!account.getOrganizationId().equals(query.organizationId())) {
-            throw new IllegalArgumentException("Account does not belong to the given organization");
-        }
+        LedgerAccount account = accountRepository.findByOrganizationIdAndAccountType(
+                        query.organizationId(), LedgerAccountType.valueOf(query.accountType().toUpperCase()))
+                .orElseThrow(() -> new LedgerAccountNotFoundException(
+                        "Ledger account not found for type: " + query.accountType()));
 
         BalanceSnapshot snapshot = snapshotRepository.findLatestByAccountId(account.getId())
                 .orElseThrow(() -> new IllegalStateException("Account missing initial balance snapshot"));
@@ -61,7 +60,8 @@ public class GetAccountBalanceHandler extends Query<GetAccountBalanceQuery, Acco
 
         List<LedgerTransaction> transactions = transactionRepository.findByAccountIdAndPostedAtAfter(account.getId(), snapshotDate);
 
-        balance = balanceCalculator.calculateRunningBalance(account.getId(), balance, transactions);
+        balance = balanceCalculator.calculateRunningBalance(
+                account.getId(), account.getNormalBalance(), balance, transactions);
 
         return new AccountBalanceResult(
                 account.getId(),

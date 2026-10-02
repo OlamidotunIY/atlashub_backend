@@ -5,6 +5,7 @@ import com.atlashub.pay.ledger.domain.entities.LedgerAccount;
 import com.atlashub.pay.ledger.domain.repositories.BalanceSnapshotRepository;
 import com.atlashub.pay.ledger.domain.repositories.LedgerAccountRepository;
 import com.atlashub.pay.ledger.domain.valueobject.LedgerAccountType;
+import com.atlashub.pay.ledger.domain.valueobject.NormalBalance;
 import com.atlashub.shared.application.usecase.Command;
 import com.atlashub.shared.domain.exception.BusinessRuleException;
 import com.atlashub.shared.domain.valueobject.CurrencyCode;
@@ -42,6 +43,14 @@ public class CreateLedgerAccountHandler extends Command<CreateLedgerAccountComma
             if (ledgerAccountRepository.findByOrganizationIdAndOutletId(command.organizationId(), command.outletId()).isPresent()) {
                 throw new BusinessRuleException("A TILL account already exists for this outlet.");
             }
+        } else if (accountType == LedgerAccountType.CUSTOMER_FUNDS
+                || accountType == LedgerAccountType.VENDOR_PAYABLE) {
+            if (ledgerAccountRepository.findByOrganizationIdAndParty(
+                    command.organizationId(), command.partyType(), command.partyReferenceId(), accountType).isPresent()) {
+                return new CreateLedgerAccountResponse(ledgerAccountRepository.findByOrganizationIdAndParty(
+                        command.organizationId(), command.partyType(), command.partyReferenceId(), accountType)
+                        .orElseThrow().getId());
+            }
         } else {
             if (ledgerAccountRepository.findByOrganizationIdAndAccountType(command.organizationId(), accountType).isPresent()) {
                 throw new BusinessRuleException("A " + accountType + " account already exists for this organization.");
@@ -56,7 +65,10 @@ public class CreateLedgerAccountHandler extends Command<CreateLedgerAccountComma
                 command.organizationId(),
                 accountType,
                 command.outletId(),
-                currency
+                command.partyType(),
+                command.partyReferenceId(),
+                currency,
+                NormalBalance.valueOf(command.normalBalance().toUpperCase())
         );
 
         ledgerAccountRepository.save(account);

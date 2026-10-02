@@ -4,5 +4,8 @@ public record CreateLedgerAccountCommand(
     Long organizationId,
     String accountType,
     Long outletId,
-    String currency
+    String partyType,
+    String partyReferenceId,
+    String currency,
+    String normalBalance
 ) {}

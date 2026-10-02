@@ -59,6 +59,14 @@ public class LedgerAccountRepositoryAdapter
     }
 
     @Override
+    public Optional<LedgerAccount> findByOrganizationIdAndParty(
+            Long organizationId, String partyType, String partyReferenceId, LedgerAccountType type) {
+        return springDataRepo.findByOrganizationIdAndPartyTypeAndPartyReferenceIdAndAccountType(
+                        organizationId, partyType, partyReferenceId, type.name())
+                .map(mapper::toDomain);
+    }
+
+    @Override
     public List<LedgerAccount> findAllByIdInWithLock(List<Long> ids) {
         return springDataRepo.findAllByIdIn(ids).stream()
                 .map(mapper::toDomain)

@@ -29,7 +29,6 @@ public record LedgerTransactionPostedEvent(
     public record EntryPayload(
         Long accountId,
         String entryType,
-        BigDecimal amount,
-        BigDecimal runningBalance
+        BigDecimal amount
     ) {}
 }

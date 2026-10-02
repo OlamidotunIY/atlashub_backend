@@ -94,6 +94,14 @@ public class LedgerTransactionRepositoryAdapter implements LedgerTransactionRepo
     }
 
     @Override
+    public List<LedgerTransaction> findAll() {
+        return txRepo.findAll().stream().map(tx -> {
+            List<LedgerEntryJpa> entries = entryRepo.findByTransactionId(tx.getId());
+            return txMapper.toDomain(tx, entries.stream().map(entryMapper::toDomain).toList());
+        }).toList();
+    }
+
+    @Override
     public Optional<LedgerTransaction> findByReference(String reference) {
         return txRepo.findByReference(reference).map(tx -> {
             List<LedgerEntryJpa> entries = entryRepo.findByTransactionId(tx.getId());

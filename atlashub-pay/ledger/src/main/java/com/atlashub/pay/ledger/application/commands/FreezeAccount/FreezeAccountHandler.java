@@ -3,6 +3,7 @@ package com.atlashub.pay.ledger.application.commands.FreezeAccount;
 import com.atlashub.pay.ledger.domain.entities.LedgerAccount;
 import com.atlashub.pay.ledger.domain.exceptions.LedgerAccountNotFoundException;
 import com.atlashub.pay.ledger.domain.repositories.LedgerAccountRepository;
+import com.atlashub.pay.ledger.domain.valueobject.LedgerRestrictionType;
 import com.atlashub.shared.application.usecase.Command;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,7 +29,11 @@ public class FreezeAccountHandler extends Command<FreezeAccountCommand, Void> {
         LedgerAccount account = ledgerAccountRepository.findByIdWithLock(command.ledgerAccountId())
                 .orElseThrow(() -> new LedgerAccountNotFoundException(command.ledgerAccountId().toString()));
 
-        account.freeze();
+        if (!account.getOrganizationId().equals(command.organizationId())) {
+            throw new IllegalArgumentException("Account does not belong to the active organization");
+        }
+
+        account.freeze(LedgerRestrictionType.valueOf(command.restrictionType().toUpperCase()));
         ledgerAccountRepository.save(account);
 
         return null;

@@ -52,8 +52,7 @@ public class LedgerTransaction extends AggregateRoot<Long> {
                 .map(e -> new LedgerTransactionPostedEvent.EntryPayload(
                         e.getAccountId(),
                         e.getType().name(),
-                        e.getAmount().amount(),
-                        e.getRunningBalance().amount()
+                        e.getAmount().amount()
                 ))
                 .collect(Collectors.toList());
 

@@ -76,7 +76,8 @@ public class GetWalletBalancesHandler extends Query<GetWalletBalancesQuery, Wall
 
             List<LedgerTransaction> transactions = transactionRepository.findByAccountIdAndPostedAtAfter(account.getId(), snapshotDate);
 
-            balance = balanceCalculator.calculateRunningBalance(account.getId(), balance, transactions);
+            balance = balanceCalculator.calculateRunningBalance(
+                    account.getId(), account.getNormalBalance(), balance, transactions);
             
             String typeName = account.getAccountType().name();
             BigDecimal currentTotal = balancesByAccountType.getOrDefault(typeName, BigDecimal.ZERO);

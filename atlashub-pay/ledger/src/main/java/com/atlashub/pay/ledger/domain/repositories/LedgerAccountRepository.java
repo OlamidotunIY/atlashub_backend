@@ -12,5 +12,7 @@ public interface LedgerAccountRepository extends Repository<LedgerAccount> {
     List<LedgerAccount> findAllByOrganizationId(Long organizationId);
     Optional<LedgerAccount> findByOrganizationIdAndAccountType(Long organizationId, LedgerAccountType type);
     Optional<LedgerAccount> findByOrganizationIdAndOutletId(Long organizationId, Long outletId);
+    Optional<LedgerAccount> findByOrganizationIdAndParty(
+            Long organizationId, String partyType, String partyReferenceId, LedgerAccountType type);
     List<LedgerAccount> findAllByIdInWithLock(List<Long> ids);
 }
