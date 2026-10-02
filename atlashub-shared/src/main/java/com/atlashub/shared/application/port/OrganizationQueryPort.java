@@ -11,8 +11,7 @@ public interface OrganizationQueryPort {
     record OrganizationDto(
             Long id,
             String businessName,
-            String businessType,
-            String businessSize,
+            String registrationType,
             String industry,
             String description,
             String logoUrl,

@@ -2,6 +2,7 @@ package com.atlashub.main.config;
 
 import com.atlashub.main.security.CustomAuthenticationEntryPoint;
 import com.atlashub.main.security.JwtAuthenticationFilter;
+import com.atlashub.main.security.HmacSignatureVerificationFilter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,13 +25,17 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtFilter;
+    private final HmacSignatureVerificationFilter hmacFilter;
     private final CustomAuthenticationEntryPoint entryPoint;
 
     @Value("${app.cors.allowed-origins:http://localhost:3000}")
     private List<String> allowedOrigins;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtFilter, CustomAuthenticationEntryPoint entryPoint) {
+    public SecurityConfig(JwtAuthenticationFilter jwtFilter,
+                          HmacSignatureVerificationFilter hmacFilter,
+                          CustomAuthenticationEntryPoint entryPoint) {
         this.jwtFilter = jwtFilter;
+        this.hmacFilter = hmacFilter;
         this.entryPoint = entryPoint;
     }
 
@@ -50,6 +55,8 @@ public class SecurityConfig {
                                 "/api/v1/password/forgot",
                                 "/api/v1/password/reset",
                                 "/api/v1/register"
+                                ,"/.well-known/jwks.json",
+                                "/api/v1/webhooks/anchor/**"
                         ).permitAll()
                         // Swagger / OpenAPI
                         .requestMatchers(
@@ -60,7 +67,8 @@ public class SecurityConfig {
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
-                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(hmacFilter, JwtAuthenticationFilter.class);
 
         return http.build();
     }
