@@ -17,13 +17,14 @@ Before editing, enumerate every field, invariant, state transition, and document
 Rules:
 
 - Domain code has no Spring, JPA, JSON, web, provider, or infrastructure dependencies.
-- Aggregate roots extend `AggregateRoot<Long>` and expose `getId()`.
+- Annotate every entity with Lombok `@Getter` and import `lombok.Getter`; do not hand-write field getters. An aggregate root may keep only the required `getId()` override. Computed domain predicates such as `isExpired()` are behavior, not field getters, and remain explicit.
+- Aggregate roots extend `AggregateRoot<Long>` and expose `getId()` through the required override; all other field access comes from Lombok `@Getter`.
 - The application generates IDs. A `create` factory accepts the generated ID and never creates or nulls it.
 - Factories accept caller-known creation data only and set defaults/timestamps internally.
 - Mapper rehydration does not emit creation events or reset state.
 - State changes use intention-revealing methods that enforce invariants and update owned timestamps.
 - Fields unchanged after construction are `final`; boolean fields do not start with `is`.
-- No public setters or Lombok `@Data`.
+- No public setters, hand-written field getters, or Lombok `@Data`.
 - Event payloads are minimal and do not duplicate `aggregateId`.
 
 Use the scaffold only for a new file and complete it immediately. Read back the full slice, run the architecture validator, domain tests, and target module compile. Never commit or push unless explicitly requested.

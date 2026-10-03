@@ -24,12 +24,14 @@ If docs conflict with current code, do not overwrite the code blindly. Report th
 
 - AtlasHub is the source of truth. Provider models and names do not leak into public domain/API contracts unless the docs explicitly require them.
 - A module owns its domain entities and repositories. No module imports another module's domain, application, infrastructure, or presentation packages.
-- Cross-module reads may be synchronous only through an interface in `com.atlashub.shared.application.port`, implemented by the owning module under `infrastructure/persistence/adapters`.
+- Cross-module reads may be synchronous only through an interface whose file is in `atlashub-shared/src/main/java/com/atlashub/shared/application/port` and whose package is `com.atlashub.shared.application.port`. Never place that contract in an owning or consuming module's domain/application packages. Its implementation belongs to the owning module under `infrastructure/persistence/adapters`.
 - Cross-module writes are asynchronous domain/integration events. Never call another module's repository, command handler, controller, or implementation directly.
 - Kafka listeners and schedulers are infrastructure triggers under `infrastructure/messaging/listeners` and `infrastructure/messaging/schedulers`. They may construct a command and call exactly the appropriate command handler. They never use repositories, domain services, external clients, or business rules directly.
 - Controllers are per resource/entity, live in `presentation/rest`, and delegate to handlers. Request and response records live in `presentation/dto`; requests are never declared inside controllers.
 - Authenticated operations obtain the user ID and active organization ID from `AuthenticatedPrincipal`. Do not accept those context IDs from request bodies. Target IDs that are the subject of an operation are allowed when the docs require them.
 - Domain entities contain invariants and state transitions. They never throw shared base exceptions directly. Create a semantic exception in that module's `domain/exception` or existing `domain/exceptions` package and extend a shared base exception there.
+- Domain entities use Lombok `@Getter` for field access and do not contain hand-written field getters; aggregate roots retain only the required explicit `getId()` override. Computed predicates/domain behavior remain explicit methods.
+- Module repository contracts extend the shared `Repository<T>` and never redeclare inherited methods, including `nextIdentity`, `save`, `findById`, `deleteById`, `existsById`, and `findAll`.
 - Domain entities publish only documented or explicitly approved events. Events are created before registering them.
 - JPA is an infrastructure detail: no JPA/Spring imports in domain code, no ORM relationship annotations, no generated IDs, and MySQL uses `json`, never `jsonb`.
 - Preserve the target module's established singular/plural package names and `Jpa`/`JPA` naming. Do not introduce a second convention.

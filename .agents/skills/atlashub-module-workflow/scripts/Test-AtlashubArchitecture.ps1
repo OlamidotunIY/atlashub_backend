@@ -48,6 +48,31 @@ foreach ($file in $files) {
         if ($text -match 'throw\s+new\s+(BusinessRuleException|ConflictException|NotFoundException|ValidationException|AuthorizationException|DomainException)\s*\(') {
             Add-RuleError $file 'Entities must throw a module-specific domain exception, not a shared base exception.'
         }
+        if ($text -notmatch 'import\s+lombok\.Getter\s*;' -or $text -notmatch '(?m)^@Getter\s*$') {
+            Add-RuleError $file 'Domain entities must use Lombok @Getter for field access.'
+        }
+        $explicitAccessors = [regex]::Matches($text, '(?ms)public\s+[\w<>?,.\[\]\s]+\s+(?<name>(?:get|is)[A-Z]\w*)\s*\(\s*\)\s*\{(?<body>.*?)\}')
+        foreach ($accessor in $explicitAccessors) {
+            $accessorName = $accessor.Groups['name'].Value
+            $body = $accessor.Groups['body'].Value.Trim()
+            $isSimpleFieldGetter = $body -match '^return\s+(?:this\.)?\w+\s*;$' -or $body -match '^return\s+new\s+(?:ArrayList|HashSet|LinkedHashSet|HashMap|LinkedHashMap)\s*<>?\s*\(\s*(?:this\.)?\w+\s*\)\s*;$'
+            if ($accessorName -ne 'getId' -and $isSimpleFieldGetter) {
+                Add-RuleError $file "Hand-written field getter '$accessorName' is forbidden; use Lombok @Getter."
+            }
+        }
+    }
+
+    if ($normalized -match '\\domain\\(?:port|ports)\\' -and $text -match '\binterface\s+\w+QueryPort\b') {
+        Add-RuleError $file 'Cross-module query ports must live in atlashub-shared/com.atlashub.shared.application.port, never a module domain.'
+    }
+
+    if ($normalized -match '\\domain\\(?:repository|repositories)\\' -and $text -match '\bextends\s+Repository\s*<') {
+        $baseRepositoryMethods = @('nextIdentity', 'save', 'findById', 'deleteById', 'existsById', 'findAll')
+        foreach ($methodName in $baseRepositoryMethods) {
+            if ($text -match "(?m)^\s*(?:[\w<>?,.\[\]]+\s+)+$methodName\s*\(") {
+                Add-RuleError $file "Repository redeclares inherited base method '$methodName'."
+            }
+        }
     }
 
     if ($normalized -match '\\infrastructure\\messaging\\listeners\\') {
