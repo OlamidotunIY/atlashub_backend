@@ -300,6 +300,22 @@ When `customer.identification.awaitingDocument` arrives:
 
 Document approval/rejection events update the matching requirement. A rejected document returns the journey to `ACTION_REQUIRED`; it does not discard the other approved documents.
 
+### Capability-specific provider onboarding
+
+The five-step application remains the single AtlasHub compliance journey. Enabling card, USSD, or a terminal after base approval creates/updates a separate `ProviderOnboardingCase` for `(organizationId, environment, provider)`; it never resets or replaces the five steps.
+
+- Card/USSD requests are expressed in AtlasHub capability terms and route internally to Paystack initially.
+- POS onboarding uses the business-selected terminal provider: Paystack, Moniepoint, or OPay.
+- Each case records requested capabilities, provider application ID, additional information requirements, safe external merchant/account references, and status.
+- LIVE provider onboarding requires approved AtlasHub compliance.
+- TEST uses the provider sandbox contract and remains completely separate from LIVE.
+- Additional provider requirements are collected only when required for the selected capability/provider. The UI may render these after the five base steps as a capability-enablement task, not as a sixth global compliance step.
+- Provider adapters/listeners call commands; they never mutate repositories directly.
+
+When a provider approves the requested capabilities, compliance publishes `ProviderOnboardingApprovedEvent`. `pay:accounts` remains the source of truth for which capabilities are active and applies that fact to the matching provider profile.
+
+Every non-approval transition publishes `ProviderOnboardingStatusChangedEvent`. `pay:accounts` maps submitted/review states to provisioning, information requests to `INFORMATION_REQUIRED`, and rejection, suspension, or provider errors to their matching profile state. The listener delegates only to a command handler.
+
 ### Final Decision
 
 - `customer.identification.approved` calls `recordAnchorApproved()`.
@@ -329,11 +345,8 @@ All local events are published on `compliance-events` and written to the outbox 
 ```
 organizationId
 anchorBusinessCustomerId
-legalRegistrationType
-country
-currency
+environment
 approvedAt
-complianceVersion
 ```
 
 `OrganizationComplianceSuspendedEvent.payload`:
