@@ -5,7 +5,7 @@ import com.atlashub.shared.application.port.ComplianceQueryPort;
 import com.atlashub.iam.domain.entities.ApiKey;
 import com.atlashub.iam.domain.repositories.ApiKeyRepository;
 import com.atlashub.iam.domain.repositories.CustomRoleRepository;
-import com.atlashub.iam.domain.valueobject.ApiEnvironment;
+import com.atlashub.shared.application.security.ApiEnvironment;
 import com.atlashub.shared.application.usecase.Command;
 import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
@@ -42,7 +42,7 @@ public class IssueApiKeyHandler extends Command<IssueApiKeyCommand, IssuedApiKey
     public IssuedApiKeyResult execute(IssueApiKeyCommand command) {
         log.info("Executing IssueApiKeyCommand");
 
-        ApiEnvironment environment = ApiEnvironment.valueOf(command.environment().toUpperCase());
+        ApiEnvironment environment = ApiEnvironment.parse(command.environment());
         if (environment == ApiEnvironment.LIVE && !complianceQueryPort.isApproved(command.orgId())) {
             throw new IllegalStateException("Live API keys require approved compliance");
         }

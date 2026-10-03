@@ -2,7 +2,7 @@ package com.atlashub.iam.domain.entities;
 
 import com.atlashub.iam.domain.events.ApiKeyRevokedEvent;
 import com.atlashub.iam.domain.exception.ApiKeyAlreadyRevokedException;
-import com.atlashub.iam.domain.valueobject.ApiEnvironment;
+import com.atlashub.shared.application.security.ApiEnvironment;
 import com.atlashub.shared.domain.entities.AggregateRoot;
 import com.atlashub.shared.domain.valueobject.CorrelationId;
 import lombok.Getter;

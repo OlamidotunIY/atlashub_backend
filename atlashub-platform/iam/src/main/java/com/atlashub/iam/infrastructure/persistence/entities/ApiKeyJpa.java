@@ -1,6 +1,6 @@
 package com.atlashub.iam.infrastructure.persistence.entities;
 
-import com.atlashub.iam.domain.valueobject.ApiEnvironment;
+import com.atlashub.shared.application.security.ApiEnvironment;
 import com.atlashub.shared.infrastructure.persistence.entities.BaseJpaEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

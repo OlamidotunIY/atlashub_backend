@@ -6,7 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.atlashub.iam.domain.repositories.ApiKeyRepository;
 import com.atlashub.iam.domain.entities.ApiKey;
-import com.atlashub.iam.domain.valueobject.ApiEnvironment;
+import com.atlashub.shared.application.security.ApiEnvironment;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -27,7 +27,7 @@ public class ListApiKeysHandler extends Query<ListApiKeysQuery, List<ApiKeyResul
         
         ApiEnvironment env = null;
         if (query.environment() != null) {
-            env = ApiEnvironment.valueOf(query.environment().toUpperCase());
+            env = ApiEnvironment.parse(query.environment());
         }
 
         List<ApiKey> keys = env == null

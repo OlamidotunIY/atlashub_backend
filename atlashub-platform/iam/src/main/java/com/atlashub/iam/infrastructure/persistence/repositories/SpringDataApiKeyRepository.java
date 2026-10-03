@@ -1,6 +1,6 @@
 package com.atlashub.iam.infrastructure.persistence.repositories;
 
-import com.atlashub.iam.domain.valueobject.ApiEnvironment;
+import com.atlashub.shared.application.security.ApiEnvironment;
 import com.atlashub.iam.infrastructure.persistence.entities.ApiKeyJpa;
 import org.springframework.data.jpa.repository.JpaRepository;
 

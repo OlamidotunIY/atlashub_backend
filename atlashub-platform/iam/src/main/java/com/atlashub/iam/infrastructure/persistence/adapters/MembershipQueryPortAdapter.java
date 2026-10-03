@@ -1,4 +1,4 @@
-package com.atlashub.iam.infrastructure.services;
+package com.atlashub.iam.infrastructure.persistence.adapters;
 
 import com.atlashub.iam.domain.entities.CustomRole;
 import com.atlashub.iam.domain.entities.OrganizationMember;
@@ -8,22 +8,24 @@ import com.atlashub.iam.domain.repositories.OrganizationMemberRepository;
 import com.atlashub.iam.domain.repositories.PermissionRepository;
 import com.atlashub.iam.domain.valueobject.MemberStatus;
 import com.atlashub.shared.application.port.MembershipQueryPort;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@Service
-public class MembershipQueryAdapter implements MembershipQueryPort {
+@Component
+public class MembershipQueryPortAdapter implements MembershipQueryPort {
     private final OrganizationMemberRepository memberRepository;
     private final CustomRoleRepository roleRepository;
     private final PermissionRepository permissionRepository;
 
-    public MembershipQueryAdapter(OrganizationMemberRepository memberRepository,
-                                  CustomRoleRepository roleRepository,
-                                  PermissionRepository permissionRepository) {
+    public MembershipQueryPortAdapter(
+            OrganizationMemberRepository memberRepository,
+            CustomRoleRepository roleRepository,
+            PermissionRepository permissionRepository
+    ) {
         this.memberRepository = memberRepository;
         this.roleRepository = roleRepository;
         this.permissionRepository = permissionRepository;
@@ -31,9 +33,7 @@ public class MembershipQueryAdapter implements MembershipQueryPort {
 
     @Override
     public boolean isMemberOf(Long userId, Long orgId) {
-        return memberRepository.findByOrganizationIdAndUserId(orgId, userId)
-                .map(member -> member.getStatus() == MemberStatus.ACTIVE)
-                .orElse(false);
+        return activeMember(userId, orgId).isPresent();
     }
 
     @Override

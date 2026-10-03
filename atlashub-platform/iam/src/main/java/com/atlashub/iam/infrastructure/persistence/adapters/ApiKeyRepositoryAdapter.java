@@ -3,7 +3,7 @@ package com.atlashub.iam.infrastructure.persistence.adapters;
 import com.atlashub.iam.domain.entities.ApiKey;
 import com.atlashub.iam.domain.repositories.ApiKeyRepository;
 import com.atlashub.iam.infrastructure.persistence.repositories.SpringDataApiKeyRepository;
-import com.atlashub.iam.domain.valueobject.ApiEnvironment;
+import com.atlashub.shared.application.security.ApiEnvironment;
 import com.atlashub.iam.infrastructure.persistence.entities.ApiKeyJpa;
 import com.atlashub.iam.infrastructure.persistence.mappers.ApiKeyMapper;
 import com.atlashub.shared.application.port.DomainEventPublisher;
