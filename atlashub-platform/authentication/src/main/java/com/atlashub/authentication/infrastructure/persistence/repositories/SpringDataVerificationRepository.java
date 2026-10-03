@@ -9,6 +9,6 @@ import java.util.Optional;
 
 public interface SpringDataVerificationRepository extends JpaRepository<VerificationJpa, Long> {
 
-    Optional<VerificationJpa> findByIdentifierAndVerificationTypeAndVerificationStatus(
+    Optional<VerificationJpa> findFirstByIdentifierAndVerificationTypeAndVerificationStatusOrderByCreatedAtDesc(
             String identifier, VerificationType verificationType, VerificationStatus verificationStatus);
 }

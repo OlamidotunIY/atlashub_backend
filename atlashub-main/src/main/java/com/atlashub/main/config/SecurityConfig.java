@@ -54,8 +54,9 @@ public class SecurityConfig {
                                 "/api/v1/email/resend-verification",
                                 "/api/v1/password/forgot",
                                 "/api/v1/password/reset",
-                                "/api/v1/register"
-                                ,"/.well-known/jwks.json",
+                                "/api/v1/devices/verify",
+                                "/api/v1/register",
+                                "/.well-known/jwks.json",
                                 "/api/v1/webhooks/anchor/**"
                         ).permitAll()
                         // Swagger / OpenAPI

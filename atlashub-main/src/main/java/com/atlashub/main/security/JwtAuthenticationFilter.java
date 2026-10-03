@@ -20,9 +20,10 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -106,7 +107,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     .toList();
 
             AuthenticatedPrincipal principal = new AuthenticatedPrincipal(
-                    Long.valueOf(userId), Long.valueOf(organizationId), environment, sessionId);
+                    Long.valueOf(userId), Long.valueOf(organizationId), environment, sessionId,
+                    jti, ZonedDateTime.ofInstant(claims.getExpiration().toInstant(), ZoneId.of("UTC")));
             UsernamePasswordAuthenticationToken auth =
                     new UsernamePasswordAuthenticationToken(principal, null, authorities);
             SecurityContextHolder.getContext().setAuthentication(auth);

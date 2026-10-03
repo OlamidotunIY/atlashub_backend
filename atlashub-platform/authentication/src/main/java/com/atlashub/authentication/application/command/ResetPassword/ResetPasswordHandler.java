@@ -6,12 +6,14 @@ import com.atlashub.authentication.domain.exceptions.InvalidCredentials;
 import com.atlashub.authentication.domain.exceptions.VerifyTokenError;
 import com.atlashub.authentication.domain.repositories.AuthAccountRepository;
 import com.atlashub.authentication.domain.repositories.VerificationRepository;
+import com.atlashub.authentication.domain.services.PasswordPolicy;
 import com.atlashub.authentication.domain.valueobject.VerificationStatus;
 import com.atlashub.authentication.domain.valueobject.VerificationType;
 import com.atlashub.shared.application.port.PasswordEncoderPort;
 import com.atlashub.shared.application.usecase.Command;
 import com.atlashub.shared.domain.exception.NotFoundException;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.ZonedDateTime;
 
@@ -31,6 +33,7 @@ public class ResetPasswordHandler extends Command<ResetPasswordCommand, Void> {
     }
 
     @Override
+    @Transactional
     public Void execute(ResetPasswordCommand command) {
         AuthAccount account = accountRepository.findByAccountId(command.email())
                 .orElseThrow(() -> new NotFoundException("Account not found"));
@@ -53,6 +56,7 @@ public class ResetPasswordHandler extends Command<ResetPasswordCommand, Void> {
         verification.verify();
         verificationRepository.save(verification);
 
+        PasswordPolicy.validate(command.newPassword());
         String newHash = passwordEncoderPort.encode(command.newPassword());
         account.updatePassword(newHash);
         accountRepository.save(account);

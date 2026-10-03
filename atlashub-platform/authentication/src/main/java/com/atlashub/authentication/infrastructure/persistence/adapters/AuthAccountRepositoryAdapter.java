@@ -10,6 +10,7 @@ import com.atlashub.shared.infrastructure.persistence.repository.JpaBaseReposito
 import com.atlashub.shared.infrastructure.service.DomainSequenceGenerator;
 import org.springframework.stereotype.Component;
 
+import java.util.Locale;
 import java.util.Optional;
 
 @Component
@@ -34,7 +35,9 @@ public class AuthAccountRepositoryAdapter
 
     @Override
     public Optional<AuthAccount> findByAccountId(String accountId) {
-        return springDataRepo.findByAccountId(accountId).map(mapper::toDomain);
+        if (accountId == null || accountId.isBlank()) return Optional.empty();
+        return springDataRepo.findByAccountId(accountId.trim().toLowerCase(Locale.ROOT))
+                .map(mapper::toDomain);
     }
 
     @Override

@@ -1,5 +1,6 @@
 package com.atlashub.authentication.domain.entities;
 
+import com.atlashub.authentication.domain.exceptions.AuthenticationInvariantException;
 import com.atlashub.shared.domain.entities.AggregateRoot;
 import lombok.Getter;
 
@@ -26,8 +27,22 @@ public class TrustedDevice extends AggregateRoot<Long> {
     }
 
     public static TrustedDevice create(Long id, Long userId, String deviceFingerprint, String deviceName, String lastSeenIp) {
+        if (id == null || userId == null) {
+            throw new AuthenticationInvariantException("Trusted device and user identifiers are required");
+        }
+        if (deviceFingerprint == null || deviceFingerprint.isBlank()) {
+            throw new AuthenticationInvariantException("Device fingerprint is required");
+        }
         ZonedDateTime now = ZonedDateTime.now();
 
         return new TrustedDevice(id, userId, deviceFingerprint, deviceName, lastSeenIp, now, now.plusDays(90));
+    }
+
+    public void renew(String deviceName, String lastSeenIp) {
+        ZonedDateTime now = ZonedDateTime.now();
+        this.deviceName = deviceName;
+        this.lastSeenIp = lastSeenIp;
+        this.trustedAt = now;
+        this.expiresAt = now.plusDays(90);
     }
 }

@@ -18,19 +18,15 @@ import com.atlashub.authentication.application.command.ResetPassword.ResetPasswo
 import com.atlashub.authentication.application.command.ResetPassword.ResetPasswordHandler;
 import com.atlashub.authentication.application.command.SendVerificationEmail.SendVerificationEmailCommand;
 import com.atlashub.authentication.application.command.SendVerificationEmail.SendVerificationEmailHandler;
-import com.atlashub.authentication.application.command.SwitchOrganization.SwitchOrganizationCommand;
-import com.atlashub.authentication.application.command.SwitchOrganization.SwitchOrganizationHandler;
 import com.atlashub.authentication.application.command.VerifyEmail.VerifyEmailCommand;
 import com.atlashub.authentication.application.command.VerifyEmail.VerifyEmailHandler;
 import com.atlashub.authentication.presentation.dto.ChangePasswordRequest;
 import com.atlashub.authentication.presentation.dto.EmailRequest;
 import com.atlashub.authentication.presentation.dto.LoginRequest;
 import com.atlashub.authentication.presentation.dto.LoginWebResponse;
-import com.atlashub.authentication.presentation.dto.LogoutRequest;
 import com.atlashub.authentication.presentation.dto.RefreshTokenRequest;
 import com.atlashub.authentication.presentation.dto.RefreshTokenWebResponse;
 import com.atlashub.authentication.presentation.dto.ResetPasswordRequest;
-import com.atlashub.authentication.presentation.dto.SwitchOrganizationRequest;
 import com.atlashub.authentication.presentation.dto.VerifyEmailRequest;
 import com.atlashub.shared.application.annotation.PublicEndpoint;
 import com.atlashub.shared.application.dto.ApiResponse;
@@ -41,6 +37,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -60,7 +57,6 @@ public class AuthenticationController {
     private final InitiatePasswordResetHandler initiatePasswordResetHandler;
     private final ResetPasswordHandler resetPasswordHandler;
     private final ChangePasswordHandler changePasswordHandler;
-    private final SwitchOrganizationHandler switchOrganizationHandler;
 
     public AuthenticationController(LoginHandler loginHandler,
                                     LogoutHandler logoutHandler,
@@ -70,8 +66,7 @@ public class AuthenticationController {
                                     SendVerificationEmailHandler sendVerificationEmailHandler,
                                     InitiatePasswordResetHandler initiatePasswordResetHandler,
                                     ResetPasswordHandler resetPasswordHandler,
-                                    ChangePasswordHandler changePasswordHandler,
-                                    SwitchOrganizationHandler switchOrganizationHandler) {
+                                    ChangePasswordHandler changePasswordHandler) {
         this.loginHandler = loginHandler;
         this.logoutHandler = logoutHandler;
         this.logoutAllDevicesHandler = logoutAllDevicesHandler;
@@ -81,7 +76,6 @@ public class AuthenticationController {
         this.initiatePasswordResetHandler = initiatePasswordResetHandler;
         this.resetPasswordHandler = resetPasswordHandler;
         this.changePasswordHandler = changePasswordHandler;
-        this.switchOrganizationHandler = switchOrganizationHandler;
     }
 
     @PublicEndpoint
@@ -136,14 +130,18 @@ public class AuthenticationController {
 
     @PostMapping("/logout")
     @SecurityRequirement(name = "bearerAuth")
-    public ResponseEntity<ApiResponse<Void>> logout(@Valid @RequestBody LogoutRequest request) {
+    @PreAuthorize("principal.userId() != null")
+    public ResponseEntity<ApiResponse<Void>> logout(
+            @AuthenticationPrincipal AuthenticatedPrincipal principal) {
         logoutHandler.execute(new LogoutCommand(
-                request.refreshToken(), request.accessTokenJti(), request.accessTokenExpiresAt()));
+                principal.userId(), Long.valueOf(principal.sessionId()),
+                principal.tokenId(), principal.tokenExpiresAt()));
         return done("Logged out successfully");
     }
 
     @PostMapping("/logout-all")
     @SecurityRequirement(name = "bearerAuth")
+    @PreAuthorize("principal.userId() != null")
     public ResponseEntity<ApiResponse<Void>> logoutAll(
             @AuthenticationPrincipal AuthenticatedPrincipal principal) {
         logoutAllDevicesHandler.execute(new LogoutAllDevicesCommand(principal.userId()));
@@ -152,22 +150,13 @@ public class AuthenticationController {
 
     @PostMapping("/password/change")
     @SecurityRequirement(name = "bearerAuth")
+    @PreAuthorize("principal.userId() != null")
     public ResponseEntity<ApiResponse<Void>> changePassword(
             @AuthenticationPrincipal AuthenticatedPrincipal principal,
             @Valid @RequestBody ChangePasswordRequest request) {
         changePasswordHandler.execute(new ChangePasswordCommand(
                 principal.userId(), request.currentPassword(), request.newPassword()));
         return done("Password changed successfully");
-    }
-
-    @PostMapping("/organizations/switch")
-    @SecurityRequirement(name = "bearerAuth")
-    public ResponseEntity<ApiResponse<RefreshTokenWebResponse>> switchOrganization(
-            @AuthenticationPrincipal AuthenticatedPrincipal principal,
-            @Valid @RequestBody SwitchOrganizationRequest request) {
-        RefreshTokenResponse response = switchOrganizationHandler.execute(new SwitchOrganizationCommand(
-                principal.userId(), Long.valueOf(principal.sessionId()), request.organizationId()));
-        return ok(toWebResponse(response));
     }
 
     private String clientIp(HttpServletRequest request) {

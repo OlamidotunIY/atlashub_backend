@@ -67,7 +67,7 @@ public class HmacSignatureVerificationFilter extends OncePerRequestFilter {
             var key = authenticated.get();
             var authorities = key.permissions().stream().map(SimpleGrantedAuthority::new).toList();
             AuthenticatedPrincipal principal = new AuthenticatedPrincipal(
-                    null, key.organizationId(), key.environment(), key.publicKey());
+                    null, key.organizationId(), key.environment(), null, null, null);
             SecurityContextHolder.getContext().setAuthentication(
                     new UsernamePasswordAuthenticationToken(principal, null, authorities));
             chain.doFilter(cached, response);
