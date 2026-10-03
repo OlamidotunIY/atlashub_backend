@@ -27,6 +27,8 @@ All subpackages share the root package `com.atlashub.commerce`.
 ### Checkout Saga (Choreography)
 POS/online checkout reserves stock → triggers pay charge → awaits `ChargeSuccessfulEvent` or `ChargeFailedEvent` → deducts or releases stock. Timeout handled by `StockReleaseScheduler`. See [commerce-storefront-design.md](commerce-storefront-design.md) and [sagas-design.md](../architecture/sagas-design.md).
 
+Checkout is environment-bound. `TEST` commerce orders publish `CheckoutPaymentRequestedEvent` with `environment=TEST` and may be completed only by a matching TEST charge event; LIVE follows the same rule. Commerce never selects Paystack or another online gateway and never calls a payment write port synchronously. It requests card, USSD, bank transfer, or an AtlasHub terminal assignment. The charge module owns provider routing; only POS setup exposes the supported terminal choices (Paystack, Moniepoint, and OPay initially).
+
 ### WebSocket Events
 `KitchenOrderTicketCreatedEvent` and `KotReadyEvent` are broadcast via `SelectiveWebSocketBroadcaster` to `/topic/outlet/{outletId}/kitchen`.
 

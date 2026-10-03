@@ -143,31 +143,25 @@ ComplianceSubmittedEvent.payload
 
 ---
 
-### 2.2 AtlasHub Admin Reviews & Approves KYC
+### 2.2 Anchor Reviews; AtlasHub Applies the Verified Decision
 
-**AtlasHub internal staff** logs into admin dashboard.
+AtlasHub receives the environment-specific signed Anchor webhook. Admin staff can monitor/escalate failures but cannot approve or reject compliance.
 
 ```
-POST /api/v1/admin/kyc/approve
-Body: { complianceRecordId, notes }
+POST /api/v1/webhooks/anchor/{environment}/compliance
 ```
 
-**Handler**: `ApproveKycHandler` (admin module)
+**Handler**: `ReceiveAnchorWebhookHandler` → `RecordAnchorDecisionHandler`
 
-1. Loads `KycReviewTask`.
-2. Marks task resolved.
-3. Publishes `KycApprovedEvent` to `admin-events` topic.
+1. Verifies the Anchor signature against the raw body.
+2. Deduplicates the provider event and resolves the existing record by Anchor customer ID.
+3. Applies the provider decision in AtlasHub and publishes `OrganizationComplianceApprovedEvent`.
 
-**Event chain from `KycApprovedEvent`:**
+**Event chain:**
 ```
-KycApprovedEvent.payload
-├── complianceRecordId : Long
-├── organizationId     : Long
-├── reviewerId         : Long
-└── approvedAt         : ZonedDateTime
-
-→ compliance: KycApprovedListener
-      complianceRecord.approve() → status = APPROVED
+AnchorWebhookReceivedEvent
+→ compliance: AnchorComplianceWebhookListener
+      RecordAnchorDecisionCommand → status = APPROVED
       Publishes OrganizationComplianceApprovedEvent to compliance-events
 
 → notifications: ComplianceNotificationListener

@@ -27,6 +27,12 @@ This submodule does **not** own balances. AtlasHub balances and money movement a
 
 The former generic `VirtualAccount` aggregate is deprecated because it conflated these resources.
 
+### API environment boundary
+
+Every banking profile, provider request, deposit account, subaccount, reserved account, and provider profile is scoped by AtlasHub `ApiEnvironment TEST | LIVE`. `TEST` maps to Anchor Sandbox and `LIVE` maps to Anchor Live. The environment comes from the authenticated principal/event, never an organization request body. Provider identifiers and idempotency references are unique together with environment; no adapter may fall back from TEST to LIVE.
+
+Anchor Sandbox supports customers, deposit accounts, and transfers. Subaccounts and reserved accounts are enabled in TEST only when the configured Sandbox programme capabilities and Sandbox FBO account ID support them. When unavailable, AtlasHub rejects those TEST banking operations explicitly; simulated commerce/card flows remain in `pay:charges` and never create fake Anchor resources.
+
 ---
 
 ## 2. Platform Anchor Programme Account
@@ -58,7 +64,8 @@ Coordinates the two resources every organization must have.
 ```
 OrganizationBankingProfile
 ├── id: Long
-├── organizationId: Long                     unique
+├── organizationId: Long                     unique with environment
+├── environment: ApiEnvironment              TEST | LIVE
 ├── anchorBusinessCustomerId: String        supplied by approved compliance
 ├── businessDepositAccountId: Long          nullable until locally requested
 ├── businessSubAccountId: Long              nullable until locally requested
@@ -115,7 +122,7 @@ BusinessDepositAccount
 
 The provider request creates an Anchor `DepositAccount` with `productName = CURRENT` and a `BusinessCustomer` relationship using the approved compliance customer ID. A synchronous `200/202` response records acceptance, not necessarily final activation. Confirmed account details arrive through the provider response, webhook, or reconciliation fetch.
 
-Only one non-closed business deposit account is allowed per organization and currency.
+Only one non-closed business deposit account is allowed per organization, environment, and currency.
 
 ---
 
@@ -175,7 +182,7 @@ Anchor request shape:
 
 The parent is always AtlasHub's configured FBO account, **not** the organization's business deposit account.
 
-Only one non-closed business subaccount is allowed per organization and currency.
+Only one non-closed business subaccount is allowed per organization, environment, and currency.
 
 ---
 
@@ -187,6 +194,7 @@ Only one non-closed business subaccount is allowed per organization and currency
 ReservedAccount
 ├── id: Long                                  AtlasHub ID
 ├── organizationId: Long
+├── environment: ApiEnvironment              TEST | LIVE
 ├── ownerType: ReservedAccountOwnerType      CUSTOMER | VENDOR
 ├── ownerReferenceId: String                 local customer/vendor ID
 ├── anchorReservedAccountId: String          unique, nullable until accepted
@@ -346,6 +354,8 @@ Expected normalized provider facts include:
 - Reserved account created/failed
 - Inbound transfer/collection
 
+The shared Anchor module verifies and publishes one `AnchorWebhookReceivedEvent`; consuming modules use that event directly and translate it into module-owned commands. They do not define a second Anchor event for the same webhook.
+
 Webhook processing:
 
 1. Validate the signature against the raw request body.
@@ -481,13 +491,29 @@ Organization business deposit/subaccount creation is system-only. Organization-w
 - Unique non-closed reserved account per `(organizationId, ownerType, ownerReferenceId, provider)`.
 - Unique `requestReference`/idempotency key.
 - Optimistic locking on all account aggregates.
-- Store encrypted full account numbers only where operationally required; store masked variants for ordinary reads.
+- Store full account numbers with AES-256-GCM through the JPA converter only where operationally required; configure the Base64 32-byte key with `ATLASHUB_PAY_ACCOUNTS_ENCRYPTION_KEY`, and use masked variants for ordinary reads.
 
 Remote calls are outside database transactions. Local request intent is committed before dispatch. Provider responses/webhooks are applied in new transactions.
 
 ---
 
-## 16. Legacy Migration
+## 16. Organization Payment Provider Profiles
+
+`OrganizationProviderProfile` is AtlasHub's source of truth for non-banking collection capability per organization and environment. It records AtlasHub capability names, the internally selected provider, provider onboarding case ID, safe external merchant/account references, requested capabilities, active capabilities, and lifecycle status.
+
+Public capability requests are:
+
+- `CARD_COLLECTION` and `USSD_COLLECTION` — internally route to Paystack initially;
+- `POS_TERMINAL` — requires the business to select Paystack, Moniepoint, or OPay;
+- `BANK_TRANSFER_COLLECTION` — backed by the Anchor banking profile.
+
+Enabling a missing capability publishes `ProviderOnboardingRequestedEvent`. `platform:compliance` owns the provider onboarding case and additional requirements. `ProviderOnboardingApprovedEvent` activates only the approved capabilities on the matching organization/environment/provider profile. `ProviderOnboardingStatusChangedEvent` synchronizes provisioning, information-required, rejected, suspended, and failed states through a command-only listener. Adding a later capability updates the existing profile and starts only the additional provider review; it does not reset the five-step AtlasHub compliance application.
+
+Provider names remain hidden from the public card/USSD checkout contract. A synchronous `PaymentProviderProfileQueryPort`, implemented under this module's `infrastructure.persistence.adapters`, allows consuming modules to read an active capability without performing cross-module writes.
+
+---
+
+## 17. Legacy Migration
 
 1. Add the new profile, deposit-account, subaccount, programme-account, and reserved-account tables.
 2. Keep legacy `VirtualAccount` reads behind a compatibility facade.

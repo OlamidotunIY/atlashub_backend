@@ -24,6 +24,7 @@ LedgerAccount
 ├── organizationId: Long
 ├── accountType: LedgerAccountType     ← OPERATING, PAYROLL_RESERVE, TAX_HOLDING,
 │                                         ESCROW, SUSPENSE, TILL, SPLIT_HOLDING,
+│                                         PROVIDER_CLEARING,
 │                                         CUSTOMER_FUNDS, VENDOR_PAYABLE
 ├── outletId: Long                     ← nullable; only for TILL accounts
 ├── partyType: LedgerPartyType         ← nullable; CUSTOMER or VENDOR for party accounts
@@ -78,13 +79,14 @@ ACTIVE ──freeze()──► FROZEN ──unfreeze()──► ACTIVE
 LedgerTransaction
 ├── id: Long
 ├── organizationId: Long
+├── environment: ApiEnvironment          TEST | LIVE
 ├── entries: List<LedgerEntry>         ← at least 2: one DEBIT, one CREDIT
 ├── sourceSystem: SourceSystem
 ├── sourceReferenceId: String          ← ID of the originating business entity
 ├── description: String
 ├── currency: Currency
 ├── postedAt: ZonedDateTime
-└── reference: String                  ← unique idempotency reference
+└── reference: String                  ← unique with environment
 ```
 
 **Construction Rule — `validateBalance()`:**
@@ -147,7 +149,7 @@ BalanceSnapshot
 
 | Class | Values | Description |
 |---|---|---|
-| `LedgerAccountType` | `OPERATING`, `PAYROLL_RESERVE`, `TAX_HOLDING`, `ESCROW`, `SUSPENSE`, `TILL`, `SPLIT_HOLDING`, `CUSTOMER_FUNDS`, `VENDOR_PAYABLE` | The functional purpose of each account |
+| `LedgerAccountType` | `OPERATING`, `PAYROLL_RESERVE`, `TAX_HOLDING`, `ESCROW`, `SUSPENSE`, `PROVIDER_CLEARING`, `TILL`, `SPLIT_HOLDING`, `CUSTOMER_FUNDS`, `VENDOR_PAYABLE` | The functional purpose of each account |
 | `LedgerAccountStatus` | `ACTIVE`, `FROZEN`, `CLOSED` | Lifecycle state |
 | `EntryType` | `DEBIT`, `CREDIT` | Direction of ledger entry |
 | `LedgerPartyType` | `CUSTOMER`, `VENDOR` | Party owning/benefiting from a dynamic party ledger account |
@@ -290,8 +292,8 @@ public interface LedgerAccountRepository {
 public interface LedgerTransactionRepository {
     LedgerTransaction save(LedgerTransaction transaction);
     Optional<LedgerTransaction> findById(Long id);
-    Optional<LedgerTransaction> findByReference(String reference);
-    List<LedgerTransaction> findByOrganizationId(Long organizationId, Pageable pageable);
+    Optional<LedgerTransaction> findByReferenceAndEnvironment(String reference, ApiEnvironment environment);
+    List<LedgerTransaction> findByOrganizationIdAndEnvironment(Long organizationId, ApiEnvironment environment, Pageable pageable);
 }
 
 public interface BalanceSnapshotRepository {
@@ -313,6 +315,7 @@ public interface BalanceSnapshotRepository {
 ```java
 public record PostLedgerTransactionCommand(
     Long organizationId,
+    String environment,
     String reference,                         // idempotency key — caller-supplied
     String sourceSystem,
     String sourceReferenceId,
@@ -333,11 +336,11 @@ public record PostLedgerTransactionCommand(
 **RBAC**: Internal system command — called by other handlers within the platform, not directly from the API.
 
 **Processing steps (CRITICAL — locking order must be preserved):**
-1. Check idempotency: if a `LedgerTransaction` with `reference` already exists, return its result without re-posting.
+1. Check idempotency: if a `LedgerTransaction` with `(environment, reference)` already exists, return its result without re-posting.
 2. Validate the caller-provided `entries` list: at least one DEBIT and one CREDIT must be present.
 3. **Collect all unique `accountId`s from `entries`. Sort them in ascending order. Acquire `PESSIMISTIC_WRITE` locks on each `LedgerAccount` in that sorted order.** This prevents deadlocks when concurrent transactions affect overlapping account sets.
 4. Verify each locked account belongs to `organizationId` and is `ACTIVE` (not FROZEN or CLOSED). Throw `LedgerAccountFrozenException` or `LedgerAccountClosedException` if violated.
-5. Compute `runningBalance` for each entry using the account's current balance.
+5. Do not persist or mutate a current-balance column. Balances remain derived from the latest snapshot plus later entries.
 6. Construct `LedgerTransaction` — `validateBalance()` is called in the constructor. If unbalanced, `UnbalancedLedgerTransactionException` is thrown and no persistence occurs.
 7. Save `LedgerTransaction` and all `LedgerEntry` records.
 8. Update each account's balance (stored on the `LedgerAccount` entity for fast queries).
@@ -548,7 +551,6 @@ public class LedgerAccountJpa {
     String partyReferenceId;
     String currency;
     @Enumerated(EnumType.STRING) LedgerAccountStatus status;
-    BigDecimal currentBalance;   // denormalized for fast balance reads
     ZonedDateTime createdAt;
 }
 ```
@@ -560,6 +562,7 @@ public class LedgerAccountJpa {
 public class LedgerTransactionJpa {
     @Id @GeneratedValue Long id;
     Long organizationId;
+    ApiEnvironment environment;
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     List<LedgerEntryJpa> entries;
     @Enumerated(EnumType.STRING) SourceSystem sourceSystem;
@@ -567,7 +570,7 @@ public class LedgerTransactionJpa {
     String description;
     String currency;
     ZonedDateTime postedAt;
-    @Column(unique = true) String reference;
+    String reference; // composite unique index with api_environment
 }
 ```
 
@@ -616,7 +619,7 @@ The ledger is the **single source of truth** for all money movements on the plat
 | **Event** | `OrganizationBankingActivatedEvent` |
 | **Payload fields** | `organizationId`, `bankingProfileId`, `businessDepositAccountId`, `businessSubAccountId`, `currency`, `activatedAt` |
 | **Command called** | `CreateLedgerAccountHandler` (multiple times) |
-| **Flow** | For each account type in `[OPERATING, PAYROLL_RESERVE, TAX_HOLDING, ESCROW, SUSPENSE, SPLIT_HOLDING]`, create the organization-level account if absent. Idempotent. Reserved-account activation never repeats this bootstrap. |
+| **Flow** | For each account type in `[OPERATING, PAYROLL_RESERVE, TAX_HOLDING, ESCROW, SUSPENSE, PROVIDER_CLEARING, SPLIT_HOLDING]`, create the organization-level account if absent. Idempotent. Reserved-account activation never repeats this bootstrap. |
 
 #### `ReservedAccountActivatedListener`
 | Attribute | Value |
@@ -646,7 +649,16 @@ The ledger is the **single source of truth** for all money movements on the plat
 | **Event** | `ChargeSuccessfulEvent` |
 | **Payload fields** | `chargeId`, `organizationId`, `chargeReference`, `gatewayReference`, `amount`, `currency`, `channel`, `sourceSystem`, `sourceReferenceId`, `customerId`, `succeededAt` |
 | **Command called** | `PostLedgerTransactionHandler` |
-| **Flow** | Posts: `Dr Suspense Account → Cr Operating Account` (funds cleared from gateway to operating). Reference = `chargeReference`. SourceSystem = `CARD_CHARGE`. |
+| **Flow** | Posts `Dr PROVIDER_CLEARING → Cr OPERATING`. This recognizes the successful collection while retaining the unsettled provider receivable. Reference = `chargeReference`; SourceSystem = `CARD_CHARGE`. It does not claim the provider has settled cash. |
+
+#### `ProviderSettlementReceivedListener`
+
+| Field | Value |
+|---|---|
+| **Topic** | `pay-events` |
+| **Event** | `ProviderSettlementReceivedEvent` |
+| **Command called** | `PostLedgerTransactionHandler` |
+| **Flow** | Posts `Dr SUSPENSE → Cr PROVIDER_CLEARING` for the reconciled settlement amount. Operating/revenue is not credited again. Reference = provider settlement reference; SourceSystem = `SETTLEMENT`. |
 
 #### `ReservedAccountFundedListener`
 | Attribute | Value |
@@ -832,7 +844,7 @@ No WebSocket push from this submodule. `LedgerTransactionPostedEvent` is a backg
 - **Optimistic Lock** (`@Version`) on `LedgerAccount` for all other mutations (freeze, close, unfreeze).
 
 ### Idempotency
-- `PostLedgerTransactionHandler` checks for an existing `LedgerTransaction` by `reference` before posting. Duplicate `reference` → return existing result, no re-post.
+- `PostLedgerTransactionHandler` checks for an existing `LedgerTransaction` by `(environment, reference)` before posting. Duplicate reference in the same environment returns the existing result; TEST and LIVE never share postings or balances.
 - `Idempotency-Key` header on the API is mapped to `reference` for callers that supply it.
 
 ### Outbox
