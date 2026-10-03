@@ -22,7 +22,7 @@ secretKey:  atlas_sk_live_Mn7pKd2vWe...   (40 Base62 characters) — shown ONCE 
 ```
 
 - The `publicKey` identifies the organization and environment. It is safe to include in logs and error messages.
-- The `secretKey` is shown **once** at creation time and never stored — only its SHA-256 hash is stored in the database.
+- The `secretKey` is shown **once** at creation time. AtlasHub stores only an encrypted ciphertext so the server can recompute HMAC signatures; plaintext is never stored.
 - TEST keys operate against test accounts with simulated payment providers. LIVE keys operate with real money.
 
 ---
@@ -132,9 +132,7 @@ public class HmacSignatureVerificationFilter extends OncePerRequestFilter {
         String path     = request.getRequestURI();
         String bodyHash = sha256Hex(body);
         String message  = method + "\n" + path + "\n" + timestamp + "\n" + nonce + "\n" + bodyHash;
-        String expectedSig = hmacSha256Hex(message, apiKey.secretKeyHash());
-        // NOTE: secretKeyHash is the SHA-256 hash of the secret. We compare HMAC(message, hash(secret)).
-        // The original secret is not stored anywhere on our servers.
+        String expectedSig = hmacSha256Hex(message, secretProtector.decrypt(apiKey.secretKeyCiphertext()));
 
         // 7. Constant-time comparison
         if (!MessageDigest.isEqual(
@@ -152,9 +150,9 @@ public class HmacSignatureVerificationFilter extends OncePerRequestFilter {
         filterChain.doFilter(cachedRequest, response);  // use cached body for downstream processing
     }
 
-    private String hmacSha256Hex(String message, String keyHex) throws Exception {
+    private String hmacSha256Hex(String message, String secretKey) throws Exception {
         Mac mac = Mac.getInstance("HmacSHA256");
-        mac.init(new SecretKeySpec(hexToBytes(keyHex), "HmacSHA256"));
+        mac.init(new SecretKeySpec(secretKey.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
         return bytesToHex(mac.doFinal(message.getBytes(StandardCharsets.UTF_8)));
     }
 }

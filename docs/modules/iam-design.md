@@ -155,7 +155,7 @@ Invitation
 
 ### `ApiKey` (Aggregate Root)
 
-Organizations are issued API key pairs (public + secret) for machine-to-machine access. There is a **single environment** — no TEST/LIVE split. Keys can be named, revoked, and rotated at any time.
+Organizations are issued separate API key pairs for `TEST` and `LIVE` machine-to-machine access. TEST keys are available without provider production approval. LIVE key issuance requires approved AtlasHub compliance. Keys are environment-bound, can be named, revoked, and rotated, and can never switch environment after creation.
 
 ```
 ApiKey

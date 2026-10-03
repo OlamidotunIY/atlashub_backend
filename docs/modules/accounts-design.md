@@ -26,7 +26,7 @@ An `Organization` represents a business entity on AtlasHub. On creation, the fou
 
 `accounts` records the organization's legal registration classification and product-facing industry. It does **not** decide whether the organization is eligible for banking or verified by Anchor; those decisions belong to `compliance`.
 
-For the initial Nigerian banking programme, AtlasHub accepts only `BUSINESS_NAME` and `PRIVATE_INCORPORATED`. Unsupported registration types are rejected during registration so an organization is not allowed to complete an onboarding journey that can never receive an Anchor banking product.
+For the initial Nigerian banking programme, AtlasHub accepts only `SOLE_PROPRIETORSHIP` and `PRIVATE_LIMITED_COMPANY`. Unsupported registration types are rejected during registration so an organization is not allowed to complete an onboarding journey that can never receive a supported banking product.
 
 ### Atomic Registration
 `RegisterOrganizationHandler` creates both `User` and `Organization` in a single database transaction. It publishes `UserCreated` and `OrganizationRegistered` domain events, which downstream modules (`auth`, `iam`, `billing`, `compliance`) react to asynchronously.
@@ -34,8 +34,8 @@ For the initial Nigerian banking programme, AtlasHub accepts only `BUSINESS_NAME
 ### Profile Management
 Users can update their profile. Organizations can update their business details and logo.
 
-### Active Organization Switching
-A user who belongs to multiple organizations can switch their active context (`SwitchActiveOrganizationUseCase`). The `activeOrganizationId` field drives which org's data is loaded on login.
+### Active Organization Context
+Authentication owns organization switching because it must atomically rotate the session and access token with the target organization's permissions. Accounts consumes `ActiveOrganizationSwitchedEvent` and updates `User.activeOrganizationId` as the durable profile preference.
 
 ---
 
@@ -82,10 +82,8 @@ Represents a registered business entity. Has no separate `status` field — the 
 Organization
 ├── id: Long
 ├── businessName: String
-├── legalRegistrationType: LegalRegistrationType
-├── registrationDate: LocalDate
-├── businessRegistrationNumber: String
-├── businessSize: BusinessSize   ← MICRO (1-9), SMALL (10-49), MEDIUM (50-249), LARGE (250+)
+├── registrationType: AtlasHubRegistrationType
+├── registrationDate: LocalDate          ← generated on AtlasHub registration
 ├── industry: SupportedIndustry
 ├── description: String          ← nullable
 ├── logoUrl: String              ← nullable
@@ -97,16 +95,16 @@ Organization
 ```
 
 **Business Methods:**
-- `create(id, businessName, legalRegistrationType, registrationDate, businessRegistrationNumber, businessSize, description, currency, logoUrl, country, industry, websiteUrl, ownerUserId)` — static factory; raises `OrganizationRegistered` event
+- `create(id, businessName, registrationType, description, currency, logoUrl, country, industry, websiteUrl, ownerUserId)` — generates `registrationDate` from the current AtlasHub date and raises `OrganizationRegistered`
 - `updateOrganization(businessName, description, logoUrl, industry, websiteUrl)` → registers `OrganizationUpdated` event
 
 **Domain Rules:**
 - `country` and `baseCurrency` are immutable — changing them would invalidate all historical financial records
 - `businessName` must be non-empty
-- `legalRegistrationType` must be enabled by the AtlasHub onboarding policy
-- Initial supported types are `BUSINESS_NAME` and `PRIVATE_INCORPORATED`
+- `registrationType` must be enabled by the AtlasHub onboarding policy
+- Initial supported types are `SOLE_PROPRIETORSHIP` and `PRIVATE_LIMITED_COMPANY`
 - `industry` must be selected from AtlasHub's supported-industry allowlist; arbitrary strings are not accepted
-- Legal registration fields become immutable after effective compliance approval. Corrections after approval require a compliance amendment workflow.
+- Legal registration identity is immutable in accounts after registration. Corrections require a dedicated compliance amendment workflow rather than a generic organization-profile update.
 
 ---
 
@@ -172,7 +170,7 @@ public record PhoneNumber(String value) {
 ```java
 public record Country(String code) {
     // ISO 3166-1 alpha-2
-    private static final Set<String> SUPPORTED = Set.of("NG", "KE", "GH", "ZA", "US");
+    private static final Set<String> SUPPORTED = Set.of("NG");
     public Country {
         if (!SUPPORTED.contains(code))
             throw new ValidationException(AccountsErrorCode.UNSUPPORTED_COUNTRY, "Unsupported country: " + code);
@@ -180,53 +178,32 @@ public record Country(String code) {
     public Currency deriveCurrency() {
         return switch (code) {
             case "NG" -> Currency.NGN;
-            case "KE" -> Currency.KES;
-            case "GH" -> Currency.GHS;
-            case "ZA" -> Currency.ZAR;
-            case "US" -> Currency.USD;
             default -> throw new BusinessRuleException(AccountsErrorCode.UNSUPPORTED_COUNTRY, code);
         };
     }
 }
 ```
 
-### `LegalRegistrationType` (Enum)
+### `AtlasHubRegistrationType` (Enum)
 
-Legal form is separate from industry. Values map explicitly to Anchor registration codes:
-
-| AtlasHub value | Anchor code | Initial support |
-|---|---|---|
-| `BUSINESS_NAME` | `Business_Name` | Enabled |
-| `PRIVATE_INCORPORATED` | `Private_Incorporated` | Enabled |
-| `INCORPORATED_TRUSTEES` | `Incorporated_Trustees` | Disabled |
-| `FREE_ZONE` | `Free_Zone` | Disabled |
-| `GOVERNMENT` | `Gov` | Disabled |
-| `PRIVATE_INCORPORATED_GOVERNMENT` | `Private_Incorporated_Gov` | Disabled |
-| `COOPERATIVE_SOCIETY` | `Cooperative_Society` | Disabled |
-| `PUBLIC_INCORPORATED` | `Public_Incorporated` | Disabled |
-
-Disabled types are retained as known provider values, but registration rejects them until an explicit compliance policy enables them.
+The public AtlasHub values are `SOLE_PROPRIETORSHIP` and `PRIVATE_LIMITED_COMPANY`. Provider values are not exposed by accounts. The Anchor compliance adapter maps these values to its provider contract when submitting compliance.
 
 ### `SupportedIndustry` (Enum)
 
 The initial allowlist is deliberately limited to AtlasHub's commerce, hospitality, and logistics use cases:
 
-- `COMMERCE_PHYSICAL_GOODS`
-- `COMMERCE_DIGITAL_SERVICES`
-- `COMMERCE_PHYSICAL_SERVICES`
-- `COMMERCE_PROFESSIONAL_SERVICES`
-- `HOSPITALITY_HOTELS`
-- `HOSPITALITY_RESTAURANTS`
-- `LOGISTICS_COURIER_SERVICES`
-- `LOGISTICS_FREIGHT_SERVICES`
+- `PHYSICAL_GOODS`
+- `DIGITAL_SERVICES`
+- `PHYSICAL_SERVICES`
+- `PROFESSIONAL_SERVICES`
+- `HOTELS`
+- `COURIER_SERVICES`
+- `FREIGHT_SERVICES`
 - `RETAIL`
 - `WHOLESALE`
 - `RESTAURANTS`
 
 Each value has an explicit Anchor code. Financial services, gaming, government, political organizations, public companies, and other enhanced-risk categories are not accepted in the initial programme.
-
-### `BusinessSize` (Enum)
-`MICRO` (1–9 employees), `SMALL` (10–49), `MEDIUM` (50–249), `LARGE` (250+)
 
 ---
 
@@ -256,16 +233,14 @@ UserCreated
 └── payload
     ├── email        : String
     ├── isInvited    : Boolean   ← true = came via org invitation; auth skips email verification
-    └── hashedPassword : String  ← BCrypt hash created in accounts module
+    └── credentialReference : String  ← one-time Redis reference; raw password and hash never enter the event
 
 OrganizationRegistered
 ├── aggregateId    : Long    ← the organizationId
 └── payload
     ├── businessName   : String
-├── legalRegistrationType : LegalRegistrationType
+├── registrationType : AtlasHubRegistrationType
 ├── registrationDate : LocalDate
-├── businessRegistrationNumber : String
-    ├── businessSize   : BusinessSize
 ├── industry       : SupportedIndustry
 ├── country        : String
     ├── currency       : CurrencyCode
@@ -318,8 +293,10 @@ public interface OrganizationQueryPort {
 ## 8. Commands
 
 ### Registration
-- `RegisterOrganizationCommand(firstName, lastName, email, phone, country, businessName, legalRegistrationType, registrationDate, businessRegistrationNumber, businessSize, industry)` → `RegisterOrganizationHandler`
+- `RegisterOrganizationCommand(firstName, lastName, email, password, country, businessName, registrationType, industry, ...)` → `RegisterOrganizationHandler`
   - Creates `User`, `Organization` in one transaction
+  - Generates the organization registration date in code
+  - Stores the password temporarily through `OneTimeSecretStore` and publishes only its one-time reference
   - Publishes `UserCreated` + `OrganizationRegistered`
   - Idempotency: pre-checks email uniqueness before creation
   - Rejects registration types and industries disabled by the current AtlasHub onboarding policy
@@ -327,16 +304,7 @@ public interface OrganizationQueryPort {
 ### Profile Updates
 - `UpdateUserProfileCommand(userId, firstName, lastName, phone, timezone)` → `UpdateUserProfileHandler`
 - `UpdateOrganizationDetailsCommand(orgId, businessName, description, websiteUrl)` → `UpdateOrganizationDetailsHandler`
-- `UpdateOrganizationLogoCommand(orgId, logoUrl)` → `UpdateOrganizationLogoHandler`
-- `SwitchActiveOrganizationCommand(userId, orgId)` → `SwitchActiveOrganizationHandler`
-  - Guards: user must be a member of the target org (checked via `iam:MembershipQueryPort`)
-
-### POS Feature Toggle
-- `EnablePosCommand(orgId, requestedByUserId)` → `EnablePosHandler`
-  - Sets `posEnabled = true`; publishes `PosFeatureToggledEvent`
-  - Guard: user must have `commerce:pos:manage` permission (OWNER or equivalent)
-- `DisablePosCommand(orgId, requestedByUserId)` → `DisablePosHandler`
-  - Sets `posEnabled = false`; publishes `PosFeatureToggledEvent`
+Organization switching is implemented by authentication and synchronized back through `ActiveOrganizationSwitchedEvent`. Payment/POS capability enablement belongs to `pay:accounts`, not this module.
 
 ### Outlet Management
 - `CreateOutletCommand(organizationId, name, address, city, state, country, managerId)` → `CreateOutletHandler`
