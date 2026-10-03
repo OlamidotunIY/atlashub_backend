@@ -8,13 +8,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import java.util.Optional;
+import com.atlashub.shared.application.security.ApiEnvironment;
 
 public interface ReservedAccountRepository extends Repository<ReservedAccount> {
-    Optional<ReservedAccount> findByOrganizationIdAndId(Long organizationId, Long id);
-    Optional<ReservedAccount> findByRequestReference(String requestReference);
-    Optional<ReservedAccount> findByAnchorReservedAccountId(String anchorReservedAccountId);
+    Optional<ReservedAccount> findByOrganizationIdAndEnvironmentAndId(Long organizationId, ApiEnvironment environment, Long id);
+    Optional<ReservedAccount> findByRequestReferenceAndEnvironment(String requestReference, ApiEnvironment environment);
+    Optional<ReservedAccount> findByAnchorReservedAccountIdAndEnvironment(String anchorReservedAccountId, ApiEnvironment environment);
     Optional<ReservedAccount> findActiveByOwner(
-            Long organizationId, ReservedAccountOwnerType ownerType, String ownerReferenceId, String provider);
-    Page<ReservedAccount> search(Long organizationId, ReservedAccountOwnerType ownerType,
+            Long organizationId, ApiEnvironment environment, ReservedAccountOwnerType ownerType, String ownerReferenceId, String provider);
+    Page<ReservedAccount> search(Long organizationId, ApiEnvironment environment, ReservedAccountOwnerType ownerType,
                                  String ownerReferenceId, ExternalAccountStatus status, Pageable pageable);
 }

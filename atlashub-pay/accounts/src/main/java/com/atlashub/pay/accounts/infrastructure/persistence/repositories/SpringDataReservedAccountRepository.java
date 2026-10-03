@@ -9,17 +9,18 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 import java.util.Optional;
+import com.atlashub.shared.application.security.ApiEnvironment;
 
 public interface SpringDataReservedAccountRepository extends JpaRepository<ReservedAccountJpa, Long>,
         JpaSpecificationExecutor<ReservedAccountJpa> {
-    Optional<ReservedAccountJpa> findByOrganizationIdAndId(Long organizationId, Long id);
-    Optional<ReservedAccountJpa> findByRequestReference(String requestReference);
-    Optional<ReservedAccountJpa> findByAnchorReservedAccountId(String anchorReservedAccountId);
-    Optional<ReservedAccountJpa> findFirstByOrganizationIdAndOwnerTypeAndOwnerReferenceIdAndProviderAndStatusNot(
-            Long organizationId, ReservedAccountOwnerType ownerType, String ownerReferenceId,
+    Optional<ReservedAccountJpa> findByOrganizationIdAndEnvironmentAndId(Long organizationId, ApiEnvironment environment, Long id);
+    Optional<ReservedAccountJpa> findByRequestReferenceAndEnvironment(String requestReference, ApiEnvironment environment);
+    Optional<ReservedAccountJpa> findByAnchorReservedAccountIdAndEnvironment(String anchorReservedAccountId, ApiEnvironment environment);
+    Optional<ReservedAccountJpa> findFirstByOrganizationIdAndEnvironmentAndOwnerTypeAndOwnerReferenceIdAndProviderAndStatusNot(
+            Long organizationId, ApiEnvironment environment, ReservedAccountOwnerType ownerType, String ownerReferenceId,
             String provider, ExternalAccountStatus status);
-    Page<ReservedAccountJpa> findAllByOrganizationId(Long organizationId, Pageable pageable);
-    Page<ReservedAccountJpa> findAllByOrganizationIdAndOwnerTypeAndOwnerReferenceIdAndStatus(
-            Long organizationId, ReservedAccountOwnerType ownerType, String ownerReferenceId,
+    Page<ReservedAccountJpa> findAllByOrganizationIdAndEnvironment(Long organizationId, ApiEnvironment environment, Pageable pageable);
+    Page<ReservedAccountJpa> findAllByOrganizationIdAndEnvironmentAndOwnerTypeAndOwnerReferenceIdAndStatus(
+            Long organizationId, ApiEnvironment environment, ReservedAccountOwnerType ownerType, String ownerReferenceId,
             ExternalAccountStatus status, Pageable pageable);
 }

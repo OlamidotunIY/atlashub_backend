@@ -66,21 +66,21 @@ public class ReservedAccountController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         return ok(listHandler.execute(new ListReservedAccountsQuery(
-                principal.activeOrganizationId(), ownerType, ownerReferenceId, status, page, size)));
+                principal.activeOrganizationId(), principal.environment(), ownerType, ownerReferenceId, status, page, size)));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<ReservedAccountResult>> get(
             @AuthenticationPrincipal AuthenticatedPrincipal principal,
             @PathVariable Long id) {
-        return ok(getHandler.execute(new GetReservedAccountQuery(principal.activeOrganizationId(), id)));
+        return ok(getHandler.execute(new GetReservedAccountQuery(principal.activeOrganizationId(), principal.environment(), id)));
     }
 
     @PostMapping("/{id}/suspend")
     public ResponseEntity<ApiResponse<Void>> suspend(
             @AuthenticationPrincipal AuthenticatedPrincipal principal, @PathVariable Long id) {
         statusHandler.execute(new ChangeReservedAccountStatusCommand(
-                principal.activeOrganizationId(), id, ChangeReservedAccountStatusCommand.Action.SUSPEND));
+                principal.activeOrganizationId(), principal.environment(), id, ChangeReservedAccountStatusCommand.Action.SUSPEND));
         return done("Reserved account suspended");
     }
 
@@ -88,7 +88,7 @@ public class ReservedAccountController {
     public ResponseEntity<ApiResponse<Void>> reactivate(
             @AuthenticationPrincipal AuthenticatedPrincipal principal, @PathVariable Long id) {
         statusHandler.execute(new ChangeReservedAccountStatusCommand(
-                principal.activeOrganizationId(), id, ChangeReservedAccountStatusCommand.Action.REACTIVATE));
+                principal.activeOrganizationId(), principal.environment(), id, ChangeReservedAccountStatusCommand.Action.REACTIVATE));
         return done("Reserved account reactivated");
     }
 
@@ -96,7 +96,7 @@ public class ReservedAccountController {
     public ResponseEntity<ApiResponse<Void>> close(
             @AuthenticationPrincipal AuthenticatedPrincipal principal, @PathVariable Long id) {
         statusHandler.execute(new ChangeReservedAccountStatusCommand(
-                principal.activeOrganizationId(), id, ChangeReservedAccountStatusCommand.Action.CLOSE));
+                principal.activeOrganizationId(), principal.environment(), id, ChangeReservedAccountStatusCommand.Action.CLOSE));
         return done("Reserved account closed");
     }
 

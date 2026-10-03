@@ -11,6 +11,7 @@ import com.atlashub.shared.infrastructure.service.DomainSequenceGenerator;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
+import com.atlashub.shared.application.security.ApiEnvironment;
 
 @Component
 public class OrganizationBankingProfileRepositoryAdapter
@@ -29,7 +30,7 @@ public class OrganizationBankingProfileRepositoryAdapter
 
     @Override protected String getSequenceName() { return "organization_banking_profile_seq"; }
 
-    @Override public Optional<OrganizationBankingProfile> findByOrganizationId(Long organizationId) {
-        return repository.findByOrganizationId(organizationId).map(mapper::toDomain);
+    @Override public Optional<OrganizationBankingProfile> findByOrganizationIdAndEnvironment(Long organizationId, ApiEnvironment environment) {
+        return repository.findByOrganizationIdAndEnvironment(organizationId, environment).map(mapper::toDomain);
     }
 }

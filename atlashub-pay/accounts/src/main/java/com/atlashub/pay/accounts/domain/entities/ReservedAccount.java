@@ -9,6 +9,7 @@ import com.atlashub.pay.accounts.domain.events.ReservedAccountActivatedEvent;
 import com.atlashub.shared.domain.valueobject.CorrelationId;
 import com.atlashub.shared.domain.valueobject.CurrencyCode;
 import lombok.Getter;
+import com.atlashub.shared.application.security.ApiEnvironment;
 
 import java.time.ZonedDateTime;
 import java.util.HashSet;
@@ -19,6 +20,7 @@ import java.util.UUID;
 public class ReservedAccount extends AggregateRoot<Long> {
     private final Long id;
     private final Long organizationId;
+    private final ApiEnvironment environment;
     private final ReservedAccountOwnerType ownerType;
     private final String ownerReferenceId;
     private final Long businessSubAccountId;
@@ -40,7 +42,7 @@ public class ReservedAccount extends AggregateRoot<Long> {
     private ZonedDateTime activatedAt;
     private ZonedDateTime updatedAt;
 
-    public ReservedAccount(Long id, Long organizationId, ReservedAccountOwnerType ownerType,
+    public ReservedAccount(Long id, Long organizationId, ApiEnvironment environment, ReservedAccountOwnerType ownerType,
                            String ownerReferenceId, Long businessSubAccountId, String anchorPayoutSubAccountId,
                            String provider, String requestReference, String anchorReservedAccountId,
                            String anchorCustomerId, String accountName, String accountNumber,
@@ -48,7 +50,7 @@ public class ReservedAccount extends AggregateRoot<Long> {
                            ExternalAccountStatus status, Set<BankingRestrictionType> activeRestrictions,
                            String failureReason, ZonedDateTime createdAt, ZonedDateTime activatedAt,
                            ZonedDateTime updatedAt) {
-        this.id=id; this.organizationId=organizationId; this.ownerType=ownerType; this.ownerReferenceId=ownerReferenceId;
+        this.id=id; this.organizationId=organizationId; this.environment=environment; this.ownerType=ownerType; this.ownerReferenceId=ownerReferenceId;
         this.businessSubAccountId=businessSubAccountId; this.anchorPayoutSubAccountId=anchorPayoutSubAccountId;
         this.provider=provider; this.requestReference=requestReference; this.anchorReservedAccountId=anchorReservedAccountId;
         this.anchorCustomerId=anchorCustomerId; this.accountName=accountName; this.accountNumber=accountNumber;
@@ -58,7 +60,7 @@ public class ReservedAccount extends AggregateRoot<Long> {
         this.failureReason=failureReason; this.createdAt=createdAt; this.activatedAt=activatedAt; this.updatedAt=updatedAt;
     }
 
-    public static ReservedAccount request(Long id, Long orgId, ReservedAccountOwnerType ownerType,
+    public static ReservedAccount request(Long id, Long orgId, ApiEnvironment environment, ReservedAccountOwnerType ownerType,
                                           String ownerReferenceId, Long subAccountId,
                                           String anchorPayoutSubAccountId, String provider,
                                           String requestReference, CurrencyCode currency) {
@@ -67,13 +69,15 @@ public class ReservedAccount extends AggregateRoot<Long> {
         if (anchorPayoutSubAccountId == null || anchorPayoutSubAccountId.isBlank())
             throw new IllegalArgumentException("Organization Anchor payout subaccount is required");
         ZonedDateTime now=ZonedDateTime.now();
-        return new ReservedAccount(id,orgId,ownerType,ownerReferenceId,subAccountId,anchorPayoutSubAccountId,
+        return new ReservedAccount(id,orgId,environment,ownerType,ownerReferenceId,subAccountId,anchorPayoutSubAccountId,
                 provider,requestReference,null,null,null,null,null,null,null,currency,
                 ExternalAccountStatus.REQUESTED,Set.of(),null,now,null,now);
     }
 
     public void markSubmitted(String reservedAccountId, String customerId) { anchorReservedAccountId=reservedAccountId; anchorCustomerId=customerId; status=ExternalAccountStatus.PENDING; touch(); }
     public void activate(ConfirmedBankingDetails d) {
+        if (status == ExternalAccountStatus.ACTIVE) return;
+        if (d == null) throw new IllegalArgumentException("Confirmed banking details are required");
         accountName=d.accountName(); accountNumber=d.accountNumber(); maskedAccountNumber=d.maskedAccountNumber();
         bankName=d.bankName(); bankCode=d.bankCode(); status=ExternalAccountStatus.ACTIVE;
         activatedAt=ZonedDateTime.now(); touch();
@@ -81,7 +85,7 @@ public class ReservedAccount extends AggregateRoot<Long> {
                 UUID.randomUUID().toString(), id, ZonedDateTime.now(), CorrelationId.getOrCreate(),
                 new ReservedAccountActivatedEvent.Payload(id, organizationId, ownerType.name(), ownerReferenceId,
                         businessSubAccountId, anchorReservedAccountId, accountName, maskedAccountNumber,
-                        bankName, currency.name(), activatedAt)));
+                        bankName, environment.name(), currency.name(), activatedAt)));
     }
     public void restrict(BankingRestrictionType reason) { activeRestrictions.add(reason); status=ExternalAccountStatus.SUSPENDED; touch(); }
     public void removeRestriction(BankingRestrictionType reason) { activeRestrictions.remove(reason); if(activeRestrictions.isEmpty()) status=ExternalAccountStatus.ACTIVE; touch(); }

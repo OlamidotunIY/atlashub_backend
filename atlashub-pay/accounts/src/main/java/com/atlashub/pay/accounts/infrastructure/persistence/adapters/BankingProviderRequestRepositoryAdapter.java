@@ -29,8 +29,8 @@ public class BankingProviderRequestRepositoryAdapter
     }
 
     @Override protected String getSequenceName() { return "banking_provider_request_seq"; }
-    @Override public Optional<BankingProviderRequest> findByRequestReference(String requestReference) {
-        return repository.findByRequestReference(requestReference).map(mapper::toDomain);
+    @Override public Optional<BankingProviderRequest> findByRequestReferenceAndApiEnvironment(String requestReference, String apiEnvironment) {
+        return repository.findByRequestReferenceAndApiEnvironment(requestReference, apiEnvironment).map(mapper::toDomain);
     }
     @Override public List<BankingProviderRequest> findPending(int limit) {
         return repository.findByStatusOrderByCreatedAt(RequestStatus.PENDING, PageRequest.of(0, limit))

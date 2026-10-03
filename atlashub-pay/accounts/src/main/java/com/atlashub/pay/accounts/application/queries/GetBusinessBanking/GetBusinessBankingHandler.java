@@ -11,6 +11,7 @@ import com.atlashub.pay.accounts.domain.repositories.OrganizationBankingProfileR
 import com.atlashub.shared.application.usecase.Query;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Component;
+import com.atlashub.shared.application.security.ApiEnvironment;
 
 @Component
 public class GetBusinessBankingHandler extends Query<GetBusinessBankingQuery, BusinessBankingResult> {
@@ -28,11 +29,12 @@ public class GetBusinessBankingHandler extends Query<GetBusinessBankingQuery, Bu
     @Override
     @PreAuthorize("hasAuthority('pay:accounts:read')")
     public BusinessBankingResult execute(GetBusinessBankingQuery query) {
-        OrganizationBankingProfile profile = profileRepository.findByOrganizationId(query.organizationId())
+        ApiEnvironment environment = ApiEnvironment.parse(query.environment());
+        OrganizationBankingProfile profile = profileRepository.findByOrganizationIdAndEnvironment(query.organizationId(), environment)
                 .orElseThrow(() -> new IllegalArgumentException("Banking profile not found"));
         return new BusinessBankingResult(profile.getId(), profile.getStatus().name(),
-                depositRepository.findByOrganizationId(query.organizationId()).map(this::deposit).orElse(null),
-                subAccountRepository.findByOrganizationId(query.organizationId()).map(this::subAccount).orElse(null));
+                depositRepository.findByOrganizationIdAndEnvironment(query.organizationId(), environment).map(this::deposit).orElse(null),
+                subAccountRepository.findByOrganizationIdAndEnvironment(query.organizationId(), environment).map(this::subAccount).orElse(null));
     }
 
     private ExternalAccountResult deposit(BusinessDepositAccount value) {

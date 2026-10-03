@@ -3,6 +3,7 @@ package com.atlashub.pay.accounts.infrastructure.external;
 import com.atlashub.anchor.client.AnchorClientRegistry;
 import com.atlashub.anchor.client.AnchorClients;
 import com.atlashub.anchor.configuration.AnchorEnvironment;
+import com.atlashub.anchor.configuration.AnchorProperties;
 import com.atlashub.anchor.dto.common.AnchorBank;
 import com.atlashub.anchor.dto.common.AnchorRelationship;
 import com.atlashub.anchor.dto.common.AnchorRequest;
@@ -30,13 +31,38 @@ import java.util.List;
 @Component
 public class AnchorBankingAdapter implements AnchorBankingPort {
     private final ObjectProvider<AnchorClientRegistry> clientRegistryProvider;
+    private final ObjectProvider<AnchorProperties> propertiesProvider;
 
-    public AnchorBankingAdapter(ObjectProvider<AnchorClientRegistry> clientRegistryProvider) {
+    public AnchorBankingAdapter(ObjectProvider<AnchorClientRegistry> clientRegistryProvider,
+                                ObjectProvider<AnchorProperties> propertiesProvider) {
         this.clientRegistryProvider = clientRegistryProvider;
+        this.propertiesProvider = propertiesProvider;
+    }
+
+    @Override
+    public boolean supports(String capability, String apiEnvironment) {
+        AnchorProperties.ProgrammeCapabilities capabilities = capabilities(apiEnvironment);
+        return switch (capability.toUpperCase()) {
+            case "DEPOSIT_ACCOUNT" -> capabilities.depositAccounts();
+            case "SUB_ACCOUNT" -> capabilities.subAccounts();
+            case "RESERVED_ACCOUNT" -> capabilities.reservedAccounts();
+            case "TRANSFER" -> capabilities.transfers();
+            default -> false;
+        };
+    }
+
+    @Override
+    public String requireFboAccountId(String apiEnvironment) {
+        String accountId = capabilities(apiEnvironment).fboAccountId();
+        if (accountId == null || accountId.isBlank()) {
+            throw new IllegalStateException("Anchor FBO account is unavailable in " + apiEnvironment.toUpperCase());
+        }
+        return accountId;
     }
 
     @Override
     public DepositAccountResult createBusinessDepositAccount(String customerId, String productName, String requestReference, String apiEnvironment) {
+        requireCapability("DEPOSIT_ACCOUNT", apiEnvironment);
         DepositAccountResource resource = requireData(clients(apiEnvironment).depositAccounts().createDepositAccount(new AnchorRequest<>(
                 new CreateDepositAccountData(
                         new CreateDepositAccountData.Attributes(productName),
@@ -54,6 +80,7 @@ public class AnchorBankingAdapter implements AnchorBankingPort {
             String requestReference,
             String apiEnvironment
     ) {
+        requireCapability("SUB_ACCOUNT", apiEnvironment);
         SubAccountResource resource = requireData(clients(apiEnvironment).subAccounts().createSubAccount(new AnchorRequest<>(
                 new CreateSubAccountData(
                         new CreateSubAccountData.Attributes(createVirtualNuban),
@@ -74,6 +101,7 @@ public class AnchorBankingAdapter implements AnchorBankingPort {
             String requestReference,
             String apiEnvironment
     ) {
+        requireCapability("RESERVED_ACCOUNT", apiEnvironment);
         ReservedAccountResource resource = requireData(clients(apiEnvironment).reservedAccounts().createReservedAccount(new AnchorRequest<>(
                 new CreateReservedAccountData(
                         new CreateReservedAccountData.Attributes(
@@ -132,6 +160,20 @@ public class AnchorBankingAdapter implements AnchorBankingPort {
             throw new IllegalStateException("Anchor integration is disabled or not configured");
         }
         return registry.forEnvironment(toAnchorEnvironment(apiEnvironment));
+    }
+
+    private AnchorProperties.ProgrammeCapabilities capabilities(String apiEnvironment) {
+        AnchorProperties properties = propertiesProvider.getIfAvailable();
+        if (properties == null) {
+            throw new IllegalStateException("Anchor integration is disabled or not configured");
+        }
+        return properties.forEnvironment(toAnchorEnvironment(apiEnvironment)).capabilities();
+    }
+
+    private void requireCapability(String capability, String apiEnvironment) {
+        if (!supports(capability, apiEnvironment)) {
+            throw new IllegalStateException("Anchor " + capability + " is unavailable in " + apiEnvironment.toUpperCase());
+        }
     }
 
     private AnchorEnvironment toAnchorEnvironment(String apiEnvironment) {

@@ -10,7 +10,7 @@ public record ReservedAccountActivatedEvent(
     public record Payload(Long reservedAccountId, Long organizationId, String ownerType,
                           String ownerReferenceId, Long businessSubAccountId,
                           String anchorReservedAccountId, String accountName,
-                          String maskedAccountNumber, String bankName, String currency,
+                          String maskedAccountNumber, String bankName, String environment, String currency,
                           ZonedDateTime activatedAt) {
     }
 }

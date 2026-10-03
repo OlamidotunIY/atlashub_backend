@@ -4,8 +4,9 @@ import com.atlashub.pay.accounts.domain.entities.BusinessDepositAccount;
 import com.atlashub.shared.domain.repository.Repository;
 
 import java.util.Optional;
+import com.atlashub.shared.application.security.ApiEnvironment;
 
 public interface BusinessDepositAccountRepository extends Repository<BusinessDepositAccount> {
-    Optional<BusinessDepositAccount> findByOrganizationId(Long organizationId);
-    Optional<BusinessDepositAccount> findByAnchorAccountId(String anchorAccountId);
+    Optional<BusinessDepositAccount> findByOrganizationIdAndEnvironment(Long organizationId, ApiEnvironment environment);
+    Optional<BusinessDepositAccount> findByAnchorAccountIdAndEnvironment(String anchorAccountId, ApiEnvironment environment);
 }

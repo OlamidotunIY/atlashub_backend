@@ -16,6 +16,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
+import com.atlashub.shared.application.security.ApiEnvironment;
 
 @Component
 public class ReservedAccountRepositoryAdapter extends JpaBaseRepository<ReservedAccount, ReservedAccountJpa>
@@ -30,25 +31,27 @@ public class ReservedAccountRepositoryAdapter extends JpaBaseRepository<Reserved
     }
 
     @Override protected String getSequenceName() { return "reserved_account_seq"; }
-    @Override public Optional<ReservedAccount> findByOrganizationIdAndId(Long organizationId, Long id) {
-        return repository.findByOrganizationIdAndId(organizationId, id).map(mapper::toDomain);
+    @Override public Optional<ReservedAccount> findByOrganizationIdAndEnvironmentAndId(Long organizationId, ApiEnvironment environment, Long id) {
+        return repository.findByOrganizationIdAndEnvironmentAndId(organizationId, environment, id).map(mapper::toDomain);
     }
-    @Override public Optional<ReservedAccount> findByRequestReference(String requestReference) {
-        return repository.findByRequestReference(requestReference).map(mapper::toDomain);
+    @Override public Optional<ReservedAccount> findByRequestReferenceAndEnvironment(String requestReference, ApiEnvironment environment) {
+        return repository.findByRequestReferenceAndEnvironment(requestReference, environment).map(mapper::toDomain);
     }
-    @Override public Optional<ReservedAccount> findByAnchorReservedAccountId(String anchorReservedAccountId) {
-        return repository.findByAnchorReservedAccountId(anchorReservedAccountId).map(mapper::toDomain);
+    @Override public Optional<ReservedAccount> findByAnchorReservedAccountIdAndEnvironment(String anchorReservedAccountId, ApiEnvironment environment) {
+        return repository.findByAnchorReservedAccountIdAndEnvironment(anchorReservedAccountId, environment).map(mapper::toDomain);
     }
-    @Override public Optional<ReservedAccount> findActiveByOwner(Long organizationId,
+    @Override public Optional<ReservedAccount> findActiveByOwner(Long organizationId, ApiEnvironment environment,
             ReservedAccountOwnerType ownerType, String ownerReferenceId, String provider) {
-        return repository.findFirstByOrganizationIdAndOwnerTypeAndOwnerReferenceIdAndProviderAndStatusNot(
-                        organizationId, ownerType, ownerReferenceId, provider, ExternalAccountStatus.CLOSED)
+        return repository.findFirstByOrganizationIdAndEnvironmentAndOwnerTypeAndOwnerReferenceIdAndProviderAndStatusNot(
+                        organizationId, environment, ownerType, ownerReferenceId, provider, ExternalAccountStatus.CLOSED)
                 .map(mapper::toDomain);
     }
-    @Override public Page<ReservedAccount> search(Long organizationId, ReservedAccountOwnerType ownerType,
+    @Override public Page<ReservedAccount> search(Long organizationId, ApiEnvironment environment, ReservedAccountOwnerType ownerType,
             String ownerReferenceId, ExternalAccountStatus status, Pageable pageable) {
         Specification<ReservedAccountJpa> specification = (root, query, builder) ->
                 builder.equal(root.get("organizationId"), organizationId);
+        specification = specification.and((root, query, builder) ->
+                builder.equal(root.get("environment"), environment));
         if (ownerType != null) specification = specification.and((root, query, builder) ->
                 builder.equal(root.get("ownerType"), ownerType));
         if (ownerReferenceId != null) specification = specification.and((root, query, builder) ->

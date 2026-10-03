@@ -23,7 +23,7 @@ public class BusinessBankingController {
     @GetMapping
     public ResponseEntity<ApiResponse<BusinessBankingResult>> get(
             @AuthenticationPrincipal AuthenticatedPrincipal principal) {
-        return ok(handler.execute(new GetBusinessBankingQuery(principal.activeOrganizationId())));
+        return ok(handler.execute(new GetBusinessBankingQuery(principal.activeOrganizationId(), principal.environment())));
     }
 
     private <T> ResponseEntity<ApiResponse<T>> ok(T value) {

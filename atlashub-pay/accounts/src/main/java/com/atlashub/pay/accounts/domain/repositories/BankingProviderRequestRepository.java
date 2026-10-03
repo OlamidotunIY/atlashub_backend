@@ -7,6 +7,6 @@ import java.util.List;
 import java.util.Optional;
 
 public interface BankingProviderRequestRepository extends Repository<BankingProviderRequest> {
-    Optional<BankingProviderRequest> findByRequestReference(String requestReference);
+    Optional<BankingProviderRequest> findByRequestReferenceAndApiEnvironment(String requestReference, String apiEnvironment);
     List<BankingProviderRequest> findPending(int limit);
 }

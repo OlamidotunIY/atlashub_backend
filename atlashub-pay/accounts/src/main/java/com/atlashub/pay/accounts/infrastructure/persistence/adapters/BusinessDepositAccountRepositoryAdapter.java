@@ -11,6 +11,7 @@ import com.atlashub.shared.infrastructure.service.DomainSequenceGenerator;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
+import com.atlashub.shared.application.security.ApiEnvironment;
 
 @Component
 public class BusinessDepositAccountRepositoryAdapter
@@ -26,10 +27,10 @@ public class BusinessDepositAccountRepositoryAdapter
     }
 
     @Override protected String getSequenceName() { return "business_deposit_account_seq"; }
-    @Override public Optional<BusinessDepositAccount> findByOrganizationId(Long organizationId) {
-        return repository.findByOrganizationId(organizationId).map(mapper::toDomain);
+    @Override public Optional<BusinessDepositAccount> findByOrganizationIdAndEnvironment(Long organizationId, ApiEnvironment environment) {
+        return repository.findByOrganizationIdAndEnvironment(organizationId, environment).map(mapper::toDomain);
     }
-    @Override public Optional<BusinessDepositAccount> findByAnchorAccountId(String anchorAccountId) {
-        return repository.findByAnchorAccountId(anchorAccountId).map(mapper::toDomain);
+    @Override public Optional<BusinessDepositAccount> findByAnchorAccountIdAndEnvironment(String anchorAccountId, ApiEnvironment environment) {
+        return repository.findByAnchorAccountIdAndEnvironment(anchorAccountId, environment).map(mapper::toDomain);
     }
 }

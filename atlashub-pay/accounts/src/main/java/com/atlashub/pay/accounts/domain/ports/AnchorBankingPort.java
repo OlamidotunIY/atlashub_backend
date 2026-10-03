@@ -1,6 +1,9 @@
 package com.atlashub.pay.accounts.domain.ports;
 
 public interface AnchorBankingPort {
+    boolean supports(String capability, String apiEnvironment);
+    String requireFboAccountId(String apiEnvironment);
+
     DepositAccountResult createBusinessDepositAccount(
             String anchorBusinessCustomerId, String productName, String requestReference, String apiEnvironment);
 

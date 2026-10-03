@@ -7,12 +7,16 @@ import com.atlashub.anchor.client.AnchorReservedAccountClient;
 import com.atlashub.anchor.client.AnchorSubAccountClient;
 import com.atlashub.anchor.client.AnchorWebhookClient;
 import com.atlashub.anchor.configuration.AnchorEnvironment;
+import com.atlashub.anchor.configuration.AnchorProperties;
 import com.atlashub.anchor.dto.common.AnchorRequest;
 import com.atlashub.anchor.dto.common.AnchorResponse;
 import com.atlashub.anchor.dto.deposit.CreateDepositAccountData;
 import com.atlashub.anchor.dto.deposit.DepositAccountResource;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.ObjectProvider;
+
+import java.net.URI;
+import java.time.Duration;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -40,7 +44,7 @@ class AnchorBankingAdapterTest {
                         new DepositAccountResource.Attributes(null, null, "AtlasHub", false, "NGN", "1234567890", "CURRENT", "PENDING"),
                         null)
         ));
-        AnchorBankingAdapter adapter = new AnchorBankingAdapter(provider);
+        AnchorBankingAdapter adapter = new AnchorBankingAdapter(provider, provider(properties()));
 
         var result = adapter.createBusinessDepositAccount("customer-1", "CURRENT", "atlas-reference", "TEST");
 
@@ -54,16 +58,28 @@ class AnchorBankingAdapterTest {
 
     @Test
     void fails_explicitly_when_anchor_is_not_configured() {
-        AnchorBankingAdapter adapter = new AnchorBankingAdapter(provider(null));
+        AnchorBankingAdapter adapter = new AnchorBankingAdapter(provider(null), provider(properties()));
 
         assertThrows(IllegalStateException.class,
                 () -> adapter.createBusinessDepositAccount("customer-1", "CURRENT", "atlas-reference", "TEST"));
     }
 
-    private ObjectProvider<AnchorClientRegistry> provider(AnchorClientRegistry registry) {
+    private <T> ObjectProvider<T> provider(T value) {
         @SuppressWarnings("unchecked")
-        ObjectProvider<AnchorClientRegistry> provider = mock(ObjectProvider.class);
-        when(provider.getIfAvailable()).thenReturn(registry);
+        ObjectProvider<T> provider = mock(ObjectProvider.class);
+        when(provider.getIfAvailable()).thenReturn(value);
         return provider;
+    }
+
+    private AnchorProperties properties() {
+        AnchorProperties.WebhookSubscriptions subscriptions = new AnchorProperties.WebhookSubscriptions(
+                new AnchorProperties.WebhookSubscriptionProperties(URI.create("https://api.atlashub.test/anchor/compliance"), "token"),
+                new AnchorProperties.WebhookSubscriptionProperties(URI.create("https://api.atlashub.test/anchor/pay-accounts"), "token"));
+        AnchorProperties.ProgrammeCapabilities capabilities =
+                new AnchorProperties.ProgrammeCapabilities(true, true, true, true, "fbo-account");
+        AnchorProperties.EnvironmentProperties environment = new AnchorProperties.EnvironmentProperties(
+                URI.create("https://api.sandbox.getanchor.co"), "key", subscriptions, capabilities,
+                Duration.ofSeconds(2), Duration.ofSeconds(10));
+        return new AnchorProperties(Duration.ofSeconds(5), environment, environment);
     }
 }

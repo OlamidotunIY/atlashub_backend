@@ -31,6 +31,9 @@ public class OrganizationComplianceApprovedListener extends BaseKafkaEventListen
 
     @KafkaListener(topics = "compliance-events", groupId = GROUP_ID)
     public void listen(String message) {
-        processEventIfMatches(message, "OrganizationComplianceApprovedEvent", OrganizationComplianceApprovedEvent.class, log, GROUP_ID, error -> error instanceof TimeoutException, event -> handler.execute(new ProvisionOrganizationBankingCommand(event.payload().organizationId(), event.payload().anchorBusinessCustomerId())));
+        processEventIfMatches(message, "OrganizationComplianceApprovedEvent", OrganizationComplianceApprovedEvent.class, log, GROUP_ID, error -> error instanceof TimeoutException, event -> handler.execute(new ProvisionOrganizationBankingCommand(
+                event.payload().organizationId(),
+                event.payload().anchorBusinessCustomerId(),
+                event.payload().environment())));
     }
 }

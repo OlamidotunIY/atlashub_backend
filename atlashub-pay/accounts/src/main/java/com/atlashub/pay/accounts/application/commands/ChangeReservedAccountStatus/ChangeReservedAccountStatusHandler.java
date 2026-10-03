@@ -6,6 +6,7 @@ import com.atlashub.pay.accounts.domain.valueobject.BankingRestrictionType;
 import com.atlashub.shared.application.usecase.Command;
 import org.springframework.stereotype.Component;
 import org.springframework.security.access.prepost.PreAuthorize;
+import com.atlashub.shared.application.security.ApiEnvironment;
 
 @Component
 public class ChangeReservedAccountStatusHandler extends Command<ChangeReservedAccountStatusCommand, Void> {
@@ -20,8 +21,8 @@ public class ChangeReservedAccountStatusHandler extends Command<ChangeReservedAc
             + " or (#command.action().name() == 'REACTIVATE' and hasAuthority('pay:accounts:reactivate'))"
             + " or (#command.action().name() == 'CLOSE' and hasAuthority('pay:accounts:close'))")
     public Void execute(ChangeReservedAccountStatusCommand command) {
-        ReservedAccount account = repository.findByOrganizationIdAndId(
-                        command.organizationId(), command.reservedAccountId())
+        ReservedAccount account = repository.findByOrganizationIdAndEnvironmentAndId(
+                        command.organizationId(), ApiEnvironment.parse(command.environment()), command.reservedAccountId())
                 .orElseThrow(() -> new IllegalArgumentException("Reserved account not found"));
         switch (command.action()) {
             case SUSPEND -> account.restrict(BankingRestrictionType.MANUAL);

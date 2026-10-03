@@ -10,9 +10,10 @@ import com.atlashub.pay.accounts.domain.repositories.BankingProviderRequestRepos
 import com.atlashub.pay.accounts.domain.repositories.BusinessSubAccountRepository;
 import com.atlashub.pay.accounts.domain.repositories.OrganizationBankingProfileRepository;
 import com.atlashub.pay.accounts.domain.repositories.ReservedAccountRepository;
+import com.atlashub.pay.accounts.domain.ports.AnchorBankingPort;
+import com.atlashub.shared.application.security.ApiEnvironment;
 import com.atlashub.shared.application.usecase.Command;
 import com.atlashub.shared.domain.valueobject.CurrencyCode;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -22,19 +23,19 @@ public class ApplyAnchorAccountStatusHandler extends Command<ApplyAnchorAccountS
     private final ReservedAccountRepository reservedRepository;
     private final OrganizationBankingProfileRepository profileRepository;
     private final BankingProviderRequestRepository providerRequestRepository;
-    private final String parentFboAccountId;
+    private final AnchorBankingPort anchorBankingPort;
 
     public ApplyAnchorAccountStatusHandler(BusinessDepositAccountRepository depositRepository,
             BusinessSubAccountRepository subAccountRepository, ReservedAccountRepository reservedRepository,
             OrganizationBankingProfileRepository profileRepository,
             BankingProviderRequestRepository providerRequestRepository,
-            @Value("${anchor.fbo-account-id:}") String parentFboAccountId) {
+            AnchorBankingPort anchorBankingPort) {
         this.depositRepository = depositRepository;
         this.subAccountRepository = subAccountRepository;
         this.reservedRepository = reservedRepository;
         this.profileRepository = profileRepository;
         this.providerRequestRepository = providerRequestRepository;
-        this.parentFboAccountId = parentFboAccountId;
+        this.anchorBankingPort = anchorBankingPort;
     }
 
     @Override
@@ -49,7 +50,8 @@ public class ApplyAnchorAccountStatusHandler extends Command<ApplyAnchorAccountS
     }
 
     private void applyDeposit(ApplyAnchorAccountStatusCommand command) {
-        BusinessDepositAccount deposit = depositRepository.findByAnchorAccountId(command.anchorResourceId())
+        ApiEnvironment environment = ApiEnvironment.parse(command.environment());
+        BusinessDepositAccount deposit = depositRepository.findByAnchorAccountIdAndEnvironment(command.anchorResourceId(), environment)
                 .orElseThrow(() -> new IllegalArgumentException("Deposit account not found"));
         if ("FAILED".equalsIgnoreCase(command.status())) {
             deposit.fail(command.failureReason());
@@ -60,9 +62,10 @@ public class ApplyAnchorAccountStatusHandler extends Command<ApplyAnchorAccountS
         depositRepository.save(deposit);
         OrganizationBankingProfile profile = profileRepository.findById(deposit.getBankingProfileId()).orElseThrow();
         if (profile.getBusinessSubAccountId() != null) return;
-        if (parentFboAccountId.isBlank()) throw new IllegalStateException("Anchor FBO account is not configured");
+        if (!anchorBankingPort.supports("SUB_ACCOUNT", command.environment())) return;
+        String parentFboAccountId = anchorBankingPort.requireFboAccountId(command.environment());
         BusinessSubAccount subAccount = BusinessSubAccount.request(
-                subAccountRepository.nextIdentity(), deposit.getOrganizationId(), profile.getId(),
+                subAccountRepository.nextIdentity(), deposit.getOrganizationId(), environment, profile.getId(),
                 deposit.getAnchorBusinessCustomerId(), parentFboAccountId, CurrencyCode.NGN);
         subAccountRepository.save(subAccount);
         profile.linkSubAccount(subAccount.getId());
@@ -70,13 +73,19 @@ public class ApplyAnchorAccountStatusHandler extends Command<ApplyAnchorAccountS
         String reference = "org-banking-subaccount-" + deposit.getOrganizationId();
         providerRequestRepository.save(BankingProviderRequest.create(
                 providerRequestRepository.nextIdentity(), BankingProviderRequest.RequestType.SUB_ACCOUNT,
-                subAccount.getId(), reference, "LIVE", deposit.getAnchorBusinessCustomerId(), parentFboAccountId,
+                subAccount.getId(), reference + "-" + environment.name().toLowerCase(), environment.name(), deposit.getAnchorBusinessCustomerId(), parentFboAccountId,
                 null, null, null, null, null, null));
     }
 
     private void applySubAccount(ApplyAnchorAccountStatusCommand command) {
-        BusinessSubAccount subAccount = subAccountRepository.findByAnchorSubAccountId(command.anchorResourceId())
+        ApiEnvironment environment = ApiEnvironment.parse(command.environment());
+        BusinessSubAccount subAccount = subAccountRepository.findByAnchorSubAccountIdAndEnvironment(command.anchorResourceId(), environment)
                 .orElseThrow(() -> new IllegalArgumentException("Subaccount not found"));
+        if ("FAILED".equalsIgnoreCase(command.status())) {
+            subAccount.fail(command.failureReason());
+            subAccountRepository.save(subAccount);
+            return;
+        }
         subAccount.activate(command.details());
         subAccountRepository.save(subAccount);
         OrganizationBankingProfile profile = profileRepository.findById(subAccount.getBankingProfileId()).orElseThrow();
@@ -85,7 +94,8 @@ public class ApplyAnchorAccountStatusHandler extends Command<ApplyAnchorAccountS
     }
 
     private void applyReserved(ApplyAnchorAccountStatusCommand command) {
-        ReservedAccount account = reservedRepository.findByAnchorReservedAccountId(command.anchorResourceId())
+        ApiEnvironment environment = ApiEnvironment.parse(command.environment());
+        ReservedAccount account = reservedRepository.findByAnchorReservedAccountIdAndEnvironment(command.anchorResourceId(), environment)
                 .orElseThrow(() -> new IllegalArgumentException("Reserved account not found"));
         if ("FAILED".equalsIgnoreCase(command.status())) account.fail(command.failureReason());
         else account.activate(command.details());

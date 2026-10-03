@@ -11,6 +11,7 @@ import com.atlashub.shared.infrastructure.service.DomainSequenceGenerator;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
+import com.atlashub.shared.application.security.ApiEnvironment;
 
 @Component
 public class BusinessSubAccountRepositoryAdapter
@@ -26,10 +27,10 @@ public class BusinessSubAccountRepositoryAdapter
     }
 
     @Override protected String getSequenceName() { return "business_sub_account_seq"; }
-    @Override public Optional<BusinessSubAccount> findByOrganizationId(Long organizationId) {
-        return repository.findByOrganizationId(organizationId).map(mapper::toDomain);
+    @Override public Optional<BusinessSubAccount> findByOrganizationIdAndEnvironment(Long organizationId, ApiEnvironment environment) {
+        return repository.findByOrganizationIdAndEnvironment(organizationId, environment).map(mapper::toDomain);
     }
-    @Override public Optional<BusinessSubAccount> findByAnchorSubAccountId(String anchorSubAccountId) {
-        return repository.findByAnchorSubAccountId(anchorSubAccountId).map(mapper::toDomain);
+    @Override public Optional<BusinessSubAccount> findByAnchorSubAccountIdAndEnvironment(String anchorSubAccountId, ApiEnvironment environment) {
+        return repository.findByAnchorSubAccountIdAndEnvironment(anchorSubAccountId, environment).map(mapper::toDomain);
     }
 }

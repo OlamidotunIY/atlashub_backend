@@ -10,6 +10,6 @@ import java.util.Optional;
 
 public interface SpringDataBankingProviderRequestRepository
         extends JpaRepository<BankingProviderRequestJpa, Long> {
-    Optional<BankingProviderRequestJpa> findByRequestReference(String requestReference);
+    Optional<BankingProviderRequestJpa> findByRequestReferenceAndApiEnvironment(String requestReference, String apiEnvironment);
     List<BankingProviderRequestJpa> findByStatusOrderByCreatedAt(RequestStatus status, Pageable pageable);
 }

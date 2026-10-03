@@ -21,7 +21,7 @@ import java.time.ZonedDateTime;
 @Entity
 @Table(name = "pay_banking_provider_requests", indexes = {
         @Index(name = "Idx_pay_provider_request_status", columnList = "status,created_at"),
-        @Index(name = "Idx_pay_provider_request_reference", columnList = "request_reference", unique = true)
+        @Index(name = "Idx_pay_provider_request_reference_env", columnList = "request_reference,api_environment", unique = true)
 })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -30,9 +30,8 @@ public class BankingProviderRequestJpa implements BaseJpaEntity {
     @Id private Long id;
     @Enumerated(EnumType.STRING) @Column(name = "request_type", nullable = false) private RequestType requestType;
     @Column(name = "aggregate_id", nullable = false) private Long aggregateId;
-    @Column(name = "request_reference", nullable = false, unique = true) private String requestReference;
-    // Nullable only for rows created before this field existed; new domain requests always validate it.
-    @Column(name = "api_environment") private String apiEnvironment;
+    @Column(name = "request_reference", nullable = false) private String requestReference;
+    @Column(name = "api_environment", nullable = false) private String apiEnvironment;
     @Column(name = "anchor_customer_id") private String anchorCustomerId;
     @Column(name = "parent_or_payout_account_id") private String parentOrPayoutAccountId;
     private String provider;

@@ -15,6 +15,7 @@ import com.atlashub.shared.application.usecase.Command;
 import com.atlashub.shared.domain.valueobject.CurrencyCode;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Component;
+import com.atlashub.shared.application.security.ApiEnvironment;
 
 @Component
 public class IssueReservedAccountHandler extends Command<IssueReservedAccountCommand, Long> {
@@ -37,14 +38,15 @@ public class IssueReservedAccountHandler extends Command<IssueReservedAccountCom
     @PreAuthorize("hasAuthority('pay:accounts:create')")
     public Long execute(IssueReservedAccountCommand command) {
         ReservedAccountOwnerType ownerType = ReservedAccountOwnerType.valueOf(command.ownerType().toUpperCase());
-        ReservedAccount existing = reservedAccountRepository.findByRequestReference(command.idempotencyKey())
+        ApiEnvironment environment = ApiEnvironment.parse(command.apiEnvironment());
+        ReservedAccount existing = reservedAccountRepository.findByRequestReferenceAndEnvironment(command.idempotencyKey(), environment)
                 .orElse(null);
         if (existing != null) return existing.getId();
         if (reservedAccountRepository.findActiveByOwner(
-                command.organizationId(), ownerType, command.ownerReferenceId(), command.provider()).isPresent()) {
+                command.organizationId(), environment, ownerType, command.ownerReferenceId(), command.provider()).isPresent()) {
             throw new IllegalStateException("An active reserved account already exists for this owner and provider");
         }
-        OrganizationBankingProfile profile = profileRepository.findByOrganizationId(command.organizationId())
+        OrganizationBankingProfile profile = profileRepository.findByOrganizationIdAndEnvironment(command.organizationId(), environment)
                 .orElseThrow(() -> new IllegalStateException("Organization banking is not provisioned"));
         if (profile.getStatus() != BankingProfileStatus.ACTIVE || !profile.getActiveRestrictions().isEmpty()) {
             throw new IllegalStateException("Organization banking is not active");
@@ -53,7 +55,7 @@ public class IssueReservedAccountHandler extends Command<IssueReservedAccountCom
                 .filter(value -> value.getStatus() == ExternalAccountStatus.ACTIVE)
                 .orElseThrow(() -> new IllegalStateException("Organization subaccount is not active"));
         ReservedAccount account = ReservedAccount.request(
-                reservedAccountRepository.nextIdentity(), command.organizationId(), ownerType,
+                reservedAccountRepository.nextIdentity(), command.organizationId(), environment, ownerType,
                 command.ownerReferenceId(), subAccount.getId(), subAccount.getAnchorSubAccountId(),
                 command.provider(), command.idempotencyKey(), CurrencyCode.NGN);
         reservedAccountRepository.save(account);

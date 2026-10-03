@@ -12,6 +12,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Component;
+import com.atlashub.shared.application.security.ApiEnvironment;
 
 @Component
 public class ListReservedAccountsHandler
@@ -30,7 +31,7 @@ public class ListReservedAccountsHandler
         ExternalAccountStatus status = query.status() == null ? null
                 : ExternalAccountStatus.valueOf(query.status().toUpperCase());
         Page<ReservedAccount> page = repository.search(
-                query.organizationId(), ownerType, query.ownerReferenceId(), status,
+                query.organizationId(), ApiEnvironment.parse(query.environment()), ownerType, query.ownerReferenceId(), status,
                 PageRequest.of(query.page(), query.size()));
         return new PageResult<>(page.getContent().stream().map(GetReservedAccountHandler::map).toList(),
                 page.getNumber(), page.getSize(), page.getTotalElements(), page.getTotalPages());

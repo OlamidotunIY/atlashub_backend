@@ -5,6 +5,7 @@ import com.atlashub.pay.accounts.domain.valueobject.ExternalAccountStatus;
 import com.atlashub.shared.domain.entities.AggregateRoot;
 import com.atlashub.shared.domain.valueobject.CurrencyCode;
 import lombok.Getter;
+import com.atlashub.shared.application.security.ApiEnvironment;
 
 import java.time.ZonedDateTime;
 
@@ -12,6 +13,7 @@ import java.time.ZonedDateTime;
 public class BusinessDepositAccount extends AggregateRoot<Long> {
     private final Long id;
     private final Long organizationId;
+    private final ApiEnvironment environment;
     private final Long bankingProfileId;
     private final String anchorBusinessCustomerId;
     private String anchorAccountId;
@@ -28,13 +30,13 @@ public class BusinessDepositAccount extends AggregateRoot<Long> {
     private ZonedDateTime activatedAt;
     private ZonedDateTime updatedAt;
 
-    public BusinessDepositAccount(Long id, Long organizationId, Long bankingProfileId,
+    public BusinessDepositAccount(Long id, Long organizationId, ApiEnvironment environment, Long bankingProfileId,
                                   String anchorBusinessCustomerId, String anchorAccountId,
                                   String accountName, String accountNumber, String maskedAccountNumber,
                                   String bankName, String bankCode, CurrencyCode currency, boolean frozen,
                                   ExternalAccountStatus status, String failureReason, ZonedDateTime createdAt,
                                   ZonedDateTime activatedAt, ZonedDateTime updatedAt) {
-        this.id=id; this.organizationId=organizationId; this.bankingProfileId=bankingProfileId;
+        this.id=id; this.organizationId=organizationId; this.environment=environment; this.bankingProfileId=bankingProfileId;
         this.anchorBusinessCustomerId=anchorBusinessCustomerId; this.anchorAccountId=anchorAccountId;
         this.accountName=accountName; this.accountNumber=accountNumber; this.maskedAccountNumber=maskedAccountNumber;
         this.bankName=bankName; this.bankCode=bankCode; this.currency=currency; this.frozen=frozen;
@@ -42,10 +44,10 @@ public class BusinessDepositAccount extends AggregateRoot<Long> {
         this.activatedAt=activatedAt; this.updatedAt=updatedAt;
     }
 
-    public static BusinessDepositAccount request(Long id, Long organizationId, Long profileId,
+    public static BusinessDepositAccount request(Long id, Long organizationId, ApiEnvironment environment, Long profileId,
                                                  String anchorCustomerId, CurrencyCode currency) {
         ZonedDateTime now=ZonedDateTime.now();
-        return new BusinessDepositAccount(id, organizationId, profileId, anchorCustomerId, null,
+        return new BusinessDepositAccount(id, organizationId, environment, profileId, anchorCustomerId, null,
                 null,null,null,null,null,currency,false,ExternalAccountStatus.REQUESTED,null,now,null,now);
     }
 
@@ -55,8 +57,10 @@ public class BusinessDepositAccount extends AggregateRoot<Long> {
     }
 
     public void activate(ConfirmedBankingDetails details) {
+        if (status == ExternalAccountStatus.ACTIVE) return;
         if (status != ExternalAccountStatus.PENDING && status != ExternalAccountStatus.REQUESTED)
             throw new IllegalStateException("Only requested or pending accounts can be activated");
+        if (details == null) throw new IllegalArgumentException("Confirmed banking details are required");
         apply(details); status=ExternalAccountStatus.ACTIVE; activatedAt=ZonedDateTime.now(); touch();
     }
 

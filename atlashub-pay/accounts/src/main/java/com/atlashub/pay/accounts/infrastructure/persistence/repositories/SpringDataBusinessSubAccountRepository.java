@@ -4,8 +4,9 @@ import com.atlashub.pay.accounts.infrastructure.persistence.entities.BusinessSub
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
+import com.atlashub.shared.application.security.ApiEnvironment;
 
 public interface SpringDataBusinessSubAccountRepository extends JpaRepository<BusinessSubAccountJpa, Long> {
-    Optional<BusinessSubAccountJpa> findByOrganizationId(Long organizationId);
-    Optional<BusinessSubAccountJpa> findByAnchorSubAccountId(String anchorSubAccountId);
+    Optional<BusinessSubAccountJpa> findByOrganizationIdAndEnvironment(Long organizationId, ApiEnvironment environment);
+    Optional<BusinessSubAccountJpa> findByAnchorSubAccountIdAndEnvironment(String anchorSubAccountId, ApiEnvironment environment);
 }
