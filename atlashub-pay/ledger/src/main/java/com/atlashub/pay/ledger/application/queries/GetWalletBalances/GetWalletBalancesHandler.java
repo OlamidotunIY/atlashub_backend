@@ -10,6 +10,7 @@ import com.atlashub.pay.ledger.domain.repositories.LedgerTransactionRepository;
 import com.atlashub.pay.ledger.domain.services.BalanceCalculator;
 import com.atlashub.pay.ledger.domain.valueobject.EntryType;
 import com.atlashub.shared.application.usecase.Query;
+import com.atlashub.shared.application.security.ApiEnvironment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -74,7 +75,8 @@ public class GetWalletBalancesHandler extends Query<GetWalletBalancesQuery, Wall
             BigDecimal balance = snapshot.getBalance().amount();
             ZonedDateTime snapshotDate = snapshot.getSnapshotAt();
 
-            List<LedgerTransaction> transactions = transactionRepository.findByAccountIdAndPostedAtAfter(account.getId(), snapshotDate);
+            List<LedgerTransaction> transactions = transactionRepository.findByAccountIdAndEnvironmentAndPostedAtAfter(
+                    account.getId(), ApiEnvironment.parse(query.environment()), snapshotDate);
 
             balance = balanceCalculator.calculateRunningBalance(
                     account.getId(), account.getNormalBalance(), balance, transactions);

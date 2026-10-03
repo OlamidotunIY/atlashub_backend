@@ -12,13 +12,16 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.ZonedDateTime;
+import com.atlashub.shared.application.security.ApiEnvironment;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 
 @Entity
 @Table(
         name = "ledger_transactions",
         indexes = {
                 @Index(name = "Idx_ledger_tx_org_id", columnList = "organization_id"),
-                @Index(name = "Idx_ledger_tx_ref", columnList = "reference", unique = true),
+                @Index(name = "Idx_ledger_tx_ref_env", columnList = "reference,api_environment", unique = true),
                 @Index(name = "Idx_ledger_tx_source", columnList = "source_system, source_reference_id")
         }
 )
@@ -32,6 +35,10 @@ public class LedgerTransactionJpa implements BaseJpaEntity {
 
     @Column(name = "organization_id", nullable = false)
     private Long organizationId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "api_environment", nullable = false)
+    private ApiEnvironment environment;
 
     @Column(name = "source_system", nullable = false)
     private String sourceSystem;

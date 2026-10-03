@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 public record ProcessLedgerEventCommand(
         Action action,
         Long organizationId,
+        String environment,
         Long outletId,
         String partyType,
         String partyReferenceId,
@@ -19,6 +20,7 @@ public record ProcessLedgerEventCommand(
         CREATE_PARTY_ACCOUNT,
         CREATE_TILL_ACCOUNT,
         CHARGE_RECEIVED,
+        PROVIDER_SETTLED,
         RESERVED_ACCOUNT_FUNDED,
         ORGANIZATION_ACCOUNT_FUNDED,
         PAYOUT_COMPLETED,

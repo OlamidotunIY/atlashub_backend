@@ -32,14 +32,14 @@ public class LedgerAccountController {
             @AuthenticationPrincipal AuthenticatedPrincipal principal,
             @RequestParam String accountType) {
         return ok(balanceHandler.execute(new GetAccountBalanceQuery(
-                principal.activeOrganizationId(), accountType)));
+                principal.activeOrganizationId(), principal.environment(), accountType)));
     }
 
     @GetMapping("/balances")
     public ResponseEntity<ApiResponse<WalletBalancesResult>> walletBalances(
             @AuthenticationPrincipal AuthenticatedPrincipal principal) {
         return ok(walletBalancesHandler.execute(
-                new GetWalletBalancesQuery(principal.activeOrganizationId())));
+                new GetWalletBalancesQuery(principal.activeOrganizationId(), principal.environment())));
     }
 
     private <T> ResponseEntity<ApiResponse<T>> ok(T value) {

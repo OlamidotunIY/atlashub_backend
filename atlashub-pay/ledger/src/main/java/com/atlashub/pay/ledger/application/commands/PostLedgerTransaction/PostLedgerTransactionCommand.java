@@ -4,6 +4,7 @@ import java.util.List;
 
 public record PostLedgerTransactionCommand(
         Long organizationId,
+        String environment,
         String reference,
         String sourceSystem,
         String sourceReferenceId,

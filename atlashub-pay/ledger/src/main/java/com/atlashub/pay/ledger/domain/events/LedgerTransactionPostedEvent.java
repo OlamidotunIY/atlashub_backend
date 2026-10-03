@@ -16,6 +16,7 @@ public record LedgerTransactionPostedEvent(
     public record Payload(
         Long transactionId,
         Long organizationId,
+        String environment,
         String reference,
         String sourceSystem,
         String sourceReferenceId,

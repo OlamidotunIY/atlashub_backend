@@ -21,6 +21,7 @@ public class ProcessLedgerEventHandler extends Command<ProcessLedgerEventCommand
             LedgerAccountType.TAX_HOLDING,
             LedgerAccountType.ESCROW,
             LedgerAccountType.SUSPENSE,
+            LedgerAccountType.PROVIDER_CLEARING,
             LedgerAccountType.SPLIT_HOLDING);
 
     private final CreateLedgerAccountHandler createAccountHandler;
@@ -44,7 +45,11 @@ public class ProcessLedgerEventHandler extends Command<ProcessLedgerEventCommand
             case CREATE_TILL_ACCOUNT -> createIfMissing(
                     command.organizationId(), LedgerAccountType.TILL, command.outletId(), null, null,
                     command.currency());
-            case CHARGE_RECEIVED, ORGANIZATION_ACCOUNT_FUNDED -> post(
+            case CHARGE_RECEIVED -> post(
+                    command, LedgerAccountType.PROVIDER_CLEARING, LedgerAccountType.OPERATING, null, null);
+            case PROVIDER_SETTLED -> post(
+                    command, LedgerAccountType.SUSPENSE, LedgerAccountType.PROVIDER_CLEARING, null, null);
+            case ORGANIZATION_ACCOUNT_FUNDED -> post(
                     command, LedgerAccountType.SUSPENSE, LedgerAccountType.OPERATING, null, null);
             case RESERVED_ACCOUNT_FUNDED -> postReservedFunding(command);
             case PAYOUT_COMPLETED -> post(
@@ -108,7 +113,7 @@ public class ProcessLedgerEventHandler extends Command<ProcessLedgerEventCommand
         LedgerAccount debit = resolve(command, debitType, debitOutletId);
         LedgerAccount credit = resolve(command, creditType, creditOutletId);
         postTransactionHandler.execute(new PostLedgerTransactionCommand(
-                command.organizationId(), command.reference(), command.sourceSystem(),
+                command.organizationId(), command.environment(), command.reference(), command.sourceSystem(),
                 command.sourceReferenceId(), command.action().name(), command.currency(),
                 List.of(
                         new PostLedgerTransactionCommand.LedgerEntryRequest(
@@ -138,6 +143,7 @@ public class ProcessLedgerEventHandler extends Command<ProcessLedgerEventCommand
 
     private String normalBalance(LedgerAccountType type) {
         return type == LedgerAccountType.SUSPENSE || type == LedgerAccountType.TILL
+                || type == LedgerAccountType.PROVIDER_CLEARING
                 ? "DEBIT" : "CREDIT";
     }
 }

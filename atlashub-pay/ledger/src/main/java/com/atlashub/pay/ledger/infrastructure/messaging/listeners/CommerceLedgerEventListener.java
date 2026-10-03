@@ -36,7 +36,7 @@ public class CommerceLedgerEventListener extends BaseKafkaEventListener {
                 "pay-ledger-till-opened", e -> e instanceof TimeoutException, event ->
                         handler.execute(new ProcessLedgerEventCommand(
                                 ProcessLedgerEventCommand.Action.TILL_OPENED, event.organizationId(),
-                                event.outletId(), null, null, event.tillSessionId() + "-open",
+                                event.environment(), event.outletId(), null, null, event.tillSessionId() + "-open",
                                 "INTER_OUTLET_TRANSFER", event.tillSessionId(), event.openingFloat(),
                                 event.currency())));
     }
@@ -47,7 +47,7 @@ public class CommerceLedgerEventListener extends BaseKafkaEventListener {
                 "pay-ledger-till-closed", e -> e instanceof TimeoutException, event ->
                         handler.execute(new ProcessLedgerEventCommand(
                                 ProcessLedgerEventCommand.Action.TILL_CLOSED, event.organizationId(),
-                                event.outletId(), null, null, event.tillSessionId() + "-close",
+                                event.environment(), event.outletId(), null, null, event.tillSessionId() + "-close",
                                 "CASH_BANKING", event.tillSessionId(), event.closingCash(),
                                 event.currency())));
     }

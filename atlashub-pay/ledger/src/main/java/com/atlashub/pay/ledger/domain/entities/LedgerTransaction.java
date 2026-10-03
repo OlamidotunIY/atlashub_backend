@@ -5,6 +5,7 @@ import com.atlashub.pay.ledger.domain.exceptions.UnbalancedLedgerTransactionExce
 import com.atlashub.pay.ledger.domain.valueobject.EntryType;
 import com.atlashub.pay.ledger.domain.valueobject.SourceSystem;
 import com.atlashub.shared.domain.entities.AggregateRoot;
+import com.atlashub.shared.application.security.ApiEnvironment;
 import com.atlashub.shared.domain.valueobject.CorrelationId;
 import com.atlashub.shared.domain.valueobject.CurrencyCode;
 import lombok.Getter;
@@ -20,6 +21,7 @@ public class LedgerTransaction extends AggregateRoot<Long> {
     
     private final Long id;
     private final Long organizationId;
+    private final ApiEnvironment environment;
     private final List<LedgerEntry> entries;
     private final SourceSystem sourceSystem;
     private final String sourceReferenceId;
@@ -28,9 +30,10 @@ public class LedgerTransaction extends AggregateRoot<Long> {
     private final ZonedDateTime postedAt;
     private final String reference;
 
-    public LedgerTransaction(Long id, Long organizationId, List<LedgerEntry> entries, SourceSystem sourceSystem, String sourceReferenceId, String description, CurrencyCode currency, ZonedDateTime postedAt, String reference) {
+    public LedgerTransaction(Long id, Long organizationId, ApiEnvironment environment, List<LedgerEntry> entries, SourceSystem sourceSystem, String sourceReferenceId, String description, CurrencyCode currency, ZonedDateTime postedAt, String reference) {
         this.id = id;
         this.organizationId = organizationId;
+        this.environment = environment;
         this.entries = entries;
         this.sourceSystem = sourceSystem;
         this.sourceReferenceId = sourceReferenceId;
@@ -40,12 +43,15 @@ public class LedgerTransaction extends AggregateRoot<Long> {
         this.reference = reference;
     }
 
-    public static LedgerTransaction create(Long id, Long organizationId, List<LedgerEntry> entries, SourceSystem sourceSystem, String sourceReferenceId, String description, CurrencyCode currency, ZonedDateTime postedAt, String reference) {
+    public static LedgerTransaction create(Long id, Long organizationId, ApiEnvironment environment, List<LedgerEntry> entries, SourceSystem sourceSystem, String sourceReferenceId, String description, CurrencyCode currency, ZonedDateTime postedAt, String reference) {
         if (id == null) {
             throw new IllegalArgumentException("LedgerTransaction id cannot be null");
         }
 
-        LedgerTransaction tx = new LedgerTransaction(id, organizationId, entries, sourceSystem, sourceReferenceId, description, currency, postedAt, reference);
+        if (environment == null) {
+            throw new IllegalArgumentException("LedgerTransaction environment cannot be null");
+        }
+        LedgerTransaction tx = new LedgerTransaction(id, organizationId, environment, entries, sourceSystem, sourceReferenceId, description, currency, postedAt, reference);
         tx.validateBalance();
 
         List<LedgerTransactionPostedEvent.EntryPayload> entryPayloads = entries.stream()
@@ -64,6 +70,7 @@ public class LedgerTransaction extends AggregateRoot<Long> {
                 new LedgerTransactionPostedEvent.Payload(
                         id,
                         organizationId,
+                        environment.name(),
                         reference,
                         sourceSystem.name(),
                         sourceReferenceId,

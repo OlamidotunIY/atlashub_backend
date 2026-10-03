@@ -12,6 +12,7 @@ import com.atlashub.pay.ledger.domain.valueobject.EntryType;
 import com.atlashub.pay.ledger.domain.valueobject.LedgerAccountStatus;
 import com.atlashub.pay.ledger.domain.valueobject.SourceSystem;
 import com.atlashub.shared.application.usecase.Command;
+import com.atlashub.shared.application.security.ApiEnvironment;
 import com.atlashub.shared.domain.valueobject.CurrencyCode;
 import com.atlashub.shared.domain.valueobject.Money;
 import org.springframework.stereotype.Component;
@@ -42,7 +43,8 @@ public class PostLedgerTransactionHandler extends Command<PostLedgerTransactionC
     @Transactional
     public PostLedgerTransactionResponse execute(PostLedgerTransactionCommand command) {
         // 1. Check idempotency
-        Optional<LedgerTransaction> existingTx = transactionRepository.findByReference(command.reference());
+        ApiEnvironment environment = ApiEnvironment.parse(command.environment());
+        Optional<LedgerTransaction> existingTx = transactionRepository.findByReferenceAndEnvironment(command.reference(), environment);
         if (existingTx.isPresent()) {
             LedgerTransaction tx = existingTx.get();
             return new PostLedgerTransactionResponse(tx.getId(), tx.getReference(), tx.getPostedAt());
@@ -112,6 +114,7 @@ public class PostLedgerTransactionHandler extends Command<PostLedgerTransactionC
         LedgerTransaction transaction = LedgerTransaction.create(
                 txId,
                 command.organizationId(),
+                environment,
                 ledgerEntries,
                 SourceSystem.valueOf(command.sourceSystem()),
                 command.sourceReferenceId(),

@@ -34,7 +34,7 @@ public class AccountsLedgerEventListener extends BaseKafkaEventListener {
         processEventIfMatches(message, "OutletCreatedEvent", OutletCreatedEvent.class, log, GROUP_ID,
                 e -> e instanceof TimeoutException, event -> handler.execute(new ProcessLedgerEventCommand(
                         ProcessLedgerEventCommand.Action.CREATE_TILL_ACCOUNT, event.organizationId(),
-                        event.outletId(), null, null, null, "SYSTEM", event.outletId().toString(),
+                        null, event.outletId(), null, null, null, "SYSTEM", event.outletId().toString(),
                         null, event.currency())));
     }
 }

@@ -33,7 +33,8 @@ public class LedgerTransactionController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         return ok(historyHandler.execute(new GetLedgerHistoryQuery(
-                principal.activeOrganizationId(), accountId, dateFrom, dateTo, page, size)));
+                principal.activeOrganizationId(), principal.environment(), accountId,
+                dateFrom, dateTo, page, size)));
     }
 
     private <T> ResponseEntity<ApiResponse<T>> ok(T value) {

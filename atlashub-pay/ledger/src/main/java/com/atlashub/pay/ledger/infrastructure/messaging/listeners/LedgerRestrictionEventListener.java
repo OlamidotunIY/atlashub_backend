@@ -71,7 +71,7 @@ public class LedgerRestrictionEventListener extends BaseKafkaEventListener {
                     else if (event instanceof OrganizationUnbannedEvent value) organizationId = value.organizationId();
                     else if (event instanceof OrganizationComplianceSuspendedEvent value) organizationId = value.organizationId();
                     else organizationId = ((OrganizationComplianceReinstatedEvent) event).organizationId();
-                    handler.execute(new ProcessLedgerEventCommand(action, organizationId, null, restriction,
+                    handler.execute(new ProcessLedgerEventCommand(action, organizationId, null, null, restriction,
                             null, null, "SYSTEM", null, null, null));
                 });
     }
