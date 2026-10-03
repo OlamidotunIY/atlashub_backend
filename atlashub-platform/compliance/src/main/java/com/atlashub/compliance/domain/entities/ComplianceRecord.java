@@ -135,7 +135,12 @@ public class ComplianceRecord extends AggregateRoot<Long> {
         if (this.status == ComplianceStatus.APPROVED) {
             throw new ComplianceAlreadyApprovedException("Compliance is already approved");
         }
-        if (this.completedSteps.size() != 5) {
+        if (!this.completedSteps.containsAll(Set.of(ComplianceStep.values()))
+                || this.businessProfile == null
+                || this.contactInfo == null
+                || this.ownerIdentity == null
+                || this.complianceDocuments == null
+                || this.serviceAgreement == null) {
             throw new StepNotCompleteException("All 5 steps must be completed before submission");
         }
         if (this.eligibilityStatus != AtlasHubEligibilityStatus.ELIGIBLE) {
@@ -166,6 +171,9 @@ public class ComplianceRecord extends AggregateRoot<Long> {
         if (this.status != ComplianceStatus.UNDER_REVIEW && this.status != ComplianceStatus.SUBMITTED) {
             throw new StepOutOfOrderException("Compliance must be UNDER_REVIEW or SUBMITTED to be APPROVED");
         }
+        if (this.anchorBusinessCustomerId == null || this.anchorBusinessCustomerId.isBlank()) {
+            throw new StepOutOfOrderException("Anchor customer must exist before compliance approval");
+        }
         this.status = ComplianceStatus.APPROVED;
         this.anchorVerificationStatus = AnchorVerificationStatus.APPROVED;
         this.approvedAt = ZonedDateTime.now();
@@ -175,7 +183,7 @@ public class ComplianceRecord extends AggregateRoot<Long> {
             this.id,
             ZonedDateTime.now(),
             CorrelationId.getOrCreate(),
-            new OrganizationComplianceApprovedEvent.Payload(this.organizationId, this.anchorBusinessCustomerId, this.approvedAt)
+            new OrganizationComplianceApprovedEvent.Payload(this.organizationId, this.anchorBusinessCustomerId, "LIVE", this.approvedAt)
         ));
     }
 

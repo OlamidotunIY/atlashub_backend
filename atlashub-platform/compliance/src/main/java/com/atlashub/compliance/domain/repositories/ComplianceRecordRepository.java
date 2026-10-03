@@ -9,5 +9,6 @@ import com.atlashub.compliance.domain.valueobject.ComplianceStatus;
 
 public interface ComplianceRecordRepository extends Repository<ComplianceRecord> {
     Optional<ComplianceRecord> findByOrganizationId(Long organizationId);
+    Optional<ComplianceRecord> findByAnchorBusinessCustomerId(String anchorBusinessCustomerId);
     PageResult<ComplianceRecord> findAllByStatus(ComplianceStatus status, int page, int size);
 }

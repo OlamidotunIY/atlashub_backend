@@ -11,7 +11,9 @@ public class RecordAnchorDecisionHandler extends Command<RecordAnchorDecisionCom
     private final ComplianceRecordRepository repository;
     public RecordAnchorDecisionHandler(ComplianceRecordRepository repository) { this.repository = repository; }
     @Override @Transactional public Void execute(RecordAnchorDecisionCommand command) {
-        var record = repository.findByOrganizationId(command.organizationId())
+        var record = (command.organizationId() == null
+                ? repository.findByAnchorBusinessCustomerId(command.anchorBusinessCustomerId())
+                : repository.findByOrganizationId(command.organizationId()))
                 .orElseThrow(() -> new ComplianceRecordNotFoundException("Compliance record not found"));
         if (record.getAnchorBusinessCustomerId() == null) {
             record.recordAnchorCustomerCreated(command.anchorBusinessCustomerId());

@@ -43,6 +43,11 @@ public class ComplianceRecordRepositoryAdapter extends JpaBaseRepository<Complia
     }
 
     @Override
+    public Optional<ComplianceRecord> findByAnchorBusinessCustomerId(String anchorBusinessCustomerId) {
+        return repository.findByAnchorBusinessCustomerId(anchorBusinessCustomerId).map(mapper::toDomain);
+    }
+
+    @Override
     public PageResult<ComplianceRecord> findAllByStatus(ComplianceStatus status, int page, int size) {
         Page<ComplianceRecordJpa> jpaPage = repository.findAllByStatus(status, PageRequest.of(page, size));
         List<ComplianceRecord> content = jpaPage.getContent().stream()
