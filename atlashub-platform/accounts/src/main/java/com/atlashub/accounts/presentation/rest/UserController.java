@@ -56,8 +56,8 @@ public class UserController {
     public ResponseEntity<ApiResponse<Void>> register(@Valid @RequestBody RegisterRequest request) {
         registerHandler.execute(new RegisterOrganizationCommand(
                 request.businessName(),
-                AtlasHubRegistrationType.valueOf(request.registrationType()),
-                SupportedIndustry.valueOf(request.industry()),
+                AtlasHubRegistrationType.parse(request.registrationType()),
+                SupportedIndustry.parse(request.industry()),
                 request.description(),
                 request.logoUrl(),
                 request.websiteUrl(),

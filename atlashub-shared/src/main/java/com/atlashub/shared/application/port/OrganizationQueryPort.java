@@ -1,5 +1,6 @@
 package com.atlashub.shared.application.port;
 
+import java.time.LocalDate;
 import java.util.Optional;
 
 public interface OrganizationQueryPort {
@@ -13,6 +14,7 @@ public interface OrganizationQueryPort {
             String businessName,
             String registrationType,
             String industry,
+            LocalDate registrationDate,
             String description,
             String logoUrl,
             String websiteUrl,

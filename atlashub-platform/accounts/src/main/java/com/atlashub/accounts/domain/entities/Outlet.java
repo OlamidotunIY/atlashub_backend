@@ -6,8 +6,8 @@ import com.atlashub.accounts.domain.events.OutletSuspendedEvent;
 import com.atlashub.accounts.domain.events.OutletUpdatedEvent;
 import com.atlashub.accounts.domain.valueobject.OutletStatus;
 import com.atlashub.accounts.domain.exceptions.InvalidOutletStateException;
+import com.atlashub.accounts.domain.exceptions.InvalidOutletException;
 import com.atlashub.shared.domain.entities.AggregateRoot;
-import com.atlashub.shared.domain.exception.MissingRequiredFieldException;
 import com.atlashub.shared.domain.valueobject.CorrelationId;
 import com.atlashub.shared.domain.valueobject.Country;
 import com.atlashub.shared.domain.valueobject.CurrencyCode;
@@ -54,11 +54,11 @@ public class Outlet extends AggregateRoot<Long> {
     public static Outlet create(Long id, Long organizationId, String name, String address,
                                 String city, String state, Country country, CurrencyCode currency,
                                 Long managerId) {
-        if (id == null) throw new MissingRequiredFieldException("Outlet id is required");
-        if (organizationId == null) throw new MissingRequiredFieldException("organizationId is required");
-        if (name == null || name.isBlank()) throw new MissingRequiredFieldException("Outlet name is required");
-        if (country == null) throw new MissingRequiredFieldException("Country is required");
-        if (currency == null) throw new MissingRequiredFieldException("Currency is required");
+        if (id == null) throw new InvalidOutletException("Outlet id is required");
+        if (organizationId == null) throw new InvalidOutletException("Organization id is required");
+        if (name == null || name.isBlank()) throw new InvalidOutletException("Outlet name is required");
+        if (country == null) throw new InvalidOutletException("Country is required");
+        if (currency == null) throw new InvalidOutletException("Currency is required");
 
         ZonedDateTime now = ZonedDateTime.now();
         Outlet outlet = new Outlet(id, organizationId, name, address, city, state, country, currency,
@@ -79,7 +79,7 @@ public class Outlet extends AggregateRoot<Long> {
     }
 
     public void updateDetails(String name, String address, String city, String state, Long managerId) {
-        if (name == null || name.isBlank()) throw new MissingRequiredFieldException("Outlet name is required");
+        if (name == null || name.isBlank()) throw new InvalidOutletException("Outlet name is required");
         this.name = name;
         this.address = address;
         this.city = city;

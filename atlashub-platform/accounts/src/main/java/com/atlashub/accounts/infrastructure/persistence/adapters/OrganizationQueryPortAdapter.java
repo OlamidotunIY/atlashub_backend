@@ -103,6 +103,7 @@ public class OrganizationQueryPortAdapter implements OrganizationQueryPort {
                 jpa.getBusinessName(),
                 jpa.getRegistrationType(),
                 jpa.getIndustry(),
+                jpa.getRegistrationDate(),
                 jpa.getDescription(),
                 jpa.getLogoUrl(),
                 jpa.getWebsiteUrl(),

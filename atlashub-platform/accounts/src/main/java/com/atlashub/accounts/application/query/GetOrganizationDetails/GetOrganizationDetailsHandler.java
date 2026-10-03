@@ -21,6 +21,6 @@ public class GetOrganizationDetailsHandler extends Query<GetOrganizationDetailsQ
     public OrganizationDetailsResult execute(GetOrganizationDetailsQuery query) {
         Organization org = organizationRepository.findById(query.orgId()).orElseThrow(() -> new OrganizationNotFoundException("Organization not found"));
 
-        return new OrganizationDetailsResult(org.getId(), org.getBusinessName(), org.getRegistrationType().name(), org.getIndustry().name(), org.getLegalRegistrationDate(), org.getBusinessRegistrationNumber(), org.getDescription(), org.getLogoUrl(), org.getWebsiteUrl(), org.getCountry().code(), org.getBaseCurrency().name(), org.getCreatedAt());
+        return new OrganizationDetailsResult(org.getId(), org.getBusinessName(), org.getRegistrationType().name(), org.getIndustry().name(), org.getRegistrationDate(), org.getDescription(), org.getLogoUrl(), org.getWebsiteUrl(), org.getCountry().code(), org.getBaseCurrency().name(), org.getCreatedAt());
     }
 }

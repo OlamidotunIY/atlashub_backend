@@ -45,7 +45,10 @@ public class RegisterOrganizationHandler extends Command<RegisterOrganizationCom
         userRepository.save(user);
         log.debug("User registered with id: {}", user.getId());
 
-        Organization organization = Organization.create(organizationRepository.nextIdentity(), command.businessName(), command.registrationType(), command.description(), command.country().deriveCurrency(), command.logoUrl(), command.country(), command.industry(), command.websiteUrl(), user.getId());
+        Organization organization = Organization.create(
+                organizationRepository.nextIdentity(), command.businessName(), command.registrationType(),
+                command.description(), command.country().deriveCurrency(),
+                command.logoUrl(), command.country(), command.industry(), command.websiteUrl(), user.getId());
 
         organizationRepository.save(organization);
         log.debug("Organization saved with id: {}", organization.getId());

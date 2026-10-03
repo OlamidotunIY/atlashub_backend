@@ -8,6 +8,7 @@ import com.atlashub.shared.domain.valueobject.Country;
 import com.atlashub.shared.domain.valueobject.CurrencyCode;
 
 import java.time.ZonedDateTime;
+import java.time.LocalDate;
 
 public record OrganizationRegistered(
     String eventId,
@@ -20,6 +21,7 @@ public record OrganizationRegistered(
         String businessName,
         AtlasHubRegistrationType registrationType,
         SupportedIndustry industry,
+        LocalDate registrationDate,
         Country country,
         CurrencyCode currency,
         Long ownerUserId

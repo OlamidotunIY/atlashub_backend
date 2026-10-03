@@ -29,11 +29,8 @@ public class OrganizationJPA implements BaseJpaEntity {
     @Column(nullable = false)
     private String industry;
 
-    @Column
-    private LocalDate legalRegistrationDate;
-
-    @Column
-    private String businessRegistrationNumber;
+    @Column(nullable = false)
+    private LocalDate registrationDate;
 
     @Column
     private String description;
@@ -49,15 +46,6 @@ public class OrganizationJPA implements BaseJpaEntity {
 
     @Column(nullable = false)
     private String country;
-
-    @Column(nullable = false)
-    private boolean posEnabled;
-
-    @Column(nullable = false)
-    private boolean subscriptionSuspended;
-
-    @Column
-    private String subscriptionSuspensionReason;
 
     @Column(nullable = false)
     private ZonedDateTime createdAt;

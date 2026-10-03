@@ -56,7 +56,7 @@ public class OrganizationController {
             @Valid @RequestBody UpdateOrganizationRequest request) {
         updateOrgHandler.execute(new UpdateOrganizationDetailsCommand(
                 principal.activeOrganizationId(), request.businessName(), request.description(),
-                request.logoUrl(), request.industry() == null ? null : SupportedIndustry.valueOf(request.industry()),
+                request.logoUrl(), request.industry() == null ? null : SupportedIndustry.parse(request.industry()),
                 request.websiteUrl()
         ));
         return done("Organization updated");
@@ -76,8 +76,7 @@ public class OrganizationController {
                 result.businessName(),
                 result.registrationType(),
                 result.industry(),
-                result.legalRegistrationDate(),
-                result.businessRegistrationNumber(),
+                result.registrationDate(),
                 result.description(),
                 result.logoUrl(),
                 result.websiteUrl(),

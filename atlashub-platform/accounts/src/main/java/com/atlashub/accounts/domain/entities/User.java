@@ -1,7 +1,7 @@
 package com.atlashub.accounts.domain.entities;
 
 import com.atlashub.accounts.domain.exceptions.WeakPasswordException;
-import com.atlashub.shared.domain.exception.MissingRequiredFieldException;
+import com.atlashub.accounts.domain.exceptions.InvalidUserException;
 
 import com.atlashub.accounts.domain.events.*;
 import com.atlashub.shared.domain.entities.AggregateRoot;
@@ -36,15 +36,15 @@ public class User extends AggregateRoot<Long> {
      */
     public static User create(Long id, String firstName, String lastName, EmailAddress email, Country country,
                               Boolean invited, String rawPassword, String credentialReference) {
-        if (id == null) throw new MissingRequiredFieldException("User id is required");
-        if (firstName == null || firstName.isBlank()) throw new MissingRequiredFieldException("First name is required");
-        if (lastName == null || lastName.isBlank()) throw new MissingRequiredFieldException("Last name is required");
-        if (email == null) throw new MissingRequiredFieldException("Email is required");
-        if (country == null) throw new MissingRequiredFieldException("Country is required");
+        if (id == null) throw new InvalidUserException("User id is required");
+        if (firstName == null || firstName.isBlank()) throw new InvalidUserException("First name is required");
+        if (lastName == null || lastName.isBlank()) throw new InvalidUserException("Last name is required");
+        if (email == null) throw new InvalidUserException("Email is required");
+        if (country == null) throw new InvalidUserException("Country is required");
 
         validatePassword(rawPassword);
         if (credentialReference == null || credentialReference.isBlank()) {
-            throw new MissingRequiredFieldException("Credential reference is required");
+            throw new InvalidUserException("Credential reference is required");
         }
 
         User user = new User(id, firstName, lastName, email, null, null, country, null, false,
@@ -102,8 +102,8 @@ public class User extends AggregateRoot<Long> {
     }
 
     public void updateProfile(String firstName, String lastName, PhoneNumber phone, String locale, String timezone) {
-        if (firstName == null || firstName.isBlank()) throw new MissingRequiredFieldException("First name is required");
-        if (lastName == null || lastName.isBlank()) throw new MissingRequiredFieldException("Last name is required");
+        if (firstName == null || firstName.isBlank()) throw new InvalidUserException("First name is required");
+        if (lastName == null || lastName.isBlank()) throw new InvalidUserException("Last name is required");
 
         this.firstName = firstName;
         this.lastName = lastName;
@@ -126,7 +126,7 @@ public class User extends AggregateRoot<Long> {
     }
 
     public void switchActiveOrganization(Long organizationId) {
-        if (organizationId == null) throw new MissingRequiredFieldException("Organization id is required");
+        if (organizationId == null) throw new InvalidUserException("Organization id is required");
         this.activeOrganizationId = organizationId;
         this.updatedAt = ZonedDateTime.now();
 
