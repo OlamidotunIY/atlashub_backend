@@ -38,10 +38,10 @@ class AnchorWebhookSignatureVerifierTest {
         return new AnchorProperties(
                 Duration.ofSeconds(5),
                 new AnchorProperties.EnvironmentProperties(
-                        URI.create("https://api.sandbox.getanchor.co"), "sandbox-key", subscriptions("1234"), Duration.ofSeconds(2), Duration.ofSeconds(10)
+                        URI.create("https://api.sandbox.getanchor.co"), "sandbox-key", subscriptions("1234"), capabilities(), Duration.ofSeconds(2), Duration.ofSeconds(10)
                 ),
                 new AnchorProperties.EnvironmentProperties(
-                        URI.create("https://api.getanchor.co"), "live-key", subscriptions("live-token"), Duration.ofSeconds(2), Duration.ofSeconds(10)
+                        URI.create("https://api.getanchor.co"), "live-key", subscriptions("live-token"), capabilities(), Duration.ofSeconds(2), Duration.ofSeconds(10)
                 )
         );
     }
@@ -51,5 +51,9 @@ class AnchorWebhookSignatureVerifierTest {
                 new AnchorProperties.WebhookSubscriptionProperties(URI.create("https://api.atlashub.com/api/v1/webhooks/anchor/sandbox/compliance"), complianceToken),
                 new AnchorProperties.WebhookSubscriptionProperties(URI.create("https://api.atlashub.com/api/v1/webhooks/anchor/sandbox/pay-accounts"), "pay-accounts-token")
         );
+    }
+
+    private AnchorProperties.ProgrammeCapabilities capabilities() {
+        return new AnchorProperties.ProgrammeCapabilities(true, true, true, true, "fbo-account");
     }
 }

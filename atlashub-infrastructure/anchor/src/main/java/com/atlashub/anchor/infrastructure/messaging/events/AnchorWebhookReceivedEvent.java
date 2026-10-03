@@ -3,9 +3,13 @@ package com.atlashub.anchor.infrastructure.messaging.events;
 import com.atlashub.anchor.configuration.AnchorEnvironment;
 import com.atlashub.anchor.configuration.AnchorWebhookConsumer;
 import com.atlashub.anchor.dto.common.AnchorResourceIdentifier;
+import com.atlashub.anchor.dto.common.AnchorIncludedResource;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 
 /**
  * A verified Anchor webhook event. Consumers use this shared provider event directly and translate
@@ -17,14 +21,19 @@ public record AnchorWebhookReceivedEvent(
         AnchorWebhookConsumer consumer,
         String eventType,
         String occurredAt,
-        Map<String, AnchorResourceIdentifier> relationships
+        Map<String, Object> attributes,
+        Map<String, AnchorResourceIdentifier> relationships,
+        List<AnchorIncludedResource> includedResources
 ) {
     public AnchorWebhookReceivedEvent {
         requireText(eventId, "Anchor event ID");
         Objects.requireNonNull(environment, "Anchor environment is required");
         Objects.requireNonNull(consumer, "Anchor webhook consumer is required");
         requireText(eventType, "Anchor event type");
+        attributes = attributes == null ? Map.of()
+                : Collections.unmodifiableMap(new LinkedHashMap<>(attributes));
         relationships = relationships == null ? Map.of() : Map.copyOf(relationships);
+        includedResources = includedResources == null ? List.of() : List.copyOf(includedResources);
     }
 
     private static void requireText(String value, String name) {

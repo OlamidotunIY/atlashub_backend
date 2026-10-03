@@ -19,7 +19,8 @@ class AnchorWebhookReceivedEventTest {
 
         AnchorWebhookReceivedEvent event = new AnchorWebhookReceivedEvent(
                 "anchor-event-1", AnchorEnvironment.LIVE, AnchorWebhookConsumer.PAY_ACCOUNTS,
-                "account.opened", "2026-10-02T10:00:00", relationships
+                "account.opened", "2026-10-02T10:00:00", Map.of("status", "ACTIVE"),
+                relationships, java.util.List.of()
         );
         relationships.clear();
 

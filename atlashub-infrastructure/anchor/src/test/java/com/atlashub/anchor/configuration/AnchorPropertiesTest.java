@@ -21,14 +21,14 @@ class AnchorPropertiesTest {
     @Test
     void rejects_missing_api_key() {
         assertThrows(IllegalArgumentException.class, () -> new AnchorProperties.EnvironmentProperties(
-                URI.create("https://api.sandbox.getanchor.co"), " ", subscriptions(), Duration.ofSeconds(2), Duration.ofSeconds(10)
+                URI.create("https://api.sandbox.getanchor.co"), " ", subscriptions(), capabilities(), Duration.ofSeconds(2), Duration.ofSeconds(10)
         ));
     }
 
     @Test
     void rejects_non_https_base_url() {
         assertThrows(IllegalArgumentException.class, () -> new AnchorProperties.EnvironmentProperties(
-                URI.create("http://api.sandbox.getanchor.co"), "key", subscriptions(), Duration.ofSeconds(2), Duration.ofSeconds(10)
+                URI.create("http://api.sandbox.getanchor.co"), "key", subscriptions(), capabilities(), Duration.ofSeconds(2), Duration.ofSeconds(10)
         ));
     }
 
@@ -36,10 +36,10 @@ class AnchorPropertiesTest {
         return new AnchorProperties(
                 Duration.ofSeconds(5),
                 new AnchorProperties.EnvironmentProperties(
-                        URI.create("https://api.sandbox.getanchor.co"), "sandbox-key", subscriptions(), Duration.ofSeconds(2), Duration.ofSeconds(10)
+                        URI.create("https://api.sandbox.getanchor.co"), "sandbox-key", subscriptions(), capabilities(), Duration.ofSeconds(2), Duration.ofSeconds(10)
                 ),
                 new AnchorProperties.EnvironmentProperties(
-                        URI.create("https://api.getanchor.co"), "live-key", subscriptions(), Duration.ofSeconds(2), Duration.ofSeconds(10)
+                        URI.create("https://api.getanchor.co"), "live-key", subscriptions(), capabilities(), Duration.ofSeconds(2), Duration.ofSeconds(10)
                 )
         );
     }
@@ -49,5 +49,9 @@ class AnchorPropertiesTest {
                 new AnchorProperties.WebhookSubscriptionProperties(URI.create("https://sandbox.atlashub.com/api/v1/webhooks/anchor/sandbox/compliance"), "compliance-token"),
                 new AnchorProperties.WebhookSubscriptionProperties(URI.create("https://sandbox.atlashub.com/api/v1/webhooks/anchor/sandbox/pay-accounts"), "pay-accounts-token")
         );
+    }
+
+    private AnchorProperties.ProgrammeCapabilities capabilities() {
+        return new AnchorProperties.ProgrammeCapabilities(true, true, true, true, "fbo-account");
     }
 }

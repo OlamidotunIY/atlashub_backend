@@ -33,6 +33,7 @@ public record AnchorProperties(
             URI baseUrl,
             String apiKey,
             WebhookSubscriptions webhooks,
+            ProgrammeCapabilities capabilities,
             Duration connectTimeout,
             Duration readTimeout
     ) {
@@ -46,8 +47,23 @@ public record AnchorProperties(
                 throw new IllegalArgumentException("Anchor API key is required");
             }
             Objects.requireNonNull(webhooks, "Anchor webhook subscriptions are required");
+            Objects.requireNonNull(capabilities, "Anchor programme capabilities are required");
             AnchorProperties.validateTimeout(connectTimeout, "connectTimeout");
             AnchorProperties.validateTimeout(readTimeout, "readTimeout");
+        }
+    }
+
+    public record ProgrammeCapabilities(
+            boolean depositAccounts,
+            boolean subAccounts,
+            boolean reservedAccounts,
+            boolean transfers,
+            String fboAccountId
+    ) {
+        public ProgrammeCapabilities {
+            if ((subAccounts || reservedAccounts) && (fboAccountId == null || fboAccountId.isBlank())) {
+                throw new IllegalArgumentException("Anchor FBO account id is required when subaccounts or reserved accounts are enabled");
+            }
         }
     }
 

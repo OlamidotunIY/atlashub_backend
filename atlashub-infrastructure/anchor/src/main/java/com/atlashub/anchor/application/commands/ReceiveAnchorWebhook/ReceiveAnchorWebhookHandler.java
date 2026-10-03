@@ -3,6 +3,7 @@ package com.atlashub.anchor.application.commands.ReceiveAnchorWebhook;
 import com.atlashub.anchor.configuration.AnchorEnvironment;
 import com.atlashub.anchor.dto.common.AnchorRelationship;
 import com.atlashub.anchor.dto.common.AnchorResourceIdentifier;
+import com.atlashub.anchor.dto.common.AnchorIncludedResource;
 import com.atlashub.anchor.dto.webhook.AnchorWebhookPayload;
 import com.atlashub.anchor.exception.MalformedAnchorWebhookException;
 import com.atlashub.anchor.infrastructure.messaging.AnchorWebhookEventPublisher;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.List;
 
 /**
  * Verifies, parses, and publishes one minimal Anchor provider event without business processing.
@@ -67,8 +69,28 @@ public class ReceiveAnchorWebhookHandler extends Command<ReceiveAnchorWebhookCom
                 }
             }
         }
-        String occurredAt = data.attributes() == null ? null : data.attributes().createdAt();
-        return new AnchorWebhookReceivedEvent(data.id(), environment, consumer, data.type(), occurredAt, relationships);
+        Map<String, Object> attributes = data.attributes() == null ? Map.of() : data.attributes();
+        Object createdAt = attributes.get("createdAt");
+        List<AnchorIncludedResource> includedResources = payload.included() == null
+                ? List.of()
+                : payload.included().stream().map(included -> new AnchorIncludedResource(
+                        included.id(), included.type(), included.attributes(),
+                        identifiers(included.relationships()))).toList();
+        return new AnchorWebhookReceivedEvent(
+                data.id(), environment, consumer, data.type(),
+                createdAt == null ? null : createdAt.toString(), attributes, relationships,
+                includedResources);
+    }
+
+    private Map<String, AnchorResourceIdentifier> identifiers(Map<String, AnchorRelationship> source) {
+        if (source == null || source.isEmpty()) return Map.of();
+        Map<String, AnchorResourceIdentifier> result = new LinkedHashMap<>();
+        source.forEach((name, relationship) -> {
+            if (relationship != null && relationship.data() != null) {
+                result.put(name, relationship.data());
+            }
+        });
+        return result;
     }
 
     private boolean isBlank(String value) {
