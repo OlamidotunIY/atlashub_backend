@@ -5,12 +5,14 @@ import com.atlashub.pay.splits.domain.exceptions.MissingSubaccountException;
 import com.atlashub.pay.splits.domain.exceptions.SplitRuleInactiveException;
 import com.atlashub.pay.splits.domain.valueobject.SplitType;
 import com.atlashub.shared.domain.entities.AggregateRoot;
+import lombok.Getter;
 
 import java.math.BigDecimal;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+@Getter
 public class SplitRule extends AggregateRoot<Long> {
     private final Long id;
     private final Long organizationId;
@@ -98,37 +100,5 @@ public class SplitRule extends AggregateRoot<Long> {
     @Override
     public Long getId() {
         return id;
-    }
-
-    public Long getOrganizationId() {
-        return organizationId;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public SplitType getType() {
-        return type;
-    }
-
-    public BigDecimal getPlatformFeePercentage() {
-        return platformFeePercentage;
-    }
-
-    public List<SplitSubaccount> getSubaccounts() {
-        return new ArrayList<>(subaccounts);
-    }
-
-    public boolean isActive() {
-        return active;
-    }
-
-    public ZonedDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public ZonedDateTime getUpdatedAt() {
-        return updatedAt;
     }
 }
