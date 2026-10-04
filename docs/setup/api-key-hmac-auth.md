@@ -24,6 +24,8 @@ secretKey:  atlas_sk_live_Mn7pKd2vWe...   (URL-safe random value) — shown ONCE
 - The `publicKey` identifies the organization and environment. It is safe to include in logs and error messages.
 - The `secretKey` is shown **once** at creation time. AtlasHub stores only an encrypted ciphertext so the server can recompute HMAC signatures; plaintext is never stored.
 - TEST keys operate against test accounts with simulated payment providers. LIVE keys operate with real money.
+- Key creation is manual. The request explicitly selects `TEST` or `LIVE` and an organization role whose permissions bind the key.
+- The UI disables LIVE/Production selection until compliance is approved, and IAM independently enforces the same rule on the backend.
 
 ---
 

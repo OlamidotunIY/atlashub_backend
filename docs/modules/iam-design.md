@@ -165,7 +165,7 @@ ApiKey
 ├── secretKeyCiphertext: String   ← AES-256-GCM ciphertext; plaintext is never stored
 ├── name: String                  ← human-readable label (e.g., "Server Key", "Webhook Processor")
 ├── environment: ApiEnvironment  ← TEST or LIVE; immutable
-├── boundRoleId: Long             ← nullable; null means all active platform permissions
+├── boundRoleId: Long             ← required; limits the key to the selected organization role
 ├── isRevoked: Boolean
 ├── lastUsedAt: ZonedDateTime     ← nullable
 ├── revokedAt: ZonedDateTime      ← nullable
@@ -185,11 +185,11 @@ secretCiphertext = AES-256-GCM(secretKey)        ← stored in DB; plaintext sho
 ```
 
 **Permissions via API Key:**
-An API key authenticates as the organization. An unbound key receives the current active platform permission catalog. A key with `boundRoleId` receives only that role's current active permissions. Authentication never writes key usage synchronously; it publishes `ApiKeyAuthenticatedEvent`, and IAM records `lastUsedAt` asynchronously.
+An API key authenticates as the organization with the permissions of the role selected during key creation. The client must explicitly provide `TEST` or `LIVE` and a role belonging to the active organization. TEST keys are immediately available. LIVE key creation is rejected unless the organization's AtlasHub compliance is approved. Authentication never writes key usage synchronously; it publishes `ApiKeyAuthenticatedEvent`, and IAM records `lastUsedAt` asynchronously.
 
 ```
 ApiKey (extended)
-└── boundRoleId: Long             ← nullable; if set, limits key to that role's permissions only
+└── boundRoleId: Long             ← required; selected explicitly during creation
 ```
 
 
@@ -343,9 +343,10 @@ public interface ApiKeyQueryPort {
 - `DeleteCustomRoleCommand(roleId, requestedByUserId)` → `DeleteCustomRoleUseCase`
 
 ### API Keys
-- `IssueApiKeyCommand(orgId, name, requestedByUserId, boundRoleId?)` → `IssueApiKeyUseCase`
+- `IssueApiKeyCommand(orgId, name, environment, requestedByUserId, boundRoleId)` → `IssueApiKeyUseCase`
   - Returns `IssuedApiKeyResult` containing plaintext `secretKey` — the ONLY time it is returned
-  - `boundRoleId` is optional; if provided, limits the key's permissions to that role
+  - The requested environment is explicit; `LIVE` requires approved compliance
+  - `boundRoleId` is required and must reference a role owned by the organization
 - `RevokeApiKeyCommand(keyId, orgId, requestedByUserId)` → `RevokeApiKeyUseCase`
 - `RotateApiKeyCommand(keyId, orgId, requestedByUserId, name?)` → atomically revokes the old key and returns the replacement secret once
 - `RecordApiKeyUsageCommand(orgId, publicKey)` → event-driven audit update for `lastUsedAt`

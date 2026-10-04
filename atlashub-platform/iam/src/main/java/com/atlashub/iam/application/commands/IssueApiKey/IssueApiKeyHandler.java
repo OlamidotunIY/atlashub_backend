@@ -48,11 +48,9 @@ public class IssueApiKeyHandler extends Command<IssueApiKeyCommand, IssuedApiKey
         if (environment == ApiEnvironment.LIVE && !complianceQueryPort.isApproved(command.orgId())) {
             throw new LiveApiKeyUnavailableException("Live API keys require approved compliance");
         }
-        if (command.boundRoleId() != null) {
-            roleRepository.findById(command.boundRoleId())
-                    .filter(role -> role.getOrganizationId().equals(command.orgId()))
-                    .orElseThrow(CustomRoleNotFoundException::new);
-        }
+        roleRepository.findById(command.boundRoleId())
+                .filter(role -> role.getOrganizationId().equals(command.orgId()))
+                .orElseThrow(CustomRoleNotFoundException::new);
 
         String publicKey = "atlas_pk_" + environment.name().toLowerCase() + "_" + randomToken(18);
         String secretKey = "atlas_sk_" + environment.name().toLowerCase() + "_" + randomToken(32);
