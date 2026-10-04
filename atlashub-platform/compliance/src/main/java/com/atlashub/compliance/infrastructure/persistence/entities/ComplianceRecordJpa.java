@@ -34,7 +34,7 @@ public class ComplianceRecordJpa implements BaseJpaEntity {
     private String legalName;
     @Enumerated(EnumType.STRING) private LegalRegistrationType registrationType;
     private LocalDate registrationDate;
-    private String businessRegistrationNumber;
+    @Convert(converter = ComplianceSensitiveDataConverter.class) @Column(length = 1024) private String businessRegistrationNumber;
     @Convert(converter = ComplianceSensitiveDataConverter.class) @Column(length = 1024) private String businessBvn;
     @Enumerated(EnumType.STRING) private SupportedBusinessIndustry industry;
     @Column(length = 2048) private String businessDescription;
