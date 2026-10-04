@@ -11,4 +11,5 @@ public interface ApiKeyRepository extends Repository<ApiKey> {
     List<ApiKey> findByOrganizationIdAndEnvironment(Long organizationId, ApiEnvironment environment);
     List<ApiKey> findByOrganizationId(Long organizationId);
     Optional<ApiKey> findByPublicKey(String publicKey);
+    Optional<ApiKey> findByIdAndOrganizationIdForUpdate(Long id, Long organizationId);
 }

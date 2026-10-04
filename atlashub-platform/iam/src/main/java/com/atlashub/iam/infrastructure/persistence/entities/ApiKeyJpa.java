@@ -49,7 +49,7 @@ public class ApiKeyJpa implements BaseJpaEntity {
     @Column(name = "environment", nullable = false)
     private ApiEnvironment environment;
 
-    @Column(name = "bound_role_id", nullable = false)
+    @Column(name = "bound_role_id")
     private Long boundRoleId;
 
     @Column(name = "revoked", nullable = false)

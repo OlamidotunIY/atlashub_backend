@@ -50,14 +50,18 @@ public class ApiKeyAuthenticationService {
         }
         if (!MessageDigest.isEqual(expected, supplied)) return Optional.empty();
 
-        CustomRole role = roleRepository.findById(apiKey.getBoundRoleId()).orElse(null);
-        if (role == null || !role.getOrganizationId().equals(apiKey.getOrganizationId())) return Optional.empty();
-        Set<String> permissions = role.isBuiltIn()
-                ? permissionRepository.findAllByActiveTrue().stream().map(permission -> permission.getCode()).collect(Collectors.toSet())
-                : permissionRepository.findAllById(role.getPermissions()).stream()
-                        .filter(permission -> permission.isActive()).map(permission -> permission.getCode()).collect(Collectors.toSet());
-        apiKey.recordUsage();
-        apiKeyRepository.save(apiKey);
+        Set<String> permissions;
+        if (apiKey.getBoundRoleId() == null) {
+            permissions = permissionRepository.findAllByActiveTrue().stream()
+                    .map(permission -> permission.getCode()).collect(Collectors.toSet());
+        } else {
+            CustomRole role = roleRepository.findById(apiKey.getBoundRoleId()).orElse(null);
+            if (role == null || !role.getOrganizationId().equals(apiKey.getOrganizationId())) return Optional.empty();
+            permissions = role.isBuiltIn()
+                    ? permissionRepository.findAllByActiveTrue().stream().map(permission -> permission.getCode()).collect(Collectors.toSet())
+                    : permissionRepository.findAllById(role.getPermissions()).stream()
+                            .filter(permission -> permission.isActive()).map(permission -> permission.getCode()).collect(Collectors.toSet());
+        }
         return Optional.of(new AuthenticatedApiKey(apiKey.getOrganizationId(), apiKey.getEnvironment().name(),
                 publicKey, permissions));
     }

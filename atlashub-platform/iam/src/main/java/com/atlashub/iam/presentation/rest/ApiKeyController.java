@@ -9,6 +9,9 @@ import com.atlashub.iam.application.queries.ListApiKeys.ApiKeyResult;
 import com.atlashub.iam.application.queries.ListApiKeys.ListApiKeysHandler;
 import com.atlashub.iam.application.queries.ListApiKeys.ListApiKeysQuery;
 import com.atlashub.iam.presentation.dto.IssueApiKeyRequest;
+import com.atlashub.iam.application.commands.RotateApiKey.RotateApiKeyCommand;
+import com.atlashub.iam.application.commands.RotateApiKey.RotateApiKeyHandler;
+import com.atlashub.iam.presentation.dto.RotateApiKeyRequest;
 import com.atlashub.shared.application.dto.ApiResponse;
 import com.atlashub.shared.application.security.AuthenticatedPrincipal;
 import jakarta.validation.Valid;
@@ -31,12 +34,14 @@ public class ApiKeyController {
     private final IssueApiKeyHandler issueHandler;
     private final RevokeApiKeyHandler revokeHandler;
     private final ListApiKeysHandler listHandler;
+    private final RotateApiKeyHandler rotateHandler;
 
     public ApiKeyController(IssueApiKeyHandler issueHandler, RevokeApiKeyHandler revokeHandler,
-                            ListApiKeysHandler listHandler) {
+                            ListApiKeysHandler listHandler, RotateApiKeyHandler rotateHandler) {
         this.issueHandler = issueHandler;
         this.revokeHandler = revokeHandler;
         this.listHandler = listHandler;
+        this.rotateHandler = rotateHandler;
     }
 
     @PostMapping
@@ -60,6 +65,14 @@ public class ApiKeyController {
                                                     @PathVariable Long id) {
         revokeHandler.execute(new RevokeApiKeyCommand(id, principal.activeOrganizationId(), principal.userId()));
         return done("API key revoked");
+    }
+
+    @PostMapping("/{id}/rotate")
+    public ResponseEntity<ApiResponse<IssuedApiKeyResult>> rotate(
+            @AuthenticationPrincipal AuthenticatedPrincipal principal, @PathVariable Long id,
+            @Valid @RequestBody RotateApiKeyRequest request) {
+        return ok(rotateHandler.execute(new RotateApiKeyCommand(
+                id, principal.activeOrganizationId(), principal.userId(), request.name())));
     }
 
     private <T> ResponseEntity<ApiResponse<T>> ok(T value) {

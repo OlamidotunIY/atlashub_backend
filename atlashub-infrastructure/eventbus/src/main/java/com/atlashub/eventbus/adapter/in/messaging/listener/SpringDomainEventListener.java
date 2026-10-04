@@ -22,7 +22,10 @@ public class SpringDomainEventListener {
     }
 
     private String getTopicForEvent(String eventClassName) {
-        if (eventClassName.startsWith("Organization") || eventClassName.startsWith("ApiKey")) {
+        if (eventClassName.startsWith("ApiKey") || eventClassName.startsWith("CustomRole")
+                || eventClassName.startsWith("Invitation") || eventClassName.startsWith("Member")) {
+            return "iam-events";
+        } else if (eventClassName.startsWith("Organization")) {
             return "organization-events";
         } else if (eventClassName.startsWith("User")) {
             return "user-events";

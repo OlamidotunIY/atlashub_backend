@@ -50,6 +50,11 @@ public class ApiKeyRepositoryAdapter
     public List<ApiKey> findByOrganizationId(Long organizationId) {
         return springDataRepo.findByOrganizationId(organizationId).stream().map(mapper::toDomain).toList();
     }
+
+    @Override
+    public java.util.Optional<ApiKey> findByIdAndOrganizationIdForUpdate(Long id, Long organizationId) {
+        return springDataRepo.findByIdAndOrganizationIdForUpdate(id, organizationId).map(mapper::toDomain);
+    }
 }
 
 

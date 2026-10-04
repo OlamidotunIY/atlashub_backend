@@ -15,6 +15,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
 import java.util.Base64;
+import com.atlashub.iam.domain.exception.CustomRoleNotFoundException;
+import com.atlashub.iam.domain.exception.LiveApiKeyUnavailableException;
 
 @Component
 public class IssueApiKeyHandler extends Command<IssueApiKeyCommand, IssuedApiKeyResult> {
@@ -44,11 +46,13 @@ public class IssueApiKeyHandler extends Command<IssueApiKeyCommand, IssuedApiKey
 
         ApiEnvironment environment = ApiEnvironment.parse(command.environment());
         if (environment == ApiEnvironment.LIVE && !complianceQueryPort.isApproved(command.orgId())) {
-            throw new IllegalStateException("Live API keys require approved compliance");
+            throw new LiveApiKeyUnavailableException("Live API keys require approved compliance");
         }
-        roleRepository.findById(command.boundRoleId())
-                .filter(role -> role.getOrganizationId().equals(command.orgId()))
-                .orElseThrow(() -> new IllegalArgumentException("API key role does not belong to the organization"));
+        if (command.boundRoleId() != null) {
+            roleRepository.findById(command.boundRoleId())
+                    .filter(role -> role.getOrganizationId().equals(command.orgId()))
+                    .orElseThrow(CustomRoleNotFoundException::new);
+        }
 
         String publicKey = "atlas_pk_" + environment.name().toLowerCase() + "_" + randomToken(18);
         String secretKey = "atlas_sk_" + environment.name().toLowerCase() + "_" + randomToken(32);
