@@ -16,7 +16,7 @@ public interface SpringDataApiKeyRepository extends JpaRepository<ApiKeyJpa, Lon
     List<ApiKeyJpa> findByOrganizationId(Long organizationId);
     java.util.Optional<ApiKeyJpa> findByPublicKey(String publicKey);
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("select key from ApiKeyJpa key where key.id = :id and key.organizationId = :organizationId")
+    @Query("select apiKey from ApiKeyJpa apiKey where apiKey.id = :id and apiKey.organizationId = :organizationId")
     Optional<ApiKeyJpa> findByIdAndOrganizationIdForUpdate(
             @Param("id") Long id, @Param("organizationId") Long organizationId);
 }
