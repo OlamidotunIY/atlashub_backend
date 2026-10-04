@@ -17,6 +17,6 @@ public interface AnchorDocumentClient {
     @PostExchange(value = "/api/v1/documents/upload-document/{customerId}/{documentId}",
             contentType = MediaType.MULTIPART_FORM_DATA_VALUE)
     void upload(@PathVariable String customerId, @PathVariable String documentId,
-                @RequestParam(required = false) String textData,
+                @RequestPart(name = "textData", required = false) String textData,
                 @RequestPart(name = "fileData", required = false) Resource fileData);
 }

@@ -8,9 +8,8 @@ public enum AnchorWebhookConsumer {
             "compliance",
             "atlashub-compliance",
             List.of(
-                    "customer.created", "customer.updated", "customer.identification.approved",
-                    "customer.identification.manualReview", "customer.identification.error",
-                    "customer.identification.rejected", "customer.identification.reenter_information",
+                    "customer.identification.approved", "customer.identification.error",
+                    "customer.identification.rejected",
                     "customer.identification.awaitingDocument", "document.approved", "document.rejected"
             )
     ),
