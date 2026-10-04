@@ -9,6 +9,7 @@ import com.atlashub.iam.domain.entities.ApiKey;
 import com.atlashub.shared.application.security.ApiEnvironment;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @Component
 public class ListApiKeysHandler extends Query<ListApiKeysQuery, List<ApiKeyResult>> {
@@ -22,6 +23,7 @@ public class ListApiKeysHandler extends Query<ListApiKeysQuery, List<ApiKeyResul
     }
 
     @Override
+    @PreAuthorize("hasAuthority('iam:apikeys:manage')")
     public List<ApiKeyResult> execute(ListApiKeysQuery query) {
         log.info("Executing ListApiKeysQuery for orgId: {}, environment: {}", query.orgId(), query.environment());
         

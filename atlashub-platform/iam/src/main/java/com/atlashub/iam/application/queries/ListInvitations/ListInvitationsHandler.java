@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @Component
 public class ListInvitationsHandler extends Query<ListInvitationsQuery, List<InvitationResult>> {
@@ -23,6 +24,7 @@ public class ListInvitationsHandler extends Query<ListInvitationsQuery, List<Inv
     }
 
     @Override
+    @PreAuthorize("hasAuthority('iam:members:invite')")
     public List<InvitationResult> execute(ListInvitationsQuery query) {
         log.info("Executing ListInvitationsQuery for orgId: {}", query.orgId());
         

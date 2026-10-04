@@ -27,7 +27,9 @@ public class ListPermissionsHandler extends Query<ListPermissionsQuery, List<Per
     public List<PermissionResult> execute(ListPermissionsQuery query) {
         log.info("Executing ListPermissionsQuery for module: {}", query.moduleName());
         
-        List<Permission> permissions = permissionRepository.findByModule(query.moduleName());
+        List<Permission> permissions = query.moduleName() == null || query.moduleName().isBlank()
+                ? permissionRepository.findAllByActiveTrue()
+                : permissionRepository.findByModule(query.moduleName()).stream().filter(Permission::isActive).toList();
 
         return permissions.stream()
             .map(PermissionResult::fromEntity)

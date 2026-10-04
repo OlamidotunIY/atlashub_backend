@@ -52,7 +52,7 @@ When a user logs in, `iam` provides all permissions for their active organizatio
 Org owners/admins invite new members by email. The `Invitation` aggregate tracks the full lifecycle. On acceptance, `OrganizationMember` is created and `InvitationAcceptedEvent` is published.
 
 ### API Key Management
-Organizations are issued API key pairs (public + secret) per environment (LIVE/TEST). The secret key is only returned once on creation — the hash is stored. Keys can be revoked.
+Organizations are issued API key pairs (public + secret) per environment (LIVE/TEST). The secret key is returned once; AtlasHub stores only AES-256-GCM ciphertext so it can verify HMAC signatures. Keys can be revoked or atomically rotated.
 
 ---
 
@@ -68,7 +68,7 @@ Permission
 ├── code: String                  ← unique, e.g., "pay:charges:create"
 ├── module: String                ← e.g., "pay"
 ├── resource: String              ← e.g., "charges"
-├── action: PermissionAction      ← CREATE, READ, UPDATE, DELETE, APPROVE, INITIATE, DISPATCH
+├── action: PermissionAction      ← CREATE, READ, UPDATE, DELETE, APPROVE, INITIATE, DISPATCH, MANAGE, SUSPEND, REACTIVATE, CLOSE, REFUND, OPEN, POST
 ├── displayName: String           ← human-readable label
 ├── description: String
 └── isActive: Boolean
@@ -162,8 +162,10 @@ ApiKey
 ├── id: Long
 ├── organizationId: Long
 ├── publicKey: String             ← "atlas_pk_..." — stored plaintext
-├── secretKeyHash: String         ← SHA-256 hash of the secret key — original never stored
+├── secretKeyCiphertext: String   ← AES-256-GCM ciphertext; plaintext is never stored
 ├── name: String                  ← human-readable label (e.g., "Server Key", "Webhook Processor")
+├── environment: ApiEnvironment  ← TEST or LIVE; immutable
+├── boundRoleId: Long             ← nullable; null means all active platform permissions
 ├── isRevoked: Boolean
 ├── lastUsedAt: ZonedDateTime     ← nullable
 ├── revokedAt: ZonedDateTime      ← nullable
@@ -177,17 +179,13 @@ ApiKey
 
 **Key Generation** (in `IssueApiKeyUseCase`):
 ```
-publicKey  = "atlas_pk_" + Base62.random(24)
-secretKey  = "atlas_sk_" + Base62.random(40)   ← shown ONCE, never stored
-secretHash = SHA-256(secretKey)                  ← stored in DB
+publicKey  = "atlas_pk_" + environment + "_" + secureRandom
+secretKey        = "atlas_sk_" + environment + "_" + secureRandom
+secretCiphertext = AES-256-GCM(secretKey)        ← stored in DB; plaintext shown once
 ```
 
 **Permissions via API Key:**
-An API key authenticates as the organization. Permissions are derived from:
-1. The organization's active subscription status (checked via `EntitlementQueryPort`)
-2. The requesting user's IAM role (if the request carries a `userId` claim embedded in the key)
-
-For fully automated / server-to-server requests with no user context, the API key grants the organization's base permissions. Fine-grained per-action access can be restricted by associating a `customRoleId` with the key at issuance.
+An API key authenticates as the organization. An unbound key receives the current active platform permission catalog. A key with `boundRoleId` receives only that role's current active permissions. Authentication never writes key usage synchronously; it publishes `ApiKeyAuthenticatedEvent`, and IAM records `lastUsedAt` asynchronously.
 
 ```
 ApiKey (extended)
@@ -283,12 +281,13 @@ Organization deposit-account and FBO-subaccount provisioning is system-only and 
 | Event | Published When | Consumed By |
 |---|---|---|
 | `MemberJoinedEvent` | Invitation accepted / member directly added | `notifications` (welcome to org), `hr` (optional: draft employee record) |
-| `MemberDeactivatedEvent` | Member deactivated | `notifications`, `auth` (revoke all refresh tokens for this org context) |
+| `MemberDeactivatedEvent` | Member deactivated or suspended | `notifications`, `authentication` (revoke user sessions) |
 | `InvitationCreatedEvent` | New invitation created | `notifications` (send invite email with token link) |
 | `InvitationAcceptedEvent` | Invited user accepts | `auth` (ensure account is active), `hr` (if org has HR, draft employee) |
 | `InvitationExpiredEvent` | Invitation TTL reached | Internal only |
-| `ApiKeyRevokedEvent` | API key revoked | `auth` (clear key from Redis cache), `notifications` (alert org admins) |
-| `CustomRolePermissionsChangedEvent` | Role permissions updated | `auth` (invalidate affected users' access tokens — add JTIs to revocation list) |
+| `ApiKeyRevokedEvent` | API key revoked | Audit/notification consumers; authentication reads current key state and therefore needs no key cache invalidation |
+| `ApiKeyAuthenticatedEvent` | HMAC signature accepted | `iam` (asynchronously update `lastUsedAt`) |
+| `CustomRolePermissionsChangedEvent` | Role permissions updated | `authentication` (revoke organization sessions) |
 
 ---
 
@@ -304,8 +303,8 @@ public interface MembershipQueryPort {
 }
 
 public interface ApiKeyQueryPort {
-    Optional<ApiKeyDto> findByPublicKey(String publicKey);
-    boolean isRevoked(String publicKey);
+    Optional<AuthenticatedApiKey> authenticate(
+        String publicKey, String canonicalMessage, String signature);
 }
 ```
 
@@ -348,6 +347,8 @@ public interface ApiKeyQueryPort {
   - Returns `IssuedApiKeyResult` containing plaintext `secretKey` — the ONLY time it is returned
   - `boundRoleId` is optional; if provided, limits the key's permissions to that role
 - `RevokeApiKeyCommand(keyId, orgId, requestedByUserId)` → `RevokeApiKeyUseCase`
+- `RotateApiKeyCommand(keyId, orgId, requestedByUserId, name?)` → atomically revokes the old key and returns the replacement secret once
+- `RecordApiKeyUsageCommand(orgId, publicKey)` → event-driven audit update for `lastUsedAt`
 
 ---
 
@@ -366,7 +367,7 @@ public interface ApiKeyQueryPort {
 ## 9. Listeners
 
 - **`OrganizationRegisteredListener`**: topic=`accounts-events`, event=`OrganizationRegistered`. Creates the built-in OWNER role for the org and an `OrganizationMember` linking the founding user to the org with the OWNER role.
-- **`MemberDeactivatedListener`** (internal): After deactivation, publishes `MemberDeactivatedEvent` → `auth` revokes all refresh tokens for this user in this org context.
+- IAM publishes `MemberDeactivatedEvent` from member deactivation/suspension; the `authentication` module consumes it and revokes the user's sessions.
 - **`SubscriptionSuspendedListener`**: topic=`billing-events`. Suspends all non-OWNER members for the organization (access cutoff without deleting data).
 - **`EmployeeSuspendedListener`**: topic=`hr-events`. Event=`EmployeeSuspendedEvent`. Payload: `employeeId`, `organizationId`, `userId`, `suspendedAt`. Calls `DeactivateMemberHandler` for the suspended employee's corresponding `OrganizationMember` record. Prevents suspended employees from accessing the dashboard or API while HR suspension is active.
 - **`OrganizationBannedListener`**: topic=`admin-events`. Event=`OrganizationBannedEvent`. Payload: `organizationId`, `reason`, `bannedAt`. Deactivates ALL members of the organization (including OWNER). Publishes `MemberDeactivatedEvent` for each, causing `auth` to revoke all tokens for the org.
@@ -389,7 +390,7 @@ Permissions are read from the JWT claims (`permissions` array). No DB hit per re
 For Maker-Checker and other sensitive operations, the use case re-validates the permission in the application layer — defense-in-depth against JWT tampering.
 
 ### Token Invalidation on Role Change
-When a `CustomRole`'s permissions are changed, all active members using that role have their current access tokens added to the Redis revocation list. On their next request, they will get a 401, forcing a token refresh. The new token will carry the updated permissions.
+When a `CustomRole`'s permissions change, IAM publishes `CustomRolePermissionsChangedEvent`. Authentication consumes it and revokes every session for that organization, conservatively guaranteeing that no token retains stale role permissions. The next authentication issues a token with the current permission set.
 
 ---
 
@@ -400,5 +401,6 @@ When a `CustomRole`'s permissions are changed, all active members using that rol
 - **Pessimistic Locking**: `OrganizationMember` during role assignment — prevents concurrent role changes leaving inconsistent state
 
 ### Outbox & Inbox
-- **Outbox**: `InvitationCreatedEvent` (triggers email), `MemberJoinedEvent` (triggers HR draft), `ApiKeyRevokedEvent` (triggers cache invalidation in auth)
-- **Inbox**: `OrganizationRegistered` (bootstrap owner role — idempotent) and `SubscriptionSuspendedEvent` (suspend members — idempotent)
+- **Outbox**: invitation/member events, `ApiKeyRevokedEvent`, `ApiKeyAuthenticatedEvent`, and `CustomRolePermissionsChangedEvent`, routed to `iam-events` where applicable
+- **Inbox**: `OrganizationRegistered`, `SubscriptionSuspendedEvent`, `EmployeeSuspendedEvent`, `OrganizationBannedEvent`, and IAM's own asynchronous API-key usage event
+- **Invitation expiry**: `InvitationExpirationScheduler` under `infrastructure/messaging/schedulers` invokes only `ExpireInvitationsHandler`
