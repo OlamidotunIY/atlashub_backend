@@ -44,6 +44,8 @@ class AnchorClientConfigurationTest {
             assertNotNull(registry.forEnvironment(AnchorEnvironment.SANDBOX).subAccounts());
             assertNotNull(registry.forEnvironment(AnchorEnvironment.LIVE).reservedAccounts());
             assertNotNull(registry.forEnvironment(AnchorEnvironment.SANDBOX).webhooks());
+            assertNotNull(registry.forEnvironment(AnchorEnvironment.LIVE).businessCustomers());
+            assertNotNull(registry.forEnvironment(AnchorEnvironment.LIVE).documents());
         }
     }
 

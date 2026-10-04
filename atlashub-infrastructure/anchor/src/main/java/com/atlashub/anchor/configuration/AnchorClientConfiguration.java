@@ -6,6 +6,8 @@ import com.atlashub.anchor.client.AnchorDepositAccountClient;
 import com.atlashub.anchor.client.AnchorReservedAccountClient;
 import com.atlashub.anchor.client.AnchorSubAccountClient;
 import com.atlashub.anchor.client.AnchorWebhookClient;
+import com.atlashub.anchor.client.AnchorBusinessCustomerClient;
+import com.atlashub.anchor.client.AnchorDocumentClient;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -56,6 +58,8 @@ public class AnchorClientConfiguration {
                 proxyFactory.createClient(AnchorDepositAccountClient.class),
                 proxyFactory.createClient(AnchorSubAccountClient.class),
                 proxyFactory.createClient(AnchorReservedAccountClient.class),
+                proxyFactory.createClient(AnchorBusinessCustomerClient.class),
+                proxyFactory.createClient(AnchorDocumentClient.class),
                 proxyFactory.createClient(AnchorWebhookClient.class)
         );
     }

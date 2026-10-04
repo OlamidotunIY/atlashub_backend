@@ -6,6 +6,8 @@ import com.atlashub.anchor.client.AnchorDepositAccountClient;
 import com.atlashub.anchor.client.AnchorReservedAccountClient;
 import com.atlashub.anchor.client.AnchorSubAccountClient;
 import com.atlashub.anchor.client.AnchorWebhookClient;
+import com.atlashub.anchor.client.AnchorBusinessCustomerClient;
+import com.atlashub.anchor.client.AnchorDocumentClient;
 import com.atlashub.anchor.configuration.AnchorEnvironment;
 import com.atlashub.anchor.configuration.AnchorProperties;
 import com.atlashub.anchor.dto.common.AnchorRequest;
@@ -35,6 +37,8 @@ class AnchorBankingAdapterTest {
                 depositAccounts,
                 mock(AnchorSubAccountClient.class),
                 mock(AnchorReservedAccountClient.class),
+                mock(AnchorBusinessCustomerClient.class),
+                mock(AnchorDocumentClient.class),
                 mock(AnchorWebhookClient.class)
         );
         ObjectProvider<AnchorClientRegistry> provider = provider(registry);
