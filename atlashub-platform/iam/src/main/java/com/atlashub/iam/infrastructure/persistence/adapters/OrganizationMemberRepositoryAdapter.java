@@ -59,6 +59,11 @@ public class OrganizationMemberRepositoryAdapter
     }
 
     @Override
+    public Optional<OrganizationMember> findByIdAndOrganizationIdForUpdate(Long id, Long organizationId) {
+        return springDataRepo.findByIdAndOrganizationIdForUpdate(id, organizationId).map(mapper::toDomain);
+    }
+
+    @Override
     public List<OrganizationMember> findAllByUserId(Long userId) {
         return springDataRepo.findAllByUserId(userId).stream().map(mapper::toDomain).toList();
     }

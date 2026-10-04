@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @Component
 public class ListCustomRolesHandler extends Query<ListCustomRolesQuery, List<CustomRoleResult>> {
@@ -22,6 +23,7 @@ public class ListCustomRolesHandler extends Query<ListCustomRolesQuery, List<Cus
     }
 
     @Override
+    @PreAuthorize("hasAuthority('iam:roles:manage')")
     public List<CustomRoleResult> execute(ListCustomRolesQuery query) {
         log.info("Executing ListCustomRolesQuery");
         

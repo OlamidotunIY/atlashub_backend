@@ -3,7 +3,8 @@ package com.atlashub.iam.application.queries.GetMemberDetails;
 import com.atlashub.iam.domain.entities.OrganizationMember;
 import com.atlashub.iam.domain.repositories.OrganizationMemberRepository;
 import com.atlashub.shared.application.usecase.Query;
-import com.atlashub.shared.domain.exception.NotFoundException;
+import com.atlashub.iam.domain.exception.OrganizationMemberNotFoundException;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,12 +21,13 @@ public class GetMemberDetailsHandler extends Query<GetMemberDetailsQuery, Member
     }
 
     @Override
+    @PreAuthorize("hasAuthority('iam:members:manage')")
     public MemberDetailsResult execute(GetMemberDetailsQuery query) {
         log.info("Executing GetMemberDetailsQuery");
         
         OrganizationMember member = organizationMemberRepository.findById(query.memberId())
                 .filter(found -> found.getOrganizationId().equals(query.organizationId()))
-                .orElseThrow(() -> new NotFoundException("Member not found with id: " + query.memberId()));
+                .orElseThrow(OrganizationMemberNotFoundException::new);
         
         return new MemberDetailsResult(
                 member.getId(),

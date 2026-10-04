@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.security.access.prepost.PreAuthorize;
+import com.atlashub.iam.domain.exception.OrganizationMemberNotFoundException;
 
 @Component
 public class DeactivateMemberHandler extends Command<DeactivateMemberCommand, OrganizationMember> {
@@ -30,9 +31,9 @@ public class DeactivateMemberHandler extends Command<DeactivateMemberCommand, Or
     public OrganizationMember execute(DeactivateMemberCommand command) {
         log.info("Executing DeactivateMemberCommand");
         
-        OrganizationMember member = organizationMemberRepository.findById(command.memberId())
-                .filter(found -> found.getOrganizationId().equals(command.organizationId()))
-                .orElseThrow(() -> new IllegalArgumentException("Member not found"));
+        OrganizationMember member = organizationMemberRepository.findByIdAndOrganizationIdForUpdate(
+                        command.memberId(), command.organizationId())
+                .orElseThrow(OrganizationMemberNotFoundException::new);
                 
         boolean ownerRole = roleRepository.findById(member.getCustomRoleId())
                 .map(role -> role.isBuiltIn() && "Owner".equalsIgnoreCase(role.getName()))

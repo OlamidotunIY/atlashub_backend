@@ -12,6 +12,7 @@ import com.atlashub.iam.domain.valueobject.MemberStatus;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @Component
 public class ListMembersHandler extends Query<ListMembersQuery, List<MemberResult>> {
@@ -24,6 +25,7 @@ public class ListMembersHandler extends Query<ListMembersQuery, List<MemberResul
     }
 
     @Override
+    @PreAuthorize("hasAuthority('iam:members:manage')")
     public List<MemberResult> execute(ListMembersQuery query) {
         log.info("Executing ListMembersQuery for orgId: {}", query.orgId());
         

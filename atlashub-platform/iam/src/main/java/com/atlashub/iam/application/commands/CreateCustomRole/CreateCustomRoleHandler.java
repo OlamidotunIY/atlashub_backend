@@ -9,6 +9,8 @@ import com.atlashub.shared.application.usecase.Command;
 import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
 public class CreateCustomRoleHandler extends Command<CreateCustomRoleCommand, CustomRole> {
@@ -25,6 +27,8 @@ public class CreateCustomRoleHandler extends Command<CreateCustomRoleCommand, Cu
     }
 
     @Override
+    @Transactional
+    @PreAuthorize("hasAuthority('iam:roles:manage')")
     public CustomRole execute(CreateCustomRoleCommand command) {
         log.info("Executing CreateCustomRoleCommand");
         

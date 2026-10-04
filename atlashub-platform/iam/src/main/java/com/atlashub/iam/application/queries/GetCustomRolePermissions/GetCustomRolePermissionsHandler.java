@@ -5,7 +5,8 @@ import com.atlashub.iam.domain.entities.Permission;
 import com.atlashub.iam.domain.repositories.CustomRoleRepository;
 import com.atlashub.iam.domain.repositories.PermissionRepository;
 import com.atlashub.shared.application.usecase.Query;
-import com.atlashub.shared.domain.exception.NotFoundException;
+import com.atlashub.iam.domain.exception.CustomRoleNotFoundException;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -28,12 +29,13 @@ public class GetCustomRolePermissionsHandler extends Query<GetCustomRolePermissi
     }
 
     @Override
+    @PreAuthorize("hasAuthority('iam:roles:manage')")
     public CustomRolePermissionsResult execute(GetCustomRolePermissionsQuery query) {
         log.info("Executing GetCustomRolePermissionsQuery for roleId: {}", query.roleId());
         
         CustomRole customRole = customRoleRepository.findById(query.roleId())
                 .filter(found -> found.getOrganizationId().equals(query.organizationId()))
-                .orElseThrow(() -> new NotFoundException("Custom role not found with id: " + query.roleId()));
+                .orElseThrow(CustomRoleNotFoundException::new);
 
         List<Permission> permissions = customRole.isBuiltIn()
                 ? permissionRepository.findAllByActiveTrue()

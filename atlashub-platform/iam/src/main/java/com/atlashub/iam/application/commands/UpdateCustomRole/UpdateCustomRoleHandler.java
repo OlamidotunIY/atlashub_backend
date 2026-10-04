@@ -9,6 +9,9 @@ import com.atlashub.iam.domain.repositories.PermissionRepository;
 import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.atlashub.iam.domain.exception.CustomRoleNotFoundException;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
 public class UpdateCustomRoleHandler extends Command<UpdateCustomRoleCommand, CustomRole> {
@@ -25,12 +28,14 @@ public class UpdateCustomRoleHandler extends Command<UpdateCustomRoleCommand, Cu
     }
 
     @Override
+    @Transactional
+    @PreAuthorize("hasAuthority('iam:roles:manage')")
     public CustomRole execute(UpdateCustomRoleCommand command) {
         log.info("Executing UpdateCustomRoleCommand");
         
         CustomRole role = customRoleRepository.findById(command.roleId())
             .filter(found -> found.getOrganizationId().equals(command.organizationId()))
-            .orElseThrow(() -> new IllegalArgumentException("CustomRole not found: " + command.roleId()));
+            .orElseThrow(CustomRoleNotFoundException::new);
             
         if (command.name() != null) {
             role.rename(command.name());
