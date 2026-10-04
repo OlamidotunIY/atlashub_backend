@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Optional;
+import java.time.ZonedDateTime;
 import java.util.stream.Collectors;
 
 @Component
@@ -47,6 +48,17 @@ public class InvitationRepositoryAdapter
                 .stream()
                 .map(mapper::toDomain)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<Invitation> findByOrganizationId(Long organizationId) {
+        return springDataRepo.findByOrganizationId(organizationId).stream().map(mapper::toDomain).toList();
+    }
+
+    @Override
+    public List<Invitation> findPendingExpiredBefore(ZonedDateTime cutoff) {
+        return springDataRepo.findByStatusAndExpiresAtBefore(InvitationStatus.PENDING, cutoff)
+                .stream().map(mapper::toDomain).toList();
     }
 
     @Override

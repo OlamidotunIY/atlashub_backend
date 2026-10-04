@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
+import com.atlashub.iam.domain.exception.*;
 
 @Component
 public class AcceptInvitationHandler extends Command<AcceptInvitationCommand, Invitation> {
@@ -38,20 +39,20 @@ public class AcceptInvitationHandler extends Command<AcceptInvitationCommand, In
         log.info("Executing AcceptInvitationCommand for token: {}", command.token());
         
         Invitation invitation = invitationRepository.findByToken(command.token())
-            .orElseThrow(() -> new IllegalArgumentException("Invitation not found for token: " + command.token()));
+            .orElseThrow(InvitationNotFoundException::new);
             
         var user = userQueryPort.findById(command.acceptingUserId())
                 .orElseThrow(() -> new IllegalArgumentException("Accepting user does not exist"));
         if (!user.email().equalsIgnoreCase(invitation.getInvitedEmail().value())) {
-            throw new IllegalArgumentException("Invitation does not belong to the accepting user");
+            throw new InvalidInvitationRecipientException();
         }
         if (memberRepository.findByOrganizationIdAndUserId(
                 invitation.getOrganizationId(), command.acceptingUserId()).isPresent()) {
-            throw new IllegalArgumentException("User is already a member of this organization");
+            throw new DuplicateOrganizationMemberException();
         }
         roleRepository.findById(invitation.getCustomRoleId())
                 .filter(role -> role.getOrganizationId().equals(invitation.getOrganizationId()))
-                .orElseThrow(() -> new IllegalArgumentException("Invitation role is invalid"));
+                .orElseThrow(CustomRoleNotFoundException::new);
 
         invitation.accept(command.acceptingUserId());
         OrganizationMember member = OrganizationMember.create(

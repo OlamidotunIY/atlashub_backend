@@ -16,6 +16,9 @@ import com.atlashub.iam.domain.repositories.CustomRoleRepository;
 import com.atlashub.iam.domain.repositories.OrganizationMemberRepository;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
+import com.atlashub.iam.domain.exception.CustomRoleNotFoundException;
+import com.atlashub.iam.domain.exception.DuplicateInvitationException;
+import com.atlashub.iam.domain.exception.DuplicateOrganizationMemberException;
 
 @Component
 public class InviteMemberHandler extends Command<InviteMemberCommand, Invitation> {
@@ -57,14 +60,14 @@ public class InviteMemberHandler extends Command<InviteMemberCommand, Invitation
 
         roleRepository.findById(command.customRoleId())
                 .filter(role -> role.getOrganizationId().equals(command.orgId()))
-                .orElseThrow(() -> new IllegalArgumentException("Role does not belong to the organization"));
+                .orElseThrow(CustomRoleNotFoundException::new);
         userQueryPort.findByEmail(command.email()).ifPresent(existingUser -> {
             if (memberRepository.findByOrganizationIdAndUserId(command.orgId(), existingUser.id()).isPresent()) {
-                throw new IllegalArgumentException("User is already a member of the organization");
+                throw new DuplicateOrganizationMemberException();
             }
         });
         if (invitationRepository.findPendingByOrganizationIdAndEmail(command.orgId(), command.email()).isPresent()) {
-            throw new IllegalArgumentException("A pending invitation already exists for this email");
+            throw new DuplicateInvitationException();
         }
 
         EmailAddress emailAddress = new EmailAddress(command.email());

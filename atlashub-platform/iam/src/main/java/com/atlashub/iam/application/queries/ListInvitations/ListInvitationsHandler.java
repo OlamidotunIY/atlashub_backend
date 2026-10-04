@@ -28,7 +28,9 @@ public class ListInvitationsHandler extends Query<ListInvitationsQuery, List<Inv
         
         InvitationStatus status = query.status() != null ? InvitationStatus.valueOf(query.status().toUpperCase()) : null;
         
-        List<Invitation> invitations = invitationRepository.findByOrganizationIdAndStatus(query.orgId(), status);
+        List<Invitation> invitations = status == null
+                ? invitationRepository.findByOrganizationId(query.orgId())
+                : invitationRepository.findByOrganizationIdAndStatus(query.orgId(), status);
         
         List<InvitationResult> results = invitations.stream()
             .map(invitation -> new InvitationResult(

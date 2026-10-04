@@ -3,7 +3,7 @@ package com.atlashub.iam.application.commands.DeclineInvitation;
 import com.atlashub.iam.domain.entities.Invitation;
 import com.atlashub.iam.domain.repositories.InvitationRepository;
 import com.atlashub.shared.application.usecase.Command;
-import com.atlashub.shared.domain.exception.NotFoundException;
+import com.atlashub.iam.domain.exception.InvitationNotFoundException;
 import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,7 +23,7 @@ public class DeclineInvitationHandler extends Command<DeclineInvitationCommand, 
         log.info("Executing DeclineInvitationCommand");
         
         Invitation invitation = invitationRepository.findByToken(command.token())
-                .orElseThrow(() -> new NotFoundException("Invitation not found with given token"));
+                .orElseThrow(InvitationNotFoundException::new);
 
         invitation.decline();
 
