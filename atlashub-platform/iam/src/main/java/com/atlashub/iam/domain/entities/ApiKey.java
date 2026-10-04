@@ -2,6 +2,7 @@ package com.atlashub.iam.domain.entities;
 
 import com.atlashub.iam.domain.events.ApiKeyRevokedEvent;
 import com.atlashub.iam.domain.exception.ApiKeyAlreadyRevokedException;
+import com.atlashub.iam.domain.exception.InvalidApiKeyException;
 import com.atlashub.shared.application.security.ApiEnvironment;
 import com.atlashub.shared.domain.entities.AggregateRoot;
 import com.atlashub.shared.domain.valueobject.CorrelationId;
@@ -47,8 +48,14 @@ public class ApiKey extends AggregateRoot<Long> {
 
     public static ApiKey create(Long id, Long organizationId, String publicKey, String secretKeyCiphertext,
                                 String name, ApiEnvironment environment, Long boundRoleId) {
-        if (id == null || organizationId == null || boundRoleId == null || environment == null) {
-            throw new IllegalArgumentException("API key identity, organization, environment, and role are required");
+        if (id == null || organizationId == null || environment == null) {
+            throw new InvalidApiKeyException("API key identity, organization, and environment are required");
+        }
+        if (publicKey == null || publicKey.isBlank() || secretKeyCiphertext == null || secretKeyCiphertext.isBlank()) {
+            throw new InvalidApiKeyException("API key material is required");
+        }
+        if (name == null || name.isBlank()) {
+            throw new InvalidApiKeyException("API key name is required");
         }
         ZonedDateTime now = ZonedDateTime.now();
 
@@ -57,6 +64,9 @@ public class ApiKey extends AggregateRoot<Long> {
     }
 
     public void revoke(Long revokedByUserId) {
+        if (revokedByUserId == null) {
+            throw new InvalidApiKeyException("Revoking user is required");
+        }
         if (Boolean.TRUE.equals(this.revoked)) {
             throw new ApiKeyAlreadyRevokedException("Api key with ID " + this.id + " is already revoked.");
         }

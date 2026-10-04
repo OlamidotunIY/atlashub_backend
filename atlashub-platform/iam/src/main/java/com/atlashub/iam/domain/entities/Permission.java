@@ -34,8 +34,14 @@ public class Permission extends AggregateRoot<Long> {
     }
 
     public static Permission create(Long id, String code, String module, String resource, PermissionAction action, String displayName, String description) {
+        if (id == null) {
+            throw new InvalidPermissionDataException("Permission identity is required");
+        }
         if (code == null || code.isBlank()) {
             throw new InvalidPermissionDataException("Permission code cannot be null or blank");
+        }
+        if (!code.matches("[a-z][a-z0-9-]*:[a-z][a-z0-9-]*:[a-z][a-z0-9-]*")) {
+            throw new InvalidPermissionDataException("Permission code must use module:resource:action format");
         }
         if (module == null || module.isBlank()) {
             throw new InvalidPermissionDataException("Permission module cannot be null or blank");

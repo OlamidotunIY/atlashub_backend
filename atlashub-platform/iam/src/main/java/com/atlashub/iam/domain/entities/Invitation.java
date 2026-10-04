@@ -7,6 +7,8 @@ import com.atlashub.iam.domain.events.InvitationExpiredEvent;
 import com.atlashub.iam.domain.events.InvitationRevokedEvent;
 import com.atlashub.iam.domain.exception.InvalidInvitationStateException;
 import com.atlashub.iam.domain.exception.InvitationExpiredException;
+import com.atlashub.iam.domain.exception.InvalidInvitationException;
+import com.atlashub.iam.domain.exception.InvitationNotExpiredException;
 import com.atlashub.iam.domain.valueobject.InvitationStatus;
 import com.atlashub.shared.domain.entities.AggregateRoot;
 import com.atlashub.shared.domain.valueobject.CorrelationId;
@@ -45,6 +47,13 @@ public class Invitation extends AggregateRoot<Long> {
 
     public static Invitation create(Long id, Long organizationId, EmailAddress invitedEmail, Long invitedByUserId,
                                     Long customRoleId, String tokenHash, String invitationToken) {
+        if (id == null || organizationId == null || invitedEmail == null || invitedByUserId == null
+                || customRoleId == null) {
+            throw new InvalidInvitationException("Invitation identity, organization, email, inviter, and role are required");
+        }
+        if (tokenHash == null || tokenHash.isBlank() || invitationToken == null || invitationToken.isBlank()) {
+            throw new InvalidInvitationException("Invitation token material is required");
+        }
         ZonedDateTime now = ZonedDateTime.now();
         Invitation invitation = new Invitation(
                 id, organizationId, invitedEmail, invitedByUserId, customRoleId, tokenHash,
@@ -63,6 +72,9 @@ public class Invitation extends AggregateRoot<Long> {
     }
 
     public void accept(Long acceptingUserId) {
+        if (acceptingUserId == null) {
+            throw new InvalidInvitationException("Accepting user is required");
+        }
         if (this.isExpired()) {
             throw new InvitationExpiredException("Invitation has expired");
         }
@@ -102,6 +114,9 @@ public class Invitation extends AggregateRoot<Long> {
         if (this.status != InvitationStatus.PENDING) {
             throw new InvalidInvitationStateException("Only pending invitations can be expired");
         }
+        if (!this.isExpired()) {
+            throw new InvitationNotExpiredException("Invitation has not expired");
+        }
         this.status = InvitationStatus.EXPIRED;
         this.touch();
         
@@ -115,6 +130,9 @@ public class Invitation extends AggregateRoot<Long> {
     }
 
     public void revoke(Long revokedByUserId) {
+        if (revokedByUserId == null) {
+            throw new InvalidInvitationException("Revoking user is required");
+        }
         if (this.status != InvitationStatus.PENDING) {
             throw new InvalidInvitationStateException("Only pending invitations can be revoked");
         }

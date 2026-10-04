@@ -3,6 +3,7 @@ package com.atlashub.iam.domain.entities;
 import com.atlashub.iam.domain.events.MemberDeactivatedEvent;
 import com.atlashub.iam.domain.events.MemberJoinedEvent;
 import com.atlashub.iam.domain.exception.LastOwnerDeactivationException;
+import com.atlashub.iam.domain.exception.InvalidOrganizationMemberException;
 import com.atlashub.iam.domain.valueobject.MemberStatus;
 import com.atlashub.shared.domain.entities.AggregateRoot;
 import com.atlashub.shared.domain.valueobject.CorrelationId;
@@ -35,6 +36,9 @@ public class OrganizationMember extends AggregateRoot<Long> {
     }
 
     public static OrganizationMember create(Long id, Long organizationId, Long userId, Long customRoleId, Long invitedBy) {
+        if (id == null || organizationId == null || userId == null || customRoleId == null) {
+            throw new InvalidOrganizationMemberException("Member identity, organization, user, and role are required");
+        }
         ZonedDateTime now = ZonedDateTime.now();
 
         OrganizationMember member = new OrganizationMember(id, organizationId, userId, customRoleId, MemberStatus.ACTIVE, now, invitedBy, now);
@@ -49,6 +53,9 @@ public class OrganizationMember extends AggregateRoot<Long> {
     }
 
     public void assignRole(Long newRoleId) {
+        if (newRoleId == null) {
+            throw new InvalidOrganizationMemberException("Role is required");
+        }
         if (!newRoleId.equals(this.customRoleId)) {
             this.customRoleId = newRoleId;
             this.touch();
@@ -73,6 +80,9 @@ public class OrganizationMember extends AggregateRoot<Long> {
     }
 
     public void suspend(String reason) {
+        if (reason == null || reason.isBlank()) {
+            throw new InvalidOrganizationMemberException("Suspension reason is required");
+        }
         if (this.status.equals(MemberStatus.ACTIVE)) {
             this.status = MemberStatus.SUSPENDED;
             this.touch();

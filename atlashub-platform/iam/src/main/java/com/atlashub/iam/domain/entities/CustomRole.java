@@ -5,6 +5,7 @@ import com.atlashub.shared.domain.entities.AggregateRoot;
 import com.atlashub.iam.domain.exception.RoleModificationException;
 import com.atlashub.iam.domain.exception.InvalidRolePermissionCountException;
 import com.atlashub.iam.domain.exception.RoleInUseException;
+import com.atlashub.iam.domain.exception.InvalidCustomRoleException;
 import com.atlashub.shared.domain.valueobject.CorrelationId;
 import lombok.Getter;
 
@@ -39,6 +40,12 @@ public class CustomRole extends AggregateRoot<Long> {
     }
 
     public static CustomRole create(Long id, Long organizationId, String name, String description, Set<Long> permissions, boolean builtIn, Long createdBy) {
+        if (id == null || organizationId == null || createdBy == null) {
+            throw new InvalidCustomRoleException("Role identity, organization, and creator are required");
+        }
+        if (name == null || name.isBlank()) {
+            throw new InvalidCustomRoleException("Role name is required");
+        }
         if (!builtIn && (permissions == null || permissions.isEmpty())) {
             throw new InvalidRolePermissionCountException("Minimum 1 permission per custom role");
         }
@@ -54,6 +61,9 @@ public class CustomRole extends AggregateRoot<Long> {
         if (this.builtIn) {
             throw new RoleModificationException("Cannot modify built-in OWNER role");
         }
+        if (permissionId == null) {
+            throw new InvalidCustomRoleException("Permission is required");
+        }
         permissions.add(permissionId);
         this.touch();
         this.publishPermissionsChangedEvent();
@@ -62,6 +72,9 @@ public class CustomRole extends AggregateRoot<Long> {
     public void addPermissions(Set<Long> permissionIds) {
         if (this.builtIn) {
             throw new RoleModificationException("Cannot modify built-in OWNER role");
+        }
+        if (permissionIds == null || permissionIds.isEmpty() || permissionIds.contains(null)) {
+            throw new InvalidCustomRoleException("At least one valid permission is required");
         }
         permissions.addAll(permissionIds);
         this.touch();
@@ -85,6 +98,9 @@ public class CustomRole extends AggregateRoot<Long> {
         if (this.builtIn) {
             throw new RoleModificationException("Cannot modify built-in OWNER role");
         }
+        if (newName == null || newName.isBlank()) {
+            throw new InvalidCustomRoleException("Role name is required");
+        }
         this.name = newName;
         this.touch();
     }
@@ -101,7 +117,7 @@ public class CustomRole extends AggregateRoot<Long> {
         if (this.builtIn) {
             throw new RoleModificationException("Cannot modify built-in OWNER role");
         }
-        if (newPermissions == null || newPermissions.isEmpty()) {
+        if (newPermissions == null || newPermissions.isEmpty() || newPermissions.contains(null)) {
             throw new InvalidRolePermissionCountException("Minimum 1 permission per custom role");
         }
         this.permissions = new HashSet<>(newPermissions);
