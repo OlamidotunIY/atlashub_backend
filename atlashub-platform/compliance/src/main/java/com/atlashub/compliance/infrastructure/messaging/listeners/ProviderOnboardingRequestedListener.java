@@ -26,7 +26,7 @@ public class ProviderOnboardingRequestedListener extends BaseKafkaEventListener 
 
     @PostConstruct
     public void init() {
-        registerSubscription(ProviderOnboardingRequestedEvent.class.getName(), GROUP_ID);
+        registerSubscription("com.atlashub.pay.accounts.domain.events.ProviderOnboardingRequestedEvent", GROUP_ID);
     }
 
     @KafkaListener(topics = "pay-events", groupId = GROUP_ID)

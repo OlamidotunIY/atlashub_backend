@@ -7,6 +7,8 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -40,8 +42,10 @@ public class ComplianceRecordJpa implements BaseJpaEntity {
     @JdbcTypeCode(SqlTypes.JSON) @Column(columnDefinition = "json") private ContactInfoData contactInfo;
     @JdbcTypeCode(SqlTypes.JSON) @Column(columnDefinition = "json") private ServiceAgreementData serviceAgreement;
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @Fetch(FetchMode.SUBSELECT)
     @JoinColumn(name = "compliance_record_id") @Builder.Default private List<BusinessOfficerJpa> officers = new ArrayList<>();
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @Fetch(FetchMode.SUBSELECT)
     @JoinColumn(name = "compliance_record_id") @Builder.Default private List<ComplianceDocumentRequirementJpa> documentRequirements = new ArrayList<>();
     @Column(nullable = false, updatable = false) private ZonedDateTime createdAt;
     @Column(nullable = false) private ZonedDateTime updatedAt;

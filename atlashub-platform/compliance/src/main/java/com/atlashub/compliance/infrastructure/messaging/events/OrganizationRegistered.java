@@ -3,6 +3,9 @@ package com.atlashub.compliance.infrastructure.messaging.events;
 import com.atlashub.shared.domain.event.DomainEvent;
 
 import java.time.ZonedDateTime;
+import java.time.LocalDate;
+import com.atlashub.shared.domain.valueobject.Country;
+import com.atlashub.shared.domain.valueobject.CurrencyCode;
 
 public record OrganizationRegistered(
         String eventId,
@@ -15,8 +18,9 @@ public record OrganizationRegistered(
             String businessName,
             String registrationType,
             String industry,
-            String country,
-            String currency,
+            LocalDate registrationDate,
+            Country country,
+            CurrencyCode currency,
             Long ownerUserId
     ) {
     }

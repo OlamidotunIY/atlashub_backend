@@ -13,5 +13,6 @@ import java.util.Optional;
 public interface SpringDataComplianceRecordRepository extends JpaRepository<ComplianceRecordJpa, Long> {
     Optional<ComplianceRecordJpa> findByOrganizationId(Long organizationId);
     Optional<ComplianceRecordJpa> findByAnchorBusinessCustomerId(String anchorBusinessCustomerId);
+    Optional<ComplianceRecordJpa> findByDocumentRequirementsAnchorDocumentId(String anchorDocumentId);
     Page<ComplianceRecordJpa> findAllByStatus(ComplianceStatus status, Pageable pageable);
 }

@@ -8,10 +8,7 @@ import com.atlashub.compliance.application.commands.UpdateBusinessProfile.Update
 import com.atlashub.compliance.application.commands.UpdateBusinessProfile.UpdateBusinessProfileHandler;
 import com.atlashub.compliance.application.commands.UpdateContactInfo.UpdateContactInfoCommand;
 import com.atlashub.compliance.application.commands.UpdateContactInfo.UpdateContactInfoHandler;
-import com.atlashub.compliance.application.queries.GetComplianceStatus.ComplianceStatusResult;
-import com.atlashub.compliance.application.queries.GetComplianceStatus.GetComplianceStatusHandler;
-import com.atlashub.compliance.application.queries.GetComplianceStatus.GetComplianceStatusQuery;
-import com.atlashub.compliance.domain.valueobject.BusinessProfileData;
+import com.atlashub.compliance.application.queries.GetComplianceDetails.*;
 import com.atlashub.compliance.domain.valueobject.ContactInfoData;
 import com.atlashub.compliance.domain.valueobject.AddressData;
 import com.atlashub.compliance.presentation.dto.BusinessProfileRequest;
@@ -39,18 +36,18 @@ public class ComplianceController {
     private final UpdateContactInfoHandler contactInfoHandler;
     private final AcceptServiceAgreementHandler agreementHandler;
     private final SubmitComplianceHandler submitHandler;
-    private final GetComplianceStatusHandler statusHandler;
+    private final GetComplianceDetailsHandler detailsHandler;
 
     public ComplianceController(UpdateBusinessProfileHandler businessProfileHandler,
                                 UpdateContactInfoHandler contactInfoHandler,
                                 AcceptServiceAgreementHandler agreementHandler,
                                 SubmitComplianceHandler submitHandler,
-                                GetComplianceStatusHandler statusHandler) {
+                                GetComplianceDetailsHandler detailsHandler) {
         this.businessProfileHandler = businessProfileHandler;
         this.contactInfoHandler = contactInfoHandler;
         this.agreementHandler = agreementHandler;
         this.submitHandler = submitHandler;
-        this.statusHandler = statusHandler;
+        this.detailsHandler = detailsHandler;
     }
 
     @PutMapping("/business")
@@ -92,10 +89,10 @@ public class ComplianceController {
         return done("Compliance submitted");
     }
 
-    @GetMapping("/status")
-    public ResponseEntity<ApiResponse<ComplianceStatusResult>> status(
+    @GetMapping
+    public ResponseEntity<ApiResponse<ComplianceDetailsResult>> details(
             @AuthenticationPrincipal AuthenticatedPrincipal principal) {
-        return ok(statusHandler.execute(new GetComplianceStatusQuery(principal.activeOrganizationId())));
+        return ok(detailsHandler.execute(new GetComplianceDetailsQuery(principal.activeOrganizationId())));
     }
 
     private ResponseEntity<ApiResponse<Void>> saved() {

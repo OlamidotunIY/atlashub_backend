@@ -14,7 +14,8 @@ public interface AnchorCompliancePort {
     void triggerBusinessVerification(String customerId);
     BusinessCustomerDetails fetchBusinessCustomer(String customerId);
 
-    record BusinessCustomerRequest(BusinessProfileData business, ContactInfoData contact, List<Officer> officers) {}
+    record BusinessCustomerRequest(Long organizationId, BusinessProfileData business, ContactInfoData contact,
+                                   List<Officer> officers) {}
     record Officer(Long localId, OfficerRole role, String firstName, String middleName, String lastName,
                    String maidenName, String nationality, LocalDate dateOfBirth, String email, String phoneNumber,
                    AddressData address, String bvn, String title, BigDecimal percentageOwned) {}

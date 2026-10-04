@@ -49,10 +49,21 @@ public class UpdateBusinessProfileHandler extends Command<UpdateBusinessProfileC
                 SupportedBusinessIndustry.valueOf(organization.industry()), input.businessDescription(), input.website());
         record.updateBusinessRegistration(profile, "NG".equalsIgnoreCase(organization.country()));
         ComplianceRecord saved = repository.save(record);
-        var requirements = anchorCompliancePort.previewDocumentRequirements(profile.registrationType(), profile.registrationDate());
+        java.util.List<AnchorCompliancePort.DocumentRequirement> requirements;
+        try {
+            requirements = anchorCompliancePort.previewDocumentRequirements(profile.registrationType(), profile.registrationDate());
+        } catch (IllegalStateException unavailable) {
+            return saved;
+        }
         saved.recordRequiredDocuments(requirements.stream().map(requirement -> new ComplianceDocumentRequirement(
-                repository.nextIdentity(), requirement.documentId(), requirement.documentType(), requirement.description(),
+                repository.nextIdentity(), null, requirement.documentType(), requirement.description(),
                 requirement.required(), RequirementSource.PREFLIGHT, null, null, null, null, null, null)).toList());
+        saved.getDocumentRequirements().stream()
+                .filter(item -> {
+                    String type = item.getDocumentType().toUpperCase(java.util.Locale.ROOT);
+                    return type.equals("RC_NUMBER") || (type.contains("REGISTRATION") && type.contains("NUMBER"));
+                })
+                .forEach(item -> saved.saveComplianceDocument(item.getId(), null, input.businessRegistrationNumber()));
         return repository.save(saved);
     }
 }

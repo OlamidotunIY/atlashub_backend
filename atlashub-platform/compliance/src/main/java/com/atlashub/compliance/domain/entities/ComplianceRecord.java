@@ -31,6 +31,7 @@ public class ComplianceRecord extends AggregateRoot<Long> {
     private ServiceAgreementData serviceAgreement;
     private final ZonedDateTime createdAt;
     private ZonedDateTime updatedAt;
+    private final Long version;
 
     public ComplianceRecord(Long id, Long organizationId, ComplianceStatus status, ComplianceStep currentStep,
                             Map<ComplianceStep, StepStatus> stepProgress,
@@ -39,7 +40,8 @@ public class ComplianceRecord extends AggregateRoot<Long> {
                             String failureCode, String rejectionReason, ZonedDateTime submittedAt,
                             ZonedDateTime approvedAt, BusinessProfileData businessProfile, ContactInfoData contactInfo,
                             List<BusinessOfficer> officers, List<ComplianceDocumentRequirement> documentRequirements,
-                            ServiceAgreementData serviceAgreement, ZonedDateTime createdAt, ZonedDateTime updatedAt) {
+                            ServiceAgreementData serviceAgreement, ZonedDateTime createdAt, ZonedDateTime updatedAt,
+                            Long version) {
         if (id == null || organizationId == null) throw new InvalidComplianceDataException("Compliance identity is required");
         this.id = id; this.organizationId = organizationId;
         this.status = status == null ? ComplianceStatus.NOT_STARTED : status;
@@ -56,13 +58,14 @@ public class ComplianceRecord extends AggregateRoot<Long> {
         this.serviceAgreement = serviceAgreement;
         this.createdAt = createdAt == null ? ZonedDateTime.now() : createdAt;
         this.updatedAt = updatedAt == null ? this.createdAt : updatedAt;
+        this.version = version;
     }
 
     public static ComplianceRecord create(Long id, Long organizationId) {
         ComplianceRecord record = new ComplianceRecord(id, organizationId, ComplianceStatus.NOT_STARTED,
                 ComplianceStep.BUSINESS_PROFILE, null, AtlasHubEligibilityStatus.PENDING,
                 AnchorVerificationStatus.NOT_CREATED, null, null, null, null, null,
-                null, null, null, null, null, ZonedDateTime.now(), ZonedDateTime.now());
+                null, null, null, null, null, ZonedDateTime.now(), ZonedDateTime.now(), null);
         record.registerEvent(new ComplianceRecordInitializedEvent(UUID.randomUUID().toString(), id,
                 ZonedDateTime.now(), CorrelationId.getOrCreate(),
                 new ComplianceRecordInitializedEvent.Payload(organizationId)));
@@ -146,15 +149,27 @@ public class ComplianceRecord extends AggregateRoot<Long> {
     }
 
     public void recordDocumentUnderReview(Long requirementId) { requirement(requirementId).markUnderReview(); refreshDocumentStep(); }
+    public ComplianceDocumentRequirement getDocumentRequirement(Long requirementId) { return requirement(requirementId); }
+    public boolean areRequiredDocumentsSatisfied() {
+        return documentRequirements.stream().noneMatch(item -> item.isRequired() && !item.isSatisfied());
+    }
     public void recordDocumentApproved(String anchorDocumentId) { requirementByAnchorId(anchorDocumentId).approve(); refreshDocumentStep(); }
     public void recordDocumentRejected(String anchorDocumentId, String reason) {
         requirementByAnchorId(anchorDocumentId).reject(reason); actionRequired(reason);
+    }
+    public void recordAwaitingDocuments(String reason) {
+        actionRequired(reason == null || reason.isBlank() ? "Additional compliance documents are required" : reason);
     }
 
     public void recordAnchorApproved() {
         if (anchorBusinessCustomerId == null) throw new StepOutOfOrderException("Anchor customer must exist before approval");
         if (eligibilityStatus != AtlasHubEligibilityStatus.ELIGIBLE || serviceAgreement == null)
             throw new StepOutOfOrderException("AtlasHub eligibility and agreement are required for approval");
+        if (status == ComplianceStatus.SUSPENDED) {
+            anchorVerificationStatus = AnchorVerificationStatus.APPROVED;
+            touch();
+            return;
+        }
         boolean newlyApproved = status != ComplianceStatus.APPROVED;
         anchorVerificationStatus = AnchorVerificationStatus.APPROVED; status = ComplianceStatus.APPROVED;
         approvedAt = ZonedDateTime.now(); failureCode = null; rejectionReason = null; touch();
@@ -174,8 +189,9 @@ public class ComplianceRecord extends AggregateRoot<Long> {
 
     public void recordAnchorError(String code, String message) {
         requireText(code, "Provider failure code"); requireText(message, "Provider failure message");
+        if (anchorVerificationStatus == AnchorVerificationStatus.ERROR && Objects.equals(failureCode, code)) return;
         anchorVerificationStatus = AnchorVerificationStatus.ERROR; failureCode = code; rejectionReason = message;
-        status = ComplianceStatus.ACTION_REQUIRED; touch();
+        status = ComplianceStatus.UNDER_REVIEW; touch();
         registerEvent(new ComplianceProviderErrorEvent(UUID.randomUUID().toString(), id, ZonedDateTime.now(),
                 CorrelationId.getOrCreate(), new ComplianceProviderErrorEvent.Payload(organizationId, code, message)));
     }
@@ -197,12 +213,6 @@ public class ComplianceRecord extends AggregateRoot<Long> {
                 organizationId, anchorBusinessCustomerId, reason, ZonedDateTime.now())));
     }
 
-    public void reopen() {
-        if (status != ComplianceStatus.REJECTED && status != ComplianceStatus.ACTION_REQUIRED)
-            throw new StepOutOfOrderException("Only rejected or action-required compliance can be reopened");
-        status = ComplianceStatus.IN_PROGRESS; rejectionReason = null; failureCode = null; touch();
-    }
-
     private void actionRequired(String reason) {
         anchorVerificationStatus = AnchorVerificationStatus.AWAITING_DOCUMENTS;
         status = ComplianceStatus.ACTION_REQUIRED; rejectionReason = reason;
@@ -214,10 +224,18 @@ public class ComplianceRecord extends AggregateRoot<Long> {
 
     private void refreshDocumentStep() {
         if (documentRequirements.stream().anyMatch(requirement -> requirement.isRequired() && !requirement.isSatisfied())) {
-            stepProgress.put(ComplianceStep.COMPLIANCE_DOCUMENTS, StepStatus.ACTION_REQUIRED);
+            stepProgress.put(ComplianceStep.COMPLIANCE_DOCUMENTS,
+                    submittedAt == null ? StepStatus.IN_PROGRESS : StepStatus.ACTION_REQUIRED);
             currentStep = ComplianceStep.COMPLIANCE_DOCUMENTS;
             if (submittedAt != null) status = ComplianceStatus.ACTION_REQUIRED;
-        } else if (!documentRequirements.isEmpty()) complete(ComplianceStep.COMPLIANCE_DOCUMENTS);
+        } else if (!documentRequirements.isEmpty()) {
+            complete(ComplianceStep.COMPLIANCE_DOCUMENTS);
+            if (submittedAt != null && status == ComplianceStatus.ACTION_REQUIRED
+                    && anchorVerificationStatus == AnchorVerificationStatus.AWAITING_DOCUMENTS) {
+                status = ComplianceStatus.UNDER_REVIEW;
+                anchorVerificationStatus = AnchorVerificationStatus.UNDER_REVIEW;
+            }
+        }
         touch();
     }
 
@@ -267,6 +285,9 @@ public class ComplianceRecord extends AggregateRoot<Long> {
         if (value == null || value.isBlank()) throw new InvalidComplianceDataException(name + " is required");
     }
 
+    public Map<ComplianceStep, StepStatus> getStepProgress() { return Map.copyOf(stepProgress); }
+    public List<BusinessOfficer> getOfficers() { return List.copyOf(officers); }
+    public List<ComplianceDocumentRequirement> getDocumentRequirements() { return List.copyOf(documentRequirements); }
     private void touch() { updatedAt = ZonedDateTime.now(); }
     @Override public Long getId() { return id; }
 }

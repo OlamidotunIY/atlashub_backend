@@ -37,6 +37,10 @@ jwt:
   expiration-minutes: ${ATLASHUB_JWT_EXPIRY_MINUTES:15}
 
 atlashub:
+  compliance:
+    encryption-key: ${ATLASHUB_COMPLIANCE_ENCRYPTION_KEY:}
+    terms-version: ${ATLASHUB_COMPLIANCE_TERMS_VERSION:v1}
+    anchor-reconciliation-cron: '${ATLASHUB_COMPLIANCE_RECONCILIATION_CRON:0 */15 * * * *}'
   pay:
     accounts:
       encryption-key: ${ATLASHUB_PAY_ACCOUNTS_ENCRYPTION_KEY:}

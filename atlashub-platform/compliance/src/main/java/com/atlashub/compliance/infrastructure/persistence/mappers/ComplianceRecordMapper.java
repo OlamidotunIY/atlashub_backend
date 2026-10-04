@@ -23,7 +23,7 @@ public class ComplianceRecordMapper implements DomainMapper<ComplianceRecord, Co
                 row.getSubmittedAt(), row.getApprovedAt(), profile, row.getContactInfo(),
                 row.getOfficers().stream().map(this::toDomain).toList(),
                 row.getDocumentRequirements().stream().map(this::toDomain).toList(),
-                row.getServiceAgreement(), row.getCreatedAt(), row.getUpdatedAt());
+                row.getServiceAgreement(), row.getCreatedAt(), row.getUpdatedAt(), row.getVersion());
     }
 
     @Override
@@ -46,7 +46,7 @@ public class ComplianceRecordMapper implements DomainMapper<ComplianceRecord, Co
                 .serviceAgreement(domain.getServiceAgreement())
                 .officers(domain.getOfficers().stream().map(this::toPersistence).toList())
                 .documentRequirements(domain.getDocumentRequirements().stream().map(this::toPersistence).toList())
-                .createdAt(domain.getCreatedAt()).updatedAt(domain.getUpdatedAt()).build();
+                .createdAt(domain.getCreatedAt()).updatedAt(domain.getUpdatedAt()).version(domain.getVersion()).build();
     }
 
     private BusinessOfficer toDomain(BusinessOfficerJpa row) {

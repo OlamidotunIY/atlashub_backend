@@ -7,7 +7,7 @@ import com.atlashub.compliance.domain.valueobject.ComplianceProvider;
 import com.atlashub.compliance.domain.valueobject.ComplianceStatus;
 import com.atlashub.shared.application.security.ApiEnvironment;
 import com.atlashub.shared.application.usecase.Command;
-import com.atlashub.shared.domain.exception.BusinessRuleException;
+import com.atlashub.compliance.domain.exception.InvalidProviderOnboardingStateException;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -30,9 +30,9 @@ public class RequestProviderOnboardingHandler extends Command<RequestProviderOnb
 
         if (environment == ApiEnvironment.LIVE) {
             var compliance = complianceRepository.findByOrganizationId(command.organizationId())
-                    .orElseThrow(() -> new BusinessRuleException("AtlasHub compliance must be completed before live provider onboarding"));
+                    .orElseThrow(() -> new InvalidProviderOnboardingStateException("AtlasHub compliance must be completed before live provider onboarding"));
             if (compliance.getStatus() != ComplianceStatus.APPROVED) {
-                throw new BusinessRuleException("AtlasHub compliance must be approved before live provider onboarding");
+                throw new InvalidProviderOnboardingStateException("AtlasHub compliance must be approved before live provider onboarding");
             }
         }
 

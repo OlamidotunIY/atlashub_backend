@@ -23,14 +23,20 @@ public class ComplianceQueryPortAdapter implements ComplianceQueryPort {
 
     @Override
     public boolean isApproved(Long organizationId) {
-        ComplianceRecord record = repository.findByOrganizationId(organizationId).map(mapper::toDomain).orElseThrow(() -> new ComplianceRecordNotFoundException("Compliance record not found for org: " + organizationId));
+        return getDecision(organizationId).canProvisionBanking();
+    }
 
-        return record.getStatus() == APPROVED;
+    @Override
+    public ComplianceDecision getDecision(Long organizationId) {
+        ComplianceRecord record = repository.findByOrganizationId(organizationId).map(mapper::toDomain)
+                .orElseThrow(() -> new ComplianceRecordNotFoundException("Compliance record not found for org: " + organizationId));
+        ComplianceStatus status = ComplianceStatus.valueOf(record.getStatus().name());
+        return new ComplianceDecision(organizationId, status, record.getStatus() == APPROVED,
+                record.getFailureCode(), record.getAnchorBusinessCustomerId());
     }
 
     @Override
     public ComplianceStatus getStatus(Long organizationId) {
-        ComplianceRecord record = repository.findByOrganizationId(organizationId).map(mapper::toDomain).orElseThrow(() -> new ComplianceRecordNotFoundException("Compliance record not found for org: " + organizationId));
-        return ComplianceQueryPort.ComplianceStatus.valueOf(record.getStatus().name());
+        return getDecision(organizationId).status();
     }
 }

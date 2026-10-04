@@ -40,11 +40,7 @@ public class GetComplianceDetailsHandler extends Query<GetComplianceDetailsQuery
             record.getRejectionReason(),
             record.getSubmittedAt(),
             record.getApprovedAt(),
-            new ComplianceDetailsResult.BusinessSummary(record.getBusinessProfile().legalName(),
-                    record.getBusinessProfile().registrationType(), record.getBusinessProfile().registrationDate(),
-                    record.getBusinessProfile().businessRegistrationNumber() != null,
-                    record.getBusinessProfile().businessBvn() != null, record.getBusinessProfile().industry(),
-                    record.getBusinessProfile().businessDescription(), record.getBusinessProfile().website()),
+            business(record.getBusinessProfile()),
             record.getContactInfo(),
             record.getOfficers().stream().map(officer -> new ComplianceDetailsResult.OfficerSummary(
                     officer.getId(), officer.getRole(), officer.getFirstName(), officer.getLastName(),
@@ -56,5 +52,13 @@ public class GetComplianceDetailsHandler extends Query<GetComplianceDetailsQuery
             record.getCreatedAt(),
             record.getUpdatedAt()
         );
+    }
+
+    private ComplianceDetailsResult.BusinessSummary business(
+            com.atlashub.compliance.domain.valueobject.BusinessProfileData profile) {
+        if (profile == null) return null;
+        return new ComplianceDetailsResult.BusinessSummary(profile.legalName(), profile.registrationType(),
+                profile.registrationDate(), profile.businessRegistrationNumber() != null,
+                profile.businessBvn() != null, profile.industry(), profile.businessDescription(), profile.website());
     }
 }
