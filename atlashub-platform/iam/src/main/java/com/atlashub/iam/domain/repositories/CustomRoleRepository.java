@@ -7,4 +7,5 @@ import java.util.List;
 
 public interface CustomRoleRepository extends Repository<CustomRole> {
     List<CustomRole> findByOrganizationId(Long organizationId);
+    Optional<CustomRole> findBuiltInByOrganizationId(Long organizationId);
 }

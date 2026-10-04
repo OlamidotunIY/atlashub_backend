@@ -31,16 +31,23 @@ public class InitializeOrganizationIamHandler extends Command<InitializeOrganiza
     public Void execute(InitializeOrganizationIamCommand command) {
         log.info("Executing InitializeOrganizationIamCommand");
 
-        Long memberId = organizationMemberRepository.nextIdentity();
-        Long roleId = roleRepository.nextIdentity();
+        if (organizationMemberRepository.findByOrganizationIdAndUserId(
+                command.orgId(), command.foundingUserId()).isPresent()) {
+            return null;
+        }
 
-        CustomRole role = CustomRole.create(roleId, command.orgId(), "Owner",
-                "Default built-in role resolved dynamically to all active platform permissions.",
-                Set.of(), true, command.foundingUserId());
+        CustomRole role = roleRepository.findBuiltInByOrganizationId(command.orgId())
+                .orElseGet(() -> {
+                    CustomRole owner = CustomRole.create(roleRepository.nextIdentity(), command.orgId(), "Owner",
+                            "Default built-in role resolved dynamically to all active platform permissions.",
+                            Set.of(), true, command.foundingUserId());
+                    return roleRepository.save(owner);
+                });
 
-        OrganizationMember member = OrganizationMember.create(memberId, command.orgId(), command.foundingUserId(), role.getId(), null);
+        OrganizationMember member = OrganizationMember.create(
+                organizationMemberRepository.nextIdentity(), command.orgId(), command.foundingUserId(),
+                role.getId(), null);
 
-        roleRepository.save(role);
         organizationMemberRepository.save(member);
         return null;
     }

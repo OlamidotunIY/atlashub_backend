@@ -10,9 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Component
 public class GetCustomRolePermissionsHandler extends Query<GetCustomRolePermissionsQuery, CustomRolePermissionsResult> {
@@ -37,20 +35,17 @@ public class GetCustomRolePermissionsHandler extends Query<GetCustomRolePermissi
                 .filter(found -> found.getOrganizationId().equals(query.organizationId()))
                 .orElseThrow(() -> new NotFoundException("Custom role not found with id: " + query.roleId()));
 
-        List<CustomRolePermissionsResult.PermissionDetail> permissionDetails = new ArrayList<>();
-        
-        for (Long permissionId : customRole.getPermissions()) {
-            Optional<Permission> permissionOpt = permissionRepository.findById(permissionId);
-            permissionOpt.ifPresent(permission -> permissionDetails.add(new CustomRolePermissionsResult.PermissionDetail(
-                    permission.getId(),
-                    permission.getCode(),
-                    permission.getModule(),
-                    permission.getResource(),
-                    permission.getAction() != null ? permission.getAction().name() : null,
-                    permission.getDisplayName(),
-                    permission.getDescription()
-            )));
-        }
+        List<Permission> permissions = customRole.isBuiltIn()
+                ? permissionRepository.findAllByActiveTrue()
+                : permissionRepository.findAllById(customRole.getPermissions()).stream()
+                        .filter(Permission::isActive)
+                        .toList();
+        List<CustomRolePermissionsResult.PermissionDetail> permissionDetails = permissions.stream()
+                .map(permission -> new CustomRolePermissionsResult.PermissionDetail(
+                        permission.getId(), permission.getCode(), permission.getModule(), permission.getResource(),
+                        permission.getAction() != null ? permission.getAction().name() : null,
+                        permission.getDisplayName(), permission.getDescription()))
+                .toList();
         
         return new CustomRolePermissionsResult(customRole.getId(), permissionDetails);
     }
