@@ -26,7 +26,7 @@ public class OrganizationComplianceApprovedListener extends BaseKafkaEventListen
 
     @PostConstruct
     public void init() {
-        registerSubscription(OrganizationComplianceApprovedEvent.class.getName(), GROUP_ID);
+        registerSubscription("com.atlashub.compliance.domain.events.OrganizationComplianceApprovedEvent", GROUP_ID);
     }
 
     @KafkaListener(topics = "compliance-events", groupId = GROUP_ID)

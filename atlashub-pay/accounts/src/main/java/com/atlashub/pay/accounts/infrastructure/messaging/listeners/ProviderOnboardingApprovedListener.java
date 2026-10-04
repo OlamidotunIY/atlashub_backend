@@ -29,7 +29,7 @@ public class ProviderOnboardingApprovedListener extends BaseKafkaEventListener {
 
     @PostConstruct
     public void init() {
-        registerSubscription(ProviderOnboardingApprovedEvent.class.getName(), GROUP_ID);
+        registerSubscription("com.atlashub.compliance.domain.events.ProviderOnboardingApprovedEvent", GROUP_ID);
     }
 
     @KafkaListener(topics = "compliance-events", groupId = GROUP_ID)
