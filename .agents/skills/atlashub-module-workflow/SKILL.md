@@ -9,6 +9,15 @@ This skill is mandatory whenever code under `atlashub-platform`, `atlashub-pay`,
 
 ## 1. Establish scope before code
 
+### Mandatory plan approval
+
+Before any repository mutation, present an exact file-level implementation plan and wait for the user's explicit approval. Read-only inspection is allowed only to prepare that plan. After approval:
+
+- Modify only the files and behaviors named in the approved plan.
+- Do not delete, replace, rename, or relocate an existing artifact unless the approved plan explicitly names that action.
+- Treat newly discovered work as a plan change: stop, explain it, and obtain explicit approval before proceeding.
+- Do not broaden an approved module or feature scope because an audit discovers additional incomplete work.
+
 Run the context resolver from the repository root:
 
 ```powershell

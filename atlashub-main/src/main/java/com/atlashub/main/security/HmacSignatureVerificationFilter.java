@@ -1,6 +1,6 @@
 package com.atlashub.main.security;
 
-import com.atlashub.iam.application.security.ApiKeyAuthenticationService;
+import com.atlashub.shared.application.port.ApiKeyQueryPort;
 import com.atlashub.shared.application.security.AuthenticatedPrincipal;
 import com.atlashub.shared.application.service.HashingUtils;
 import jakarta.servlet.FilterChain;
@@ -24,12 +24,12 @@ import java.util.Map;
 @Component
 public class HmacSignatureVerificationFilter extends OncePerRequestFilter {
     private static final long TOLERANCE_SECONDS = 300;
-    private final ApiKeyAuthenticationService authenticationService;
+    private final ApiKeyQueryPort apiKeyQueryPort;
     private final StringRedisTemplate redisTemplate;
 
-    public HmacSignatureVerificationFilter(ApiKeyAuthenticationService authenticationService,
+    public HmacSignatureVerificationFilter(ApiKeyQueryPort apiKeyQueryPort,
                                            StringRedisTemplate redisTemplate) {
-        this.authenticationService = authenticationService;
+        this.apiKeyQueryPort = apiKeyQueryPort;
         this.redisTemplate = redisTemplate;
     }
 
@@ -60,7 +60,7 @@ public class HmacSignatureVerificationFilter extends OncePerRequestFilter {
             String body = new String(cached.body(), StandardCharsets.UTF_8);
             String canonical = request.getMethod().toUpperCase() + "\n" + request.getRequestURI()
                     + "\n" + timestamp + "\n" + nonce + "\n" + HashingUtils.sha256Hex(body);
-            var authenticated = authenticationService.authenticate(publicKey, canonical, signature);
+            var authenticated = apiKeyQueryPort.authenticate(publicKey, canonical, signature);
             if (authenticated.isEmpty()) {
                 unauthorized(response, "HMAC_SIGNATURE_INVALID"); return;
             }
