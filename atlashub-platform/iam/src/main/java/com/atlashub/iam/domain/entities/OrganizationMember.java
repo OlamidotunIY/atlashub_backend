@@ -69,13 +69,7 @@ public class OrganizationMember extends AggregateRoot<Long> {
         if (this.status.equals(MemberStatus.ACTIVE)) {
             this.status = MemberStatus.INACTIVE;
             this.touch();
-            this.registerEvent(new MemberDeactivatedEvent(
-                    UUID.randomUUID().toString(),
-                    this.id,
-                    this.updatedAt,
-                    CorrelationId.getOrCreate(),
-                    new MemberDeactivatedEvent.Payload(this.organizationId, this.userId)
-            ));
+            registerDeactivatedEvent();
         }
     }
 
@@ -86,6 +80,15 @@ public class OrganizationMember extends AggregateRoot<Long> {
         if (this.status.equals(MemberStatus.ACTIVE)) {
             this.status = MemberStatus.SUSPENDED;
             this.touch();
+            registerDeactivatedEvent();
+        }
+    }
+
+    public void deactivateForOrganizationBan() {
+        if (this.status != MemberStatus.INACTIVE) {
+            this.status = MemberStatus.INACTIVE;
+            this.touch();
+            registerDeactivatedEvent();
         }
     }
 
@@ -98,6 +101,12 @@ public class OrganizationMember extends AggregateRoot<Long> {
 
     private void touch() {
         this.updatedAt = ZonedDateTime.now();
+    }
+
+    private void registerDeactivatedEvent() {
+        this.registerEvent(new MemberDeactivatedEvent(
+                UUID.randomUUID().toString(), this.id, this.updatedAt, CorrelationId.getOrCreate(),
+                new MemberDeactivatedEvent.Payload(this.organizationId, this.userId)));
     }
 
     @Override

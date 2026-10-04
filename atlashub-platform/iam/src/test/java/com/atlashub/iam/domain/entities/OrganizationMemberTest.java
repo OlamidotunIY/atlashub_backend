@@ -24,4 +24,17 @@ class OrganizationMemberTest {
         assertThrows(InvalidOrganizationMemberException.class,
                 () -> OrganizationMember.create(1L, 2L, 3L, null, null));
     }
+
+    @Test
+    void suspension_and_forced_ban_deactivation_emit_access_revocation_events() {
+        OrganizationMember member = OrganizationMember.create(1L, 2L, 3L, 4L, null);
+        member.pullDomainEvents();
+        member.suspend("Subscription overdue");
+        assertEquals(MemberStatus.SUSPENDED, member.getStatus());
+        assertInstanceOf(MemberDeactivatedEvent.class, member.pullDomainEvents().getFirst());
+
+        member.deactivateForOrganizationBan();
+        assertEquals(MemberStatus.INACTIVE, member.getStatus());
+        assertInstanceOf(MemberDeactivatedEvent.class, member.pullDomainEvents().getFirst());
+    }
 }
