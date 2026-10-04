@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.security.SecureRandom;
 import java.util.Base64;
 import com.atlashub.iam.domain.exception.CustomRoleNotFoundException;
+import com.atlashub.iam.domain.exception.InvalidApiKeyException;
 import com.atlashub.iam.domain.exception.LiveApiKeyUnavailableException;
 
 @Component
@@ -47,6 +48,9 @@ public class IssueApiKeyHandler extends Command<IssueApiKeyCommand, IssuedApiKey
         ApiEnvironment environment = ApiEnvironment.parse(command.environment());
         if (environment == ApiEnvironment.LIVE && !complianceQueryPort.isApproved(command.orgId())) {
             throw new LiveApiKeyUnavailableException("Live API keys require approved compliance");
+        }
+        if (command.boundRoleId() == null) {
+            throw new InvalidApiKeyException("API key role is required");
         }
         roleRepository.findById(command.boundRoleId())
                 .filter(role -> role.getOrganizationId().equals(command.orgId()))

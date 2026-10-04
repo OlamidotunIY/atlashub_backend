@@ -3,6 +3,7 @@ package com.atlashub.iam.application.commands.IssueApiKey;
 import com.atlashub.iam.application.port.ApiSecretProtector;
 import com.atlashub.iam.domain.entities.CustomRole;
 import com.atlashub.iam.domain.exception.LiveApiKeyUnavailableException;
+import com.atlashub.iam.domain.exception.InvalidApiKeyException;
 import com.atlashub.iam.domain.repositories.ApiKeyRepository;
 import com.atlashub.iam.domain.repositories.CustomRoleRepository;
 import com.atlashub.shared.application.port.ComplianceQueryPort;
@@ -50,5 +51,19 @@ class IssueApiKeyHandlerTest {
                         .execute(new IssueApiKeyCommand(2L, "Production", "LIVE", 3L, 4L)));
 
         verifyNoInteractions(roles, keys, protector);
+    }
+
+    @Test
+    void rejects_missing_role_outside_http_validation_boundary() {
+        ApiKeyRepository keys = mock(ApiKeyRepository.class);
+        CustomRoleRepository roles = mock(CustomRoleRepository.class);
+        ComplianceQueryPort compliance = mock(ComplianceQueryPort.class);
+        ApiSecretProtector protector = mock(ApiSecretProtector.class);
+
+        assertThrows(InvalidApiKeyException.class, () ->
+                new IssueApiKeyHandler(keys, roles, compliance, protector)
+                        .execute(new IssueApiKeyCommand(2L, "Test", "TEST", 3L, null)));
+
+        verifyNoInteractions(roles, keys, compliance, protector);
     }
 }
