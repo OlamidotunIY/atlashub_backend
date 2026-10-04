@@ -1,9 +1,10 @@
 package com.atlashub.compliance.application.commands.UpdateBusinessProfile;
 
-import com.atlashub.compliance.domain.valueobject.BusinessProfileData;
-
 public record UpdateBusinessProfileCommand(
     Long organizationId,
-    BusinessProfileData data
+    String businessRegistrationNumber,
+    String businessBvn,
+    String businessDescription,
+    String website
 ) {
 }

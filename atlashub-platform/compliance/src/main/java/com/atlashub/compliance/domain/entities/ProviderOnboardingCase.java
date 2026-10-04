@@ -62,7 +62,7 @@ public class ProviderOnboardingCase extends AggregateRoot<Long> {
     ) {
         if (id == null || organizationId == null || environment == null || provider == null
                 || capabilities == null || capabilities.isEmpty()) {
-            throw new IllegalArgumentException("Provider onboarding identity, environment, provider, and capabilities are required");
+            throw new InvalidProviderOnboardingStateException("Provider onboarding identity, environment, provider, and capabilities are required");
         }
         ZonedDateTime now = ZonedDateTime.now();
         return new ProviderOnboardingCase(id, organizationId, environment, provider, capabilities,

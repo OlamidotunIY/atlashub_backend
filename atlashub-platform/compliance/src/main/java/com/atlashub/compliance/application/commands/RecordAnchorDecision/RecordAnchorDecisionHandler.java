@@ -5,6 +5,8 @@ import com.atlashub.compliance.domain.repositories.ComplianceRecordRepository;
 import com.atlashub.shared.application.usecase.Command;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import com.atlashub.compliance.domain.exception.InvalidComplianceDataException;
+import java.util.Map;
 
 @Component
 public class RecordAnchorDecisionHandler extends Command<RecordAnchorDecisionCommand, Void> {
@@ -16,9 +18,9 @@ public class RecordAnchorDecisionHandler extends Command<RecordAnchorDecisionCom
                 : repository.findByOrganizationId(command.organizationId()))
                 .orElseThrow(() -> new ComplianceRecordNotFoundException("Compliance record not found"));
         if (record.getAnchorBusinessCustomerId() == null) {
-            record.recordAnchorCustomerCreated(command.anchorBusinessCustomerId());
+            record.recordAnchorCustomerCreated(command.anchorBusinessCustomerId(), Map.of());
         } else if (!record.getAnchorBusinessCustomerId().equals(command.anchorBusinessCustomerId())) {
-            throw new IllegalArgumentException("Anchor customer does not match the compliance record");
+            throw new InvalidComplianceDataException("Anchor customer does not match the compliance record");
         }
         if (command.approved()) record.recordAnchorApproved();
         else record.recordAnchorRejected(command.reason());

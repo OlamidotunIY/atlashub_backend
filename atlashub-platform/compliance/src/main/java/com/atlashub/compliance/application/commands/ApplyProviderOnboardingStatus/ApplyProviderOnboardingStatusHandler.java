@@ -5,6 +5,7 @@ import com.atlashub.compliance.domain.repositories.ProviderOnboardingCaseReposit
 import com.atlashub.shared.application.usecase.Command;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import com.atlashub.compliance.domain.exception.InvalidProviderOnboardingStateException;
 
 @Component
 public class ApplyProviderOnboardingStatusHandler extends Command<ApplyProviderOnboardingStatusCommand, Void> {
@@ -18,7 +19,7 @@ public class ApplyProviderOnboardingStatusHandler extends Command<ApplyProviderO
     @Transactional
     public Void execute(ApplyProviderOnboardingStatusCommand command) {
         ProviderOnboardingCase onboarding = repository.findById(command.onboardingCaseId())
-                .orElseThrow(() -> new IllegalArgumentException("Provider onboarding case not found"));
+                .orElseThrow(() -> new InvalidProviderOnboardingStateException("Provider onboarding case not found"));
         switch (command.status().toUpperCase()) {
             case "INFORMATION_REQUIRED" -> onboarding.requireInformation(command.outstandingRequirements());
             case "SUBMITTED" -> onboarding.markSubmitted(command.externalApplicationId());
@@ -29,7 +30,7 @@ public class ApplyProviderOnboardingStatusHandler extends Command<ApplyProviderO
             case "REJECTED" -> onboarding.reject(command.failureCode(), command.failureMessage());
             case "SUSPENDED" -> onboarding.suspend(command.failureCode(), command.failureMessage());
             case "ERROR" -> onboarding.recordError(command.failureCode(), command.failureMessage());
-            default -> throw new IllegalArgumentException("Unsupported provider onboarding status");
+            default -> throw new InvalidProviderOnboardingStateException("Unsupported provider onboarding status");
         }
         repository.save(onboarding);
         return null;

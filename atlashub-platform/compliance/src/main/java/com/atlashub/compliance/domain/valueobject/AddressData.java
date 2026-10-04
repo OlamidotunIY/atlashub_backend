@@ -1,25 +1,24 @@
 package com.atlashub.compliance.domain.valueobject;
 
-import com.atlashub.shared.domain.exception.ValidationException;
+import com.atlashub.compliance.domain.exception.InvalidComplianceDataException;
 
 public record AddressData(
-    String street,
+    String addressLine1,
+    String addressLine2,
     String city,
     String state,
+    String postalCode,
     String country
 ) {
     public AddressData {
-        if (street == null || street.isBlank()) {
-            throw new ValidationException("street cannot be blank");
-        }
-        if (city == null || city.isBlank()) {
-            throw new ValidationException("city cannot be blank");
-        }
-        if (state == null || state.isBlank()) {
-            throw new ValidationException("state cannot be blank");
-        }
-        if (country == null || country.isBlank()) {
-            throw new ValidationException("country cannot be blank");
-        }
+        requireText(addressLine1, "Address line 1");
+        requireText(city, "City");
+        requireText(state, "State");
+        requireText(postalCode, "Postal code");
+        requireText(country, "Country");
+    }
+
+    private static void requireText(String value, String name) {
+        if (value == null || value.isBlank()) throw new InvalidComplianceDataException(name + " is required");
     }
 }

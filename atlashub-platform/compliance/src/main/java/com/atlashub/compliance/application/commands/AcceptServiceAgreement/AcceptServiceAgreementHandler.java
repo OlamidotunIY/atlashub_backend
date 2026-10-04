@@ -7,6 +7,7 @@ import com.atlashub.compliance.domain.exception.ComplianceRecordNotFoundExceptio
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import org.springframework.security.access.prepost.PreAuthorize;
 import java.time.ZonedDateTime;
 
 @Component
@@ -21,6 +22,7 @@ public class AcceptServiceAgreementHandler extends Command<AcceptServiceAgreemen
     }
 
     @Override
+    @PreAuthorize("hasAuthority('compliance:manage')")
     public ComplianceRecord execute(AcceptServiceAgreementCommand input) {
         log.info("Executing AcceptServiceAgreementCommand for organizationId: {}", input.organizationId());
 

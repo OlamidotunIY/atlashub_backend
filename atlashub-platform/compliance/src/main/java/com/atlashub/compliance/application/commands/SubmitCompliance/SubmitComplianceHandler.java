@@ -7,6 +7,7 @@ import com.atlashub.compliance.domain.exception.ComplianceRecordNotFoundExceptio
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @Component
 public class SubmitComplianceHandler extends Command<SubmitComplianceCommand, ComplianceRecord> {
@@ -20,6 +21,7 @@ public class SubmitComplianceHandler extends Command<SubmitComplianceCommand, Co
     }
 
     @Override
+    @PreAuthorize("hasAuthority('compliance:submit')")
     public ComplianceRecord execute(SubmitComplianceCommand input) {
         log.info("Executing SubmitComplianceCommand for organizationId: {}", input.organizationId());
 
