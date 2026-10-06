@@ -35,10 +35,10 @@ deploy-stack:
 	$(eval FIREBASE_JSON := $(wildcard infrastructure/Firebase/*.json))
 	$(eval FIREBASE_JSON_NAME := $(notdir $(FIREBASE_JSON)))
 	@echo "=> Syncing .env from the local deployment source..."
-	@$(CAT) .env | $(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "cat > /tmp/.env"
-	@$(CAT) $(FIREBASE_JSON) | $(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "umask 077 && cat > /tmp/$(FIREBASE_JSON_NAME)"
-	@$(CAT) $(JWT_PRIVATE_KEY) | $(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "umask 077 && cat > /tmp/atlashub-jwt-private.pem"
-	@$(CAT) $(JWT_PUBLIC_KEY) | $(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "umask 077 && cat > /tmp/atlashub-jwt-public.pem"
+	@$(SCP) -O $(SSH_OPTIONS) -i $(SSH_KEY) .env ubuntu@$(VM_IP):/tmp/.env
+	@$(SCP) -O $(SSH_OPTIONS) -i $(SSH_KEY) $(FIREBASE_JSON) ubuntu@$(VM_IP):/tmp/$(FIREBASE_JSON_NAME)
+	@$(SCP) -O $(SSH_OPTIONS) -i $(SSH_KEY) $(JWT_PRIVATE_KEY) ubuntu@$(VM_IP):/tmp/atlashub-jwt-private.pem
+	@$(SCP) -O $(SSH_OPTIONS) -i $(SSH_KEY) $(JWT_PUBLIC_KEY) ubuntu@$(VM_IP):/tmp/atlashub-jwt-public.pem
 	@echo "=> Ensuring Docker Image exists in K3s..."
 	@$(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "sudo k3s ctr images ls | grep -q atlashub/app:latest" || $(MAKE) build-image
 	@echo "=> Applying Kubernetes Secrets..."
