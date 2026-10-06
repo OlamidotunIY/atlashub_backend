@@ -69,12 +69,10 @@ public class LoginHandler extends Command<LoginCommand, LoginResponse> {
     @Override
     @Transactional
     public LoginResponse execute(LoginCommand input) {
-        String environment;
-        try {
-            environment = ApiEnvironment.parse(input.environment()).name();
-        } catch (IllegalArgumentException exception) {
+        if (input.environment() == null) {
             throw new InvalidCredentials();
         }
+        String environment = input.environment().name();
 
         AuthAccount account = accountRepository.findByAccountId(input.email()).orElseThrow(InvalidCredentials::new);
 

@@ -4,6 +4,7 @@ import com.atlashub.authentication.domain.entities.AuthAccount;
 import com.atlashub.authentication.domain.entities.Session;
 import com.atlashub.authentication.domain.repositories.AuthAccountRepository;
 import com.atlashub.authentication.domain.repositories.SessionRepository;
+import com.atlashub.shared.application.security.ApiEnvironment;
 import com.atlashub.shared.application.usecase.Query;
 import com.atlashub.shared.domain.exception.NotFoundException;
 import org.springframework.stereotype.Component;
@@ -35,7 +36,7 @@ public class GetActiveSessionsHandler extends Query<GetActiveSessionsQuery, List
                 .map(s -> new SessionResult(
                         s.getId(),
                         s.getOrganizationId(),
-                        s.getEnvironment(),
+                        ApiEnvironment.parse(s.getEnvironment()),
                         s.getExpiresAt(),
                         s.getIpAddress(),
                         s.getUserAgent()
