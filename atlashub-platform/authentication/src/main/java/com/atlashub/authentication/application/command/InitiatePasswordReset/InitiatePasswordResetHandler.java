@@ -24,10 +24,7 @@ public class InitiatePasswordResetHandler extends Command<InitiatePasswordResetC
     private final OtpVerificationIssuer issuer;
     private final OtpTransmissionPort transmissionPort;
 
-    public InitiatePasswordResetHandler(AuthAccountRepository accountRepository,
-                                        VerificationRepository verificationRepository,
-                                        OtpVerificationIssuer issuer,
-                                        OtpTransmissionPort transmissionPort) {
+    public InitiatePasswordResetHandler(AuthAccountRepository accountRepository, VerificationRepository verificationRepository, OtpVerificationIssuer issuer, OtpTransmissionPort transmissionPort) {
         this.accountRepository = accountRepository;
         this.verificationRepository = verificationRepository;
         this.issuer = issuer;
@@ -43,8 +40,7 @@ public class InitiatePasswordResetHandler extends Command<InitiatePasswordResetC
         }
 
         AuthAccount account = accountOpt.get();
-        OtpVerificationIssuer.IssuedToken issued = issuer.issue(
-                verificationRepository.nextIdentity(), account.getAccountId(), VerificationType.password_reset);
+        OtpVerificationIssuer.IssuedToken issued = issuer.issue(verificationRepository.nextIdentity(), account.getAccountId(), VerificationType.password_reset);
 
         transmissionPort.storeForTransmission(CorrelationId.getOrCreate(), issued.rawOtp());
         verificationRepository.save(issued.token());

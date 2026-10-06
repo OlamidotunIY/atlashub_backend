@@ -21,10 +21,12 @@ public class LogoutHandler extends Command<LogoutCommand, Void> {
 
     @Override
     public Void execute(LogoutCommand input) {
-        sessionRepository.deleteByToken(input.refreshToken());
+        sessionRepository.findById(input.sessionId())
+                .filter(session -> session.getUserId().equals(input.userId().toString()))
+                .ifPresent(session -> sessionRepository.deleteById(session.getId()));
 
         Duration remainingTime = Duration.between(ZonedDateTime.now(), input.accessTokenExpiresAt());
-        if (!remainingTime.isNegative()) {
+        if (input.accessTokenJti() != null && !remainingTime.isNegative() && !remainingTime.isZero()) {
             revocationPort.revokeAccessToken(input.accessTokenJti(), remainingTime);
         }
 

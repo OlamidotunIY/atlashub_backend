@@ -6,6 +6,9 @@ public enum LedgerAccountType {
     TAX_HOLDING,
     ESCROW,
     SUSPENSE,
+    PROVIDER_CLEARING,
     TILL,
-    SPLIT_HOLDING
+    SPLIT_HOLDING,
+    CUSTOMER_FUNDS,
+    VENDOR_PAYABLE
 }

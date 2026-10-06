@@ -33,7 +33,9 @@ public class GetActiveSessionsHandler extends Query<GetActiveSessionsQuery, List
 
         return sessions.stream()
                 .map(s -> new SessionResult(
-                        s.getToken(),
+                        s.getId(),
+                        s.getOrganizationId(),
+                        s.getEnvironment(),
                         s.getExpiresAt(),
                         s.getIpAddress(),
                         s.getUserAgent()

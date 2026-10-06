@@ -13,7 +13,8 @@ public record OrganizationComplianceApprovedEvent(
 
     public record Payload(
         Long organizationId,
-        Long approvedBy,
+        String anchorBusinessCustomerId,
+        String environment,
         ZonedDateTime approvedAt
     ) {
     }

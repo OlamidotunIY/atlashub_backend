@@ -93,4 +93,18 @@ public class KafkaTopicConfig {
                 .config("retention.ms", RETENTION_MS)
                 .build();
     }
+
+    @Bean
+    public NewTopic complianceEventsTopic() {
+        return TopicBuilder.name("compliance-events")
+                .config("retention.ms", RETENTION_MS)
+                .build();
+    }
+
+    @Bean
+    public NewTopic anchorEventsTopic() {
+        return TopicBuilder.name("anchor-events")
+                .config("retention.ms", RETENTION_MS)
+                .build();
+    }
 }

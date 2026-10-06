@@ -6,6 +6,8 @@ public record UpdateUserProfileCommand(
         Long userId,
         String firstname,
         String lastname,
-        PhoneNumber phone
+        PhoneNumber phone,
+        String locale,
+        String timezone
 ) {
 }

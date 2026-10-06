@@ -13,7 +13,7 @@ public record OrganizationComplianceRejectedEvent(
 
     public record Payload(
         Long organizationId,
-        Long rejectedBy,
+        String anchorBusinessCustomerId,
         String reason,
         ZonedDateTime rejectedAt
     ) {

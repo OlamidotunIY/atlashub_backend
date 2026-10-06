@@ -7,6 +7,7 @@ import com.atlashub.compliance.domain.exception.ComplianceRecordNotFoundExceptio
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @Component
 public class GetComplianceDetailsHandler extends Query<GetComplianceDetailsQuery, ComplianceDetailsResult> {
@@ -20,6 +21,7 @@ public class GetComplianceDetailsHandler extends Query<GetComplianceDetailsQuery
     }
 
     @Override
+    @PreAuthorize("hasAuthority('compliance:read')")
     public ComplianceDetailsResult execute(GetComplianceDetailsQuery query) {
         log.info("Executing GetComplianceDetailsQuery for organizationId: {}", query.organizationId());
 
@@ -31,19 +33,32 @@ public class GetComplianceDetailsHandler extends Query<GetComplianceDetailsQuery
             record.getOrganizationId(),
             record.getStatus(),
             record.getCurrentStep(),
-            record.getCompletedSteps(),
-            record.getReviewedBy(),
-            record.getReviewedAt(),
+            record.getStepProgress(),
+            record.getEligibilityStatus(),
+            record.getAnchorVerificationStatus(),
+            record.getFailureCode(),
             record.getRejectionReason(),
             record.getSubmittedAt(),
             record.getApprovedAt(),
-            record.getBusinessProfile(),
+            business(record.getBusinessProfile()),
             record.getContactInfo(),
-            record.getOwnerIdentity(),
-            record.getSettlementAccount(),
+            record.getOfficers().stream().map(officer -> new ComplianceDetailsResult.OfficerSummary(
+                    officer.getId(), officer.getRole(), officer.getFirstName(), officer.getLastName(),
+                    officer.getTitle(), officer.getVerificationStatus())).toList(),
+            record.getDocumentRequirements().stream().map(document -> new ComplianceDetailsResult.DocumentSummary(
+                    document.getId(), document.getDocumentType(), document.getDescription(), document.isRequired(),
+                    document.getStatus(), document.getRejectionReason())).toList(),
             record.getServiceAgreement(),
             record.getCreatedAt(),
             record.getUpdatedAt()
         );
+    }
+
+    private ComplianceDetailsResult.BusinessSummary business(
+            com.atlashub.compliance.domain.valueobject.BusinessProfileData profile) {
+        if (profile == null) return null;
+        return new ComplianceDetailsResult.BusinessSummary(profile.legalName(), profile.registrationType(),
+                profile.registrationDate(), profile.businessRegistrationNumber() != null,
+                profile.businessBvn() != null, profile.industry(), profile.businessDescription(), profile.website());
     }
 }

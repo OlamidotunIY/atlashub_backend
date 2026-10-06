@@ -9,10 +9,12 @@ import com.atlashub.iam.infrastructure.persistence.repositories.SpringDataInvita
 import com.atlashub.shared.application.port.DomainEventPublisher;
 import com.atlashub.shared.infrastructure.persistence.repository.JpaBaseRepository;
 import com.atlashub.shared.infrastructure.service.DomainSequenceGenerator;
+import com.atlashub.shared.application.service.HashingUtils;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Optional;
+import java.time.ZonedDateTime;
 import java.util.stream.Collectors;
 
 @Component
@@ -37,7 +39,7 @@ public class InvitationRepositoryAdapter
 
     @Override
     public Optional<Invitation> findByToken(String token) {
-        return springDataRepo.findByToken(token).map(mapper::toDomain);
+        return springDataRepo.findByToken(HashingUtils.sha256Hex(token)).map(mapper::toDomain);
     }
 
     @Override
@@ -46,6 +48,23 @@ public class InvitationRepositoryAdapter
                 .stream()
                 .map(mapper::toDomain)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<Invitation> findByOrganizationId(Long organizationId) {
+        return springDataRepo.findByOrganizationId(organizationId).stream().map(mapper::toDomain).toList();
+    }
+
+    @Override
+    public List<Invitation> findPendingExpiredBefore(ZonedDateTime cutoff) {
+        return springDataRepo.findByStatusAndExpiresAtBefore(InvitationStatus.PENDING, cutoff)
+                .stream().map(mapper::toDomain).toList();
+    }
+
+    @Override
+    public Optional<Invitation> findPendingByOrganizationIdAndEmail(Long organizationId, String email) {
+        return springDataRepo.findByOrganizationIdAndInvitedEmailIgnoreCaseAndStatus(
+                organizationId, email, InvitationStatus.PENDING).map(mapper::toDomain);
     }
 }
 

@@ -11,6 +11,7 @@ public interface TokenPort {
             String userId,
             String sessionId,
             String orgId,
+            String environment,
             Set<String> permissions
     ) {
     }

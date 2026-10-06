@@ -38,7 +38,8 @@ public class VerificationRepositoryAdapter
     public Optional<Verification> findByIdentifierAndTypeAndStatus(
             String identifier, VerificationType type, VerificationStatus status) {
         return springDataRepo
-                .findByIdentifierAndVerificationTypeAndVerificationStatus(identifier, type, status)
+                .findFirstByIdentifierAndVerificationTypeAndVerificationStatusOrderByCreatedAtDesc(
+                        identifier, type, status)
                 .map(mapper::toDomain);
     }
 }

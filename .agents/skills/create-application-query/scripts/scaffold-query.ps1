@@ -1,109 +1,66 @@
-param (
-    [Parameter(Mandatory=$true)][string]$Module,
-    [Parameter(Mandatory=$true)][string]$QueryName,
-    [Parameter(Mandatory=$true)][string]$ResultType,
-    [Parameter(Mandatory=$false)][string]$SubModule = ""
+[CmdletBinding()]
+param(
+    [Parameter(Mandatory = $true)][string]$Module,
+    [string]$SubModule = '',
+    [Parameter(Mandatory = $true)][ValidatePattern('^[A-Z][A-Za-z0-9]*$')][string]$QueryName,
+    [string]$QueryFields = '',
+    [Parameter(Mandatory = $true)][string]$ResultType,
+    [string]$ResultFields = '',
+    [string]$Imports = '',
+    [string]$Dependencies = '',
+    [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$ExecuteBody,
+    [string]$PreAuthorize = ''
 )
 
-$ErrorActionPreference = "Stop"
+$ErrorActionPreference = 'Stop'
+$contextScript = Join-Path $PSScriptRoot '..\..\atlashub-module-workflow\scripts\Get-AtlashubContext.ps1'
+$context = (& $contextScript -Module $Module -SubModule $SubModule -Artifact query) | ConvertFrom-Json
+$applicationDir = Join-Path $context.sourceRoot 'application'
+$folder = if (Test-Path (Join-Path $applicationDir 'query')) { 'query' } else { 'queries' }
+$targetDir = Join-Path $applicationDir "$folder\$QueryName"
+$package = "$($context.javaPackage).application.$folder.$QueryName"
+$queryFile = Join-Path $targetDir "$QueryName`Query.java"
+$handlerFile = Join-Path $targetDir "$QueryName`Handler.java"
+if ((Test-Path $queryFile) -or (Test-Path $handlerFile)) { throw "Refusing to overwrite query files in $targetDir" }
 
-# Build the Java sub-path
-if ($SubModule -ne "") {
-    $JavaSubPath = "src\main\java\com\atlashub\$Module\$SubModule"
-    $JavaPackage = "com.atlashub.$Module.$SubModule"
-} else {
-    $JavaSubPath = "src\main\java\com\atlashub\$Module"
-    $JavaPackage = "com.atlashub.$Module"
+function Parse-Declarations([string]$Value) { @($Value.Split(';') | ForEach-Object { $_.Trim() } | Where-Object { $_ }) }
+$queryBody = (Parse-Declarations $QueryFields | ForEach-Object { "        $_" }) -join ",`r`n"
+$importLines = (Parse-Declarations $Imports | ForEach-Object { "import $_;" }) -join "`r`n"
+$deps = Parse-Declarations $Dependencies
+$fields = ($deps | ForEach-Object { "    private final $_;" }) -join "`r`n"
+$params = $deps -join ', '
+$assignments = ($deps | ForEach-Object { $name = ($_ -split '\s+')[-1]; "        this.$name = $name;" }) -join "`r`n"
+$securityImport = if ($PreAuthorize) { "import org.springframework.security.access.prepost.PreAuthorize;`r`n" } else { '' }
+$securityAnnotation = if ($PreAuthorize) { "    @PreAuthorize(`"$PreAuthorize`")`r`n" } else { '' }
+
+New-Item -ItemType Directory -Force -Path $targetDir | Out-Null
+Set-Content -LiteralPath $queryFile -Value "package $package;`r`n`r`npublic record $QueryName`Query(`r`n$queryBody`r`n) {`r`n}`r`n" -Encoding utf8NoBOM
+if ($ResultFields) {
+    $resultFile = Join-Path $targetDir "$ResultType.java"
+    $resultBody = (Parse-Declarations $ResultFields | ForEach-Object { "        $_" }) -join ",`r`n"
+    Set-Content -LiteralPath $resultFile -Value "package $package;`r`n`r`npublic record $ResultType(`r`n$resultBody`r`n) {`r`n}`r`n" -Encoding utf8NoBOM
 }
-
-$FoundModulePath = Get-ChildItem -Path . -Recurse -Directory |
-    Where-Object { $_.FullName -match [regex]::Escape($JavaSubPath) } |
-    Select-Object -First 1
-
-if (-not $FoundModulePath) {
-    Write-Host "ERROR: Path '$JavaSubPath' not found in this workspace."
-    exit 1
-}
-
-$ModulePath = $FoundModulePath.FullName
-
-# Detect whether this module uses singular "query" or plural "queries"
-$AppPath = Join-Path $ModulePath "application"
-if (Test-Path (Join-Path $AppPath "query")) {
-    $QueriesDir = "query"
-} else {
-    $QueriesDir = "queries"
-}
-
-$QueryDir    = Join-Path -Path $ModulePath -ChildPath "application\$QueriesDir\$QueryName"
-$QueryPkg    = "$JavaPackage.application.$QueriesDir.$QueryName"
-
-if (-Not (Test-Path $QueryDir)) {
-    New-Item -ItemType Directory -Force -Path $QueryDir | Out-Null
-}
-
-$QueryFile   = Join-Path $QueryDir "${QueryName}Query.java"
-$HandlerFile = Join-Path $QueryDir "${QueryName}Handler.java"
-$ResultFile  = Join-Path $QueryDir "${QueryName}Result.java"
-
-if (Test-Path $HandlerFile) {
-    Write-Host "WARNING: Query Handler already exists at $HandlerFile. Skipping to prevent overwrite."
-    exit 0
-}
-
-# 1. Query Record
-$QueryContent = @"
-package $QueryPkg;
-
-public record ${QueryName}Query() {
-    // TODO: Add query parameters here
-}
-"@
-Set-Content -Path $QueryFile -Value $QueryContent
-
-# 2. Result Record — create if ResultType matches the convention (ends with "Result")
-$createResultFile = ($ResultType -eq "${QueryName}Result")
-
-if ($createResultFile) {
-    $ResultContent = @"
-package $QueryPkg;
-
-public record ${QueryName}Result() {
-    // TODO: Add result fields here
-}
-"@
-    Set-Content -Path $ResultFile -Value $ResultContent
-}
-
-# 3. Handler Class
-$HandlerContent = @"
-package $QueryPkg;
+$handlerContent = @"
+package $package;
 
 import com.atlashub.shared.application.usecase.Query;
+$securityImport$importLines
 import org.springframework.stereotype.Component;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @Component
-public class ${QueryName}Handler extends Query<${QueryName}Query, $ResultType> {
+public class $QueryName`Handler extends Query<$QueryName`Query, $ResultType> {
 
-    private static final Logger log = LoggerFactory.getLogger(${QueryName}Handler.class);
+$fields
 
-    public ${QueryName}Handler(
-        // TODO: Inject repositories / read ports
-    ) {}
+    public $QueryName`Handler($params) {
+$assignments
+    }
 
-    @Override
-    public $ResultType execute(${QueryName}Query query) {
-        log.info("Executing ${QueryName}Query");
-
-        // TODO: Implement read-only orchestration logic
-        throw new UnsupportedOperationException("${QueryName}Handler not implemented");
+$securityAnnotation    @Override
+    public $ResultType execute($QueryName`Query query) {
+$ExecuteBody
     }
 }
 "@
-Set-Content -Path $HandlerFile -Value $HandlerContent
-
-$createdFiles = "Query, Handler"
-if ($createResultFile) { $createdFiles += ", Result" }
-Write-Host "SUCCESS: Scaffolded $createdFiles at $QueryDir"
+Set-Content -LiteralPath $handlerFile -Value $handlerContent -Encoding utf8NoBOM
+Write-Host "CREATED: $targetDir"

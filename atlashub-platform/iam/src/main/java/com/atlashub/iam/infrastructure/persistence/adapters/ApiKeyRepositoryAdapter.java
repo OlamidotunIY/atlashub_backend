@@ -3,7 +3,7 @@ package com.atlashub.iam.infrastructure.persistence.adapters;
 import com.atlashub.iam.domain.entities.ApiKey;
 import com.atlashub.iam.domain.repositories.ApiKeyRepository;
 import com.atlashub.iam.infrastructure.persistence.repositories.SpringDataApiKeyRepository;
-import com.atlashub.iam.domain.valueobject.ApiEnvironment;
+import com.atlashub.shared.application.security.ApiEnvironment;
 import com.atlashub.iam.infrastructure.persistence.entities.ApiKeyJpa;
 import com.atlashub.iam.infrastructure.persistence.mappers.ApiKeyMapper;
 import com.atlashub.shared.application.port.DomainEventPublisher;
@@ -39,6 +39,21 @@ public class ApiKeyRepositoryAdapter
                 .stream()
                 .map(mapper::toDomain)
                 .toList();
+    }
+
+    @Override
+    public java.util.Optional<ApiKey> findByPublicKey(String publicKey) {
+        return springDataRepo.findByPublicKey(publicKey).map(mapper::toDomain);
+    }
+
+    @Override
+    public List<ApiKey> findByOrganizationId(Long organizationId) {
+        return springDataRepo.findByOrganizationId(organizationId).stream().map(mapper::toDomain).toList();
+    }
+
+    @Override
+    public java.util.Optional<ApiKey> findByIdAndOrganizationIdForUpdate(Long id, Long organizationId) {
+        return springDataRepo.findByIdAndOrganizationIdForUpdate(id, organizationId).map(mapper::toDomain);
     }
 }
 

@@ -3,6 +3,7 @@ package com.atlashub.pay.ledger.application.commands.FreezeAccount;
 import com.atlashub.pay.ledger.domain.entities.LedgerAccount;
 import com.atlashub.pay.ledger.domain.exceptions.LedgerAccountNotFoundException;
 import com.atlashub.pay.ledger.domain.repositories.LedgerAccountRepository;
+import com.atlashub.pay.ledger.domain.valueobject.LedgerRestrictionType;
 import com.atlashub.shared.application.usecase.Command;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,14 +22,14 @@ public class FreezeAccountHandler extends Command<FreezeAccountCommand, Void> {
     }
 
     @Override
-    @PreAuthorize("hasAuthority('pay:ledger:freeze')")
+    @PreAuthorize("hasAuthority('platform:pay:operations')")
     public Void execute(FreezeAccountCommand command) {
         log.info("Executing FreezeAccountCommand for account id: {}", command.ledgerAccountId());
 
         LedgerAccount account = ledgerAccountRepository.findByIdWithLock(command.ledgerAccountId())
                 .orElseThrow(() -> new LedgerAccountNotFoundException(command.ledgerAccountId().toString()));
 
-        account.freeze();
+        account.freeze(LedgerRestrictionType.valueOf(command.restrictionType().toUpperCase()));
         ledgerAccountRepository.save(account);
 
         return null;

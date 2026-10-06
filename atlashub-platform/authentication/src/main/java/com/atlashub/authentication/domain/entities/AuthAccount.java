@@ -2,7 +2,7 @@ package com.atlashub.authentication.domain.entities;
 
 import com.atlashub.authentication.domain.events.AuthAccountLocked;
 import com.atlashub.authentication.domain.events.AuthEmailVerifiedEvent;
-import com.atlashub.authentication.domain.exceptions.AuthInvaraintError;
+import com.atlashub.authentication.domain.exceptions.AuthenticationInvariantException;
 import com.atlashub.authentication.domain.exceptions.AuthLocked;
 import com.atlashub.shared.domain.entities.AggregateRoot;
 import com.atlashub.shared.domain.valueobject.CorrelationId;
@@ -19,12 +19,6 @@ public class AuthAccount extends AggregateRoot<Long> {
     private final String accountId;              // email for credential, provider sub-id for OAuth
     private final String providerId;             // "CREDENTIALS" or "google", etc.
     private final Long userId;
-    private String accessToken;
-    private String refreshToken;
-    private String idToken;
-    private ZonedDateTime accessTokenExpiresAt;
-    private ZonedDateTime refreshTokenExpiresAt;
-    private String scope;
     private String password;                     // BCrypt hash — null for OAuth accounts
     private int failedLoginAttempts;
     private ZonedDateTime lockedUntil;
@@ -35,21 +29,13 @@ public class AuthAccount extends AggregateRoot<Long> {
 
     /** All-args constructor used by MapStruct reconstitution. */
     public AuthAccount(Long id, String accountId, String providerId, Long userId,
-                       String accessToken, String refreshToken, String idToken,
-                       ZonedDateTime accessTokenExpiresAt, ZonedDateTime refreshTokenExpiresAt,
-                       String scope, String password, int failedLoginAttempts,
+                       String password, int failedLoginAttempts,
                        ZonedDateTime lockedUntil, ZonedDateTime lastLoginAt, String lastLoginIp,
                        ZonedDateTime createdAt, ZonedDateTime updatedAt) {
         this.id = id;
         this.accountId = accountId;
         this.providerId = providerId;
         this.userId = userId;
-        this.accessToken = accessToken;
-        this.refreshToken = refreshToken;
-        this.idToken = idToken;
-        this.accessTokenExpiresAt = accessTokenExpiresAt;
-        this.refreshTokenExpiresAt = refreshTokenExpiresAt;
-        this.scope = scope;
         this.password = password;
         this.failedLoginAttempts = failedLoginAttempts;
         this.lockedUntil = lockedUntil;
@@ -62,7 +48,13 @@ public class AuthAccount extends AggregateRoot<Long> {
     /** Creates a credential-based account (email + password). */
     public static AuthAccount createCredentialsAccount(Long id, Long userId, String email, String passwordHash) {
         if (id == null || userId == null) {
-            throw new AuthInvaraintError("id and userId cannot be null");
+            throw new AuthenticationInvariantException("id and userId cannot be null");
+        }
+        if (email == null || email.isBlank()) {
+            throw new AuthenticationInvariantException("Email is required");
+        }
+        if (passwordHash == null || passwordHash.isBlank()) {
+            throw new AuthenticationInvariantException("Password hash is required");
         }
         ZonedDateTime now = ZonedDateTime.now();
         return new AuthAccount(
@@ -70,30 +62,7 @@ public class AuthAccount extends AggregateRoot<Long> {
                 email.trim().toLowerCase(),
                 "CREDENTIALS",
                 userId,
-                null, null, null, null, null,
-                "user",
                 passwordHash,
-                0, null, null, null,
-                now, now
-        );
-    }
-
-    /** Creates an OAuth account (Google, GitHub, etc.). */
-    public static AuthAccount createOAuthAccount(Long id, Long userId, String accountId,
-                                                  String providerId, String accessToken,
-                                                  String refreshToken, String idToken,
-                                                  ZonedDateTime accessTokenExpiresAt,
-                                                  ZonedDateTime refreshTokenExpiresAt,
-                                                  String scope) {
-        if (id == null || userId == null) {
-            throw new AuthInvaraintError("id and userId cannot be null");
-        }
-        ZonedDateTime now = ZonedDateTime.now();
-        return new AuthAccount(
-                id, accountId, providerId, userId,
-                accessToken, refreshToken, idToken,
-                accessTokenExpiresAt, refreshTokenExpiresAt,
-                scope, null,
                 0, null, null, null,
                 now, now
         );
@@ -135,19 +104,9 @@ public class AuthAccount extends AggregateRoot<Long> {
 
     public void updatePassword(String newPasswordHash) {
         if (newPasswordHash == null || newPasswordHash.isBlank()) {
-            throw new AuthInvaraintError("New password cannot be empty");
+            throw new AuthenticationInvariantException("New password cannot be empty");
         }
         this.password = newPasswordHash;
-        this.updatedAt = ZonedDateTime.now();
-    }
-
-    public void updateTokens(String accessToken, String refreshToken, String idToken,
-                              ZonedDateTime accessTokenExpiresAt, ZonedDateTime refreshTokenExpiresAt) {
-        this.accessToken = accessToken;
-        if (refreshToken != null) this.refreshToken = refreshToken;
-        if (idToken != null) this.idToken = idToken;
-        if (accessTokenExpiresAt != null) this.accessTokenExpiresAt = accessTokenExpiresAt;
-        if (refreshTokenExpiresAt != null) this.refreshTokenExpiresAt = refreshTokenExpiresAt;
         this.updatedAt = ZonedDateTime.now();
     }
 

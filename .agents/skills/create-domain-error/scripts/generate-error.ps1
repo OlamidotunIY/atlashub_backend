@@ -1,46 +1,34 @@
-param (
-    [Parameter(Mandatory=$true)][string]$Module,
-    [Parameter(Mandatory=$true)][string]$ErrorName,
-    [Parameter(Mandatory=$true)][string]$BaseException
+[CmdletBinding()]
+param(
+    [Parameter(Mandatory = $true)][string]$Module,
+    [string]$SubModule = '',
+    [Parameter(Mandatory = $true)][ValidatePattern('^[A-Z][A-Za-z0-9]*Exception$')][string]$ErrorName,
+    [Parameter(Mandatory = $true)][ValidateSet('BusinessRuleException','ConflictException','NotFoundException','ValidationException','AuthorizationException')][string]$BaseException,
+    [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$DefaultMessage
 )
 
-$ErrorActionPreference = "Stop"
+$ErrorActionPreference = 'Stop'
+$contextScript = Join-Path $PSScriptRoot '..\..\atlashub-module-workflow\scripts\Get-AtlashubContext.ps1'
+$context = (& $contextScript -Module $Module -SubModule $SubModule -Artifact error) | ConvertFrom-Json
+$singular = Join-Path $context.sourceRoot 'domain\exception'
+$plural = Join-Path $context.sourceRoot 'domain\exceptions'
+if ((Test-Path $singular) -and (Test-Path $plural)) { throw 'Both domain/exception and domain/exceptions exist; resolve the package inconsistency first.' }
+$targetDir = if (Test-Path $singular) { $singular } else { $plural }
+$packagePart = if ($targetDir -eq $singular) { 'exception' } else { 'exceptions' }
+$targetFile = Join-Path $targetDir "$ErrorName.java"
+if (Test-Path $targetFile) { throw "Refusing to overwrite: $targetFile" }
+$escapedMessage = $DefaultMessage.Replace('\', '\\').Replace('"', '\"')
 
-# Dynamic module discovery
-$SearchPattern = "src\main\java\com\atlashub\$Module"
-$FoundModulePath = Get-ChildItem -Path . -Recurse -Directory |
-    Where-Object { $_.FullName -match [regex]::Escape("src\main\java\com\atlashub\$Module") } |
-    Select-Object -First 1
-
-if (-not $FoundModulePath) {
-    Write-Host "ERROR: Module '$Module' not found under any src\main\java\com\atlashub\$Module path."
-    exit 1
-}
-
-$ModulePath = $FoundModulePath.FullName
-$TargetDir = Join-Path -Path $ModulePath -ChildPath "domain\exceptions"
-
-if (-not (Test-Path -Path $TargetDir)) {
-    New-Item -ItemType Directory -Force -Path $TargetDir | Out-Null
-}
-
-$TargetFile = Join-Path -Path $TargetDir -ChildPath "$ErrorName.java"
-
-if (Test-Path -Path $TargetFile) {
-    Write-Host "ERROR: $TargetFile already exists! Aborting to prevent overwrite."
-    exit 1
-}
-
-$PackageModule = $Module -replace '[/\\]', '.'
-$Content = @"
-package com.atlashub.$PackageModule.domain.exceptions;
+New-Item -ItemType Directory -Force -Path $targetDir | Out-Null
+$content = @"
+package $($context.javaPackage).domain.$packagePart;
 
 import com.atlashub.shared.domain.exception.$BaseException;
 
 public class $ErrorName extends $BaseException {
 
     public $ErrorName() {
-        super("A domain error occurred");
+        super("$escapedMessage");
     }
 
     public $ErrorName(String message) {
@@ -52,6 +40,5 @@ public class $ErrorName extends $BaseException {
     }
 }
 "@
-
-Set-Content -Path $TargetFile -Value $Content
-Write-Host "SUCCESS: Domain Error created at $TargetFile"
+Set-Content -LiteralPath $targetFile -Value $content -Encoding utf8NoBOM
+Write-Host "CREATED: $targetFile"

@@ -9,7 +9,6 @@ include 'atlashub-pay:ledger'
 
 // Platform
 include 'atlashub-platform'
-include 'atlashub-platform:catalog'
 include 'atlashub-platform:accounts'
 include 'atlashub-platform:iam'
 include 'atlashub-platform:compliance'
@@ -26,3 +25,7 @@ include 'atlashub-infrastructure:audit'
 // App
 include 'atlashub-main'
 
+
+include 'atlashub-pay:accounts'
+include 'atlashub-infrastructure:anchor'
+include 'atlashub-pay:splits'

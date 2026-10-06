@@ -23,18 +23,4 @@ public class OtpTransmissionAdapter implements OtpTransmissionPort {
 
         redisTemplate.opsForValue().set(key, rawCode, TTL_MINUTES, TimeUnit.MINUTES);
     }
-
-    @Override
-    public String retrieveForTransmission(String correlationId) {
-        String key = "otp_transmit:" + correlationId;
-
-        // 1. Fetch the raw code
-        String rawCode = redisTemplate.opsForValue().get(key);
-
-        if (rawCode != null) {
-            redisTemplate.delete(key);
-        }
-
-        return rawCode;
-    }
 }

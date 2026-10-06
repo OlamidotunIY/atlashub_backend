@@ -7,4 +7,8 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-json'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
+    // Optional: Swagger for API docs
+    implementation 'io.swagger.core.v3:swagger-annotations:2.2.20'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
 }

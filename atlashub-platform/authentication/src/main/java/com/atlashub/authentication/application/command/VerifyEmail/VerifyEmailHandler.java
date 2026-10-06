@@ -12,6 +12,7 @@ import com.atlashub.shared.application.port.PasswordEncoderPort;
 import com.atlashub.shared.application.usecase.Command;
 import com.atlashub.shared.domain.exception.NotFoundException;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.ZonedDateTime;
 
@@ -31,6 +32,7 @@ public class VerifyEmailHandler extends Command<VerifyEmailCommand, Void> {
     }
 
     @Override
+    @Transactional
     public Void execute(VerifyEmailCommand command) {
         AuthAccount account = accountRepository.findByAccountId(command.email())
                 .orElseThrow(() -> new NotFoundException("Account not found"));

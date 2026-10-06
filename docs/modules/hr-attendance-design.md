@@ -167,7 +167,34 @@ AttendanceRecordJpaRepository
 
 ---
 
-## Presentation Layer
+### Kafka Listeners — `infrastructure/messaging/listeners/`
+
+#### `LeaveApprovedListener`
+
+| Attribute | Value |
+|---|---|
+| **Topic** | `hr-events` |
+| **Group ID** | `hr-attendance-leave-approved` |
+| **Event** | `LeaveApprovedEvent` |
+| **Payload fields** | `leaveRequestId`, `employeeId`, `organizationId`, `startDate`, `endDate`, `leaveType`, `approvedAt` |
+| **Command called** | `MarkAttendanceAsLeaveHandler` |
+| **Flow** | For each date between `startDate` and `endDate`, upserts an `AttendanceRecord` with `status = ON_LEAVE`. This ensures payroll deduction rules respect approved leave days. Idempotent via `(employeeId, date)` unique constraint. |
+
+---
+
+#### `EmployeeTerminatedListener`
+
+| Attribute | Value |
+|---|---|
+| **Topic** | `hr-events` |
+| **Group ID** | `hr-attendance-employee-terminated` |
+| **Event** | `EmployeeTerminatedEvent` |
+| **Payload fields** | `employeeId`, `organizationId`, `terminatedAt` |
+| **Command called** | None — marks all future pending attendance records for the employee as CLOSED |
+| **Flow** | Soft-closes any open clock-in record for the employee on the termination date to avoid dangling attendance entries. |
+
+---
+
 
 ### Controller: `HrAttendanceController`
 

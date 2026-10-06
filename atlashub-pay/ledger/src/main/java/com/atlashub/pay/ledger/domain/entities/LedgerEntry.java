@@ -13,18 +13,16 @@ public class LedgerEntry {
     private final Long accountId;
     private final EntryType type;
     private final Money amount;
-    private final Money runningBalance;
 
-    public LedgerEntry(Long id, Long transactionId, Long accountId, EntryType type, Money amount, Money runningBalance) {
+    public LedgerEntry(Long id, Long transactionId, Long accountId, EntryType type, Money amount) {
         this.id = id;
         this.transactionId = transactionId;
         this.accountId = accountId;
         this.type = type;
         this.amount = amount;
-        this.runningBalance = runningBalance;
     }
 
-    public static LedgerEntry create(Long id, Long transactionId, Long accountId, EntryType type, Money amount, Money runningBalance) {
+    public static LedgerEntry create(Long id, Long transactionId, Long accountId, EntryType type, Money amount) {
         if (id == null) {
             throw new LedgerInvariantException("LedgerEntry id cannot be null");
         }
@@ -40,10 +38,6 @@ public class LedgerEntry {
         if (amount == null) {
             throw new LedgerInvariantException("LedgerEntry amount cannot be null");
         }
-        if (runningBalance == null) {
-            throw new LedgerInvariantException("LedgerEntry runningBalance cannot be null");
-        }
-
-        return new LedgerEntry(id, transactionId, accountId, type, amount, runningBalance);
+        return new LedgerEntry(id, transactionId, accountId, type, amount);
     }
 }

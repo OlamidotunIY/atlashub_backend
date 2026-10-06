@@ -16,6 +16,7 @@ public record LedgerTransactionPostedEvent(
     public record Payload(
         Long transactionId,
         Long organizationId,
+        String environment,
         String reference,
         String sourceSystem,
         String sourceReferenceId,
@@ -29,7 +30,6 @@ public record LedgerTransactionPostedEvent(
     public record EntryPayload(
         Long accountId,
         String entryType,
-        BigDecimal amount,
-        BigDecimal runningBalance
+        BigDecimal amount
     ) {}
 }

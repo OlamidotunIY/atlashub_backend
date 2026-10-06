@@ -1,114 +1,75 @@
-param (
-    [Parameter(Mandatory=$true)][string]$Module,
-    [Parameter(Mandatory=$true)][string]$CommandName,
-    [Parameter(Mandatory=$true)][string]$ResponseType,
-    [Parameter(Mandatory=$false)][string]$SubModule = ""
+[CmdletBinding()]
+param(
+    [Parameter(Mandatory = $true)][string]$Module,
+    [string]$SubModule = '',
+    [Parameter(Mandatory = $true)][ValidatePattern('^[A-Z][A-Za-z0-9]*$')][string]$CommandName,
+    [string]$CommandFields = '',
+    [Parameter(Mandatory = $true)][string]$ResultType,
+    [string]$ResultFields = '',
+    [string]$Imports = '',
+    [string]$Dependencies = '',
+    [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$ExecuteBody,
+    [string]$PreAuthorize = ''
 )
 
-$ErrorActionPreference = "Stop"
+$ErrorActionPreference = 'Stop'
+$contextScript = Join-Path $PSScriptRoot '..\..\atlashub-module-workflow\scripts\Get-AtlashubContext.ps1'
+$context = (& $contextScript -Module $Module -SubModule $SubModule -Artifact command) | ConvertFrom-Json
+$applicationDir = Join-Path $context.sourceRoot 'application'
+$commandFolder = if (Test-Path (Join-Path $applicationDir 'command')) { 'command' } else { 'commands' }
+$targetDir = Join-Path $applicationDir "$commandFolder\$CommandName"
+$package = "$($context.javaPackage).application.$commandFolder.$CommandName"
+$commandFile = Join-Path $targetDir "$CommandName`Command.java"
+$handlerFile = Join-Path $targetDir "$CommandName`Handler.java"
+if ((Test-Path $commandFile) -or (Test-Path $handlerFile)) { throw "Refusing to overwrite command files in $targetDir" }
 
-# Build the Java package sub-path to search for
-# If SubModule is provided: com.atlashub.<Module>.<SubModule>
-# Else:                     com.atlashub.<Module>
-if ($SubModule -ne "") {
-    $JavaSubPath = "src\main\java\com\atlashub\$Module\$SubModule"
-    $JavaPackage = "com.atlashub.$Module.$SubModule"
-} else {
-    $JavaSubPath = "src\main\java\com\atlashub\$Module"
-    $JavaPackage = "com.atlashub.$Module"
+function Parse-Declarations([string]$Value) {
+    @($Value.Split(';') | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+}
+$commandMembers = Parse-Declarations $CommandFields
+$recordBody = ($commandMembers | ForEach-Object { "        $_" }) -join ",`r`n"
+$importLines = (Parse-Declarations $Imports | ForEach-Object { "import $_;" }) -join "`r`n"
+$dependencyMembers = Parse-Declarations $Dependencies
+$dependencyFields = ($dependencyMembers | ForEach-Object { "    private final $_;" }) -join "`r`n"
+$constructorParams = $dependencyMembers -join ', '
+$assignments = ($dependencyMembers | ForEach-Object { $name = ($_ -split '\s+')[-1]; "        this.$name = $name;" }) -join "`r`n"
+$securityImport = if ($PreAuthorize) { "import org.springframework.security.access.prepost.PreAuthorize;`r`n" } else { '' }
+$securityAnnotation = if ($PreAuthorize) { "    @PreAuthorize(`"$PreAuthorize`")`r`n" } else { '' }
+
+New-Item -ItemType Directory -Force -Path $targetDir | Out-Null
+$commandContent = "package $package;`r`n`r`npublic record $CommandName`Command(`r`n$recordBody`r`n) {`r`n}`r`n"
+Set-Content -LiteralPath $commandFile -Value $commandContent -Encoding utf8NoBOM
+
+$actualResultType = $ResultType
+if ($ResultType -ne 'Void' -and $ResultFields) {
+    $resultFile = Join-Path $targetDir "$ResultType.java"
+    if (Test-Path $resultFile) { throw "Refusing to overwrite result: $resultFile" }
+    $resultMembers = Parse-Declarations $ResultFields
+    $resultBody = ($resultMembers | ForEach-Object { "        $_" }) -join ",`r`n"
+    Set-Content -LiteralPath $resultFile -Value "package $package;`r`n`r`npublic record $ResultType(`r`n$resultBody`r`n) {`r`n}`r`n" -Encoding utf8NoBOM
 }
 
-$FoundModulePath = Get-ChildItem -Path . -Recurse -Directory |
-    Where-Object { $_.FullName -match [regex]::Escape($JavaSubPath) } |
-    Select-Object -First 1
-
-if (-not $FoundModulePath) {
-    Write-Host "ERROR: Path '$JavaSubPath' not found in this workspace."
-    exit 1
-}
-
-$ModulePath = $FoundModulePath.FullName
-$CommandDir = Join-Path -Path $ModulePath -ChildPath "application\commands\$CommandName"
-
-if (-Not (Test-Path $CommandDir)) {
-    New-Item -ItemType Directory -Force -Path $CommandDir | Out-Null
-}
-
-$CommandFile  = Join-Path $CommandDir "${CommandName}Command.java"
-$HandlerFile  = Join-Path $CommandDir "${CommandName}Handler.java"
-$ResponseFile = Join-Path $CommandDir "${CommandName}Response.java"
-
-if (Test-Path $HandlerFile) {
-    Write-Host "WARNING: Command Handler already exists at $HandlerFile. Skipping to prevent overwrite."
-    exit 0
-}
-
-$isVoid = ($ResponseType -eq "void" -or $ResponseType -eq "Void")
-
-# 1. Command Record
-$CommandContent = @"
-package $JavaPackage.application.commands.${CommandName};
-
-public record ${CommandName}Command() {
-    // TODO: Add command fields here
-}
-"@
-Set-Content -Path $CommandFile -Value $CommandContent
-
-# 2. Response Record — only when not void
-if (-not $isVoid) {
-    if (Test-Path $ResponseFile) {
-        Write-Host "WARNING: Response file already exists at $ResponseFile. Skipping."
-    } else {
-        $ResponseContent = @"
-package $JavaPackage.application.commands.${CommandName};
-
-public record ${CommandName}Response() {
-    // TODO: Add response fields here
-}
-"@
-        Set-Content -Path $ResponseFile -Value $ResponseContent
-    }
-}
-
-# 3. Handler Class
-if ($isVoid) {
-    $ReturnType    = "Void"
-    $ReturnComment = "// TODO: Implement orchestration logic. Return null for Void handlers."
-    $ReturnLine    = "        return null;"
-} else {
-    $ReturnType    = "${CommandName}Response"
-    $ReturnComment = "// TODO: Implement orchestration logic and return the response."
-    $ReturnLine    = "        // TODO: replace with actual result`n        throw new UnsupportedOperationException(`"${CommandName}Handler not implemented`");"
-}
-
-$HandlerContent = @"
-package $JavaPackage.application.commands.${CommandName};
+$handlerContent = @"
+package $package;
 
 import com.atlashub.shared.application.usecase.Command;
+$securityImport$importLines
 import org.springframework.stereotype.Component;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @Component
-public class ${CommandName}Handler extends Command<${CommandName}Command, ${ReturnType}> {
+public class $CommandName`Handler extends Command<$CommandName`Command, $actualResultType> {
 
-    private static final Logger log = LoggerFactory.getLogger(${CommandName}Handler.class);
+$dependencyFields
 
-    public ${CommandName}Handler(
-        // TODO: Inject repositories and ports
-    ) {}
+    public $CommandName`Handler($constructorParams) {
+$assignments
+    }
 
-    @Override
-    public ${ReturnType} execute(${CommandName}Command command) {
-        log.info("Executing ${CommandName}Command");
-        $ReturnComment
-$ReturnLine
+$securityAnnotation    @Override
+    public $actualResultType execute($CommandName`Command command) {
+$ExecuteBody
     }
 }
 "@
-Set-Content -Path $HandlerFile -Value $HandlerContent
-
-$createdFiles = "Command, Handler"
-if (-not $isVoid) { $createdFiles += ", Response" }
-Write-Host "SUCCESS: Scaffolded $createdFiles at $CommandDir"
+Set-Content -LiteralPath $handlerFile -Value $handlerContent -Encoding utf8NoBOM
+Write-Host "CREATED: $targetDir"

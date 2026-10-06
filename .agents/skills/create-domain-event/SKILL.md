@@ -1,84 +1,18 @@
 ---
 name: create-domain-event
-description: >-
-  Use this skill whenever the user asks to "create domain events" or "create a domain event".
-  The user will provide the event name, its trigger/purpose, and the target module name.
+description: Create or audit an AtlasHub domain event from documented producer and consumer contracts.
 ---
 
-# Create Domain Event Workflow
+# Create domain event
 
-You are responsible for generating Domain Event records in the Atlashub backend codebase according to strict Domain-Driven Design (DDD) guidelines.
-## Audit / Update Mode
-If the user asks you to "check", "verify", or "update" an existing Event:
-1. Read the existing file using your tools.
-2. Verify it meets ALL rules (no wildcard imports, extends DomainEvent, has a Payload record, does NOT duplicate the aggregate ID inside the payload).
-3. If it perfectly matches, tell the user "Everything is structurally perfect."
-4. If it violates ANY rules, do not recreate it. Use the `replace_file_content` tool to safely update the file, then compile it via Gradle.
+Load `atlashub-module-workflow`, resolve artifact `event`, and read the module design, saga/communication docs, producing aggregate, and consuming contracts.
 
-## Generation Mode (Inputs Required)
-If creating new events, ask for missing info:
-1. **Event Name(s)** (e.g., `MemberJoinedEvent`)
-2. **Trigger / Consumers** (e.g., "Invitation accepted, used by notifications and hr")
-3. **Module Name** (e.g., `iam`, `accounts`)
+- Create only documented or explicitly approved events.
+- Use past-tense business names and the module's existing `DomainEvent` structure.
+- Payload contains only data consumers require and the producer owns at publication time.
+- Do not repeat the producer ID when `aggregateId` already carries it.
+- Never include secrets, hashes, raw tokens, provider credentials, or unnecessary personal data.
+- Preserve published compatibility; breaking changes require versioning or coordinated migration.
+- The aggregate registers events; handlers do not fabricate events representing aggregate transitions.
 
-## Batch Processing (Multiple Events)
-This skill supports processing a list or table of multiple events simultaneously for BOTH Generation Mode and Audit/Update Mode.
-1. Deduce the target module from context, or ask the user if it's missing.
-2. You MUST process every event iteratively. Do not skip any.
-3. **Execution Strategy:** You can either process them sequentially in a single turn (best for small batches) OR use `invoke_subagent` to spawn a concurrent team of subagents to process them simultaneously (best for massive lists).
-
-
-## Subagent Separation of Concerns (Vertical Slicing)
-When using invoke_subagent to process multiple items, group related work into a small number of subagents instead of spawning many to avoid Gradle lock contentions and context fragmentation.
-1. **Group by Feature/Entity**: Assign each subagent a primary entity and ALL of its related components (e.g., its Value Objects, Exceptions, Events, Mappers, Repositories). NEVER create one subagent per single file.
-2. **End-to-End Flow**: The subagent is responsible for checking its own pre-requisites and generating all missing dependencies sequentially within its own turn.
-3. **Independent Verification**: The subagent MUST run its own verification (e.g., .\gradlew compileJava for the module) once for the entire group of files to ensure its specific slice is perfect.
-4. **Independent Commit**: Once verified, the subagent MUST commit its own changes to Git and end its turn. Do not wait for a parent agent to commit.
-
-## Step 1: Deep Domain Analysis (Payload Discovery)
-Before writing any code, you MUST figure out the optimal payload by analyzing the domain:
-1. **Read the Sender Entity:** Use your search tools to find and read the sender's Domain Entity in the codebase (e.g., `Invitation.java` or `OrganizationMember.java`).
-2. **Read the Receiver Entity/Docs:** Identify the receiver modules (e.g., `notifications`, `hr`). Use your search tools to find and read the receiver Domain Entities (e.g., `Employee.java`). If the receiver module is not yet implemented in code, search the project's markdown documentation to find the planned entity fields.
-3. **Determine the Payload:** Based on what the sender has and what the receiver needs, deduce the exact fields required for the `Payload` record. Format them as a comma-separated string of Java declarations (e.g., `"Long organizationId, Long userId, String email, Long customRoleId"`).
-4. **CRITICAL PAYLOAD RULE:** Do **NOT** include the ID of the sender/aggregate (e.g., `invitationId`, `memberId`) inside the `Payload`. The standard `aggregateId` field on the event already holds this value.
-
-## Step 2: Code Generation (via Script)
-Do NOT use `write_to_file` to write the Java code manually. 
-Instead, execute the provided helper script. The script automatically searches for the module path, prevents overwrites, bans wildcard imports, and formats the Java record perfectly.
-
-**Command:**
-```powershell
-.agents\skills\create-domain-event\scripts\generate-event.ps1 -Module "<module_name>" -EventName "<event_name>" -PayloadFields "<deduced_payload_fields>"
-```
-
-*Example Execution:*
-```powershell
-.agents\skills\create-domain-event\scripts\generate-event.ps1 -Module "iam" -EventName "MemberJoinedEvent" -PayloadFields "Long organizationId, Long userId, String email, Long customRoleId"
-```
-
-
-## CRITICAL: Self-Correction & Verification Before Gradle
-Before you (or your dedicated subagents) run the Gradle compiler check, you MUST ALWAYS perform a strict self-review of all created and modified files. 
-- Read back the files you just wrote using "cat" or "view_file".
-- Check against ALL rules (e.g., absolutely NO inline imports, NO wildcard imports, NO leftover "// TODO"s, NO "return null;" placeholders).
-- If ANY rule is violated, you MUST fix it immediately using "replace_file_content".
-- Only after this explicit re-confirmation are you allowed to run ".\gradlew compileJava". Dedicated subagents MUST also follow this rule.
-
-## Step 3: Gradle Compilation Check
-After the script finishes generating the files, you MUST run the Gradle compiler to prove to the user that your generated events have zero syntax or import errors.
-**CRITICAL RULE:** NEVER run `.\gradlew compileJava` globally, as it will compile the entire app.
-You MUST strictly target the module you are working on.
-Example: `.\gradlew :atlashub-platform:iam:compileJava`
-
-## Step 4: Final Verification
-Confirm to the user that the file was created. Show them the successful output of the Gradle build to prove it compiled flawlessly.
-
-
-## Final Step: Git Commit & Push
-Verification is NOT the final step; committing your work is.
-After your code successfully compiles and passes all verification rules, you (and every individual subagent) MUST commit and push your changes to GitHub.
-1. Stage your specific files: "git add <paths_to_your_files>"
-2. Commit your changes using standard Conventional Commits formatting (e.g., "feat(<module>): add <feature>", "refactor(<module>): ...").
-3. Push to the remote repository: "git push origin HEAD"
-**CRITICAL:** If you are a subagent, you MUST commit and push your own specific work independently as soon as it passes compilation. Do not wait for the parent agent.
-
+Verify no equivalent event exists, use the generator with explicit payload fields, and create consumer listeners only when docs require them. Validate producer and consumers and add serialization tests.

@@ -9,17 +9,34 @@
   <component name="ChangeListManager">
     <list default="true" id="174f3fac-956e-4ce4-b2e2-bac8d3e75c4d" name="Changes" comment="fix: file system">
       <changelist_data name="Iyanda Olamidotun" email="olamidotun225@gmail.com" automatic="false" />
-      <change beforePath="$PROJECT_DIR$/.agents/skills/create-application-command/scripts/scaffold-command.ps1" beforeDir="false" afterPath="$PROJECT_DIR$/.agents/skills/create-application-command/scripts/scaffold-command.ps1" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.agents/skills/create-application-query/scripts/scaffold-query.ps1" beforeDir="false" afterPath="$PROJECT_DIR$/.agents/skills/create-application-query/scripts/scaffold-query.ps1" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.agents/skills/create-domain-entity/scripts/scaffold-entity.ps1" beforeDir="false" afterPath="$PROJECT_DIR$/.agents/skills/create-domain-entity/scripts/scaffold-entity.ps1" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.agents/skills/create-domain-mapper/scripts/scaffold-mapper.ps1" beforeDir="false" afterPath="$PROJECT_DIR$/.agents/skills/create-domain-mapper/scripts/scaffold-mapper.ps1" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.agents/skills/create-jpa-entity/scripts/scaffold-jpa-entity.ps1" beforeDir="false" afterPath="$PROJECT_DIR$/.agents/skills/create-jpa-entity/scripts/scaffold-jpa-entity.ps1" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/pay/accounts/domain/entities/VirtualAccount.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/pay/accounts/domain/events/VirtualAccountActivatedEvent.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/pay/accounts/domain/events/VirtualAccountClosedEvent.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/pay/accounts/domain/events/VirtualAccountSuspendedEvent.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/pay/accounts/domain/events/WalletFundedEvent.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/pay/accounts/domain/exceptions/VirtualAccountAlreadyActiveException.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/pay/accounts/domain/exceptions/VirtualAccountAlreadyClosedException.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/pay/accounts/domain/exceptions/VirtualAccountInactiveException.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/pay/accounts/domain/exceptions/VirtualAccountNotActiveException.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/pay/accounts/domain/exceptions/VirtualAccountNotFoundException.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/pay/accounts/domain/ports/AnchorPort.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/pay/accounts/domain/valueobject/OwnerType.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/pay/accounts/domain/valueobject/VirtualAccountStatus.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.agents/skills/create-domain-event/scripts/generate-event.ps1" beforeDir="false" afterPath="$PROJECT_DIR$/.agents/skills/create-domain-event/scripts/generate-event.ps1" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.agents/skills/create-domain-valueobject/scripts/scaffold-valueobject.ps1" beforeDir="false" afterPath="$PROJECT_DIR$/.agents/skills/create-domain-valueobject/scripts/scaffold-valueobject.ps1" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/gradle.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/gradle.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atlashub-pay/ledger/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-pay/ledger/build.gradle" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/modules/accounting-design.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/modules/accounting-design.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/modules/commerce-design.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/modules/commerce-design.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/modules/logistics-design.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/modules/logistics-design.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/modules/pay-design.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/modules/pay-design.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/modules/accounts-design.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/modules/accounts-design.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/modules/admin-design.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/modules/admin-design.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/modules/commerce-storefront-design.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/modules/commerce-storefront-design.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/modules/compliance-design.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/modules/compliance-design.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/modules/hr-payroll-design.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/modules/hr-payroll-design.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/modules/pay-accounts-design.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/modules/pay-accounts-design.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/modules/pay-charges-design.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/modules/pay-charges-design.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/modules/pay-ledger-design.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/modules/pay-ledger-design.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/modules/pay-mandates-design.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/modules/pay-mandates-design.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/modules/pay-transfers-design.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/modules/pay-transfers-design.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/settings.gradle" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -74,8 +91,9 @@
     <option name="RECENT_TEMPLATES">
       <list>
         <option value="HTTP Private Environment File" />
-        <option value="Interface" />
         <option value="Enum" />
+        <option value="Interface" />
+        <option value="Exception" />
         <option value="Record" />
         <option value="Class" />
       </list>
@@ -134,25 +152,6 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="0.0" />
-      <entry key="MS500" value="0.0" />
-      <entry key="S2" value="0.0" />
-      <entry key="S5" value="0.0" />
-      <entry key="S10" value="0.0" />
-      <entry key="S30" value="0.0" />
-      <entry key="S60" value="1.6238117314306995E-170" />
-      <entry key="M2" value="2.5485664223028517E-85" />
-      <entry key="M5" value="3.340057380938537E-34" />
-      <entry key="M10" value="3.6551641464744786E-17" />
-      <entry key="M15" value="1.748336192886214E-11" />
-      <entry key="M30" value="8.377976217449878E-6" />
-      <entry key="H1" value="0.007107152982234628" />
-      <entry key="H2" value="0.6702389456770312" />
-      <entry key="H4" value="12.604840024379154" />
-      <entry key="D1" value="469.5429780644967" />
-      <entry key="W1" value="1624.7800179230765" />
-    </decayedCancelled>
-    <decayedSelected>
       <entry key="MS100" value="1.0" />
       <entry key="MS500" value="1.0" />
       <entry key="S2" value="1.0" />
@@ -162,33 +161,52 @@
       <entry key="S60" value="1.0" />
       <entry key="M2" value="1.0" />
       <entry key="M5" value="1.0" />
-      <entry key="M10" value="1.0" />
-      <entry key="M15" value="1.000000000000351" />
-      <entry key="M30" value="1.0000008758285677" />
-      <entry key="H1" value="1.0027677381021076" />
-      <entry key="H2" value="1.5535872750311013" />
-      <entry key="H4" value="13.053476669469552" />
-      <entry key="D1" value="656.2612954346617" />
-      <entry key="W1" value="2076.4334580988243" />
+      <entry key="M10" value="1.000000000095363" />
+      <entry key="M15" value="1.0000002087309365" />
+      <entry key="M30" value="1.0004568708121022" />
+      <entry key="H1" value="1.0213882065460598" />
+      <entry key="H2" value="1.180034678764319" />
+      <entry key="H4" value="3.3214960521860766" />
+      <entry key="D1" value="241.044302906311" />
+      <entry key="W1" value="1580.1344428577663" />
+    </decayedCancelled>
+    <decayedSelected>
+      <entry key="MS100" value="0.0" />
+      <entry key="MS500" value="0.0" />
+      <entry key="S2" value="2.9301786956539456E-119" />
+      <entry key="S5" value="5.579725796400562E-48" />
+      <entry key="S10" value="3.8199384141645714E-24" />
+      <entry key="S30" value="3.200106343640738E-8" />
+      <entry key="S60" value="3.092296660220851E-4" />
+      <entry key="M2" value="0.030442977466388913" />
+      <entry key="M5" value="0.4782075569438787" />
+      <entry key="M10" value="1.197733883378275" />
+      <entry key="M15" value="1.6265924518089039" />
+      <entry key="M30" value="2.2090170062618393" />
+      <entry key="H1" value="2.5743214787212256" />
+      <entry key="H2" value="2.8198928950492093" />
+      <entry key="H4" value="5.3352748091393005" />
+      <entry key="D1" value="347.99610004016523" />
+      <entry key="W1" value="2079.2429463115127" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="4.369150658070586E-9" />
-      <entry key="MS500" value="0.02128528179125763" />
-      <entry key="S2" value="0.38196172940140016" />
-      <entry key="S5" value="0.6804683662008761" />
-      <entry key="S10" value="0.8249050649625544" />
-      <entry key="S30" value="0.9378527511513293" />
-      <entry key="S60" value="0.9684279793311061" />
-      <entry key="M2" value="0.984087383991435" />
-      <entry key="M5" value="0.9936043076643074" />
-      <entry key="M10" value="0.9967970243055039" />
-      <entry key="M15" value="0.9978635413676088" />
-      <entry key="M30" value="0.9989404475488157" />
-      <entry key="H1" value="1.0093371007970509" />
-      <entry key="H2" value="2.223366257339699" />
-      <entry key="H4" value="25.65624949333003" />
-      <entry key="D1" value="1125.7865161488019" />
-      <entry key="W1" value="3701.2049992516427" />
+      <entry key="MS100" value="0.04358573957345017" />
+      <entry key="MS500" value="0.534402995605504" />
+      <entry key="S2" value="0.8550021778919727" />
+      <entry key="S5" value="0.9392622943045217" />
+      <entry key="S10" value="0.9691554541478481" />
+      <entry key="S30" value="0.9896109554257404" />
+      <entry key="S60" value="0.9950905157921904" />
+      <entry key="M2" value="1.0273134986214632" />
+      <entry key="M5" value="1.473885804097584" />
+      <entry key="M10" value="2.193107779670474" />
+      <entry key="M15" value="2.622529196388818" />
+      <entry key="M30" value="3.20677647255562" />
+      <entry key="H1" value="3.5941367302293186" />
+      <entry key="H2" value="3.9990169041494497" />
+      <entry key="H4" value="8.655710414757696" />
+      <entry key="D1" value="589.0301030218515" />
+      <entry key="W1" value="3659.3687323687104" />
     </decayedShown>
   </component>
   <component name="ProblemsViewState">
@@ -294,13 +312,14 @@
       <recent name="core.cards.repository" />
     </key>
     <key name="CopyClassDialog.RECENTS_KEY">
+      <recent name="com.atlashub.iam.infrastructure.messaging.events" />
       <recent name="com.atlashub.authentication.infrastructure.messaging.events" />
       <recent name="com.atlashub.accounts.application.command.RegisterOrg" />
       <recent name="com.atlashub.accounts.domain.model" />
       <recent name="core.access.valueobjects" />
     </key>
   </component>
-  <component name="RunManager" selected="Makefile Target.start">
+  <component name="RunManager" selected="Spring Boot.AtlashubApplication">
     <configuration name="generated-requests | #1" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" nameIsGenerated="true" path="$APPLICATION_CONFIG_DIR$/scratches/generated-requests.http" executionIdentifier="#1" runType="Run single request">
       <method v="2" />
     </configuration>
@@ -393,11 +412,11 @@
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="Docker.docker: Compose Deployment" />
         <item itemvalue="Makefile Target.start" />
         <item itemvalue="HTTP Request.generated-requests | #4" />
         <item itemvalue="HTTP Request.generated-requests | #2" />
         <item itemvalue="HTTP Request.generated-requests | #1" />
-        <item itemvalue="Docker.docker: Compose Deployment" />
       </list>
     </recent_temporary>
   </component>

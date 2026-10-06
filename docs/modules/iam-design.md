@@ -52,7 +52,7 @@ When a user logs in, `iam` provides all permissions for their active organizatio
 Org owners/admins invite new members by email. The `Invitation` aggregate tracks the full lifecycle. On acceptance, `OrganizationMember` is created and `InvitationAcceptedEvent` is published.
 
 ### API Key Management
-Organizations are issued API key pairs (public + secret) per environment (LIVE/TEST). The secret key is only returned once on creation — the hash is stored. Keys can be revoked.
+Organizations are issued API key pairs (public + secret) per environment (LIVE/TEST). The secret key is returned once; AtlasHub stores only AES-256-GCM ciphertext so it can verify HMAC signatures. Keys can be revoked or atomically rotated.
 
 ---
 
@@ -68,7 +68,7 @@ Permission
 ├── code: String                  ← unique, e.g., "pay:charges:create"
 ├── module: String                ← e.g., "pay"
 ├── resource: String              ← e.g., "charges"
-├── action: PermissionAction      ← CREATE, READ, UPDATE, DELETE, APPROVE, INITIATE, DISPATCH
+├── action: PermissionAction      ← CREATE, READ, UPDATE, DELETE, APPROVE, INITIATE, DISPATCH, MANAGE, SUSPEND, REACTIVATE, CLOSE, REFUND, OPEN, POST
 ├── displayName: String           ← human-readable label
 ├── description: String
 └── isActive: Boolean
@@ -155,14 +155,17 @@ Invitation
 
 ### `ApiKey` (Aggregate Root)
 
+Organizations are issued separate API key pairs for `TEST` and `LIVE` machine-to-machine access. TEST keys are available without provider production approval. LIVE key issuance requires approved AtlasHub compliance. Keys are environment-bound, can be named, revoked, and rotated, and can never switch environment after creation.
+
 ```
 ApiKey
 ├── id: Long
 ├── organizationId: Long
-├── publicKey: String             ← "atlas_pk_live_..." or "atlas_pk_test_..." — stored plaintext
-├── secretKeyHash: String         ← SHA-256 hash of the secret key — original never stored
-├── name: String                  ← human-readable label (e.g., "Production Server Key")
-├── environment: ApiEnvironment   ← LIVE, TEST
+├── publicKey: String             ← "atlas_pk_..." — stored plaintext
+├── secretKeyCiphertext: String   ← AES-256-GCM ciphertext; plaintext is never stored
+├── name: String                  ← human-readable label (e.g., "Server Key", "Webhook Processor")
+├── environment: ApiEnvironment  ← TEST or LIVE; immutable
+├── boundRoleId: Long             ← required; limits the key to the selected organization role
 ├── isRevoked: Boolean
 ├── lastUsedAt: ZonedDateTime     ← nullable
 ├── revokedAt: ZonedDateTime      ← nullable
@@ -176,25 +179,39 @@ ApiKey
 
 **Key Generation** (in `IssueApiKeyUseCase`):
 ```
-publicKey  = "atlas_pk_" + env.lower() + "_" + Base62.random(24)
-secretKey  = "atlas_sk_" + env.lower() + "_" + Base62.random(40)   ← shown ONCE, never stored
-secretHash = SHA-256(secretKey)                                      ← stored in DB
+publicKey  = "atlas_pk_" + environment + "_" + secureRandom
+secretKey        = "atlas_sk_" + environment + "_" + secureRandom
+secretCiphertext = AES-256-GCM(secretKey)        ← stored in DB; plaintext shown once
 ```
 
----
+**Permissions via API Key:**
+An API key authenticates as the organization with the permissions of the role selected during key creation. The client must explicitly provide `TEST` or `LIVE` and a role belonging to the active organization. TEST keys are immediately available. LIVE key creation is rejected unless the organization's AtlasHub compliance is approved. Authentication never writes key usage synchronously; it publishes `ApiKeyAuthenticatedEvent`, and IAM records `lastUsedAt` asynchronously.
+
+```
+ApiKey (extended)
+└── boundRoleId: Long             ← required; selected explicitly during creation
+```
+
+
 
 ## 3. Built-In Permissions (Platform-Defined)
 
 ### `atlashub-pay`
 | Code | Description |
 |---|---|
-| `pay:accounts:read` | View virtual account details |
+| `pay:accounts:create` | Issue customer/vendor reserved accounts |
+| `pay:accounts:read` | View the organization's banking profile and reserved accounts |
+| `pay:accounts:suspend` | Suspend a reserved account |
+| `pay:accounts:reactivate` | Reactivate a suspended reserved account |
+| `pay:accounts:close` | Permanently close a reserved account |
 | `pay:charges:create` | Initiate payment collection |
 | `pay:transfers:create` | Initiate a bank transfer |
 | `pay:transfers:approve` | Approve a bank transfer (maker-checker) |
 | `pay:ledger:read` | View ledger transactions |
 | `pay:splits:manage` | Create and manage split rules |
 | `pay:settlements:read` | View settlement history |
+
+Organization deposit-account and FBO-subaccount provisioning is system-only and has no organization IAM permission. Ledger freeze/unfreeze/close operations use platform-staff payment-operations authorization and are not represented as organization role permissions.
 
 ### `atlashub-commerce`
 | Code | Description |
@@ -206,6 +223,7 @@ secretHash = SHA-256(secretKey)                                      ← stored 
 | `commerce:inventory:read` | View stock levels |
 | `commerce:inventory:update` | Adjust stock |
 | `commerce:suppliers:manage` | Manage suppliers and purchase orders |
+| `commerce:pos:manage` | Enable or disable the POS feature for the organization |
 | `commerce:tills:open` | Open a POS till |
 | `commerce:tills:close` | Close a POS till |
 | `commerce:vendors:manage` | Manage marketplace vendors |
@@ -249,6 +267,13 @@ secretHash = SHA-256(secretKey)                                      ← stored 
 | `iam:roles:manage` | Create/edit custom roles |
 | `iam:apikeys:manage` | Issue/revoke API keys |
 
+### `atlashub-compliance`
+| Code | Description |
+|---|---|
+| `compliance:read` | View compliance status and outstanding requirements |
+| `compliance:manage` | Update business details, contacts, officers, agreements, and requested documents |
+| `compliance:submit` | Submit the organization's completed KYB application |
+
 ---
 
 ## 4. Domain Events
@@ -256,12 +281,13 @@ secretHash = SHA-256(secretKey)                                      ← stored 
 | Event | Published When | Consumed By |
 |---|---|---|
 | `MemberJoinedEvent` | Invitation accepted / member directly added | `notifications` (welcome to org), `hr` (optional: draft employee record) |
-| `MemberDeactivatedEvent` | Member deactivated | `notifications`, `auth` (revoke all refresh tokens for this org context) |
+| `MemberDeactivatedEvent` | Member deactivated or suspended | `notifications`, `authentication` (revoke user sessions) |
 | `InvitationCreatedEvent` | New invitation created | `notifications` (send invite email with token link) |
 | `InvitationAcceptedEvent` | Invited user accepts | `auth` (ensure account is active), `hr` (if org has HR, draft employee) |
 | `InvitationExpiredEvent` | Invitation TTL reached | Internal only |
-| `ApiKeyRevokedEvent` | API key revoked | `auth` (clear key from Redis cache), `notifications` (alert org admins) |
-| `CustomRolePermissionsChangedEvent` | Role permissions updated | `auth` (invalidate affected users' access tokens — add JTIs to revocation list) |
+| `ApiKeyRevokedEvent` | API key revoked | Audit/notification consumers; authentication reads current key state and therefore needs no key cache invalidation |
+| `ApiKeyAuthenticatedEvent` | HMAC signature accepted | `iam` (asynchronously update `lastUsedAt`) |
+| `CustomRolePermissionsChangedEvent` | Role permissions updated | `authentication` (revoke organization sessions) |
 
 ---
 
@@ -277,8 +303,8 @@ public interface MembershipQueryPort {
 }
 
 public interface ApiKeyQueryPort {
-    Optional<ApiKeyDto> findByPublicKey(String publicKey);
-    boolean isRevoked(String publicKey);
+    Optional<AuthenticatedApiKey> authenticate(
+        String publicKey, String canonicalMessage, String signature);
 }
 ```
 
@@ -300,6 +326,10 @@ public interface ApiKeyQueryPort {
 ## 7. Commands & Use Cases
 
 ### Memberships & Invitations
+- `InitializeOrganizationIamCommand(orgId, foundingUserId)` → `InitializeOrganizationIamUseCase`
+  - Triggered internally by `OrganizationRegisteredListener`
+  - Bootstraps the built-in `OWNER` role for the organization
+  - Creates the initial `OrganizationMember` entity linking the founding user as the owner
 - `InviteMemberCommand(orgId, invitedByUserId, email, customRoleId)` → `InviteMemberUseCase`
 - `AcceptInvitationCommand(token, acceptingUserId)` → `AcceptInvitationUseCase`
 - `DeclineInvitationCommand(token)` → `DeclineInvitationUseCase`
@@ -313,9 +343,13 @@ public interface ApiKeyQueryPort {
 - `DeleteCustomRoleCommand(roleId, requestedByUserId)` → `DeleteCustomRoleUseCase`
 
 ### API Keys
-- `IssueApiKeyCommand(orgId, name, environment, requestedByUserId)` → `IssueApiKeyUseCase`
+- `IssueApiKeyCommand(orgId, name, environment, requestedByUserId, boundRoleId)` → `IssueApiKeyUseCase`
   - Returns `IssuedApiKeyResult` containing plaintext `secretKey` — the ONLY time it is returned
+  - The requested environment is explicit; `LIVE` requires approved compliance
+  - `boundRoleId` is required and must reference a role owned by the organization
 - `RevokeApiKeyCommand(keyId, orgId, requestedByUserId)` → `RevokeApiKeyUseCase`
+- `RotateApiKeyCommand(keyId, orgId, requestedByUserId, name?)` → atomically revokes the old key and returns the replacement secret once
+- `RecordApiKeyUsageCommand(orgId, publicKey)` → event-driven audit update for `lastUsedAt`
 
 ---
 
@@ -326,16 +360,19 @@ public interface ApiKeyQueryPort {
 - `ListCustomRolesQuery(orgId)` → `List<CustomRoleResult>`
 - `GetCustomRolePermissionsQuery(roleId)` → `CustomRolePermissionsResult`
 - `ListPermissionsQuery(module)` → `List<PermissionResult>` ← for role builder UI
-- `ListApiKeysQuery(orgId, environment)` → `List<ApiKeyResult>` ← never returns key values
+- `ListApiKeysQuery(orgId)` → `List<ApiKeyResult>` ← never returns key values
 - `ListInvitationsQuery(orgId, status)` → `List<InvitationResult>`
 
 ---
 
 ## 9. Listeners
 
-- **`OrganizationCreatedListener`**: Listens to `OrganizationCreatedEvent` from `accounts`. Creates the built-in OWNER role for the org. Creates an `OrganizationMember` record linking the founding user to the org with the OWNER role.
-- **`MemberDeactivatedListener`** (internal): After deactivation, publishes `MemberDeactivatedEvent` → `auth` revokes all refresh tokens for this user in this org context.
-- **`SubscriptionSuspendedListener`**: Listens to `SubscriptionSuspendedEvent` from `billing`. Suspends all non-OWNER members for the organization (access cutoff without deleting data).
+- **`OrganizationRegisteredListener`**: topic=`accounts-events`, event=`OrganizationRegistered`. Creates the built-in OWNER role for the org and an `OrganizationMember` linking the founding user to the org with the OWNER role.
+- IAM publishes `MemberDeactivatedEvent` from member deactivation/suspension; the `authentication` module consumes it and revokes the user's sessions.
+- **`SubscriptionSuspendedListener`**: topic=`billing-events`. Suspends all non-OWNER members for the organization (access cutoff without deleting data).
+- **`EmployeeSuspendedListener`**: topic=`hr-events`. Event=`EmployeeSuspendedEvent`. Payload: `employeeId`, `organizationId`, `userId`, `suspendedAt`. Calls `DeactivateMemberHandler` for the suspended employee's corresponding `OrganizationMember` record. Prevents suspended employees from accessing the dashboard or API while HR suspension is active.
+- **`OrganizationBannedListener`**: topic=`admin-events`. Event=`OrganizationBannedEvent`. Payload: `organizationId`, `reason`, `bannedAt`. Deactivates ALL members of the organization (including OWNER). Publishes `MemberDeactivatedEvent` for each, causing `auth` to revoke all tokens for the org.
+
 
 ---
 
@@ -354,7 +391,7 @@ Permissions are read from the JWT claims (`permissions` array). No DB hit per re
 For Maker-Checker and other sensitive operations, the use case re-validates the permission in the application layer — defense-in-depth against JWT tampering.
 
 ### Token Invalidation on Role Change
-When a `CustomRole`'s permissions are changed, all active members using that role have their current access tokens added to the Redis revocation list. On their next request, they will get a 401, forcing a token refresh. The new token will carry the updated permissions.
+When a `CustomRole`'s permissions change, IAM publishes `CustomRolePermissionsChangedEvent`. Authentication consumes it and revokes every session for that organization, conservatively guaranteeing that no token retains stale role permissions. The next authentication issues a token with the current permission set.
 
 ---
 
@@ -365,5 +402,6 @@ When a `CustomRole`'s permissions are changed, all active members using that rol
 - **Pessimistic Locking**: `OrganizationMember` during role assignment — prevents concurrent role changes leaving inconsistent state
 
 ### Outbox & Inbox
-- **Outbox**: `InvitationCreatedEvent` (triggers email), `MemberJoinedEvent` (triggers HR draft), `ApiKeyRevokedEvent` (triggers cache invalidation in auth)
-- **Inbox**: `OrganizationCreatedEvent` (bootstrap owner role — idempotent) and `SubscriptionSuspendedEvent` (suspend members — idempotent)
+- **Outbox**: invitation/member events, `ApiKeyRevokedEvent`, `ApiKeyAuthenticatedEvent`, and `CustomRolePermissionsChangedEvent`, routed to `iam-events` where applicable
+- **Inbox**: `OrganizationRegistered`, `SubscriptionSuspendedEvent`, `EmployeeSuspendedEvent`, `OrganizationBannedEvent`, and IAM's own asynchronous API-key usage event
+- **Invitation expiry**: `InvitationExpirationScheduler` under `infrastructure/messaging/schedulers` invokes only `ExpireInvitationsHandler`

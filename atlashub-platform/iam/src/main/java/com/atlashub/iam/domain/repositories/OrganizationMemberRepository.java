@@ -9,4 +9,8 @@ import java.util.Optional;
 public interface OrganizationMemberRepository extends Repository<OrganizationMember> {
     List<OrganizationMember> findAllByOrganizationId(Long organizationId);
     List<OrganizationMember> findAllByOrganizationIdAndStatus(Long organizationId, MemberStatus status);
+    Optional<OrganizationMember> findByOrganizationIdAndUserId(Long organizationId, Long userId);
+    Optional<OrganizationMember> findByIdAndOrganizationIdForUpdate(Long id, Long organizationId);
+    List<OrganizationMember> findAllByUserId(Long userId);
+    long countByOrganizationIdAndCustomRoleIdAndStatus(Long organizationId, Long customRoleId, MemberStatus status);
 }

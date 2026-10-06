@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 import com.atlashub.iam.infrastructure.persistence.repositories.SpringDataPermissionRepository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -48,6 +49,16 @@ public class PermissionRepositoryAdapter
                 .stream()
                 .map(mapper::toDomain)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<Permission> findAllByActiveTrue() {
+        return springDataRepo.findAllByActiveTrue().stream().map(mapper::toDomain).toList();
+    }
+
+    @Override
+    public Optional<Permission> findByCode(String code) {
+        return springDataRepo.findByCode(code).map(mapper::toDomain);
     }
 }
 

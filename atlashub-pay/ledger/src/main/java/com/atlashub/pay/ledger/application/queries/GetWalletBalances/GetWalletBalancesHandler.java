@@ -10,6 +10,7 @@ import com.atlashub.pay.ledger.domain.repositories.LedgerTransactionRepository;
 import com.atlashub.pay.ledger.domain.services.BalanceCalculator;
 import com.atlashub.pay.ledger.domain.valueobject.EntryType;
 import com.atlashub.shared.application.usecase.Query;
+import com.atlashub.shared.application.security.ApiEnvironment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -44,14 +45,17 @@ public class GetWalletBalancesHandler extends Query<GetWalletBalancesQuery, Wall
     }
 
     @Override
-    @PreAuthorize("hasAuthority('pay:wallets:read')")
+    @PreAuthorize("hasAuthority('pay:ledger:read')")
     public WalletBalancesResult execute(GetWalletBalancesQuery query) {
         log.info("Executing GetWalletBalancesQuery for organizationId={}", query.organizationId());
 
-        List<LedgerAccount> accounts = accountRepository.findAllByOrganizationId(query.organizationId());
+        List<LedgerAccount> accounts = accountRepository.findAllByOrganizationIdAndEnvironment(
+                query.organizationId(), ApiEnvironment.parse(query.environment())).stream()
+                .filter(account -> account.getOutletId() == null && account.getPartyType() == null)
+                .toList();
         
         if (accounts.isEmpty()) {
-            return new WalletBalancesResult(query.organizationId(), new HashMap<>(), "USD");
+            return new WalletBalancesResult(query.organizationId(), new HashMap<>(), "NGN");
         }
         
         String currency = accounts.getFirst().getCurrency().name();
@@ -74,9 +78,11 @@ public class GetWalletBalancesHandler extends Query<GetWalletBalancesQuery, Wall
             BigDecimal balance = snapshot.getBalance().amount();
             ZonedDateTime snapshotDate = snapshot.getSnapshotAt();
 
-            List<LedgerTransaction> transactions = transactionRepository.findByAccountIdAndPostedAtAfter(account.getId(), snapshotDate);
+            List<LedgerTransaction> transactions = transactionRepository.findByAccountIdAndEnvironmentAndPostedAtAfter(
+                    account.getId(), ApiEnvironment.parse(query.environment()), snapshotDate);
 
-            balance = balanceCalculator.calculateRunningBalance(account.getId(), balance, transactions);
+            balance = balanceCalculator.calculateRunningBalance(
+                    account.getId(), account.getNormalBalance(), balance, transactions);
             
             String typeName = account.getAccountType().name();
             BigDecimal currentTotal = balancesByAccountType.getOrDefault(typeName, BigDecimal.ZERO);

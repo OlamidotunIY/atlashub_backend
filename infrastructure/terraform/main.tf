@@ -2,13 +2,14 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "~> 3.0"
+      version = "~> 4.0"
     }
   }
 }
 
 provider "azurerm" {
   features {}
+  subscription_id = var.subscription_id
 }
 
 # Resource Group
@@ -112,7 +113,7 @@ resource "azurerm_network_interface" "nic" {
   }
 }
 
-# Connect NSG to NIC
+# Connect NSG to NIC before the VM operation begins.
 resource "azurerm_network_interface_security_group_association" "nic_nsg" {
   network_interface_id      = azurerm_network_interface.nic.id
   network_security_group_id = azurerm_network_security_group.nsg.id
@@ -125,6 +126,7 @@ resource "azurerm_linux_virtual_machine" "k3s_node" {
   location            = azurerm_resource_group.rg.location
   size                = var.vm_size
   admin_username      = "ubuntu"
+  depends_on          = [azurerm_network_interface_security_group_association.nic_nsg]
   network_interface_ids = [
     azurerm_network_interface.nic.id,
   ]

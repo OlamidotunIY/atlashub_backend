@@ -1,7 +1,9 @@
 package com.atlashub.accounts.infrastructure.messaging.listeners;
 
-import com.atlashub.accounts.domain.repository.UserRepository;
+import com.atlashub.accounts.application.command.ApplyAuthenticationEvent.ApplyAuthenticationEventCommand;
+import com.atlashub.accounts.application.command.ApplyAuthenticationEvent.ApplyAuthenticationEventHandler;
 import com.atlashub.accounts.infrastructure.messaging.events.AuthEmailVerified;
+import com.atlashub.accounts.infrastructure.messaging.events.ActiveOrganizationSwitched;
 import com.atlashub.shared.application.messaging.BaseKafkaEventListener;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
@@ -18,28 +20,27 @@ public class AuthEventListener extends BaseKafkaEventListener {
     private static final Logger log = LoggerFactory.getLogger(AuthEventListener.class);
     private static final String GROUP_ID = "accounts-auth-group";
 
-    private final UserRepository userRepository;
+    private final ApplyAuthenticationEventHandler handler;
 
-    public AuthEventListener(ObjectMapper objectMapper, UserRepository userRepository) {
+    public AuthEventListener(ObjectMapper objectMapper, ApplyAuthenticationEventHandler handler) {
         super(objectMapper);
-        this.userRepository = userRepository;
+        this.handler = handler;
     }
 
     @PostConstruct
     public void init() {
         registerSubscription("AuthEmailVerifiedEvent", GROUP_ID);
+        registerSubscription("ActiveOrganizationSwitchedEvent", GROUP_ID);
     }
 
     @KafkaListener(topics = "auth-events", groupId = GROUP_ID)
     public void listen(String messagePayload) {
-        processEventIfMatches(messagePayload, "AuthEmailVerifiedEvent", AuthEmailVerified.class, log, GROUP_ID,
-                e -> e instanceof TimeoutException, event -> {
-                    Long userId = Long.parseLong(event.payload().userId());
-                    userRepository.findById(userId).ifPresent(user -> {
-                        user.markEmailVerified();
-                        userRepository.save(user);
-                        log.info("Email verified for userId={}", userId);
-                    });
-                });
+        processEventIfMatches(messagePayload, "AuthEmailVerifiedEvent", AuthEmailVerified.class, log, GROUP_ID, e -> e instanceof TimeoutException, event -> {
+            Long userId = Long.parseLong(event.payload().userId());
+            handler.execute(new ApplyAuthenticationEventCommand(userId, null, true));
+        });
+        processEventIfMatches(messagePayload, "ActiveOrganizationSwitchedEvent", ActiveOrganizationSwitched.class, log, GROUP_ID, e -> e instanceof TimeoutException, event -> {
+            handler.execute(new ApplyAuthenticationEventCommand(event.payload().userId(), event.payload().organizationId(), false));
+        });
     }
 }

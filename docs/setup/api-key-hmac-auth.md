@@ -14,16 +14,18 @@ This design is modelled after AWS Signature Version 4 and is used by Paystack, F
 
 ## Key Pair Structure
 
-Every organization can have up to 2 active key pairs per environment (LIVE and TEST):
+Every key belongs to exactly one environment (LIVE or TEST):
 
 ```
-publicKey:  atlas_pk_live_Ab3xYz9qRs...   (24 Base62 characters)
-secretKey:  atlas_sk_live_Mn7pKd2vWe...   (40 Base62 characters) — shown ONCE only
+publicKey:  atlas_pk_live_Ab3xYz9qRs...   (URL-safe random value)
+secretKey:  atlas_sk_live_Mn7pKd2vWe...   (URL-safe random value) — shown ONCE only
 ```
 
 - The `publicKey` identifies the organization and environment. It is safe to include in logs and error messages.
-- The `secretKey` is shown **once** at creation time and never stored — only its SHA-256 hash is stored in the database.
+- The `secretKey` is shown **once** at creation time. AtlasHub stores only an encrypted ciphertext so the server can recompute HMAC signatures; plaintext is never stored.
 - TEST keys operate against test accounts with simulated payment providers. LIVE keys operate with real money.
+- Key creation is manual. The request explicitly selects `TEST` or `LIVE` and an organization role whose permissions bind the key.
+- The UI disables LIVE/Production selection until compliance is approved, and IAM independently enforces the same rule on the backend.
 
 ---
 
@@ -115,48 +117,33 @@ public class HmacSignatureVerificationFilter extends OncePerRequestFilter {
             return;
         }
 
-        // 4. Look up the secret key hash (Redis cache → DB fallback)
-        ApiKeyDto apiKey = apiKeyQueryPort.findByPublicKey(publicKey)
-            .orElseThrow(() -> sendErrorAndReturn(response, 401, "API_KEY_NOT_FOUND"));
-        if (apiKey.isRevoked()) {
-            sendError(response, 401, "API_KEY_REVOKED", "This API key has been revoked");
-            return;
-        }
-
-        // 5. Read and cache the request body (needed for body hash)
+        // 4. Read and cache the request body (needed for body hash)
         CachedBodyHttpServletRequest cachedRequest = new CachedBodyHttpServletRequest(request);
         String body = new String(cachedRequest.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
 
-        // 6. Recompute the signature
+        // 5. Build the canonical message
         String method   = request.getMethod().toUpperCase();
         String path     = request.getRequestURI();
         String bodyHash = sha256Hex(body);
         String message  = method + "\n" + path + "\n" + timestamp + "\n" + nonce + "\n" + bodyHash;
-        String expectedSig = hmacSha256Hex(message, apiKey.secretKeyHash());
-        // NOTE: secretKeyHash is the SHA-256 hash of the secret. We compare HMAC(message, hash(secret)).
-        // The original secret is not stored anywhere on our servers.
+        // 6. IAM owns lookup, revocation, AES-GCM decryption, constant-time HMAC
+        //    verification, and effective permission resolution behind this shared read port.
+        var apiKey = apiKeyQueryPort.authenticate(publicKey, message, signature)
+            .orElseThrow(() -> sendErrorAndReturn(response, 401, "HMAC_AUTHENTICATION_FAILED"));
 
-        // 7. Constant-time comparison
-        if (!MessageDigest.isEqual(
-                hexToBytes(expectedSig),
-                hexToBytes(signature))) {
-            sendError(response, 401, "HMAC_SIGNATURE_INVALID", "Request signature does not match");
-            return;
-        }
-
-        // 8. Set security context
-        HmacAuthPrincipal principal = new HmacAuthPrincipal(apiKey.organizationId(), apiKey.environment());
+        // 7. Set security context with the resolved permissions
+        var authorities = apiKey.permissions().stream()
+            .map(SimpleGrantedAuthority::new).toList();
+        AuthenticatedPrincipal principal = new AuthenticatedPrincipal(
+            null, apiKey.organizationId(), apiKey.environment(), null, null, null);
+        SecurityContextHolder.getContext().setAuthentication(
+            new UsernamePasswordAuthenticationToken(principal, null, authorities));
         SecurityContextHolder.getContext().setAuthentication(
             new HmacAuthenticationToken(principal, List.of()));
 
         filterChain.doFilter(cachedRequest, response);  // use cached body for downstream processing
     }
 
-    private String hmacSha256Hex(String message, String keyHex) throws Exception {
-        Mac mac = Mac.getInstance("HmacSHA256");
-        mac.init(new SecretKeySpec(hexToBytes(keyHex), "HmacSHA256"));
-        return bytesToHex(mac.doFinal(message.getBytes(StandardCharsets.UTF_8)));
-    }
 }
 ```
 
@@ -168,26 +155,23 @@ public class HmacSignatureVerificationFilter extends OncePerRequestFilter {
 // In IssueApiKeyUseCase
 private KeyPair generateKeyPair(ApiEnvironment environment) {
     String envSuffix = environment == ApiEnvironment.LIVE ? "live" : "test";
-    String publicKey  = "atlas_pk_" + envSuffix + "_" + Base62.random(24);
-    String secretKey  = "atlas_sk_" + envSuffix + "_" + Base62.random(40);
-    String secretHash = sha256Hex(secretKey);   // only hash stored
+    String publicKey  = "atlas_pk_" + envSuffix + "_" + secureRandomUrlToken(18);
+    String secretKey  = "atlas_sk_" + envSuffix + "_" + secureRandomUrlToken(32);
+    String secretCiphertext = aesGcmProtector.encrypt(secretKey); // only ciphertext stored
 
-    return new KeyPair(publicKey, secretKey, secretHash);
+    return new KeyPair(publicKey, secretKey, secretCiphertext);
 }
 ```
 
-The `secretKey` is returned in the API response **exactly once**. After the response is sent, `secretKey` is not stored anywhere in AtlasHub. The merchant must save it securely. If lost, they must revoke the key and issue a new one.
+The `secretKey` is returned in the API response **exactly once**. AtlasHub never stores plaintext; it stores AES-256-GCM ciphertext protected by `ATLASHUB_API_KEY_MASTER_KEY` because HMAC verification requires recovery of the signing secret. If the client loses the secret, it must rotate or replace the key.
 
 ---
 
 ## Key Rotation
 
-To rotate an API key:
-1. Issue a new key pair (`IssueApiKeyCommand`)
-2. Update the application server with the new keys
-3. Revoke the old key (`RevokeApiKeyCommand`)
+`POST /api/v1/api-keys/{id}/rotate` invokes `RotateApiKeyCommand`. In one transaction it locks and revokes the selected key, creates a replacement with the same environment and role binding, and returns the replacement secret once. The optional request name replaces the display name; otherwise the prior name is preserved.
 
-AtlasHub supports up to 2 active key pairs per environment per organization, allowing zero-downtime rotation: the new key is issued and deployed before the old one is revoked.
+Successful HMAC authentication publishes `ApiKeyAuthenticatedEvent`. IAM consumes it asynchronously to update `lastUsedAt`, keeping the authentication read path free of synchronous audit writes.
 
 ---
 

@@ -218,17 +218,17 @@ Logistics: MarkShipmentFailedHandler → ShipmentFailedEvent
 1. Compliance: SubmitComplianceHandler
    → ComplianceRecord → SUBMITTED
    → ComplianceSubmittedEvent published
-   → Admin: CreateKycReviewTaskHandler creates a review task
+   → Anchor orchestrator creates/reconciles the business customer and starts verification
 
-2. Admin: ApproveComplianceHandler
-   → KycApprovedEvent published
-   → Compliance: TransitionToApprovedHandler
+2. Anchor: verified customer identification webhook
+   → AnchorWebhookReceivedEvent published
+   → Compliance: RecordAnchorDecisionHandler
        → ComplianceRecord → APPROVED
        → OrganizationComplianceApprovedEvent published
 
-3. Pay: IssueVirtualAccountHandler (listens on OrganizationComplianceApprovedEvent)
-   → NUBAN created via Anchor
-   → VirtualAccountIssuedEvent published
+3. Pay Accounts: ProvisionOrganizationBankingHandler (listens on OrganizationComplianceApprovedEvent)
+   → DepositAccount then FBO-parented SubAccount provisioned through persisted requests
+   → OrganizationBankingActivatedEvent published
 
 4. Billing: ActivatePlatformAccessHandler (listens on OrganizationComplianceApprovedEvent)
    → Subscription → ACTIVE if payment already received

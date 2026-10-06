@@ -7,6 +7,7 @@ import com.atlashub.compliance.domain.exception.ComplianceRecordNotFoundExceptio
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @Component
 public class GetComplianceStatusHandler extends Query<GetComplianceStatusQuery, ComplianceStatusResult> {
@@ -20,6 +21,7 @@ public class GetComplianceStatusHandler extends Query<GetComplianceStatusQuery, 
     }
 
     @Override
+    @PreAuthorize("hasAuthority('compliance:read')")
     public ComplianceStatusResult execute(GetComplianceStatusQuery query) {
         log.info("Executing GetComplianceStatusQuery for organizationId: {}", query.organizationId());
 
@@ -29,7 +31,10 @@ public class GetComplianceStatusHandler extends Query<GetComplianceStatusQuery, 
         return new ComplianceStatusResult(
             record.getCurrentStep(),
             record.getStatus(),
-            record.getCompletedSteps()
+            record.getStepProgress(),
+            record.getEligibilityStatus(),
+            record.getAnchorVerificationStatus(),
+            record.getRejectionReason()
         );
     }
 }

@@ -1,6 +1,6 @@
 package com.atlashub.accounts.infrastructure.persistence.mappers;
 
-import com.atlashub.accounts.domain.model.User;
+import com.atlashub.accounts.domain.entities.User;
 import com.atlashub.accounts.infrastructure.persistence.entities.UserJPA;
 import com.atlashub.shared.infrastructure.persistence.mappers.DomainMapper;
 import com.atlashub.shared.infrastructure.persistence.mappers.ValueObjectMapper;

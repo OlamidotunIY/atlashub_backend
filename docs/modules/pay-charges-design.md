@@ -1,575 +1,149 @@
 # Pay Charges Design (`atlashub-pay:charges`)
 
-## Role & Purpose
+## Status and purpose
 
-The `charges` submodule manages **inbound payment collection**. It is the entry point for all money flowing INTO an organization from their customers — whether via card, bank transfer, USSD, or a physical Moniepoint POS terminal.
+This module is designed but is not yet included in `settings.gradle`; changes remain documentation-only until activation.
 
-A `Charge` represents a single payment attempt. The submodule integrates with **Paystack** (card, bank transfer, USSD) and **Moniepoint** (physical POS terminals) via a `PaymentGatewayPort` domain port. Both providers notify AtlasHub of payment outcomes via inbound webhook callbacks, which are validated and processed here.
+`pay:charges` owns AtlasHub universal checkout and inbound payment attempts. Businesses request a channel, not an internal online gateway:
 
-On a successful charge, this submodule posts the corresponding ledger entry (via `pay:ledger`) and publishes `ChargeSuccessfulEvent`, which drives downstream modules: Commerce (complete sale), Billing (mark invoice paid), Webhooks (notify merchant server), and WebSocket (notify cashier).
+| Channel | AtlasHub routing |
+|---|---|
+| Bank transfer | Anchor banking/reserved-account collection |
+| Card | Paystack initially |
+| USSD | Paystack initially |
+| POS | The terminal provider selected by the business: Paystack, Moniepoint, or OPay |
+| International card | Stripe after country expansion |
 
----
+Provider names and merchant identifiers are infrastructure details. Public card/USSD APIs expose only AtlasHub channels, capability state, and checkout instructions. POS setup exposes the supported terminal-provider choices because the business must choose its physical terminal.
 
-## Domain Layer
+The module never registers a business with a provider. It reads an active profile through `PaymentProviderProfileQueryPort`; `pay:accounts` owns capability intent and `platform:compliance` owns provider onboarding.
 
-### Aggregate Root: `Charge`
+## TEST and LIVE
 
-**Package**: `com.atlashub.pay.charges.domain.entities`
+Every charge has `ApiEnvironment TEST | LIVE`.
 
+- Environment comes from the authenticated principal/API key, never request JSON.
+- Idempotency is unique by `(organizationId, environment, reference)`.
+- TEST uses sandbox resources only and never falls back to LIVE.
+- LIVE requires an active provider profile for the requested capability.
+- If a provider has no sandbox capability, AtlasHub may use a deterministic TEST simulator. Simulated facts are explicitly marked and cannot affect LIVE balances, settlements, or webhooks.
+- Commerce TEST checkout creates and consumes TEST charges only.
+
+## `Charge` aggregate
+
+```text
+id, organizationId, environment, reference
+amount, currency, channel
+provider, providerProfileId, providerReference?
+sourceSystem, sourceReferenceId, customerReferenceId?
+terminalAssignmentId?
+status: INITIALIZED | PENDING | SUCCESSFUL | FAILED | EXPIRED
+        | REFUND_PENDING | PARTIALLY_REFUNDED | REFUNDED
+checkoutInstructions?, failureCode?, failureMessage?
+successfulAt?, expiresAt, createdAt, updatedAt, version
 ```
-Charge
-├── id: Long
-├── organizationId: Long
-├── customerId: String             ← nullable; set for B2B2C payments
-├── amount: Money
-├── channel: PaymentChannel        ← CARD, BANK_TRANSFER, USSD, POS_TERMINAL
-├── status: ChargeStatus           ← PENDING, SUCCESSFUL, FAILED, REFUNDED
-├── reference: String              ← unique, caller-supplied; used to correlate gateway webhook
-├── provider: PaymentProvider      ← PAYSTACK, MONIEPOINT
-├── checkoutUrl: String            ← nullable; for redirect-based payments (card, USSD)
-├── gatewayReference: String       ← provider's own transaction reference; nullable until confirmed
-├── gatewayResponse: String        ← raw provider response; nullable
-├── splitId: Long                  ← nullable; which split rule to apply on success
-├── sourceSystem: SourceSystem     ← e.g., CARD_CHARGE, COMMERCE_CHECKOUT
-├── sourceReferenceId: String      ← e.g., salesOrderId, billingInvoiceId
-├── metadata: Map<String, String>  ← arbitrary key-value for merchant use
-├── cashierId: Long                ← nullable; the POS cashier who initiated (for WS push)
-├── createdAt: ZonedDateTime
-└── completedAt: ZonedDateTime     ← nullable; set by markSuccessful() or markFailed()
+
+Rules:
+
+- Organization, environment, reference, source, amount, and currency are immutable.
+- Provider callbacks cannot change local ownership, amount, currency, or source.
+- Successful/final transitions are idempotent and cannot regress.
+- Total confirmed refunds cannot exceed the successful charge amount.
+- Sensitive payment data and provider secrets are never stored in the aggregate.
+
+## Capability resolution
+
+Before initialization, resolve an active profile using `organizationId + environment + capability`:
+
+| Channel | Capability |
+|---|---|
+| Card | `CARD_COLLECTION` |
+| USSD | `USSD_COLLECTION` |
+| Bank transfer | `BANK_TRANSFER_COLLECTION` |
+| POS | `POS_TERMINAL` for the assigned terminal provider |
+
+No active profile means capability-not-enabled. The error may direct the business to enable the feature but must not reveal the internal card/USSD provider.
+
+## Commands
+
+`InitializeChargeCommand` contains organization and environment from trusted context plus reference, money, channel, source, optional customer, and optional terminal assignment. It:
+
+1. returns the existing organization/environment/reference result;
+2. resolves the active capability/provider profile;
+3. validates terminal ownership for POS;
+4. persists local intent and a provider-dispatch record;
+5. lets a worker call the provider outside the database transaction;
+6. stores safe checkout instructions;
+7. waits for verified webhook/reconciliation facts for final state.
+
+`ApplyChargeProviderStatusCommand` is called only by provider webhook/reconciliation listeners. It validates environment, provider profile, reference, amount, and currency before applying an idempotent transition.
+
+`RefundChargeCommand` persists refund intent. Provider completion is asynchronous; initiation is never reported as a completed refund.
+
+## Provider port and adapters
+
+The domain port is provider-neutral:
+
+```java
+public interface ChargeProviderPort {
+    ChargeInitializationResult initialize(ChargeProviderRequest request);
+    RefundInitializationResult refund(RefundProviderRequest request);
+    ChargeProviderStatus fetchStatus(String providerReference, ApiEnvironment environment);
+}
 ```
 
-**State Machine:**
-```
-PENDING ──markSuccessful()──► SUCCESSFUL ──refund()──► REFUNDED
-        ──markFailed()──────► FAILED
-```
+Provider modules own credentials, endpoints, signatures, DTOs, timeouts, and retry classification:
 
-**Invariants:**
-- `reference` must be unique across all charges.
-- `markSuccessful()` may only be called when `status == PENDING`.
-- `markFailed()` may only be called when `status == PENDING`.
-- `refund(amount)` may only be called when `status == SUCCESSFUL`.
-- Refund `amount` must be ≤ original `amount`.
+- Paystack: card, USSD, Paystack terminal.
+- Moniepoint: Moniepoint terminal only.
+- OPay: OPay terminal only.
+- Anchor: no card charge API; Anchor supplies bank-transfer receipt facts.
+- Stripe: future international card capability.
 
-**Business Methods:**
+## Webhooks and reconciliation
 
-| Method | Inputs | Guard | Effect | Event Registered |
-|---|---|---|---|---|
-| `markSuccessful(gatewayRef, gatewayResponse)` | `String gatewayRef`, `String gatewayResponse` | status must be `PENDING` | sets `gatewayReference`, `gatewayResponse`, `completedAt = now()`, `status = SUCCESSFUL` | `ChargeSuccessfulEvent` |
-| `markFailed(reason)` | `String reason` | status must be `PENDING` | sets `gatewayResponse = reason`, `completedAt = now()`, `status = FAILED` | `ChargeFailedEvent` |
-| `refund(amount)` | `Money amount` | status must be `SUCCESSFUL`; amount ≤ original | sets `status = REFUNDED` | `ChargeRefundInitiatedEvent` |
+A provider-specific public endpoint verifies the signature against the raw body before parsing and publishes one verified provider event containing provider event ID and environment. The charge listener deduplicates `(provider, environment, providerEventId, consumer)` and invokes a command only; it never uses repositories.
 
----
+Unknown references, amount/currency conflicts, and state regressions are quarantined for reconciliation. Remote calls never run inside database transactions.
 
-### Value Objects
+## Events and ledger meaning
 
-**Package**: `com.atlashub.pay.charges.domain.valueobject`
+All events include `organizationId` and `environment`:
 
-| Class | Values | Description |
+- `ChargeInitializedEvent`
+- `ChargeSuccessfulEvent`
+- `ChargeFailedEvent`
+- `ChargeExpiredEvent`
+- `ChargeRefundInitiatedEvent`
+- `ChargeRefundedEvent`
+- `ProviderSettlementReceivedEvent`
+
+Charge success is not provider settlement. `pay:ledger` posts a successful Paystack/terminal collection through `PROVIDER_CLEARING`. A later `ProviderSettlementReceivedEvent` clears that receivable into confirmed bank/settlement funds without recognizing the sale twice.
+
+## Commerce contract
+
+Commerce publishes `CheckoutPaymentRequestedEvent`; charges later publishes success/failure. There is no synchronous cross-module write. Commerce never sees provider credentials or merchant IDs. TEST events can complete TEST orders only, and LIVE events can complete LIVE orders only.
+
+## API and persistence
+
+Controllers use `AuthenticatedPrincipal.activeOrganizationId()` and `.environment()`:
+
+| Method | Path | Purpose |
 |---|---|---|
-| `PaymentChannel` | `CARD`, `BANK_TRANSFER`, `USSD`, `POS_TERMINAL` | How the customer paid |
-| `ChargeStatus` | `PENDING`, `SUCCESSFUL`, `FAILED`, `REFUNDED` | Charge lifecycle state |
-| `PaymentProvider` | `PAYSTACK`, `MONIEPOINT` | Which gateway processed this charge |
-| `Money` | `value: BigDecimal`, `currency: String` | Immutable monetary amount |
+| `POST` | `/api/v1/pay/charges` | Initialize universal checkout |
+| `POST` | `/api/v1/pay/charges/{chargeId}/refunds` | Request refund |
 
----
+Request DTOs never contain organization ID, environment, or internal provider for card/USSD. POS uses an AtlasHub terminal-assignment ID.
 
-### Domain Events
+Persistence requirements:
 
-**Package**: `com.atlashub.pay.charges.domain.events`
+- unique `(organization_id, api_environment, reference)`;
+- unique provider reference within `(provider, api_environment)`;
+- optimistic aggregate locking;
+- persisted provider dispatch/outbox;
+- webhook inbox/delivery tracker;
+- strict TEST/LIVE separation in records, cache keys, events, ledger postings, and reconciliation.
 
-All events published to Kafka topic **`pay-events`**.
+## Activation checklist
 
-| Event | Published When | Consumed By |
-|---|---|---|
-| `ChargeSuccessfulEvent` | Customer payment confirmed by gateway | `commerce` (complete sale), `billing` (mark invoice paid), `pay:ledger` (post entry), `pay:webhooks` (notify merchant), `pay:tx-query`, `SelectiveWebSocketBroadcaster` (cashier WS push) |
-| `ChargeFailedEvent` | Payment declined/timed out | `commerce` (release reserved stock), `notifications`, `pay:webhooks`, `pay:tx-query`, `SelectiveWebSocketBroadcaster` (cashier WS push) |
-| `ChargeRefundInitiatedEvent` | Refund initiated | `pay:transfers` (create payout to customer), `accounting`, `pay:tx-query` |
-
-**`ChargeSuccessfulEvent` payload:**
-```java
-public record ChargeSuccessfulEvent(
-    String eventId,
-    String aggregateId,
-    ZonedDateTime occurredAt,
-    Payload payload
-) {
-    public record Payload(
-        Long chargeId,
-        Long organizationId,
-        String customerId,
-        BigDecimal amount,
-        String currency,
-        String formattedAmount,       // e.g., "₦25,000.00"
-        String channel,
-        String provider,
-        String reference,
-        String gatewayReference,
-        Long splitId,
-        String sourceSystem,
-        String sourceReferenceId,
-        Long cashierId                // for WS push to cashier session
-    ) {}
-}
-```
-
----
-
-### Domain Exceptions
-
-**Package**: `com.atlashub.pay.charges.domain.exceptions`
-
-```java
-public class ChargeNotFoundException extends NotFoundException {
-    public ChargeNotFoundException() { super("Charge not found"); }
-    public ChargeNotFoundException(String reference) { super("Charge not found for reference: " + reference); }
-}
-
-public class DuplicateChargeReferenceException extends ConflictException {
-    public DuplicateChargeReferenceException(String reference) {
-        super("A charge with reference '" + reference + "' already exists");
-    }
-}
-
-public class InvalidChargeStateException extends BusinessRuleException {
-    public InvalidChargeStateException(String message) { super(message); }
-}
-
-public class InvalidRefundAmountException extends ValidationException {
-    public InvalidRefundAmountException() { super("Refund amount must be greater than zero and not exceed the original charge amount"); }
-}
-
-public class WebhookSignatureInvalidException extends AuthorizationException {
-    public WebhookSignatureInvalidException() { super("Webhook signature validation failed"); }
-}
-
-public class WebhookAlreadyProcessedException extends ConflictException {
-    public WebhookAlreadyProcessedException(String webhookId) {
-        super("Webhook '" + webhookId + "' has already been processed");
-    }
-}
-```
-
----
-
-### Domain Ports
-
-**Package**: `com.atlashub.pay.charges.domain.ports`
-
-```java
-public interface PaymentGatewayPort {
-    /**
-     * Initializes a charge with the payment provider.
-     * Returns the checkout URL (for card/USSD redirect) or null (for POS terminal pushes).
-     */
-    InitializeChargeResult initialize(InitializeChargeRequest request);
-
-    /**
-     * Validates the HMAC signature on an inbound provider webhook.
-     * Throws WebhookSignatureInvalidException if invalid.
-     */
-    void validateWebhookSignature(String payload, String signature, String secretKey);
-}
-```
-
----
-
-### Domain Repository
-
-**Package**: `com.atlashub.pay.charges.domain.repositories`
-
-```java
-public interface ChargeRepository {
-    Charge save(Charge charge);
-    Optional<Charge> findById(Long id);
-    Optional<Charge> findByReference(String reference);
-    Optional<Charge> findByGatewayReference(String gatewayReference);
-    List<Charge> findByOrganizationId(Long organizationId, Pageable pageable);
-}
-```
-
----
-
-## Application Layer
-
-### Commands
-
-#### `InitializeChargeCommand`
-
-**Package**: `com.atlashub.pay.charges.application.commands.InitializeCharge`
-
-```java
-public record InitializeChargeCommand(
-    Long organizationId,
-    String customerId,           // nullable
-    BigDecimal amount,
-    String currency,
-    String channel,
-    String reference,            // caller-supplied idempotency key
-    String provider,
-    Long splitId,                // nullable
-    String sourceSystem,
-    String sourceReferenceId,
-    Map<String, String> metadata,
-    Long cashierId               // nullable; for WS push
-) {}
-```
-
-**Handler**: `InitializeChargeHandler extends Command<InitializeChargeCommand, InitializeChargeResponse>`
-
-**RBAC**: `pay:charges:create`
-
-**Processing steps:**
-1. Check idempotency: if a `Charge` with `reference` already exists, return its data (no re-initialization).
-2. Construct `Charge` domain object with `status = PENDING`.
-3. Call `paymentGatewayPort.initialize(...)` to get `checkoutUrl` and provider-assigned reference.
-4. Set `checkoutUrl` on the charge.
-5. Save via `ChargeRepository`.
-6. Return `InitializeChargeResponse` with checkout URL.
-
-**Response**: `InitializeChargeResponse`
-```java
-public record InitializeChargeResponse(
-    Long chargeId,
-    String reference,
-    String checkoutUrl,    // nullable for POS_TERMINAL
-    String status
-) {}
-```
-
----
-
-#### `ProcessPaystackWebhookCommand`
-
-**Package**: `com.atlashub.pay.charges.application.commands.ProcessPaystackWebhook`
-
-```java
-public record ProcessPaystackWebhookCommand(
-    String rawPayload,
-    String signature,
-    String paystackWebhookId
-) {}
-```
-
-**Handler**: `ProcessPaystackWebhookHandler extends Command<ProcessPaystackWebhookCommand, Void>`
-
-**Triggered by**: `PaystackWebhookController` (public endpoint, no JWT — HMAC-validated instead).
-
-**Processing steps:**
-1. Check inbox: if `(paystackWebhookId, "pay-charges-paystack")` already processed, discard silently (idempotent).
-2. Call `paymentGatewayPort.validateWebhookSignature(rawPayload, signature, paystackSecretKey)`. If invalid, throw `WebhookSignatureInvalidException`.
-3. Parse the event type from `rawPayload`.
-4. For `charge.success`: find `Charge` by gateway reference. Call `charge.markSuccessful(gatewayRef, rawPayload)`. Save and publish events via outbox.
-5. For `charge.failed`: find `Charge`. Call `charge.markFailed(reason)`. Save and publish.
-6. Record the webhook in the inbox tracker.
-
-**Response**: `void`
-
----
-
-#### `ProcessMoniepointWebhookCommand`
-
-**Package**: `com.atlashub.pay.charges.application.commands.ProcessMoniepointWebhook`
-
-```java
-public record ProcessMoniepointWebhookCommand(
-    String rawPayload,
-    String signature,
-    String moniepointWebhookId
-) {}
-```
-
-**Handler**: `ProcessMoniepointWebhookHandler extends Command<ProcessMoniepointWebhookCommand, Void>`
-
-Follows the same pattern as `ProcessPaystackWebhookHandler` using the Moniepoint secret key.
-
-**Response**: `void`
-
----
-
-#### `RefundChargeCommand`
-
-**Package**: `com.atlashub.pay.charges.application.commands.RefundCharge`
-
-```java
-public record RefundChargeCommand(
-    Long chargeId,
-    BigDecimal refundAmount,
-    String reason,
-    Long requestedByUserId
-) {}
-```
-
-**Handler**: `RefundChargeHandler extends Command<RefundChargeCommand, Void>`
-
-**RBAC**: `pay:charges:refund`
-
-**Processing steps:**
-1. Load `Charge` by ID. Throw `ChargeNotFoundException` if absent.
-2. Call `charge.refund(refundAmount)` — validates amount, registers `ChargeRefundInitiatedEvent`.
-3. Save and publish events (the `pay:transfers` module will create a `Payout` when it consumes `ChargeRefundInitiatedEvent`).
-
-**Response**: `void`
-
----
-
-### Queries
-
-Queries for charges are served by `pay:tx-query` (the unified read model). The `charges` submodule does not expose its own query endpoints to avoid duplication.
-
----
-
-## Infrastructure Layer
-
-### Persistence
-
-**JPA Entity**: `ChargeJpa`
-**Package**: `com.atlashub.pay.charges.infrastructure.persistence.entities`
-
-```java
-@Entity
-@Table(name = "charges")
-public class ChargeJpa {
-    @Id @GeneratedValue Long id;
-    Long organizationId;
-    String customerId;
-    BigDecimal amount;
-    String currency;
-    @Enumerated(EnumType.STRING) PaymentChannel channel;
-    @Enumerated(EnumType.STRING) ChargeStatus status;
-    @Column(unique = true) String reference;
-    @Enumerated(EnumType.STRING) PaymentProvider provider;
-    String checkoutUrl;
-    String gatewayReference;
-    String gatewayResponse;
-    Long splitId;
-    @Enumerated(EnumType.STRING) SourceSystem sourceSystem;
-    String sourceReferenceId;
-    @ElementCollection
-    @CollectionTable(name = "charge_metadata")
-    @MapKeyColumn(name = "key")
-    @Column(name = "value")
-    Map<String, String> metadata;
-    Long cashierId;
-    ZonedDateTime createdAt;
-    ZonedDateTime completedAt;
-    @Version long version;   // optimistic locking
-}
-```
-
-**Spring Data Repository**: `SpringDataChargeRepository`
-```java
-public interface SpringDataChargeRepository extends JpaRepository<ChargeJpa, Long> {
-    Optional<ChargeJpa> findByReference(String reference);
-    Optional<ChargeJpa> findByGatewayReference(String gatewayReference);
-}
-```
-
-**Adapter**: `ChargeRepositoryAdapter implements ChargeRepository`
-**Mapper**: `ChargeMapper`
-
----
-
-### External Service Adapters
-
-#### `PaystackGatewayAdapter implements PaymentGatewayPort`
-
-**Package**: `com.atlashub.pay.charges.infrastructure.services`
-
-| Method | Paystack Endpoint | Description |
-|---|---|---|
-| `initialize(...)` | `POST /transaction/initialize` | Initializes charge, returns `checkoutUrl` |
-| `validateWebhookSignature(...)` | — (local HMAC-SHA512 computation) | Validates `X-Paystack-Signature` header |
-
----
-
-#### `MoniepointGatewayAdapter implements PaymentGatewayPort`
-
-**Package**: `com.atlashub.pay.charges.infrastructure.services`
-
-| Method | Moniepoint Endpoint | Description |
-|---|---|---|
-| `initialize(...)` | `POST /v1/transactions/initiate` | Initiates terminal push request |
-| `validateWebhookSignature(...)` | — (local HMAC computation) | Validates Moniepoint signature header |
-
----
-
-## Presentation Layer
-
-### Controller: `ChargesController`
-
-**Package**: `com.atlashub.pay.charges.presentation.rest`
-
-| Method | Path | Auth | RBAC | Request DTO | Response DTO |
-|---|---|---|---|---|---|
-| `POST` | `/api/v1/pay/charges` | Bearer JWT | `pay:charges:create` | `InitializeChargeRequest` | `InitializeChargeResponse` |
-| `POST` | `/api/v1/pay/charges/{id}/refund` | Bearer JWT | `pay:charges:refund` | `RefundChargeRequest` | `ApiResponse<Void>` |
-| `POST` | `/api/v1/webhooks/paystack` | HMAC signature | Public (HMAC-validated) | Raw body | `ApiResponse<Void>` |
-| `POST` | `/api/v1/webhooks/moniepoint` | HMAC signature | Public (HMAC-validated) | Raw body | `ApiResponse<Void>` |
-
-### DTOs
-
-**Package**: `com.atlashub.pay.charges.presentation.dto`
-
-**`InitializeChargeRequest`**
-```java
-public record InitializeChargeRequest(
-    @NotNull @Positive BigDecimal amount,
-    @NotBlank String currency,
-    @NotBlank String channel,
-    @NotBlank String reference,
-    @NotBlank String provider,
-    Long splitId,
-    @NotBlank String sourceSystem,
-    @NotBlank String sourceReferenceId,
-    Map<String, String> metadata,
-    String customerId,
-    Long cashierId
-) {}
-```
-
-**`InitializeChargeResponse`**
-```java
-public record InitializeChargeResponse(
-    Long chargeId,
-    String reference,
-    String checkoutUrl,
-    String status
-) {}
-```
-
-**`RefundChargeRequest`**
-```java
-public record RefundChargeRequest(
-    @NotNull @Positive BigDecimal refundAmount,
-    @NotBlank String reason
-) {}
-```
-
----
-
-## RBAC Table
-
-| Permission | Granted To | Operation |
-|---|---|---|
-| `pay:charges:create` | `OWNER`, `ADMIN`, `CASHIER`, `DEVELOPER` | Initialize a new charge |
-| `pay:charges:refund` | `OWNER`, `ADMIN`, `FINANCE` | Issue a refund on a completed charge |
-
----
-
-## Maker-Checker
-
-Not applicable. Charges are direct customer-initiated payments. No dual authorization is required.
-
----
-
-## Socket Events
-
-`ChargeSuccessfulEvent` and `ChargeFailedEvent` are consumed by the **`SelectiveWebSocketBroadcaster`**, which pushes real-time payment confirmation to the cashier's active session.
-
-**Push pattern:**
-```
-ChargeSuccessfulEvent → SelectiveWebSocketBroadcaster → ws.convertAndSendToUser(
-    cashierId.toString(),
-    "/queue/notifications",
-    PushNotification.of("PAYMENT_CONFIRMED", "Payment of ₦25,000.00 confirmed")
-)
-
-ChargeFailedEvent → SelectiveWebSocketBroadcaster → ws.convertAndSendToUser(
-    cashierId.toString(),
-    "/queue/notifications",
-    PushNotification.of("PAYMENT_FAILED", "Payment failed: " + reason)
-)
-```
-
-This submodule does **not** push to WebSocket directly. It publishes domain events; the `SelectiveWebSocketBroadcaster` decides whether to push.
-
----
-
-## Domain Events Table
-
-| Event | Kafka Topic | Published When | Consumed By |
-|---|---|---|---|
-| `ChargeSuccessfulEvent` | `pay-events` | Payment confirmed by gateway | `commerce`, `billing`, `pay:ledger`, `pay:webhooks`, `pay:tx-query`, `SelectiveWebSocketBroadcaster` |
-| `ChargeFailedEvent` | `pay-events` | Payment declined or timed out | `commerce`, `notifications`, `pay:webhooks`, `pay:tx-query`, `SelectiveWebSocketBroadcaster` |
-| `ChargeRefundInitiatedEvent` | `pay-events` | Refund initiated by operator | `pay:transfers`, `accounting`, `pay:tx-query` |
-
----
-
-## Distributed Architecture
-
-### Locking
-- **Optimistic locking** (`@Version`) on `ChargeJpa` — adequate for the charge lifecycle (status transitions are rare concurrency targets).
-
-### Idempotency
-- **Reference idempotency**: `InitializeChargeHandler` checks for existing charge by `reference`. Duplicate calls return the existing charge.
-- **Webhook inbox**: `ProcessPaystackWebhookHandler` and `ProcessMoniepointWebhookHandler` use `EventDeliveryTracker` keyed on `(webhookId, "pay-charges-paystack")` and `(webhookId, "pay-charges-moniepoint")` to discard duplicate webhook deliveries.
-
-### Outbox
-- `ChargeSuccessfulEvent`, `ChargeFailedEvent`, and `ChargeRefundInitiatedEvent` are written to the outbox table in the **same DB transaction** as the status transition — never lost even if the JVM crashes post-commit.
-
----
-
-## Complete File List
-
-```
-com.atlashub.pay.charges/
-├── application/
-│   └── commands/
-│       ├── InitializeCharge/
-│       │   ├── InitializeChargeCommand.java
-│       │   ├── InitializeChargeHandler.java
-│       │   └── InitializeChargeResponse.java
-│       ├── ProcessMoniepointWebhook/
-│       │   ├── ProcessMoniepointWebhookCommand.java
-│       │   └── ProcessMoniepointWebhookHandler.java
-│       ├── ProcessPaystackWebhook/
-│       │   ├── ProcessPaystackWebhookCommand.java
-│       │   └── ProcessPaystackWebhookHandler.java
-│       └── RefundCharge/
-│           ├── RefundChargeCommand.java
-│           └── RefundChargeHandler.java
-├── domain/
-│   ├── entities/
-│   │   └── Charge.java
-│   ├── events/
-│   │   ├── ChargeFailedEvent.java
-│   │   ├── ChargeRefundInitiatedEvent.java
-│   │   └── ChargeSuccessfulEvent.java
-│   ├── exceptions/
-│   │   ├── ChargeNotFoundException.java
-│   │   ├── DuplicateChargeReferenceException.java
-│   │   ├── InvalidChargeStateException.java
-│   │   ├── InvalidRefundAmountException.java
-│   │   ├── WebhookAlreadyProcessedException.java
-│   │   └── WebhookSignatureInvalidException.java
-│   ├── ports/
-│   │   └── PaymentGatewayPort.java
-│   ├── repositories/
-│   │   └── ChargeRepository.java
-│   └── valueobject/
-│       ├── ChargeStatus.java
-│       ├── Money.java
-│       ├── PaymentChannel.java
-│       └── PaymentProvider.java
-├── infrastructure/
-│   ├── persistence/
-│   │   ├── adapters/
-│   │   │   └── ChargeRepositoryAdapter.java
-│   │   ├── entities/
-│   │   │   └── ChargeJpa.java
-│   │   ├── mappers/
-│   │   │   └── ChargeMapper.java
-│   │   └── repositories/
-│   │       └── SpringDataChargeRepository.java
-│   └── services/
-│       ├── MoniepointGatewayAdapter.java
-│       └── PaystackGatewayAdapter.java
-└── presentation/
-    ├── dto/
-    │   ├── InitializeChargeRequest.java
-    │   ├── InitializeChargeResponse.java
-    │   └── RefundChargeRequest.java
-    └── rest/
-        └── ChargesController.java
-```
+Before adding this module to `settings.gradle`: implement and test the aggregate, provider-profile read, provider-neutral commands, Paystack card/USSD adapter, terminal assignment contracts, verified webhooks, refunds, reconciliation, and the TEST simulator fallback. Verify there is no synchronous cross-module write and no provider leakage in public card/USSD APIs.

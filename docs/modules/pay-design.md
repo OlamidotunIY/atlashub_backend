@@ -23,6 +23,7 @@ The module is a parent Gradle project with nine independent submodules.
 | **Settlement Tracking** | `atlashub-pay:settlement` | `com.atlashub.pay.settlement` | [pay-settlement-design.md](pay-settlement-design.md) |
 | **Transaction History** | `atlashub-pay:tx-query` | `com.atlashub.pay.txquery` | [pay-tx-query-design.md](pay-tx-query-design.md) |
 | **Outbound Webhooks** | `atlashub-pay:webhooks` | `com.atlashub.pay.webhooks` | [pay-webhooks-design.md](pay-webhooks-design.md) |
+| **Financing Payment Controls** | `atlashub-pay:controls` | `com.atlashub.pay.controls` | [pay-controls-design.md](pay-controls-design.md) |
 
 ---
 
@@ -55,6 +56,11 @@ The module is a parent Gradle project with nine independent submodules.
 | `BulkPayoutCompletedEvent` | `hr` (mark payroll DISBURSED) |
 | `LedgerTransactionPostedEvent` | `accounting:gl` (bridge listener) |
 | `SettlementConfirmedEvent` | `accounting`, `webhooks`, `tx-query` |
+| `PaymentHeld` / `PaymentBlocked` / `ControlledFundsFrozen` | `financing`, `notifications`, audit |
+
+### Financing-Control Boundary
+
+`pay:controls` enforces a Financing-owned facility policy only on AtlasHub-controlled ledger balances, virtual accounts, payment instructions, and provider rails whose capabilities explicitly support the requested action. It can automatically hold, block, or freeze those supported paths. It cannot freeze arbitrary external accounts and never performs debt recovery, GSI, collateral enforcement, or lender underwriting.
 
 ### Locking
 - `LedgerAccount` — **Pessimistic Write** (ascending account ID order) — non-negotiable
@@ -77,4 +83,5 @@ include 'atlashub-pay:mandates'
 include 'atlashub-pay:settlement'
 include 'atlashub-pay:tx-query'
 include 'atlashub-pay:webhooks'
+include 'atlashub-pay:controls'
 ```

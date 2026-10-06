@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @Component
 public class ListCustomRolesHandler extends Query<ListCustomRolesQuery, List<CustomRoleResult>> {
@@ -22,12 +23,13 @@ public class ListCustomRolesHandler extends Query<ListCustomRolesQuery, List<Cus
     }
 
     @Override
+    @PreAuthorize("hasAuthority('iam:roles:manage')")
     public List<CustomRoleResult> execute(ListCustomRolesQuery query) {
         log.info("Executing ListCustomRolesQuery");
         
         List<CustomRole> roles = customRoleRepository.findByOrganizationId(query.orgId());
-        
-        List<CustomRoleResult> results = roles.stream()
+
+        return roles.stream()
             .map(role -> new CustomRoleResult(
                 role.getId(),
                 role.getOrganizationId(),
@@ -40,8 +42,6 @@ public class ListCustomRolesHandler extends Query<ListCustomRolesQuery, List<Cus
                 role.getUpdatedAt()
             ))
             .collect(Collectors.toList());
-            
-        return results;
     }
 }
 

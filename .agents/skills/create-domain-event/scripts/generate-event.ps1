@@ -1,46 +1,23 @@
-param (
-    [Parameter(Mandatory=$true)][string]$Module,
-    [Parameter(Mandatory=$true)][string]$EventName,
-    [Parameter(Mandatory=$true)][string]$PayloadFields
+[CmdletBinding()]
+param(
+    [Parameter(Mandatory = $true)][string]$Module,
+    [string]$SubModule = '',
+    [Parameter(Mandatory = $true)][ValidatePattern('^[A-Z][A-Za-z0-9]*(Event|Created|Updated|Approved|Rejected|Closed|Opened|Issued|Revoked)$')][string]$EventName,
+    [string]$PayloadFields = ''
 )
 
-# 1. Locate the correct module path dynamically
-$SearchPattern = "src\main\java\com\atlashub\$Module"
-$ModulePath = Get-ChildItem -Path . -Recurse -Directory -Filter $Module -ErrorAction SilentlyContinue | Where-Object { $_.FullName -match [regex]::Escape($SearchPattern) } | Select-Object -First 1
+$ErrorActionPreference = 'Stop'
+$contextScript = Join-Path $PSScriptRoot '..\..\atlashub-module-workflow\scripts\Get-AtlashubContext.ps1'
+$context = (& $contextScript -Module $Module -SubModule $SubModule -Artifact event) | ConvertFrom-Json
+$targetDir = Join-Path $context.sourceRoot 'domain\events'
+$targetFile = Join-Path $targetDir "$EventName.java"
+if (Test-Path $targetFile) { throw "Refusing to overwrite: $targetFile" }
+$fields = @($PayloadFields.Split(';') | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+$payload = ($fields | ForEach-Object { "            $_" }) -join ",`r`n"
 
-if (-not $ModulePath) {
-    Write-Host "Warning: Could not dynamically find module directory. Falling back to standard atlashub-platform structure..."
-    $TargetDir = "atlashub-platform\$Module\src\main\java\com\atlashub\$Module\domain\events"
-} else {
-    $TargetDir = Join-Path -Path $ModulePath.FullName -ChildPath "domain\events"
-}
-
-# 2. Ensure the events directory exists
-if (-not (Test-Path -Path $TargetDir)) {
-    New-Item -ItemType Directory -Force -Path $TargetDir | Out-Null
-}
-
-$TargetFile = Join-Path -Path $TargetDir -ChildPath "$EventName.java"
-
-if (Test-Path -Path $TargetFile) {
-    Write-Host "Error: $TargetFile already exists! Aborting to prevent overwrite."
-    exit 1
-}
-
-# 3. Format the Payload Fields correctly for Java
-$FormattedPayload = ""
-if ($PayloadFields.Trim() -ne "") {
-    $Fields = $PayloadFields -split ","
-    $FormattedLines = @()
-    foreach ($Field in $Fields) {
-        $FormattedLines += "        $($Field.Trim())"
-    }
-    $FormattedPayload = $FormattedLines -join ",`n"
-}
-
-# 4. Generate the perfectly structured Java Record
-$Content = @"
-package com.atlashub.$Module.domain.events;
+New-Item -ItemType Directory -Force -Path $targetDir | Out-Null
+$content = @"
+package $($context.javaPackage).domain.events;
 
 import com.atlashub.shared.domain.event.DomainEvent;
 import java.time.ZonedDateTime;
@@ -54,12 +31,10 @@ public record $EventName(
 ) implements DomainEvent<$EventName.Payload> {
 
     public record Payload(
-$FormattedPayload
+$payload
     ) {
     }
 }
 "@
-
-# 5. Write file
-Set-Content -Path $TargetFile -Value $Content
-Write-Host "SUCCESS: Domain Event created strictly at $TargetFile"
+Set-Content -LiteralPath $targetFile -Value $content -Encoding utf8NoBOM
+Write-Host "CREATED: $targetFile"

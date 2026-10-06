@@ -1,59 +1,44 @@
-param (
-    [Parameter(Mandatory=$true)][string]$Module,
-    [Parameter(Mandatory=$true)][string]$EntityName,
-    [Parameter(Mandatory=$false)][string]$SubModule = "",
-    [Parameter(Mandatory=$false)][string]$TableName = ""
+[CmdletBinding()]
+param(
+    [Parameter(Mandatory = $true)][string]$Module,
+    [string]$SubModule = '',
+    [Parameter(Mandatory = $true)][ValidatePattern('^[A-Z][A-Za-z0-9]*$')][string]$EntityName,
+    [Parameter(Mandatory = $true)][ValidatePattern('^[A-Z][A-Za-z0-9]*(Jpa|JPA)$')][string]$JpaClassName,
+    [Parameter(Mandatory = $true)][ValidatePattern('^[a-z][a-z0-9_]*$')][string]$TableName,
+    [string]$Fields = ''
 )
 
-$ErrorActionPreference = "Stop"
+$ErrorActionPreference = 'Stop'
+$contextScript = Join-Path $PSScriptRoot '..\..\atlashub-module-workflow\scripts\Get-AtlashubContext.ps1'
+$context = (& $contextScript -Module $Module -SubModule $SubModule -Artifact adapter) | ConvertFrom-Json
+$targetDir = Join-Path $context.sourceRoot 'infrastructure\persistence\entities'
+$targetFile = Join-Path $targetDir "$JpaClassName.java"
+if (Test-Path $targetFile) { throw "Refusing to overwrite: $targetFile" }
 
-if ($SubModule -ne "") {
-    $JavaSubPath = "src\main\java\com\atlashub\$Module\$SubModule"
-    $JavaPackage = "com.atlashub.$Module.$SubModule"
-} else {
-    $JavaSubPath = "src\main\java\com\atlashub\$Module"
-    $JavaPackage = "com.atlashub.$Module"
+$specs = @($Fields.Split(';') | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+$fieldLines = [Collections.Generic.List[string]]::new()
+foreach ($spec in $specs) {
+    $parts = $spec.Split(':')
+    if ($parts.Count -lt 2 -or $parts.Count -gt 4) { throw "Use Type:name[:nullable[:unique]], got '$spec'" }
+    $type = $parts[0]; $name = $parts[1]
+    if ($type -notmatch '^[A-Za-z0-9_$.<>?, ]+$' -or $name -notmatch '^[a-z][A-Za-z0-9]*$') { throw "Invalid field spec '$spec'" }
+    $nullable = if ($parts.Count -ge 3) { [bool]::Parse($parts[2]) } else { $true }
+    $unique = if ($parts.Count -ge 4) { [bool]::Parse($parts[3]) } else { $false }
+    $column = ($name -creplace '(?<!^)([A-Z])', '_$1').ToLowerInvariant()
+    $attrs = @("name = `"$column`"")
+    if (-not $nullable) { $attrs += 'nullable = false' }
+    if ($unique) { $attrs += 'unique = true' }
+    $fieldLines.Add("    @Column($($attrs -join ', '))`r`n    private $type $name;")
 }
 
-$FoundModulePath = Get-ChildItem -Path . -Recurse -Directory |
-    Where-Object { $_.FullName -match [regex]::Escape($JavaSubPath) } |
-    Select-Object -First 1
+New-Item -ItemType Directory -Force -Path $targetDir | Out-Null
+$content = @"
+package $($context.javaPackage).infrastructure.persistence.entities;
 
-if (-not $FoundModulePath) {
-    Write-Host "ERROR: Path '$JavaSubPath' not found in this workspace."
-    exit 1
-}
-
-$ModulePath = $FoundModulePath.FullName
-$TargetDir  = Join-Path -Path $ModulePath -ChildPath "infrastructure\persistence\entities"
-
-if (-not (Test-Path $TargetDir)) {
-    New-Item -ItemType Directory -Force -Path $TargetDir | Out-Null
-}
-
-# Use JpaEntity suffix per project convention
-$JpaEntityName = "${EntityName}JpaEntity"
-$TargetFile = Join-Path -Path $TargetDir -ChildPath "${JpaEntityName}.java"
-
-if (Test-Path $TargetFile) {
-    Write-Host "ERROR: $TargetFile already exists! Aborting to prevent overwrite."
-    exit 1
-}
-
-# Compute snake_case table name from EntityName if not explicitly provided
-if ($TableName -eq "") {
-    # Convert PascalCase to snake_case: e.g. SalesOrder -> sales_orders
-    $snake = ($EntityName -creplace '(?<!^)([A-Z])', '_$1').ToLower()
-    $TableName = "${snake}s"
-}
-
-$Content = @"
-package $JavaPackage.infrastructure.persistence.entities;
-
+import com.atlashub.shared.infrastructure.persistence.entities.BaseJpaEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
-import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import lombok.AccessLevel;
@@ -62,38 +47,21 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(
-    name = "$TableName",
-    indexes = {
-        // TODO: Add @Index entries for frequently queried columns, e.g.:
-        // @Index(name = "Idx_${EntityName.ToLower()}_org_id", columnList = "organization_id")
-    }
-)
+@Table(name = "$TableName")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-public class $JpaEntityName {
+public class $JpaClassName implements BaseJpaEntity {
 
     @Id
     private Long id;
 
-    // TODO: Add @Column fields here.
-    // Rules:
-    //   - Use @Column(name = "snake_case_name") for every field
-    //   - Only use nullable = false when the DB column is genuinely NOT NULL
-    //   - NO @GeneratedValue — IDs come from DomainSequenceGenerator
-    //   - NO @OneToMany / @ManyToOne — store foreign-key IDs as plain Long fields
+$($fieldLines -join "`r`n`r`n")
 
     @Version
     private Long version;
 }
 "@
-
-# PowerShell here-strings don't support method calls on variable interpolation,
-# so we patch the table name placeholder in the Index comment manually
-$Content = $Content -replace '@Index\(name = "Idx_\$\{EntityName\.ToLower\(\)\}_org_id"', "@Index(name = `"Idx_${EntityName.ToLower()}_org_id`""
-
-Set-Content -Path $TargetFile -Value $Content
-Write-Host "SUCCESS: JPA Entity created at $TargetFile"
-Write-Host "  Table name: $TableName"
-Write-Host "  Remember: NO @GeneratedValue on @Id, @Version at bottom, NO relationship annotations"
+Set-Content -LiteralPath $targetFile -Value $content -Encoding utf8NoBOM
+Write-Host "CREATED: $targetFile"
+Write-Host 'Add documented indexes and JSON/enum annotations before compiling.'

@@ -22,11 +22,17 @@ This submodule also provides the real-time balance query API used by dashboards,
 LedgerAccount
 ├── id: Long
 ├── organizationId: Long
+├── environment: ApiEnvironment       ← TEST or LIVE; accounts never cross environments
 ├── accountType: LedgerAccountType     ← OPERATING, PAYROLL_RESERVE, TAX_HOLDING,
-│                                         ESCROW, SUSPENSE, TILL, SPLIT_HOLDING
+│                                         ESCROW, SUSPENSE, TILL, SPLIT_HOLDING,
+│                                         PROVIDER_CLEARING,
+│                                         CUSTOMER_FUNDS, VENDOR_PAYABLE
 ├── outletId: Long                     ← nullable; only for TILL accounts
+├── partyType: LedgerPartyType         ← nullable; CUSTOMER or VENDOR for party accounts
+├── partyReferenceId: String           ← nullable; AtlasHub customer/vendor ID
 ├── currency: Currency
 ├── status: LedgerAccountStatus        ← ACTIVE, FROZEN, CLOSED
+├── activeRestrictions: Set<LedgerRestrictionType>
 └── createdAt: ZonedDateTime
 ```
 
@@ -41,8 +47,8 @@ ACTIVE ──freeze()──► FROZEN ──unfreeze()──► ACTIVE
 
 | Method | Guard | Effect | Event Registered |
 |---|---|---|---|
-| `freeze()` | status must be `ACTIVE` | sets `status = FROZEN` | `LedgerAccountFrozenEvent` |
-| `unfreeze()` | status must be `FROZEN` | sets `status = ACTIVE` | `LedgerAccountUnfrozenEvent` |
+| `freeze(restrictionType)` | account must not be `CLOSED` | adds the restriction and sets `status = FROZEN` | `LedgerAccountFrozenEvent` |
+| `unfreeze(restrictionType)` | matching restriction must exist | removes only that restriction; sets `ACTIVE` only when none remain | `LedgerAccountUnfrozenEvent` when usable again |
 | `close()` | status must be `ACTIVE` or `FROZEN`; balance must be zero | sets `status = CLOSED` | `LedgerAccountClosedEvent` |
 
 **Exceptions:**
@@ -54,6 +60,16 @@ ACTIVE ──freeze()──► FROZEN ──unfreeze()──► ACTIVE
 | `LedgerAccountClosedException` | Any mutation attempted on a `CLOSED` account |
 | `LedgerAccountNotEmptyException` | `close()` attempted when balance is non-zero |
 
+**Account ownership rules:**
+
+- Organization-level accounts have no `outletId`, `partyType`, or `partyReferenceId`.
+- `TILL` accounts require `outletId` and may not have party fields.
+- `CUSTOMER_FUNDS` requires `partyType=CUSTOMER` and a customer reference.
+- `VENDOR_PAYABLE` requires `partyType=VENDOR` and a vendor reference.
+- Party accounts are AtlasHub ledger records, not Anchor subaccounts or reserved accounts.
+- One active party account is allowed per `(organizationId, accountType, partyReferenceId, currency)`.
+- Restriction sources such as `ORGANIZATION_BAN`, `COMPLIANCE`, `MANUAL`, and `RISK` are independent. Removing one source never clears another source's freeze.
+
 ---
 
 ### Aggregate Root: `LedgerTransaction`
@@ -64,13 +80,14 @@ ACTIVE ──freeze()──► FROZEN ──unfreeze()──► ACTIVE
 LedgerTransaction
 ├── id: Long
 ├── organizationId: Long
+├── environment: ApiEnvironment          TEST | LIVE
 ├── entries: List<LedgerEntry>         ← at least 2: one DEBIT, one CREDIT
 ├── sourceSystem: SourceSystem
 ├── sourceReferenceId: String          ← ID of the originating business entity
 ├── description: String
 ├── currency: Currency
 ├── postedAt: ZonedDateTime
-└── reference: String                  ← unique idempotency reference
+└── reference: String                  ← unique with environment
 ```
 
 **Construction Rule — `validateBalance()`:**
@@ -133,9 +150,10 @@ BalanceSnapshot
 
 | Class | Values | Description |
 |---|---|---|
-| `LedgerAccountType` | `OPERATING`, `PAYROLL_RESERVE`, `TAX_HOLDING`, `ESCROW`, `SUSPENSE`, `TILL`, `SPLIT_HOLDING` | The functional purpose of each account |
+| `LedgerAccountType` | `OPERATING`, `PAYROLL_RESERVE`, `TAX_HOLDING`, `ESCROW`, `SUSPENSE`, `PROVIDER_CLEARING`, `TILL`, `SPLIT_HOLDING`, `CUSTOMER_FUNDS`, `VENDOR_PAYABLE` | The functional purpose of each account |
 | `LedgerAccountStatus` | `ACTIVE`, `FROZEN`, `CLOSED` | Lifecycle state |
 | `EntryType` | `DEBIT`, `CREDIT` | Direction of ledger entry |
+| `LedgerPartyType` | `CUSTOMER`, `VENDOR` | Party owning/benefiting from a dynamic party ledger account |
 | `SourceSystem` | See table below | The originating business operation |
 | `Money` | `value: BigDecimal`, `currency: String` | Immutable monetary amount |
 
@@ -263,14 +281,20 @@ public interface LedgerAccountRepository {
     List<LedgerAccount> findAllByOrganizationId(Long organizationId);
     Optional<LedgerAccount> findByOrganizationIdAndAccountType(Long organizationId, LedgerAccountType type);
     Optional<LedgerAccount> findByOrganizationIdAndOutletId(Long organizationId, Long outletId);
+    Optional<LedgerAccount> findByOrganizationIdAndParty(
+        Long organizationId,
+        LedgerAccountType type,
+        LedgerPartyType partyType,
+        String partyReferenceId,
+        String currency);
     List<LedgerAccount> findAllByIdInWithLock(List<Long> ids);  // ascending ID order for deadlock prevention
 }
 
 public interface LedgerTransactionRepository {
     LedgerTransaction save(LedgerTransaction transaction);
     Optional<LedgerTransaction> findById(Long id);
-    Optional<LedgerTransaction> findByReference(String reference);
-    List<LedgerTransaction> findByOrganizationId(Long organizationId, Pageable pageable);
+    Optional<LedgerTransaction> findByReferenceAndEnvironment(String reference, ApiEnvironment environment);
+    List<LedgerTransaction> findByOrganizationIdAndEnvironment(Long organizationId, ApiEnvironment environment, Pageable pageable);
 }
 
 public interface BalanceSnapshotRepository {
@@ -292,6 +316,7 @@ public interface BalanceSnapshotRepository {
 ```java
 public record PostLedgerTransactionCommand(
     Long organizationId,
+    String environment,
     String reference,                         // idempotency key — caller-supplied
     String sourceSystem,
     String sourceReferenceId,
@@ -312,15 +337,14 @@ public record PostLedgerTransactionCommand(
 **RBAC**: Internal system command — called by other handlers within the platform, not directly from the API.
 
 **Processing steps (CRITICAL — locking order must be preserved):**
-1. Check idempotency: if a `LedgerTransaction` with `reference` already exists, return its result without re-posting.
+1. Check idempotency: if a `LedgerTransaction` with `(environment, reference)` already exists, return its result without re-posting.
 2. Validate the caller-provided `entries` list: at least one DEBIT and one CREDIT must be present.
 3. **Collect all unique `accountId`s from `entries`. Sort them in ascending order. Acquire `PESSIMISTIC_WRITE` locks on each `LedgerAccount` in that sorted order.** This prevents deadlocks when concurrent transactions affect overlapping account sets.
 4. Verify each locked account belongs to `organizationId` and is `ACTIVE` (not FROZEN or CLOSED). Throw `LedgerAccountFrozenException` or `LedgerAccountClosedException` if violated.
-5. Compute `runningBalance` for each entry using the account's current balance.
+5. Do not persist or mutate a current-balance column. Balances remain derived from the latest snapshot plus later entries.
 6. Construct `LedgerTransaction` — `validateBalance()` is called in the constructor. If unbalanced, `UnbalancedLedgerTransactionException` is thrown and no persistence occurs.
 7. Save `LedgerTransaction` and all `LedgerEntry` records.
-8. Update each account's balance (stored on the `LedgerAccount` entity for fast queries).
-9. Publish `LedgerTransactionPostedEvent` via outbox.
+8. Publish `LedgerTransactionPostedEvent` via outbox. No mutable current-balance column is stored.
 
 **Response**: `PostLedgerTransactionResponse`
 ```java
@@ -340,18 +364,21 @@ public record PostLedgerTransactionResponse(
 ```java
 public record CreateLedgerAccountCommand(
     Long organizationId,
+    String environment,
     String accountType,
     Long outletId,       // nullable
+    String partyType,    // nullable; CUSTOMER or VENDOR
+    String partyReferenceId, // nullable
     String currency
 ) {}
 ```
 
 **Handler**: `CreateLedgerAccountHandler extends Command<CreateLedgerAccountCommand, CreateLedgerAccountResponse>`
 
-**RBAC**: Internal system command (triggered on org compliance approval and on outlet creation). Not exposed directly as an API endpoint.
+**RBAC**: Internal system command (triggered on organization banking activation, outlet creation, and reserved-account activation). Not exposed directly as an API endpoint.
 
 **Processing steps:**
-1. Verify no account of this `accountType` (and `outletId` for TILL) already exists for the org.
+1. Verify no account of this `accountType` and scope already exists: organization-level, `outletId` for TILL, or party identity for customer/vendor accounts.
 2. Construct `LedgerAccount` with `status = ACTIVE`.
 3. Save and return response.
 
@@ -369,13 +396,14 @@ public record CreateLedgerAccountResponse(Long ledgerAccountId) {}
 ```java
 public record FreezeAccountCommand(
     Long ledgerAccountId,
-    Long requestedByUserId
+    Long requestedByUserId,
+    String restrictionType
 ) {}
 ```
 
 **Handler**: `FreezeAccountHandler extends Command<FreezeAccountCommand, Void>`
 
-**RBAC**: `pay:ledger:freeze` (platform admin only)
+**Authorization**: Platform payment-operations authority. This is not an organization IAM permission.
 
 **Processing steps:**
 1. Load `LedgerAccount` by ID. Throw `LedgerAccountNotFoundException` if absent.
@@ -399,7 +427,7 @@ public record CloseAccountCommand(
 
 **Handler**: `CloseAccountHandler extends Command<CloseAccountCommand, Void>`
 
-**RBAC**: `pay:ledger:close` (platform admin only)
+**Authorization**: Platform payment-operations authority. This is not an organization IAM permission.
 
 **Processing steps:**
 1. Load `LedgerAccount`. Throw `LedgerAccountNotFoundException` if absent.
@@ -451,7 +479,7 @@ public record GetWalletBalancesQuery(Long organizationId) {}
 
 **Handler**: `GetWalletBalancesHandler extends Query<GetWalletBalancesQuery, WalletBalancesResult>`
 
-**Returns**: All ledger accounts for the org and their current balances — used by the dashboard wallet overview.
+**Returns**: Organization-level ledger accounts and their current balances — used by the dashboard wallet overview. Party accounts are excluded from this map and queried through dedicated customer/vendor balance queries or summarized separately.
 
 **Result**:
 ```java
@@ -499,6 +527,12 @@ public record LedgerTransactionResult(
 ) {}
 ```
 
+#### Party Balance Queries
+
+- `GetPartyBalanceQuery(organizationId, partyType, partyReferenceId, currency)` returns the balance of the matching `CUSTOMER_FUNDS` or `VENDOR_PAYABLE` account.
+- `GetPartyLedgerHistoryQuery(organizationId, partyType, partyReferenceId, dateFrom, dateTo, page, size)` returns pageable entries for that party account.
+- Both handlers verify the party account belongs to the authenticated organization. Organization wallet queries do not expose individual party balances.
+
 ---
 
 ## Infrastructure Layer
@@ -512,11 +546,13 @@ public record LedgerTransactionResult(
 public class LedgerAccountJpa {
     @Id @GeneratedValue Long id;
     Long organizationId;
+    ApiEnvironment environment;
     @Enumerated(EnumType.STRING) LedgerAccountType accountType;
     Long outletId;
+    @Enumerated(EnumType.STRING) LedgerPartyType partyType;
+    String partyReferenceId;
     String currency;
     @Enumerated(EnumType.STRING) LedgerAccountStatus status;
-    BigDecimal currentBalance;   // denormalized for fast balance reads
     ZonedDateTime createdAt;
 }
 ```
@@ -528,6 +564,7 @@ public class LedgerAccountJpa {
 public class LedgerTransactionJpa {
     @Id @GeneratedValue Long id;
     Long organizationId;
+    ApiEnvironment environment;
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     List<LedgerEntryJpa> entries;
     @Enumerated(EnumType.STRING) SourceSystem sourceSystem;
@@ -535,7 +572,7 @@ public class LedgerTransactionJpa {
     String description;
     String currency;
     ZonedDateTime postedAt;
-    @Column(unique = true) String reference;
+    String reference; // composite unique index with api_environment
 }
 ```
 
@@ -570,6 +607,149 @@ public class LedgerEntryJpa {
 
 ---
 
+### Kafka Listeners — `infrastructure/messaging/listeners/`
+
+The ledger is the **single source of truth** for all money movements on the platform. Every monetary event from any other module triggers a listener here that posts the corresponding `LedgerTransaction`. No module may move money without the ledger knowing.
+
+> Idempotency: Every listener checks `reference` uniqueness before posting. A duplicate event replay returns the existing `LedgerTransactionPostedEvent` without re-posting.
+
+#### `OrganizationBankingActivatedListener`
+| Attribute | Value |
+|---|---|
+| **Topic** | `pay-events` |
+| **Group ID** | `pay-ledger-org-banking-activated` |
+| **Event** | `OrganizationBankingActivatedEvent` |
+| **Payload fields** | `organizationId`, `bankingProfileId`, `businessDepositAccountId`, `businessSubAccountId`, `currency`, `activatedAt` |
+| **Command called** | `CreateLedgerAccountHandler` (multiple times) |
+| **Flow** | For each account type in `[OPERATING, PAYROLL_RESERVE, TAX_HOLDING, ESCROW, SUSPENSE, PROVIDER_CLEARING, SPLIT_HOLDING]`, create the organization-level account if absent. Idempotent. Reserved-account activation never repeats this bootstrap. |
+
+#### `ReservedAccountActivatedListener`
+| Attribute | Value |
+|---|---|
+| **Topic** | `pay-events` |
+| **Group ID** | `pay-ledger-reserved-account-activated` |
+| **Event** | `ReservedAccountActivatedEvent` |
+| **Payload fields** | `reservedAccountId`, `organizationId`, `ownerType`, `ownerReferenceId`, `currency` |
+| **Command called** | `CreateLedgerAccountHandler` |
+| **Flow** | Idempotently creates `CUSTOMER_FUNDS` for a customer owner or `VENDOR_PAYABLE` for a vendor owner. These are internal party ledger accounts, not Anchor subaccounts. |
+
+#### `OutletCreatedListener`
+| Attribute | Value |
+|---|---|
+| **Topic** | `accounts-events` |
+| **Group ID** | `pay-ledger-outlet-created` |
+| **Event** | `OutletCreatedEvent` |
+| **Payload fields** | `outletId`, `organizationId`, `outletName`, `currency` |
+| **Command called** | `CreateLedgerAccountHandler` |
+| **Flow** | Creates one `TILL` ledger account for the new outlet. `outletId` is stored on the `LedgerAccount` for TILL-type accounts. |
+
+#### `ChargeSuccessfulListener`
+| Attribute | Value |
+|---|---|
+| **Topic** | `pay-events` |
+| **Group ID** | `pay-ledger-charge-successful` |
+| **Event** | `ChargeSuccessfulEvent` |
+| **Payload fields** | `chargeId`, `organizationId`, `chargeReference`, `gatewayReference`, `amount`, `currency`, `channel`, `sourceSystem`, `sourceReferenceId`, `customerId`, `succeededAt` |
+| **Command called** | `PostLedgerTransactionHandler` |
+| **Flow** | Posts `Dr PROVIDER_CLEARING → Cr OPERATING`. This recognizes the successful collection while retaining the unsettled provider receivable. Reference = `chargeReference`; SourceSystem = `CARD_CHARGE`. It does not claim the provider has settled cash. |
+
+#### `ProviderSettlementReceivedListener`
+
+| Field | Value |
+|---|---|
+| **Topic** | `pay-events` |
+| **Event** | `ProviderSettlementReceivedEvent` |
+| **Command called** | `PostLedgerTransactionHandler` |
+| **Flow** | Posts `Dr SUSPENSE → Cr PROVIDER_CLEARING` for the reconciled settlement amount. Operating/revenue is not credited again. Reference = provider settlement reference; SourceSystem = `SETTLEMENT`. |
+
+#### `ReservedAccountFundedListener`
+| Attribute | Value |
+|---|---|
+| **Topic** | `pay-events` |
+| **Group ID** | `pay-ledger-reserved-account-funded` |
+| **Event** | `ReservedAccountFundedEvent` |
+| **Payload fields** | `reservedAccountId`, `organizationId`, `ownerType`, `ownerReferenceId`, `businessSubAccountId`, `anchorTransferReference`, `amount`, `currency`, `senderAccountName`, `senderBankCode`, `receivedAt` |
+| **Command called** | `PostLedgerTransactionHandler` |
+| **Flow** | Posts `Dr SUSPENSE → Cr CUSTOMER_FUNDS` for customer accounts or `Dr SUSPENSE → Cr VENDOR_PAYABLE` for vendor accounts. Reference = `anchorTransferReference`; SourceSystem = `EXTERNAL_COLLECTION`. If an order/invoice already determines the economic classification, a separate idempotent business transaction reclassifies the party/suspense balance. Receipt alone is not treated as revenue. |
+
+#### `OrganizationAccountFundedListener`
+| Attribute | Value |
+|---|---|
+| **Topic** | `pay-events` |
+| **Group ID** | `pay-ledger-organization-account-funded` |
+| **Event** | `OrganizationAccountFundedEvent` |
+| **Payload fields** | `organizationId`, `businessAccountId`, `anchorTransferReference`, `amount`, `currency`, `receivedAt` |
+| **Command called** | `PostLedgerTransactionHandler` |
+| **Flow** | Posts `Dr SUSPENSE → Cr OPERATING` only for a confirmed organization-owned receipt. Reference = `anchorTransferReference`. |
+
+#### `PayoutCompletedListener`
+| Attribute | Value |
+|---|---|
+| **Topic** | `pay-events` |
+| **Group ID** | `pay-ledger-payout-completed` |
+| **Event** | `PayoutCompletedEvent` |
+| **Payload fields** | `payoutId`, `organizationId`, `payoutReference`, `amount`, `currency`, `sourceSystem`, `sourceReferenceId`, `recipientName`, `recipientAccountNumber`, `completedAt` |
+| **Command called** | `PostLedgerTransactionHandler` |
+| **Flow** | Posts: `Dr Operating Account (or Payroll Reserve for PAYROLL payouts) → Cr Suspense Account`. Reference = `payoutReference`. SourceSystem = event's `sourceSystem`. |
+
+#### `TillOpenedListener`
+| Attribute | Value |
+|---|---|
+| **Topic** | `commerce-events` |
+| **Group ID** | `pay-ledger-till-opened` |
+| **Event** | `TillOpenedEvent` |
+| **Payload fields** | `tillSessionId`, `organizationId`, `outletId`, `cashierId`, `openingFloat`, `currency`, `openedAt` |
+| **Command called** | `PostLedgerTransactionHandler` |
+| **Flow** | Posts: `Dr TILL Account (outletId) → Cr Operating Account` for the opening float amount. Reference = `tillSessionId + "-open"`. SourceSystem = `INTER_OUTLET_TRANSFER`. |
+
+#### `TillClosedListener`
+| Attribute | Value |
+|---|---|
+| **Topic** | `commerce-events` |
+| **Group ID** | `pay-ledger-till-closed` |
+| **Event** | `TillClosedEvent` |
+| **Payload fields** | `tillSessionId`, `organizationId`, `outletId`, `cashierId`, `closingCash`, `totalSales`, `currency`, `closedAt` |
+| **Command called** | `PostLedgerTransactionHandler` |
+| **Flow** | Posts: `Dr Operating Account → Cr TILL Account` to sweep TILL balance back to operating. Reference = `tillSessionId + "-close"`. SourceSystem = `CASH_BANKING`. |
+
+#### `OrganizationBannedListener`
+| Attribute | Value |
+|---|---|
+| **Topic** | `admin-events` |
+| **Group ID** | `pay-ledger-org-banned` |
+| **Event** | `OrganizationBannedEvent` |
+| **Payload fields** | `organizationId`, `bannedByStaffId`, `reason`, `bannedAt` |
+| **Command called** | `FreezeAccountHandler` (called in a loop for all org's accounts) |
+| **Flow** | Adds the `ORGANIZATION_BAN` restriction to every non-closed ledger account. A banned org cannot move money. Existing compliance/manual/risk restrictions are preserved. |
+
+#### `OrganizationComplianceSuspendedListener`
+| Attribute | Value |
+|---|---|
+| **Topic** | `compliance-events` |
+| **Group ID** | `pay-ledger-compliance-suspended` |
+| **Event** | `OrganizationComplianceSuspendedEvent` |
+| **Flow** | Adds the `COMPLIANCE` restriction to every non-closed ledger account. |
+
+#### `OrganizationComplianceReinstatedListener`
+| Attribute | Value |
+|---|---|
+| **Topic** | `compliance-events` |
+| **Group ID** | `pay-ledger-compliance-reinstated` |
+| **Event** | `OrganizationComplianceReinstatedEvent` |
+| **Flow** | Removes only the `COMPLIANCE` restriction. Accounts with other restrictions remain frozen. |
+
+#### `OrganizationUnbannedListener`
+| Attribute | Value |
+|---|---|
+| **Topic** | `admin-events` |
+| **Group ID** | `pay-ledger-org-unbanned` |
+| **Event** | `OrganizationUnbannedEvent` |
+| **Payload fields** | `organizationId`, `unbannedByStaffId`, `unbannedAt` |
+| **Command called** | `UnfreezeAccountHandler` (called in a loop) |
+| **Flow** | Removes only the `ORGANIZATION_BAN` restriction. An account returns to `ACTIVE` only when no compliance/manual/risk restriction remains. |
+
+---
+
 ## Presentation Layer
 
 ### Controller: `LedgerController`
@@ -578,11 +758,13 @@ public class LedgerEntryJpa {
 
 | Method | Path | Auth | RBAC | Request | Response |
 |---|---|---|---|---|---|
-| `GET` | `/api/v1/pay/ledger/balance` | Bearer JWT | `pay:ledger:read` | Query: `accountType` | `AccountBalanceResponse` |
-| `GET` | `/api/v1/pay/ledger/balances` | Bearer JWT | `pay:ledger:read` | — | `WalletBalancesResponse` |
-| `GET` | `/api/v1/pay/ledger/history` | Bearer JWT | `pay:ledger:read` | Query: `accountId`, `dateFrom`, `dateTo`, `page`, `size` | `PageResult<LedgerTransactionResponse>` |
-| `POST` | `/api/v1/pay/ledger/freeze/{accountId}` | Bearer JWT | `pay:ledger:freeze` | — | `ApiResponse<Void>` |
-| `POST` | `/api/v1/pay/ledger/close/{accountId}` | Bearer JWT | `pay:ledger:close` | — | `ApiResponse<Void>` |
+| `GET` | `/api/v1/ledger-accounts/balance` | Bearer JWT | `pay:ledger:read` | Query: `accountType` | `AccountBalanceResponse` |
+| `GET` | `/api/v1/ledger-accounts/balances` | Bearer JWT | `pay:ledger:read` | — | `WalletBalancesResponse` |
+| `GET` | `/api/v1/ledger-accounts/party-balance` | Bearer JWT | `pay:ledger:read` | Query: `partyType`, `partyReferenceId`, `currency` | `AccountBalanceResponse` |
+| `GET` | `/api/v1/ledger-entries` | Bearer JWT | `pay:ledger:read` | Query: `accountId`, `dateFrom`, `dateTo`, `page`, `size`; or required `partyType`, `partyReferenceId` for party history | `PageResult<LedgerTransactionResponse>` |
+| `POST` | `/api/v1/admin/ledger-accounts/{accountId}/freeze` | Platform staff auth | platform payment-operations authority | — | `ApiResponse<Void>` |
+| `POST` | `/api/v1/admin/ledger-accounts/{accountId}/unfreeze` | Platform staff auth | platform payment-operations authority | — | `ApiResponse<Void>` |
+| `POST` | `/api/v1/admin/ledger-accounts/{accountId}/close` | Platform staff auth | platform payment-operations authority | — | `ApiResponse<Void>` |
 
 ### DTOs
 
@@ -628,8 +810,7 @@ public record LedgerTransactionResponse(
 | Permission | Granted To | Operation |
 |---|---|---|
 | `pay:ledger:read` | `OWNER`, `ADMIN`, `FINANCE`, `ACCOUNTANT` | View balances and ledger history |
-| `pay:ledger:freeze` | Platform admin only | Freeze a ledger account |
-| `pay:ledger:close` | Platform admin only | Close a ledger account |
+| Platform payment-operations authority | Platform staff only | Freeze, unfreeze, or close a ledger account through admin endpoints |
 
 ---
 
@@ -667,7 +848,7 @@ No WebSocket push from this submodule. `LedgerTransactionPostedEvent` is a backg
 - **Optimistic Lock** (`@Version`) on `LedgerAccount` for all other mutations (freeze, close, unfreeze).
 
 ### Idempotency
-- `PostLedgerTransactionHandler` checks for an existing `LedgerTransaction` by `reference` before posting. Duplicate `reference` → return existing result, no re-post.
+- `PostLedgerTransactionHandler` checks for an existing `LedgerTransaction` by `(environment, reference)` before posting. Duplicate reference in the same environment returns the existing result; TEST and LIVE never share postings or balances.
 - `Idempotency-Key` header on the API is mapped to `reference` for callers that supply it.
 
 ### Outbox
@@ -675,92 +856,13 @@ No WebSocket push from this submodule. `LedgerTransactionPostedEvent` is a backg
 
 ---
 
-## Complete File List
+## Implementation Additions Required by This Design
 
-```
-com.atlashub.pay.ledger/
-├── application/
-│   ├── commands/
-│   │   ├── CloseAccount/
-│   │   │   ├── CloseAccountCommand.java
-│   │   │   └── CloseAccountHandler.java
-│   │   ├── CreateLedgerAccount/
-│   │   │   ├── CreateLedgerAccountCommand.java
-│   │   │   ├── CreateLedgerAccountHandler.java
-│   │   │   └── CreateLedgerAccountResponse.java
-│   │   ├── FreezeAccount/
-│   │   │   ├── FreezeAccountCommand.java
-│   │   │   └── FreezeAccountHandler.java
-│   │   └── PostLedgerTransaction/
-│   │       ├── PostLedgerTransactionCommand.java
-│   │       ├── PostLedgerTransactionHandler.java
-│   │       └── PostLedgerTransactionResponse.java
-│   └── queries/
-│       ├── GetAccountBalance/
-│       │   ├── GetAccountBalanceQuery.java
-│       │   ├── GetAccountBalanceHandler.java
-│       │   └── AccountBalanceResult.java
-│       ├── GetLedgerHistory/
-│       │   ├── GetLedgerHistoryQuery.java
-│       │   ├── GetLedgerHistoryHandler.java
-│       │   └── LedgerTransactionResult.java
-│       └── GetWalletBalances/
-│           ├── GetWalletBalancesQuery.java
-│           ├── GetWalletBalancesHandler.java
-│           └── WalletBalancesResult.java
-├── domain/
-│   ├── entities/
-│   │   ├── BalanceSnapshot.java
-│   │   ├── LedgerAccount.java
-│   │   ├── LedgerEntry.java
-│   │   └── LedgerTransaction.java
-│   ├── events/
-│   │   ├── LedgerAccountClosedEvent.java
-│   │   ├── LedgerAccountFrozenEvent.java
-│   │   ├── LedgerAccountUnfrozenEvent.java
-│   │   └── LedgerTransactionPostedEvent.java
-│   ├── exceptions/
-│   │   ├── CurrencyMismatchException.java
-│   │   ├── DuplicateLedgerReferenceException.java
-│   │   ├── InsufficientFundsException.java
-│   │   ├── LedgerAccountClosedException.java
-│   │   ├── LedgerAccountFrozenException.java
-│   │   ├── LedgerAccountNotEmptyException.java
-│   │   ├── LedgerAccountNotFoundException.java
-│   │   └── UnbalancedLedgerTransactionException.java
-│   ├── repositories/
-│   │   ├── BalanceSnapshotRepository.java
-│   │   ├── LedgerAccountRepository.java
-│   │   └── LedgerTransactionRepository.java
-│   └── valueobject/
-│       ├── EntryType.java
-│       ├── LedgerAccountStatus.java
-│       ├── LedgerAccountType.java
-│       ├── Money.java
-│       └── SourceSystem.java
-├── infrastructure/
-│   ├── persistence/
-│   │   ├── adapters/
-│   │   │   ├── BalanceSnapshotRepositoryAdapter.java
-│   │   │   ├── LedgerAccountRepositoryAdapter.java
-│   │   │   └── LedgerTransactionRepositoryAdapter.java
-│   │   ├── entities/
-│   │   │   ├── BalanceSnapshotJpa.java
-│   │   │   ├── LedgerAccountJpa.java
-│   │   │   ├── LedgerEntryJpa.java
-│   │   │   └── LedgerTransactionJpa.java
-│   │   ├── mappers/
-│   │   │   ├── LedgerAccountMapper.java
-│   │   │   └── LedgerTransactionMapper.java
-│   │   └── repositories/
-│   │       ├── SpringDataBalanceSnapshotRepository.java
-│   │       ├── SpringDataLedgerAccountRepository.java
-│   │       └── SpringDataLedgerTransactionRepository.java
-└── presentation/
-    ├── dto/
-    │   ├── AccountBalanceResponse.java
-    │   ├── LedgerTransactionResponse.java
-    │   └── WalletBalancesResponse.java
-    └── rest/
-        └── LedgerController.java
-```
+- `LedgerPartyType` plus party fields on domain/JPA ledger accounts.
+- Party-aware repository lookup and uniqueness constraints.
+- `UnfreezeAccountCommand`/handler for the explicit reverse transition.
+- `OrganizationBankingActivatedListener` replacing the legacy virtual-account bootstrap listener.
+- `ReservedAccountActivatedListener` for customer/vendor ledger-account creation.
+- `ReservedAccountFundedListener` and `OrganizationAccountFundedListener` replacing the ambiguous wallet-funded flow.
+- Dedicated party-balance queries that enforce organization and party ownership.
+- Migration/reconciliation for any legacy transaction referring to an undefined customer sub-ledger.

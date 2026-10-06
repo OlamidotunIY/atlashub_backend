@@ -1,81 +1,52 @@
-param (
-    [Parameter(Mandatory=$true)][string]$Module,
-    [Parameter(Mandatory=$true)][string]$ControllerName,
-    [Parameter(Mandatory=$true)][string]$TagName
+[CmdletBinding()]
+param(
+    [Parameter(Mandatory = $true)][string]$Module,
+    [string]$SubModule = '',
+    [Parameter(Mandatory = $true)][ValidatePattern('^[A-Z][A-Za-z0-9]*$')][string]$ControllerName,
+    [Parameter(Mandatory = $true)][string]$BasePath,
+    [Parameter(Mandatory = $true)][string]$TagName,
+    [string]$ConstructorParameters = ''
 )
 
-$ErrorActionPreference = "Stop"
+$ErrorActionPreference = 'Stop'
+$contextScript = Join-Path $PSScriptRoot '..\..\atlashub-module-workflow\scripts\Get-AtlashubContext.ps1'
+$context = (& $contextScript -Module $Module -SubModule $SubModule -Artifact controller) | ConvertFrom-Json
+$targetDir = Join-Path $context.sourceRoot 'presentation\rest'
+$targetFile = Join-Path $targetDir "$ControllerName`Controller.java"
+if (Test-Path $targetFile) { throw "Refusing to overwrite: $targetFile" }
+$parameters = $ConstructorParameters.Trim()
 
-# Dynamic module discovery
-$FoundModulePath = Get-ChildItem -Path . -Recurse -Directory |
-    Where-Object { $_.FullName -match [regex]::Escape("src\\main\\java\\com\\atlashub\\$Module") } |
-    Select-Object -First 1
+New-Item -ItemType Directory -Force -Path $targetDir | Out-Null
+$constructor = if ($parameters) {
+@"
 
-if (-not $FoundModulePath) {
-    Write-Host "ERROR: Module '$Module' not found under any src\main\java\com\atlashub\$Module path."
-    exit 1
-}
+    public $ControllerName`Controller($parameters) {
+    }
+"@
+} else { '' }
+$content = @"
+package $($context.javaPackage).presentation.rest;
 
-$ModulePath = $FoundModulePath.FullName
-$TargetDir  = Join-Path -Path $ModulePath -ChildPath "presentation\rest"
-
-if (-not (Test-Path $TargetDir)) {
-    New-Item -ItemType Directory -Force -Path $TargetDir | Out-Null
-}
-
-$TargetFile = Join-Path -Path $TargetDir -ChildPath "${ControllerName}Controller.java"
-
-if (Test-Path $TargetFile) {
-    Write-Host "ERROR: $TargetFile already exists! Aborting to prevent overwrite."
-    exit 1
-}
-
-$Content = @"
-package com.atlashub.$Module.presentation.rest;
-
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import com.atlashub.shared.application.dto.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-// TODO: Import DTOs from com.atlashub.$Module.presentation.dto.*
-// TODO: Import Command/Query Handlers
-// TODO: Import AuthenticatedUser or equivalent principal class
-// TODO: Import @PublicEndpoint if any public endpoints exist
-
 @RestController
-@RequestMapping("/api/v1/${ControllerName.ToLower()}s")
+@RequestMapping("$BasePath")
 @Tag(name = "$TagName")
-public class ${ControllerName}Controller {
+public class $ControllerName`Controller {$constructor
 
-    // TODO: Inject Command/Query Handlers via constructor
-    public ${ControllerName}Controller() {
+    private <T> ResponseEntity<ApiResponse<T>> ok(T value) {
+        return ResponseEntity.ok(new ApiResponse<>(true, "Success", value, null));
     }
 
-    // --- Public endpoint example (remove @SecurityRequirement, add @PublicEndpoint) ---
-    // @Operation(summary = "List all ${ControllerName.ToLower()}s")
-    // @ApiResponse(responseCode = "200", description = "OK")
-    // @GetMapping
-    // public ResponseEntity<?> listAll() {
-    //     return ResponseEntity.ok(handler.execute(new ListQuery()));
-    // }
-
-    // --- Authenticated endpoint example ---
-    // @Operation(summary = "Create a ${ControllerName.ToLower()}")
-    // @ApiResponse(responseCode = "201", description = "Created")
-    // @SecurityRequirement(name = "bearerAuth")
-    // @PostMapping
-    // public ResponseEntity<?> create(
-    //         @AuthenticationPrincipal AuthenticatedUser user,
-    //         @Valid @RequestBody ${ControllerName}Request request) {
-    //     return ResponseEntity.status(201).body(handler.execute(new CreateCommand(...)));
-    // }
+    private ResponseEntity<ApiResponse<Void>> done(String message) {
+        return ResponseEntity.ok(new ApiResponse<>(true, message, null, null));
+    }
 }
 "@
-
-Set-Content -Path $TargetFile -Value $Content
-Write-Host "SUCCESS: Controller created at $TargetFile"
+Set-Content -LiteralPath $targetFile -Value $content -Encoding utf8NoBOM
+Write-Host "CREATED: $targetFile"
+Write-Host 'Add documented endpoints, handler fields/assignments, DTOs, principal context, and MVC tests.'

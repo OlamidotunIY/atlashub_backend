@@ -11,4 +11,5 @@ public interface SessionRepository extends Repository<Session> {
     Set<Session> findAllByUserId(String userId);
     void deleteByToken(String token);
     void deleteAllByUserId(String userId);
+    void deleteAllByOrganizationId(Long organizationId);
 }

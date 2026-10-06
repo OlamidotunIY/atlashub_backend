@@ -1,3 +1,7 @@
 package com.atlashub.pay.ledger.application.commands.FreezeAccount;
 
-public record FreezeAccountCommand(Long ledgerAccountId, Long requestedByUserId) {}
+public record FreezeAccountCommand(
+        Long ledgerAccountId,
+        Long requestedByUserId,
+        String restrictionType
+) {}

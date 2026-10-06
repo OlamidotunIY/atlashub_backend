@@ -1,3 +1,3 @@
 package com.atlashub.iam.application.commands.DeleteCustomRole;
 
-public record DeleteCustomRoleCommand(Long roleId, Long requestedByUserId) {}
+public record DeleteCustomRoleCommand(Long roleId, Long requestedByUserId, Long organizationId) {}

@@ -6,6 +6,8 @@ import com.atlashub.shared.application.usecase.Command;
 import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.atlashub.iam.domain.exception.InvitationNotFoundException;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @Component
 public class RevokeInvitationHandler extends Command<RevokeInvitationCommand, Invitation> {
@@ -18,11 +20,13 @@ public class RevokeInvitationHandler extends Command<RevokeInvitationCommand, In
     }
 
     @Override
+    @PreAuthorize("hasAuthority('iam:members:invite')")
     public Invitation execute(RevokeInvitationCommand command) {
         log.info("Executing RevokeInvitationCommand");
         
         Invitation invitation = invitationRepository.findById(command.invitationId())
-                .orElseThrow(() -> new IllegalArgumentException("Invitation not found"));
+                .filter(found -> found.getOrganizationId().equals(command.organizationId()))
+                .orElseThrow(InvitationNotFoundException::new);
 
         invitation.revoke(command.revokedByUserId());
         invitationRepository.save(invitation);

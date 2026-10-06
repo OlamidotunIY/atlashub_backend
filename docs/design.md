@@ -53,14 +53,14 @@ The correct split (following Stripe's internal architecture principles) is:
 ┌──────────────────────────────────────────────────────────────────────────────────────┐
 │                              atlashub-platform                                        │
 │                                                                                       │
-│  ┌──────────┐  ┌──────┐  ┌────────────┐  ┌─────┐  ┌─────────┐  ┌─────────────────┐ │
-│  │ accounts │  │ auth │  │ compliance │  │ iam │  │ catalog │  │    billing      │ │
-│  └──────────┘  └──────┘  └────────────┘  └─────┘  └─────────┘  └─────────────────┘ │
-│                                                                                       │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐                               │
-│  │    admin     │  │notifications │  │   support    │                               │
-│  └──────────────┘  └──────────────┘  └──────────────┘                               │
-└──────────────────────────────────────────────────────────────────────────────────────┘
+│  ┌──────────┐  ┌──────┐  ┌────────────┐  ┌─────┐  ┌─────────────────┐         │
+│  │ accounts │  │ auth │  │ compliance │  │ iam │  │    billing      │         │
+│  └──────────┘  └──────┘  └────────────┘  └─────┘  └─────────────────┘         │
+│                                                                                  │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐                          │
+│  │    admin     │  │notifications │  │   support    │                          │
+│  └──────────────┘  └──────────────┘  └──────────────┘                          │
+└──────────────────────────────────────────────────────────────────────────────────┘
 
 ┌───────────────┐  ┌──────────────────┐  ┌───────────────────┐  ┌──────────────────┐
 │  atlashub-pay │  │atlashub-commerce │  │atlashub-logistics │  │   atlashub-hr    │
@@ -82,7 +82,7 @@ The correct split (following Stripe's internal architecture principles) is:
 
 ┌───────────────────────────────────────────────────────────────────────┐
 │                          atlashub-analytics                            │
-│    projections (CQRS) │ timeseries (TimescaleDB) │ dashboards          │
+│    projections (CQRS) │ MySQL metric history │ feature snapshots │ dashboards          │
 └───────────────────────────────────────────────────────────────────────┘
 
 ┌───────────────────────────────────────────────────────────────────────┐
@@ -108,8 +108,7 @@ The correct split (following Stripe's internal architecture principles) is:
 | [auth](modules/auth-design.md) | `atlashub-platform:auth` | Authentication — JWT, refresh tokens, passwords, HMAC API signing |
 | [compliance](modules/compliance-design.md) | `atlashub-platform:compliance` | KYC journey — document verification, compliance status |
 | [iam](modules/iam-design.md) | `atlashub-platform:iam` | Authorization — custom roles, permissions, memberships, API keys |
-| [catalog](modules/catalog-design.md) | `atlashub-platform:catalog` | Platform product catalog and pricing plans |
-| [billing](modules/billing-design.md) | `atlashub-platform:billing` | Subscriptions, invoices, access entitlements |
+| [billing](modules/billing-design.md) | `atlashub-platform:billing` | Subscriptions, invoices, access entitlements — plan config lives here |
 | [admin](modules/admin-design.md) | `atlashub-platform:admin` | AtlasHub internal admin portal — multi-tier staff access |
 | [notifications](modules/notifications-design.md) | `atlashub-platform:notifications` | Email, SMS, push, WhatsApp, in-app WebSocket delivery |
 | [support](modules/support-design.md) | `atlashub-platform:support` | Support ticketing for businesses |
@@ -118,7 +117,9 @@ The correct split (following Stripe's internal architecture principles) is:
 | [logistics](modules/logistics-design.md) | `atlashub-logistics` | Shipments, fleet, drivers, 3PL integrations, marketplace dispatch |
 | [hr](modules/hr-design.md) | `atlashub-hr` | Employees, payroll, leave, attendance, loans |
 | [accounting](modules/accounting-design.md) | `atlashub-accounting` | General ledger, journal entries, financial reports |
-| [analytics](modules/analytics-design.md) | `atlashub-analytics` | CQRS projections, time-series metrics, dashboards |
+| [analytics](modules/analytics-design.md) | `atlashub-analytics` | MySQL CQRS projections, metric history, feature snapshots, dashboards |
+| [intelligence](modules/intelligence-design.md) | `atlashub-intelligence` | Grounded conversational AI, ML forecasts, recommendations |
+| [financing](modules/financing-design.md) | `atlashub-financing` | AtlasScore, lender applications, facilities and monitoring |
 | [hotel](modules/hotel-design.md) | `atlashub-hotel` | **Future** — Hotel PMS, room management, front desk |
 | [infrastructure](modules/infrastructure-design.md) | `atlashub-infrastructure` | Outbox/Inbox, audit, rate limiting, outbound webhooks |
 
@@ -165,11 +166,11 @@ See [architecture/module-communication.md](architecture/module-communication.md)
 
 | Store | Purpose | Used By |
 |---|---|---|
-| **PostgreSQL** | Primary OLTP database — all aggregate state, outbox, audit | All modules |
+| **MySQL** | Primary OLTP database, event projections, feature snapshots and audit | All modules |
 | **Redis** | JWT refresh token store, revocation list, rate-limit counters, distributed locks | Auth, IAM, Infrastructure |
 | **Kafka** | Async event bus — event delivery between modules | All modules |
 | **Elasticsearch** | Full-text search — products, customers, transactions | Commerce, Pay, Analytics |
-| **TimescaleDB** | Time-series analytics — revenue per hour, orders per day | Analytics |
+| **MySQL metric tables** | Time-windowed metric history and feature snapshots | Analytics |
 
 ---
 
@@ -226,7 +227,7 @@ See [architecture/module-communication.md](architecture/module-communication.md)
 | Human auth | JWT (15-min access token) + refresh token (Redis-backed, revocable) |
 | B2B machine auth | API Key + HMAC-SHA256 request signing (replay-proof via timestamp + nonce) |
 | Authorization | Custom RBAC — permission claims embedded in JWT, enforced per endpoint |
-| Data isolation | `organization_id` on every table + PostgreSQL Row-Level Security as defense-in-depth |
+| Data isolation | `organization_id` on every tenant table + repository-level scoping and tenant-context enforcement |
 | Financial controls | Maker-Checker on payroll disbursement, fund transfers > threshold, manual journal entries |
 | Rate limiting | IP-based + org-level sliding window (Redis) |
 | Webhook integrity | HMAC-SHA256 on all outbound webhook payloads |
@@ -248,7 +249,7 @@ See [architecture/module-communication.md](architecture/module-communication.md)
 | **Redis** | `infrastructure` | Sessions, rate limiting, revocation. |
 | **Kafka** | `infrastructure:eventbus` | Async event delivery between modules. |
 | **Elasticsearch** | `commerce`, `pay`, `analytics` | Product, customer, transaction search. |
-| **TimescaleDB** | `analytics` | Time-series metrics. |
+| **MySQL** | `analytics` | Projections, metric history and feature snapshots. |
 
 ---
 

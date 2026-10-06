@@ -4,6 +4,7 @@ import java.time.LocalDate;
 
 public record GetLedgerHistoryQuery(
         Long organizationId,
+        String environment,
         Long accountId,
         LocalDate dateFrom,
         LocalDate dateTo,

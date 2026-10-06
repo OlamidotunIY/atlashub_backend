@@ -6,6 +6,10 @@ The `atlashub-commerce` module is the **retail and marketplace engine** of Atlas
 
 All subpackages share the root package `com.atlashub.commerce`.
 
+> **Subscription:** All organizations automatically get access to Atlas Commerce as part of the universal subscription. No separate registration or opt-in is needed.
+
+> **POS Feature Toggle:** The Point-of-Sale (POS) sub-feature is **opt-in**. It is controlled by the `posEnabled` flag on the `Organization` aggregate in the `accounts` module. When `posEnabled = false`, all POS endpoints (`/pos/*`, `/tills/*`, `/tables/*`, `/kitchen-orders/*`) must return `403 Forbidden`. The `PosFeatureToggledEvent` from `accounts` drives this — `commerce-storefront` caches the org's POS status in Redis. All other Commerce features (online orders, inventory, marketplace) remain available regardless.
+
 ---
 
 ## Subpackage Documentation
@@ -23,13 +27,15 @@ All subpackages share the root package `com.atlashub.commerce`.
 ### Checkout Saga (Choreography)
 POS/online checkout reserves stock → triggers pay charge → awaits `ChargeSuccessfulEvent` or `ChargeFailedEvent` → deducts or releases stock. Timeout handled by `StockReleaseScheduler`. See [commerce-storefront-design.md](commerce-storefront-design.md) and [sagas-design.md](../architecture/sagas-design.md).
 
+Checkout is environment-bound. `TEST` commerce orders publish `CheckoutPaymentRequestedEvent` with `environment=TEST` and may be completed only by a matching TEST charge event; LIVE follows the same rule. Commerce never selects Paystack or another online gateway and never calls a payment write port synchronously. It requests card, USSD, bank transfer, or an AtlasHub terminal assignment. The charge module owns provider routing; only POS setup exposes the supported terminal choices (Paystack, Moniepoint, and OPay initially).
+
 ### WebSocket Events
 `KitchenOrderTicketCreatedEvent` and `KotReadyEvent` are broadcast via `SelectiveWebSocketBroadcaster` to `/topic/outlet/{outletId}/kitchen`.
 
 ### Module Dependencies
 - **Reads from shared:** `EntitlementQueryPort`, `UserQueryPort`
 - **Publishes events to:** `commerce-events` topic consumed by `inventory`, `accounting`, `pay`, `logistics`, `analytics`, `notifications`
-- **Consumes events from:** `pay-events` (`ChargeSuccessfulEvent`, `ChargeFailedEvent`), `logistics-events` (`ShipmentDeliveredEvent`, `CustomerReturnShipmentReceivedEvent`)
+- **Consumes events from:** `pay-events` (`ChargeSuccessfulEvent`, `ChargeFailedEvent`), `logistics-events` (`ShipmentDeliveredEvent`, `CustomerReturnShipmentReceivedEvent`), `accounts-events` (`PosFeatureToggledEvent`)
 
 ---
 
@@ -39,3 +45,4 @@ POS/online checkout reserves stock → triggers pay charge → awaits `ChargeSuc
 // settings.gradle
 include 'atlashub-commerce'
 ```
+

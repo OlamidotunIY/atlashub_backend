@@ -35,7 +35,8 @@ public class UserAuthenticationListener extends BaseKafkaEventListener {
         processEventIfMatches(messagePayload, "UserCreated", UserCreated.class, log, GROUP_ID,
                 e -> e instanceof TimeoutException, event -> {
                     AuthAccountCommand command = new AuthAccountCommand(
-                            event.aggregateId(), event.payload().email(), event.payload().hashedPassword());
+                            event.aggregateId(), event.payload().email(), event.payload().credentialReference(),
+                            Boolean.TRUE.equals(event.payload().isInvited()));
                     authAccountHandler.execute(command);
                 });
     }

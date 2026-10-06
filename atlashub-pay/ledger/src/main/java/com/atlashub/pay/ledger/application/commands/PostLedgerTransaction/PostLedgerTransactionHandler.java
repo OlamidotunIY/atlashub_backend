@@ -1,26 +1,23 @@
 package com.atlashub.pay.ledger.application.commands.PostLedgerTransaction;
 
-import com.atlashub.pay.ledger.domain.entities.BalanceSnapshot;
 import com.atlashub.pay.ledger.domain.entities.LedgerAccount;
 import com.atlashub.pay.ledger.domain.entities.LedgerEntry;
 import com.atlashub.pay.ledger.domain.entities.LedgerTransaction;
 import com.atlashub.pay.ledger.domain.exceptions.LedgerAccountClosedException;
 import com.atlashub.pay.ledger.domain.exceptions.LedgerAccountFrozenException;
 import com.atlashub.pay.ledger.domain.exceptions.LedgerAccountNotFoundException;
-import com.atlashub.pay.ledger.domain.repositories.BalanceSnapshotRepository;
 import com.atlashub.pay.ledger.domain.repositories.LedgerAccountRepository;
 import com.atlashub.pay.ledger.domain.repositories.LedgerTransactionRepository;
-import com.atlashub.pay.ledger.domain.services.BalanceCalculator;
 import com.atlashub.pay.ledger.domain.valueobject.EntryType;
 import com.atlashub.pay.ledger.domain.valueobject.LedgerAccountStatus;
 import com.atlashub.pay.ledger.domain.valueobject.SourceSystem;
 import com.atlashub.shared.application.usecase.Command;
+import com.atlashub.shared.application.security.ApiEnvironment;
 import com.atlashub.shared.domain.valueobject.CurrencyCode;
 import com.atlashub.shared.domain.valueobject.Money;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,25 +31,20 @@ public class PostLedgerTransactionHandler extends Command<PostLedgerTransactionC
 
     private final LedgerTransactionRepository transactionRepository;
     private final LedgerAccountRepository accountRepository;
-    private final BalanceSnapshotRepository balanceSnapshotRepository;
-    private final BalanceCalculator balanceCalculator;
 
     public PostLedgerTransactionHandler(
             LedgerTransactionRepository transactionRepository,
-            LedgerAccountRepository accountRepository,
-            BalanceSnapshotRepository balanceSnapshotRepository,
-            BalanceCalculator balanceCalculator) {
+            LedgerAccountRepository accountRepository) {
         this.transactionRepository = transactionRepository;
         this.accountRepository = accountRepository;
-        this.balanceSnapshotRepository = balanceSnapshotRepository;
-        this.balanceCalculator = balanceCalculator;
     }
 
     @Override
     @Transactional
     public PostLedgerTransactionResponse execute(PostLedgerTransactionCommand command) {
         // 1. Check idempotency
-        Optional<LedgerTransaction> existingTx = transactionRepository.findByReference(command.reference());
+        ApiEnvironment environment = ApiEnvironment.parse(command.environment());
+        Optional<LedgerTransaction> existingTx = transactionRepository.findByReferenceAndEnvironment(command.reference(), environment);
         if (existingTx.isPresent()) {
             LedgerTransaction tx = existingTx.get();
             return new PostLedgerTransactionResponse(tx.getId(), tx.getReference(), tx.getPostedAt());
@@ -93,6 +85,9 @@ public class PostLedgerTransactionHandler extends Command<PostLedgerTransactionC
             if (!account.getOrganizationId().equals(command.organizationId())) {
                 throw new IllegalArgumentException("Account " + accountId + " does not belong to organization " + command.organizationId());
             }
+            if (account.getEnvironment() != environment) {
+                throw new IllegalArgumentException("Account " + accountId + " belongs to a different API environment");
+            }
             if (account.getStatus() == LedgerAccountStatus.FROZEN) {
                 throw new LedgerAccountFrozenException(accountId.toString());
             }
@@ -101,48 +96,19 @@ public class PostLedgerTransactionHandler extends Command<PostLedgerTransactionC
             }
         }
 
-        // 6. Compute runningBalance and apply entry
-        Map<Long, BalanceSnapshot> snapshots = balanceSnapshotRepository.findAllLatestByAccountIdIn(sortedIds).stream()
-                .collect(Collectors.toMap(BalanceSnapshot::getAccountId, Function.identity()));
-
-        Map<Long, BigDecimal> currentBalances = new java.util.HashMap<>();
-        for (Long accId : sortedIds) {
-            BalanceSnapshot snapshot = snapshots.get(accId);
-            if (snapshot == null) {
-                throw new IllegalStateException("Account missing initial balance snapshot: " + accId);
-            }
-            BigDecimal startingBalance = snapshot.getBalance().amount();
-            ZonedDateTime snapshotDate = snapshot.getSnapshotAt();
-            
-            List<LedgerTransaction> recentTxs = transactionRepository.findByAccountIdAndPostedAtAfter(accId, snapshotDate);
-            BigDecimal exactBalance = balanceCalculator.calculateRunningBalance(accId, startingBalance, recentTxs);
-            currentBalances.put(accId, exactBalance);
-        }
-
+        // 6. Create immutable entries. Balances are derived from snapshots plus entries.
         List<LedgerEntry> ledgerEntries = new ArrayList<>();
         Long txId = transactionRepository.nextIdentity();
 
         for (PostLedgerTransactionCommand.LedgerEntryRequest req : command.entries()) {
-            BigDecimal amount = req.amount();
-            BigDecimal currentBal = currentBalances.get(req.accountId());
-            
-            BigDecimal newBal;
-            if ("CREDIT".equalsIgnoreCase(req.entryType())) {
-                newBal = currentBal.add(amount);
-            } else {
-                newBal = currentBal.subtract(amount);
-            }
-            currentBalances.put(req.accountId(), newBal);
-
-            Long entryId = transactionRepository.nextIdentity();
+            Long entryId = transactionRepository.nextEntryIdentity();
             
             LedgerEntry entry = LedgerEntry.create(
                     entryId,
                     txId,
                     req.accountId(),
                     EntryType.valueOf(req.entryType().toUpperCase()),
-                    new Money(amount, CurrencyCode.valueOf(command.currency())),
-                    new Money(newBal, CurrencyCode.valueOf(command.currency()))
+                    new Money(req.amount(), CurrencyCode.valueOf(command.currency()))
             );
             ledgerEntries.add(entry);
         }
@@ -151,6 +117,7 @@ public class PostLedgerTransactionHandler extends Command<PostLedgerTransactionC
         LedgerTransaction transaction = LedgerTransaction.create(
                 txId,
                 command.organizationId(),
+                environment,
                 ledgerEntries,
                 SourceSystem.valueOf(command.sourceSystem()),
                 command.sourceReferenceId(),
@@ -162,10 +129,6 @@ public class PostLedgerTransactionHandler extends Command<PostLedgerTransactionC
 
         // 8. Save
         transactionRepository.save(transaction);
-        for (LedgerAccount acc : accounts) {
-            accountRepository.save(acc);
-        }
-
         return new PostLedgerTransactionResponse(transaction.getId(), transaction.getReference(), transaction.getPostedAt());
     }
 }

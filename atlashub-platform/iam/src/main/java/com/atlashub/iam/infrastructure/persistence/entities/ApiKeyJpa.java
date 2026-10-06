@@ -1,6 +1,6 @@
 package com.atlashub.iam.infrastructure.persistence.entities;
 
-import com.atlashub.iam.domain.valueobject.ApiEnvironment;
+import com.atlashub.shared.application.security.ApiEnvironment;
 import com.atlashub.shared.infrastructure.persistence.entities.BaseJpaEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -39,8 +39,8 @@ public class ApiKeyJpa implements BaseJpaEntity {
     @Column(name = "public_key", nullable = false, unique = true)
     private String publicKey;
 
-    @Column(name = "secret_key_hash", nullable = false)
-    private String secretKeyHash;
+    @Column(name = "secret_key_ciphertext", nullable = false, length = 2048)
+    private String secretKeyCiphertext;
 
     @Column(name = "name", nullable = false)
     private String name;
@@ -49,8 +49,11 @@ public class ApiKeyJpa implements BaseJpaEntity {
     @Column(name = "environment", nullable = false)
     private ApiEnvironment environment;
 
-    @Column(name = "is_revoked", nullable = false)
-    private Boolean isRevoked;
+    @Column(name = "bound_role_id")
+    private Long boundRoleId;
+
+    @Column(name = "revoked", nullable = false)
+    private Boolean revoked;
 
     @Column(name = "last_used_at")
     private ZonedDateTime lastUsedAt;
@@ -66,6 +69,7 @@ public class ApiKeyJpa implements BaseJpaEntity {
 
     @Column(name = "updated_at", nullable = false)
     private ZonedDateTime updatedAt;
+
     @Version
     private Long version;
 }

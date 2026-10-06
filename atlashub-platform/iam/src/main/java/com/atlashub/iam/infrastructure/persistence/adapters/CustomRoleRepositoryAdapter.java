@@ -11,6 +11,7 @@ import com.atlashub.shared.infrastructure.service.DomainSequenceGenerator;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Component
@@ -38,6 +39,12 @@ public class CustomRoleRepositoryAdapter
         return springDataRepo.findByOrganizationId(organizationId).stream()
                 .map(mapper::toDomain)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public Optional<CustomRole> findBuiltInByOrganizationId(Long organizationId) {
+        return springDataRepo.findFirstByOrganizationIdAndBuiltInTrue(organizationId)
+                .map(mapper::toDomain);
     }
 }
 

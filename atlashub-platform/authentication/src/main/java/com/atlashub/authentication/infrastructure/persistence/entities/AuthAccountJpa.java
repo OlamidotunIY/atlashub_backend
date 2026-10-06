@@ -36,24 +36,6 @@ public class AuthAccountJpa implements BaseJpaEntity {
     private Long userId;
 
     @Column
-    private String accessToken;
-
-    @Column
-    private String refreshToken;
-
-    @Column
-    private String idToken;
-
-    @Column
-    private ZonedDateTime accessTokenExpiresAt;
-
-    @Column
-    private ZonedDateTime refreshTokenExpiresAt;
-
-    @Column
-    private String scope;
-
-    @Column
     private String password;
 
     @Column(nullable = false)

@@ -1,13 +1,14 @@
 package com.atlashub.accounts.application.query.GetOrganizationDetails;
 
+import java.time.LocalDate;
 import java.time.ZonedDateTime;
 
 public record OrganizationDetailsResult(
         Long id,
         String businessName,
-        String businessType,
-        String businessSize,
+        String registrationType,
         String industry,
+        LocalDate registrationDate,
         String description,
         String logoUrl,
         String websiteUrl,

@@ -1,8 +1,8 @@
-# Auth Module Design (`atlashub-platform:auth`)
+# Authentication Module Design (`atlashub-platform:authentication`)
 
 ## Role & Purpose
 
-The `auth` module is the **authentication engine** of AtlasHub. It owns the complete lifecycle of how a user proves their identity to the platform: passwords, login sessions, JWT tokens, token refresh, logout, and password recovery. It also owns **machine-to-machine authentication** — the API key + HMAC signing mechanism that external systems use to call AtlasHub APIs on behalf of an organization.
+The `authentication` module is the **human-authentication engine** of AtlasHub. It owns passwords, login sessions, JWT issuance, token refresh, logout, password recovery, email verification, and trusted devices. IAM owns API-key lifecycle and HMAC credential verification; the executable application owns the HTTP security filters.
 
 The `auth` module does **not** decide what a user is allowed to do (that is `iam`) or whether their organization is verified (that is `compliance`). It answers one question: *are you who you say you are?*
 
@@ -12,25 +12,24 @@ The `auth` module does **not** decide what a user is allowed to do (that is `iam
 
 ### Human Authentication — JWT + Refresh Tokens
 AtlasHub uses a two-token model:
-- **Access Token** (JWT, 15-minute expiry): Stateless, signed with RS256. Carries user claims (`userId`, `activeOrganizationId`, `permissions`). Verified locally — no database hit on every request.
+- **Access Token** (JWT, 15-minute expiry): Signed with RS256. Carries user, active organization, session, environment, and permission claims. Signature validation is local, then the `sid` is checked against Redis on every request; authentication never reads the session database.
 - **Refresh Token** (opaque UUID, 30-day expiry): Stored in Redis with metadata (device fingerprint, IP, user agent). Used once to obtain a new access token + refresh token pair (rotation).
 
 ### Session Fingerprinting
-Every refresh token is bound to a **device fingerprint** (hash of user agent + device type). If a refresh token is presented from a different device fingerprint, it is rejected and an alert is sent. This detects token theft.
+Every refresh token is bound to a **device fingerprint**. If a refresh token is presented with a different fingerprint, the runtime session is invalidated and the request is rejected.
 
 ### Token Revocation (Logout)
-On logout, the refresh token is deleted from Redis. The current access token is added to a **Redis revocation list** (TTL = remaining access token lifetime). Every incoming request checks the revocation list. This gives AtlasHub the security of session-based auth with the scalability of stateless JWTs.
+On logout, the runtime session is invalidated in Redis while its database audit row is retained. The current access token is added to a **Redis revocation list** (TTL = remaining access token lifetime). Every incoming request checks both revocation and the Redis session, without querying the database.
 
 ### Password Management
 - Passwords are hashed with **bcrypt (cost factor 12)** before storage
 - Password reset via time-limited secure token (emailed via `notifications`)
-- Forced password change after admin reset
 
 ### Email Verification
-New accounts require email verification before login is permitted. A verification token is sent via `notifications`. The `AuthAccount.emailVerified` flag gates access.
+New accounts require email verification before login is permitted. A verification token is sent via `notifications`. Accounts owns the durable `User.emailVerified` state; Authentication checks it through `UserQueryPort`.
 
-### Device Trust & Suspicious Login Detection
-Login from a new device/IP triggers a verification challenge (email OTP). Trusted devices are recorded and do not require re-verification for 90 days.
+### Device Trust
+Login from an untrusted device fingerprint triggers an email OTP challenge. Trusted devices are recorded and do not require re-verification for 90 days.
 
 ---
 
@@ -45,7 +44,7 @@ This is more secure than a plain API key because:
 
 ### How It Works
 
-**Step 1 — API Key Issuance** (managed by `iam` module, but the key hash and signing logic live in `auth`):
+**Step 1 — API Key Issuance** (managed by IAM; HMAC verification is performed by IAM's authentication service from the main HTTP filter):
 ```
 publicKey:  atlas_pk_live_abc123...   (shown once, safe to expose — identifies the org)
 secretKey:  atlas_sk_live_xyz789...   (shown once only, used for signing — never transmitted)
@@ -68,7 +67,7 @@ Content-Type: application/json
 
 **Step 4 — Server-Side Verification** (`HmacSignatureFilter`):
 1. Extract `publicKey`, `timestamp`, `nonce`, `signature` from the Authorization header
-2. Look up the org's `secretKeyHash` from Redis cache (fallback: DB)
+2. Resolve the active key in IAM and decrypt its protected secret only for signature verification
 3. Reject if `|current_time - timestamp| > 300` seconds (5-minute replay window)
 4. Check nonce in Redis: if already seen, reject as replay attack (store nonce with TTL = 10 minutes)
 5. Recompute the HMAC and compare using a constant-time comparison (`MessageDigest.isEqual`)
@@ -78,20 +77,15 @@ Content-Type: application/json
 
 ## 3. Domain Entities & Aggregates
 
-### `AuthAccountJpa` (Aggregate Root)
+### `AuthAccount` (Aggregate Root)
 
-Created by reacting to `UserCreatedEvent`. One `AuthAccountJpa` per `User`.
+Created by reacting to `UserCreated`. One `AuthAccountJpa` audit/persistence record per `User`.
 
 ```
 AuthAccount
 ├── id: Long
 ├── userId: Long                        ← references accounts:User
-├── passwordHash: String                ← bcrypt(cost=12)
-├── emailVerified: Boolean              ← false until verification link clicked
-├── emailVerificationToken: String      ← nullable, short-lived
-├── emailVerificationExpiresAt: ZonedDateTime ← nullable
-├── passwordResetToken: String          ← nullable, hashed, short-lived
-├── passwordResetExpiresAt: ZonedDateTime ← nullable
+├── password: String                    ← bcrypt(cost=12) hash
 ├── failedLoginAttempts: Integer        ← resets to 0 on success
 ├── lockedUntil: ZonedDateTime          ← nullable, set after 5 failed attempts
 ├── lastLoginAt: ZonedDateTime          ← nullable
@@ -100,10 +94,8 @@ AuthAccount
 ```
 
 **Business Methods:**
-- `setPassword(String rawPassword)` — hashes and stores the password
-- `verifyEmail(String token)` — validates token, sets `emailVerified = true`, clears token
-- `initiatePasswordReset(String token, ZonedDateTime expiresAt)` — stores reset token
-- `resetPassword(String token, String newRawPassword)` — validates token, updates hash, clears token
+- `updatePassword(String passwordHash)` — stores a newly validated and encoded password
+- `recordEmailVerified()` — publishes the verification result for accounts
 - `recordFailedLogin()` — increments counter; locks account at 5 consecutive failures
 - `recordSuccessfulLogin(String ip)` — resets counter, records IP, sets `lastLoginAt`
 - `unlock()` — admin action to unlock an account
@@ -111,24 +103,29 @@ AuthAccount
 **Domain Rules:**
 - Account is locked after 5 consecutive failed login attempts for 30 minutes
 - A locked account cannot log in, even with the correct password
-- Email must be verified before login is permitted
+- Email verification state is owned by accounts and read through `UserQueryPort` before login
+- OAuth provider tokens are not stored in `AuthAccount`; OAuth is not implemented yet
 
 ---
 
-### `Session` (Value Object stored in Redis)
+### `Session` (Redis runtime record with a database audit copy)
 
 Not a JPA entity — stored entirely in Redis.
 
 ```
-RefreshToken (Redis key: "refresh:{token}")
-├── token: String          ← opaque UUID, stored as SHA-256 hash in Redis
+Session (Redis keys: `session:{tokenHash}` and `session:id:{id}`)
+├── id: Long              ← included in access-token `sid`
+├── tokenHash: String     ← SHA-256 of the opaque refresh token; raw token is never persisted
 ├── userId: Long
-├── orgId: Long
+├── organizationId: Long
+├── environment: TEST | LIVE
 ├── deviceFingerprint: String   ← SHA-256(userAgent + deviceType)
 ├── issuedAt: ZonedDateTime
 ├── expiresAt: ZonedDateTime    ← Redis TTL matches this
-└── lastUsedAt: ZonedDateTime
+└── tokenFamilyId: String
 ```
+
+Redis is the exclusive authentication/session-validation source. The JPA row is retained only as an audit record and is not read for authentication. Logout, rotation, member deactivation, and organization bans invalidate Redis records without deleting audit rows.
 
 ---
 
@@ -156,6 +153,7 @@ Access tokens are signed with RS256 (asymmetric). The private key is held only b
 {
   "sub": "12345",                         // userId
   "org": "67890",                         // activeOrganizationId
+  "sid": "98765",                         // Redis session ID
   "jti": "a1b2c3d4-...",                  // unique token ID (for revocation)
   "permissions": ["pay:charges:create",   // RBAC permission claims from iam
                    "commerce:orders:read"],
@@ -165,30 +163,24 @@ Access tokens are signed with RS256 (asymmetric). The private key is held only b
 }
 ```
 
+The environment and active organization are trusted token context. Controllers must read both from `AuthenticatedPrincipal`; request DTOs must not accept them. Switching organization or environment rotates the session and refresh token, recalculates permissions, and issues a new access token. Switching to LIVE requires approved compliance. TEST and LIVE state, provider resources, idempotency keys, and ledger postings never fall back into each other.
+
 ---
 
 ## 5. Domain Events
 
 | Event | Published When | Consumed By |
 |---|---|---|
-| `AuthAccountCreatedEvent` | `UserCreatedEvent` received from accounts | `notifications` (send verification email) |
-| `EmailVerifiedEvent` | User clicks verification link | `accounts` (log), `notifications` (welcome message) |
-| `PasswordResetInitiatedEvent` | User requests password reset | `notifications` (send reset email) |
-| `SuspiciousLoginDetectedEvent` | Login from new device/IP | `notifications` (email security alert), `audit` |
-| `AccountLockedEvent` | 5 failed login attempts | `notifications` (email user), `audit` |
+| `OtpVerificationCreated` | Email verification, password reset, or new-device OTP is issued | `notifications` |
+| `AuthEmailVerifiedEvent` | User verifies their email, or an invited user is trusted | `accounts`, `notifications` |
+| `AuthAccountLocked` | 5 failed login attempts | `notifications`, `audit` |
+| `ActiveOrganizationSwitchedEvent` | Active organization and permissions are rotated | `accounts` |
 
 ---
 
 ## 6. Exceptions & Errors
 
-**`AuthErrorCode`**:
-- `INVALID_CREDENTIALS`, `ACCOUNT_LOCKED`, `ACCOUNT_NOT_FOUND`
-- `EMAIL_NOT_VERIFIED`, `EMAIL_ALREADY_VERIFIED`
-- `INVALID_VERIFICATION_TOKEN`, `VERIFICATION_TOKEN_EXPIRED`
-- `INVALID_RESET_TOKEN`, `RESET_TOKEN_EXPIRED`
-- `INVALID_REFRESH_TOKEN`, `REFRESH_TOKEN_EXPIRED`, `REFRESH_TOKEN_DEVICE_MISMATCH`
-- `HMAC_SIGNATURE_INVALID`, `HMAC_TIMESTAMP_EXPIRED`, `HMAC_NONCE_REPLAYED`
-- `API_KEY_NOT_FOUND`, `API_KEY_REVOKED`
+Authentication uses module-owned exceptions for invalid credentials, locked accounts, required email verification, invalid or expired verification tokens, invalid sessions, unavailable registration credentials, live-mode compliance gating, and domain invariant failures. HMAC/API-key failures belong to IAM and the main security filter rather than this module.
 
 ---
 
@@ -199,10 +191,11 @@ Access tokens are signed with RS256 (asymmetric). The private key is held only b
   - Flow: find `AuthAccountJpa` → check lock → verify password → if new device, challenge → issue access token + refresh token
 - `RefreshTokenCommand(refreshToken, deviceFingerprint)` → `RefreshTokenUseCase`
   - Flow: look up token in Redis → verify device fingerprint → rotate (delete old, issue new pair)
-- `LogoutCommand(userId, refreshToken, accessTokenJti)` → `LogoutUseCase`
-  - Flow: delete refresh token from Redis → add access token JTI to revocation set (TTL = remaining lifetime)
+- `LogoutCommand(userId, sessionId, accessTokenJti, accessTokenExpiresAt)` → `LogoutHandler`
+  - All values come from the validated access-token principal, never the request body
+  - Flow: invalidate the Redis session → add access token JTI to the revocation set for its remaining lifetime
 - `LogoutAllDevicesCommand(userId)` → `LogoutAllDevicesUseCase`
-  - Flow: delete all Redis keys matching `refresh:userId:*` → add all active access token JTIs to revocation set
+  - Flow: invalidate every session referenced by `user:{userId}:sessions`; database audit rows remain
 
 ### Password Management
 - `InitiatePasswordResetCommand(email)` → `InitiatePasswordResetUseCase`
@@ -214,7 +207,8 @@ Access tokens are signed with RS256 (asymmetric). The private key is held only b
 - `VerifyEmailCommand(token)` → `VerifyEmailUseCase`
 
 ### Trusted Devices
-- `TrustDeviceCommand(userId, deviceFingerprint, deviceName)` → `TrustDeviceUseCase`
+- `AuthorizeDeviceCommand(email, otp, deviceFingerprint, deviceName, ipAddress)` → `AuthorizeDeviceHandler`
+  - Public challenge-completion endpoint; verifies the pending device OTP and creates or renews the trusted device. The user then retries login with their password.
 - `RevokeTrustedDeviceCommand(userId, deviceId)` → `RevokeTrustedDeviceUseCase`
 
 ---
@@ -228,8 +222,19 @@ Access tokens are signed with RS256 (asymmetric). The private key is held only b
 
 ## 9. Listeners
 
-- **`UserCreatedListener`**: Listens to `UserCreatedEvent` from `accounts`. Creates `AuthAccountJpa` with a hashed temporary password (or no password if SSO-only). Triggers email verification.
-- **`InvitationAcceptedListener`**: Listens to `InvitationAcceptedEvent` from `iam`. If the invited user is new, sets their `emailVerified = true` (invitation acceptance implies email confirmation).
+- **`UserAuthenticationListener`** — topic: `user-events`, groupId: `authentication-group`
+  - Listens for `UserCreated` event (published by `accounts` module after registration)
+  - Payload consumed: `aggregateId` (userId), `payload.email`, `payload.credentialReference`, `payload.isInvited`
+  - Calls `AuthAccountHandler` which:
+    1. Checks idempotency — if `AuthAccount` already exists for that email, returns immediately
+    2. Claims the one-time credential, validates it, hashes it, and creates `AuthAccount`
+    3. Issues an email verification OTP via `OtpVerificationIssuer.issue()` → creates a `Verification` aggregate
+    4. Stores OTP for async transmission via `OtpTransmissionPort.storeForTransmission()`
+    5. Saves `AuthAccount` + `Verification` (outbox publishes `OtpVerificationCreated` event)
+  - Invited users skip OTP verification and publish the verified-email event immediately
+- **`MemberDeactivatedListener`**: topic=`iam-events`. Event=`MemberDeactivatedEvent`. Payload: `userId`, `organizationId`, `deactivatedAt`. Revokes all refresh tokens for this user (adds to Redis revocation set). Forces logout immediately on next request.
+- **`OrganizationBannedListener`**: topic=`admin-events`. Event=`OrganizationBannedEvent`. Payload: `organizationId`, `reason`, `bannedAt`. Revokes ALL active sessions for every user in the banned organization. Users are immediately logged out and cannot re-authenticate until the ban is lifted.
+
 
 ---
 
@@ -240,15 +245,21 @@ All token comparisons (HMAC verification, password reset token matching) use `Me
 
 ### Redis Key Design
 ```
-refresh:{sha256(token)}          → RefreshToken JSON (TTL: 30 days)
+session:{sha256(token)}          → Session JSON (TTL: 30 days)
+session:id:{sessionId}           → Session JSON (TTL: 30 days)
+user:{userId}:sessions           → Set<tokenHash> (TTL: active-session window)
+organization:{orgId}:sessions    → Set<tokenHash> (TTL: active-session window)
 revoke:{jti}                     → "1" (TTL: remaining access token lifetime)
 nonce:{nonce}                    → "1" (TTL: 10 minutes, HMAC replay prevention)
 lock:{userId}                    → failedAttemptCount (TTL: 30 minutes)
 device:trust:{userId}:{fp}       → TrustedDevice JSON (TTL: 90 days)
 ```
 
+### OAuth (future)
+OAuth is deliberately not active yet. A future Google implementation must use authorization-code flow with PKCE, validate issuer/audience/nonce, map the verified provider subject to an AtlasHub user, and keep provider access/refresh/ID tokens out of the `AuthAccount` table. Provider tokens must use a dedicated encrypted credential store with rotation and revocation rather than raw JPA columns.
+
 ### Token Rotation Security
-Refresh token rotation means every use of a refresh token creates a new token and invalidates the old one. If an attacker steals a refresh token and uses it AFTER the legitimate user, the legitimate user's next refresh attempt will fail (old token is gone). This triggers `SuspiciousLoginDetectedEvent` and forces re-authentication.
+Refresh token rotation means every use creates a new token and invalidates the old Redis session. Any later use of the old token is rejected and requires re-authentication.
 
 ### HMAC Signing
 See [setup/api-key-hmac-auth.md](../setup/api-key-hmac-auth.md) for the complete implementation guide.

@@ -5,6 +5,7 @@ import com.atlashub.authentication.application.port.TokenRevocationPort;
 import com.atlashub.authentication.domain.entities.Session;
 import com.atlashub.authentication.domain.repositories.SessionRepository;
 import com.atlashub.shared.domain.valueobject.CorrelationId;
+import com.atlashub.shared.application.security.AuthenticatedPrincipal;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
@@ -19,6 +20,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
 
@@ -50,11 +53,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String token = authHeader.substring(7);
 
         try {
-            Claims claims = Jwts.parser()
-                    .verifyWith(jwtTokenAdapter.getSecretKey())
+            var parsed = Jwts.parser()
+                    .verifyWith(jwtTokenAdapter.getPublicKey())
                     .build()
-                    .parseSignedClaims(token)
-                    .getPayload();
+                    .parseSignedClaims(token);
+            Claims claims = parsed.getPayload();
+            if (!jwtTokenAdapter.issuer().equals(claims.getIssuer())
+                    || claims.getAudience() == null
+                    || !claims.getAudience().contains(jwtTokenAdapter.audience())
+                    || !"at+jwt".equals(parsed.getHeader().getType())) {
+                throw new JwtException("Invalid token issuer, audience, or type");
+            }
 
             String jti = claims.getId();
             if (jti != null && revocationPort.isRevoked(jti)) {
@@ -64,9 +73,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
 
             String userId = claims.getSubject();
-            String sessionId = claims.get("sessionId", String.class);
+            String sessionId = claims.get("sid", String.class);
+            String organizationId = claims.get("org", String.class);
+            String environment = claims.get("env", String.class);
 
-            if (sessionId == null || sessionId.isBlank()) {
+            if (sessionId == null || sessionId.isBlank()
+                    || organizationId == null || organizationId.isBlank()
+                    || environment == null || environment.isBlank()) {
                 SecurityContextHolder.clearContext();
                 filterChain.doFilter(request, response);
                 return;
@@ -75,6 +88,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             Session session = sessionRepository.findById(Long.valueOf(sessionId))
                     .filter(activeSession -> !activeSession.isExpired())
                     .filter(activeSession -> activeSession.getUserId().equals(userId))
+                    .filter(activeSession -> activeSession.getOrganizationId().equals(Long.valueOf(organizationId)))
+                    .filter(activeSession -> activeSession.getEnvironment().equals(environment))
                     .orElse(null);
 
             if (session == null) {
@@ -91,9 +106,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     .map(SimpleGrantedAuthority::new)
                     .toList();
 
-            Long userIdLong = Long.valueOf(userId);
+            AuthenticatedPrincipal principal = new AuthenticatedPrincipal(
+                    Long.valueOf(userId), Long.valueOf(organizationId), environment, sessionId,
+                    jti, ZonedDateTime.ofInstant(claims.getExpiration().toInstant(), ZoneId.of("UTC")));
             UsernamePasswordAuthenticationToken auth =
-                    new UsernamePasswordAuthenticationToken(userIdLong, null, authorities);
+                    new UsernamePasswordAuthenticationToken(principal, null, authorities);
             SecurityContextHolder.getContext().setAuthentication(auth);
 
         } catch (JwtException | IllegalArgumentException e) {

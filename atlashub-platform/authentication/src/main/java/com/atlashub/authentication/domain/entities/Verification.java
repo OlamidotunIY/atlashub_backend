@@ -1,7 +1,7 @@
 package com.atlashub.authentication.domain.entities;
 
 import com.atlashub.authentication.domain.events.OtpVerificationCreated;
-import com.atlashub.authentication.domain.exceptions.AuthInvaraintError;
+import com.atlashub.authentication.domain.exceptions.AuthenticationInvariantException;
 import com.atlashub.authentication.domain.exceptions.VerifyTokenError;
 import com.atlashub.authentication.domain.valueobject.VerificationStatus;
 import com.atlashub.authentication.domain.valueobject.VerificationType;
@@ -45,7 +45,7 @@ public class Verification extends AggregateRoot<Long> {
                                       VerificationType verificationType, ZonedDateTime expiresAt) {
         if (id == null || identifier == null || identifier.isBlank() || valueHash == null
                 || valueHash.isEmpty() || verificationType == null || expiresAt == null) {
-            throw new AuthInvaraintError("Missing required fields for Verification");
+            throw new AuthenticationInvariantException("Missing required fields for Verification");
         }
 
         ZonedDateTime now = ZonedDateTime.now();

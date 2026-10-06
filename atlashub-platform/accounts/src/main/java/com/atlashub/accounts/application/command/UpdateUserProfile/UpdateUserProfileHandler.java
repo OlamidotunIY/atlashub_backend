@@ -1,8 +1,8 @@
 package com.atlashub.accounts.application.command.UpdateUserProfile;
 
-import com.atlashub.accounts.domain.exception.UserNotFoundException;
-import com.atlashub.accounts.domain.model.User;
-import com.atlashub.accounts.domain.repository.UserRepository;
+import com.atlashub.accounts.domain.exceptions.UserNotFoundException;
+import com.atlashub.accounts.domain.entities.User;
+import com.atlashub.accounts.domain.repositories.UserRepository;
 import com.atlashub.shared.application.usecase.Command;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,10 +24,9 @@ public class UpdateUserProfileHandler extends Command<UpdateUserProfileCommand, 
     public UpdateUserProfileResult execute(UpdateUserProfileCommand input) {
         log.info("Updating user profile.....");
 
-        User user = userRepository.findById(input.userId())
-                .orElseThrow(() -> new UserNotFoundException("User not found"));
+        User user = userRepository.findById(input.userId()).orElseThrow(() -> new UserNotFoundException("User not found"));
 
-        user.updateProfile(input.firstname(), input.lastname(), input.phone());
+        user.updateProfile(input.firstname(), input.lastname(), input.phone(), input.locale(), input.timezone());
         userRepository.save(user);
 
         log.info("Saved updated user profile");

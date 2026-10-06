@@ -1,7 +1,7 @@
 package com.atlashub.compliance.domain.valueobject;
 
 import java.time.ZonedDateTime;
-import com.atlashub.shared.domain.exception.ValidationException;
+import com.atlashub.compliance.domain.exception.InvalidComplianceDataException;
 
 public record ServiceAgreementData(
     ZonedDateTime acceptedAt,
@@ -10,13 +10,13 @@ public record ServiceAgreementData(
 ) {
     public ServiceAgreementData {
         if (acceptedAt == null) {
-            throw new ValidationException("acceptedAt cannot be null");
+            throw new InvalidComplianceDataException("Accepted time is required");
         }
         if (ipAddress == null || ipAddress.isBlank()) {
-            throw new ValidationException("ipAddress cannot be blank");
+            throw new InvalidComplianceDataException("IP address is required");
         }
         if (termsVersion == null || termsVersion.isBlank()) {
-            throw new ValidationException("termsVersion cannot be blank");
+            throw new InvalidComplianceDataException("Terms version is required");
         }
     }
 }

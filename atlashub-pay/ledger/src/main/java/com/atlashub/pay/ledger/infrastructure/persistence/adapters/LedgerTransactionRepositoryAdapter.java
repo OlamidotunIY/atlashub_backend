@@ -9,6 +9,7 @@ import com.atlashub.pay.ledger.infrastructure.persistence.mappers.LedgerTransact
 import com.atlashub.pay.ledger.infrastructure.persistence.repositories.SpringDataLedgerEntryRepository;
 import com.atlashub.pay.ledger.infrastructure.persistence.repositories.SpringDataLedgerTransactionRepository;
 import com.atlashub.shared.application.port.DomainEventPublisher;
+import com.atlashub.shared.application.security.ApiEnvironment;
 import com.atlashub.shared.domain.event.DomainEvent;
 import com.atlashub.shared.domain.event.EnvelopedDomainEvent;
 import com.atlashub.shared.infrastructure.service.DomainSequenceGenerator;
@@ -54,6 +55,11 @@ public class LedgerTransactionRepositoryAdapter implements LedgerTransactionRepo
     }
 
     @Override
+    public Long nextEntryIdentity() {
+        return sequenceGenerator.nextIdentity("ledger_entry_seq");
+    }
+
+    @Override
     @Transactional
     public LedgerTransaction save(LedgerTransaction entity) {
         LedgerTransactionJpa record = txMapper.toPersistence(entity);
@@ -61,15 +67,15 @@ public class LedgerTransactionRepositoryAdapter implements LedgerTransactionRepo
                 .map(entryMapper::toPersistence)
                 .collect(Collectors.toList());
 
+        LedgerTransactionJpa savedTx = txRepo.save(record);
+        List<LedgerEntryJpa> savedEntries = entryRepo.saveAll(entryRecords);
+
         List<DomainEvent<?>> events = entity.pullDomainEvents();
         if (events != null) {
             for (DomainEvent<?> event : events) {
                 eventPublisher.publish(EnvelopedDomainEvent.wrap(event));
             }
         }
-
-        LedgerTransactionJpa savedTx = txRepo.save(record);
-        List<LedgerEntryJpa> savedEntries = entryRepo.saveAll(entryRecords);
 
         return txMapper.toDomain(savedTx, savedEntries.stream().map(entryMapper::toDomain).collect(Collectors.toList()));
     }
@@ -94,16 +100,24 @@ public class LedgerTransactionRepositoryAdapter implements LedgerTransactionRepo
     }
 
     @Override
-    public Optional<LedgerTransaction> findByReference(String reference) {
-        return txRepo.findByReference(reference).map(tx -> {
+    public List<LedgerTransaction> findAll() {
+        return txRepo.findAll().stream().map(tx -> {
+            List<LedgerEntryJpa> entries = entryRepo.findByTransactionId(tx.getId());
+            return txMapper.toDomain(tx, entries.stream().map(entryMapper::toDomain).toList());
+        }).toList();
+    }
+
+    @Override
+    public Optional<LedgerTransaction> findByReferenceAndEnvironment(String reference, ApiEnvironment environment) {
+        return txRepo.findByReferenceAndEnvironment(reference, environment).map(tx -> {
             List<LedgerEntryJpa> entries = entryRepo.findByTransactionId(tx.getId());
             return txMapper.toDomain(tx, entries.stream().map(entryMapper::toDomain).collect(Collectors.toList()));
         });
     }
 
     @Override
-    public List<LedgerTransaction> findByOrganizationId(Long organizationId, Pageable pageable) {
-        List<LedgerTransactionJpa> txs = txRepo.findByOrganizationId(organizationId, pageable);
+    public List<LedgerTransaction> findByOrganizationIdAndEnvironment(Long organizationId, ApiEnvironment environment, Pageable pageable) {
+        List<LedgerTransactionJpa> txs = txRepo.findByOrganizationIdAndEnvironment(organizationId, environment, pageable);
         List<Long> txIds = txs.stream().map(LedgerTransactionJpa::getId).collect(Collectors.toList());
         List<LedgerEntryJpa> allEntries = entryRepo.findByTransactionIdIn(txIds);
         
@@ -116,11 +130,11 @@ public class LedgerTransactionRepositoryAdapter implements LedgerTransactionRepo
     }
 
     @Override
-    public Page<LedgerTransaction> findHistory(Long organizationId, Long accountId, LocalDate dateFrom, LocalDate dateTo, Pageable pageable) {
+    public Page<LedgerTransaction> findHistory(Long organizationId, ApiEnvironment environment, Long accountId, LocalDate dateFrom, LocalDate dateTo, Pageable pageable) {
         ZonedDateTime zDateFrom = dateFrom != null ? dateFrom.atStartOfDay(ZoneOffset.UTC) : null;
         ZonedDateTime zDateTo = dateTo != null ? dateTo.plusDays(1).atStartOfDay(ZoneOffset.UTC).minusNanos(1) : null;
         
-        Page<LedgerTransactionJpa> txPage = txRepo.findHistory(organizationId, accountId, zDateFrom, zDateTo, pageable);
+        Page<LedgerTransactionJpa> txPage = txRepo.findHistory(organizationId, environment, accountId, zDateFrom, zDateTo, pageable);
         List<Long> txIds = txPage.getContent().stream().map(LedgerTransactionJpa::getId).collect(Collectors.toList());
         List<LedgerEntryJpa> allEntries = entryRepo.findByTransactionIdIn(txIds);
 
@@ -133,8 +147,13 @@ public class LedgerTransactionRepositoryAdapter implements LedgerTransactionRepo
     }
 
     @Override
-    public List<LedgerTransaction> findByAccountIdAndPostedAtAfter(Long accountId, ZonedDateTime postedAt) {
-        List<LedgerTransactionJpa> txs = txRepo.findByAccountIdAndPostedAtAfter(accountId, postedAt);
+    public List<LedgerTransaction> findByAccountIdAndEnvironmentAndPostedAtAfter(
+            Long accountId, ApiEnvironment environment, ZonedDateTime postedAt) {
+        List<LedgerTransactionJpa> txs = txRepo.findByAccountIdAndEnvironmentAndPostedAtAfter(accountId, environment, postedAt);
+        return mapTransactions(txs);
+    }
+
+    private List<LedgerTransaction> mapTransactions(List<LedgerTransactionJpa> txs) {
         List<Long> txIds = txs.stream().map(LedgerTransactionJpa::getId).collect(Collectors.toList());
         List<LedgerEntryJpa> allEntries = entryRepo.findByTransactionIdIn(txIds);
         

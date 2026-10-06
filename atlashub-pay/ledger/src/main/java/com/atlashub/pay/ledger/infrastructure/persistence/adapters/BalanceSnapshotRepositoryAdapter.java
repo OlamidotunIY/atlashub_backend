@@ -52,6 +52,11 @@ public class BalanceSnapshotRepositoryAdapter implements BalanceSnapshotReposito
     }
 
     @Override
+    public List<BalanceSnapshot> findAll() {
+        return springDataRepo.findAll().stream().map(mapper::toDomain).toList();
+    }
+
+    @Override
     public void deleteById(Long id) {
         springDataRepo.deleteById(id);
     }

@@ -1,6 +1,6 @@
 package com.atlashub.accounts.application.command.UpdateOrganizationDetails;
 
-import com.atlashub.accounts.domain.model.Organization;
+import com.atlashub.accounts.domain.entities.Organization;
 
 public record UpdateOrganizationDetailsResult(
         Organization organization

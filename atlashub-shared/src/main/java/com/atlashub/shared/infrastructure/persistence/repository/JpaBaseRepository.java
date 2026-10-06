@@ -41,6 +41,13 @@ public abstract class JpaBaseRepository<TDomain extends AggregateRoot<Long>, TRe
     }
 
     @Override
+    public List<TDomain> findAll() {
+        return springDataRepository.findAll().stream()
+                .map(mapper::toDomain)
+                .toList();
+    }
+
+    @Override
     public boolean existsById(Long id) {
         return springDataRepository.existsById(id);
     }

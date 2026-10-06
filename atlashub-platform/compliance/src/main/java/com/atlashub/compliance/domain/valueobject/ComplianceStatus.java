@@ -4,7 +4,9 @@ public enum ComplianceStatus {
     NOT_STARTED,
     IN_PROGRESS,
     SUBMITTED,
+    ACTION_REQUIRED,
     UNDER_REVIEW,
     APPROVED,
-    REJECTED
+    REJECTED,
+    SUSPENDED
 }

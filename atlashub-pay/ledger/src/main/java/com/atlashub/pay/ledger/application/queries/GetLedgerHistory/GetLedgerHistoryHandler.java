@@ -4,6 +4,7 @@ import com.atlashub.pay.ledger.domain.entities.LedgerEntry;
 import com.atlashub.pay.ledger.domain.entities.LedgerTransaction;
 import com.atlashub.pay.ledger.domain.repositories.LedgerTransactionRepository;
 import com.atlashub.shared.application.usecase.Query;
+import com.atlashub.shared.application.security.ApiEnvironment;
 import com.atlashub.shared.domain.valueobject.PageResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,7 +29,7 @@ public class GetLedgerHistoryHandler extends Query<GetLedgerHistoryQuery, PageRe
     }
 
     @Override
-    @PreAuthorize("hasAuthority('pay:transfers:read')")
+    @PreAuthorize("hasAuthority('pay:ledger:read')")
     public PageResult<LedgerTransactionResult> execute(GetLedgerHistoryQuery query) {
         log.info("Executing GetLedgerHistoryQuery for organization {} and account {}", 
                 query.organizationId(), query.accountId());
@@ -36,7 +37,8 @@ public class GetLedgerHistoryHandler extends Query<GetLedgerHistoryQuery, PageRe
         Pageable pageable = PageRequest.of(query.page(), query.size());
         
         Page<LedgerTransaction> transactionPage = ledgerTransactionRepository.findHistory(
-                query.organizationId(), 
+                query.organizationId(),
+                ApiEnvironment.parse(query.environment()),
                 query.accountId(), 
                 query.dateFrom(), 
                 query.dateTo(), 

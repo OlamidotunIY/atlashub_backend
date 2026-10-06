@@ -48,7 +48,7 @@ Permission
 └── description: String
 ```
 
-Permissions are seeded via a `DataSeeder` component on startup. No UI for creating permissions — they are defined by the platform development team alongside the Handler that uses them.
+Permissions are synchronized idempotently from `PlatformPermissionCatalog` at startup by `PermissionCatalogInitializer`, which delegates to `SynchronizePermissionsHandler`. No UI creates platform permissions.
 
 ### `CustomRole` (Entity)
 Each organization can have multiple custom roles.
@@ -62,13 +62,13 @@ CustomRole
 └── permissionIds: Set<Long>   ← references to Permission.id
 ```
 
-Built-in roles per organization (created automatically on `OrganizationCreatedEvent`):
+The built-in role created per organization on `OrganizationRegistered` is:
 
 | Role Type | Permissions |
 |---|---|
-| `OWNER` | All platform permissions |
-| `ADMIN` | All permissions except billing administration |
-| `MEMBER` | Read-only permissions across modules |
+| `OWNER` | Every active platform permission, resolved dynamically |
+
+All non-owner roles are organization-defined custom roles. AtlasHub does not seed fixed `ADMIN` or `MEMBER` roles.
 
 ### `OrganizationMember` (Entity)
 ```
@@ -76,14 +76,13 @@ OrganizationMember
 ├── id: Long
 ├── userId: Long
 ├── organizationId: Long
-├── roleType: MemberRoleType    ← OWNER, ADMIN, MEMBER, CUSTOM
-├── customRoleId: Long          ← nullable — set only when roleType = CUSTOM
+├── customRoleId: Long          ← OWNER role or an organization-defined custom role
 ├── status: MemberStatus
 └── joinedAt: ZonedDateTime
 ```
 
-- If `roleType` is `OWNER`, `ADMIN`, or `MEMBER` — permissions come from the built-in role definition.
-- If `roleType` is `CUSTOM` — permissions are fetched from the `CustomRole` referenced by `customRoleId`.
+- If the referenced role is the immutable built-in OWNER role, effective permissions are every active catalog permission, including permissions added later.
+- Otherwise, effective permissions are the active permissions assigned to the referenced custom role.
 
 ---
 
@@ -278,33 +277,18 @@ Spring Security throws `AccessDeniedException`, which the `GlobalExceptionHandle
 
 When a new handler requires a permission:
 
-1. **Add to `PermissionSeeder`** in the `iam` module — add a new `Permission` record.
+1. **Add to `PlatformPermissionCatalog`** in the `iam` module.
 2. **Add `@PreAuthorize`** to the handler's `execute()` method.
 3. **Update the module doc's RBAC table** with the new permission.
-4. **Assign to built-in roles** — update the OWNER and ADMIN role seed data if the permission should be granted by default.
+4. No OWNER update is required: OWNER resolves every active permission dynamically.
 
-No migrations or schema changes are needed — the seeder is idempotent (`INSERT ... ON CONFLICT DO NOTHING`).
+No migrations or schema changes are needed — startup synchronization creates only missing permission codes.
 
 ---
 
-## 8. Built-In Role Coverage Matrix
+## 8. Built-In Role Coverage
 
-| Permission | OWNER | ADMIN | MEMBER |
-|---|---|---|---|
-| `iam:members:invite` | ✅ | ✅ | ❌ |
-| `iam:roles:manage` | ✅ | ✅ | ❌ |
-| `pay:transfers:approve` | ✅ | ✅ | ❌ |
-| `pay:transfers:initiate` | ✅ | ✅ | ❌ |
-| `hr:payroll:initiate` | ✅ | ✅ | ❌ |
-| `hr:payroll:approve` | ✅ | ✅ | ❌ |
-| `compliance:records:submit` | ✅ | ✅ | ✅ |
-| `accounting:journals:approve` | ✅ | ❌ | ❌ |
-| `commerce:inventory:manage` | ✅ | ✅ | ❌ |
-| `support:tickets:create` | ✅ | ✅ | ✅ |
-| `*.*.read` (all read permissions) | ✅ | ✅ | ✅ |
-
-> [!NOTE]
-> OWNER is the only role that can approve accounting journal entries. This aligns with the maker-checker requirement — the OWNER is always an eligible approver of last resort.
+OWNER has every active catalog permission. Custom-role coverage is selected per organization and cannot be empty.
 
 ---
 
@@ -314,7 +298,7 @@ Organization admins can define custom roles with arbitrary permission subsets. C
 
 ### Creating a Custom Role
 ```
-POST /api/v1/iam/roles
+POST /api/v1/roles
 {
   "name": "Payroll Officer",
   "permissionCodes": ["hr:payroll:initiate", "hr:employees:read", "hr:payroll:read"]
@@ -325,14 +309,13 @@ Handled by `CreateCustomRoleHandler` in `atlashub-platform:iam` (`@PreAuthorize(
 
 ### Assigning a Custom Role
 ```
-PATCH /api/v1/iam/members/{memberId}/role
+PATCH /api/v1/members/{memberId}/role
 {
-  "roleType": "CUSTOM",
   "customRoleId": 42
 }
 ```
 
-Handled by `UpdateMemberRoleHandler`. On assignment, the `iam` module invalidates any cached JWT permission list for that member (via Redis key eviction). The next login produces a new JWT with the updated permissions.
+Handled by `AssignRoleHandler` under a pessimistic member lock. Permission changes publish `CustomRolePermissionsChangedEvent`; Authentication revokes organization sessions so replacement tokens contain current permissions.
 
 ---
 
@@ -368,9 +351,13 @@ persistence/repositories/
 services/
   MembershipQueryAdapter.java
 messaging/listeners/
-  MemberDeactivatedListener.java
   OrganizationCreatedListener.java
   SubscriptionSuspendedListener.java
+  EmployeeSuspendedListener.java
+  OrganizationBannedListener.java
+  ApiKeyAuthenticatedListener.java
+messaging/schedulers/
+  InvitationExpirationScheduler.java
 ```
 
 `MembershipQueryAdapter` implements the `MembershipQueryPort` used by maker-checker handlers to count approvers. `PermissionRepositoryAdapter` serves the permission seeder and the auth module's permission-loading query.

@@ -18,26 +18,74 @@ spring:
 
   # JPA & Hibernate Settings
   jpa:
-    database-platform: org.hibernate.dialect.MySQLDialect
+    open-in-view: false
     hibernate:
-      open-in-view: false
       ddl-auto: update
     show-sql: false # Prints SQL queries to the console so you can debug
     properties:
       hibernate:
         format_sql: true
 
-  security:
-    user:
-      name: admin
-      password: atlashub
-
 # Custom Application Properties
 jwt:
-  secret: ${ATLASHUB_JWT_SECRET}
-  expiration: ${ATLASHUB_JWT_EXPIRY_MINUTES:60} 
+  expiration-minutes: ${ATLASHUB_JWT_EXPIRY_MINUTES:15}
 
 atlashub:
+  compliance:
+    encryption-key: ${ATLASHUB_COMPLIANCE_ENCRYPTION_KEY:}
+    terms-version: ${ATLASHUB_COMPLIANCE_TERMS_VERSION:v1}
+    anchor-reconciliation-cron: '${ATLASHUB_COMPLIANCE_RECONCILIATION_CRON:0 */15 * * * *}'
+  pay:
+    accounts:
+      encryption-key: ${ATLASHUB_PAY_ACCOUNTS_ENCRYPTION_KEY:}
+  jwt:
+    private-key: ${ATLASHUB_JWT_PRIVATE_KEY:}
+    public-key: ${ATLASHUB_JWT_PUBLIC_KEY:}
+    private-key-path: ${ATLASHUB_JWT_PRIVATE_KEY_PATH:}
+    public-key-path: ${ATLASHUB_JWT_PUBLIC_KEY_PATH:}
+    key-id: ${ATLASHUB_JWT_KEY_ID:atlashub-rs256-1}
+    issuer: ${ATLASHUB_JWT_ISSUER:atlashub-authentication}
+    audience: ${ATLASHUB_JWT_AUDIENCE:atlashub-api}
+  integrations:
+    anchor:
+      enabled: ${ATLASHUB_ANCHOR_ENABLED:false}
+      webhook-publish-timeout: ${ATLASHUB_ANCHOR_WEBHOOK_PUBLISH_TIMEOUT:PT5S}
+      sandbox:
+        base-url: ${ATLASHUB_ANCHOR_SANDBOX_BASE_URL:https://api.sandbox.getanchor.co}
+        api-key: ${ATLASHUB_ANCHOR_SANDBOX_API_KEY:}
+        connect-timeout: ${ATLASHUB_ANCHOR_SANDBOX_CONNECT_TIMEOUT:PT5S}
+        read-timeout: ${ATLASHUB_ANCHOR_SANDBOX_READ_TIMEOUT:PT30S}
+        capabilities:
+          deposit-accounts: ${ATLASHUB_ANCHOR_SANDBOX_DEPOSIT_ACCOUNTS:true}
+          sub-accounts: ${ATLASHUB_ANCHOR_SANDBOX_SUB_ACCOUNTS:false}
+          reserved-accounts: ${ATLASHUB_ANCHOR_SANDBOX_RESERVED_ACCOUNTS:false}
+          transfers: ${ATLASHUB_ANCHOR_SANDBOX_TRANSFERS:true}
+          fbo-account-id: ${ATLASHUB_ANCHOR_SANDBOX_FBO_ACCOUNT_ID:}
+        webhooks:
+          compliance:
+            callback-url: ${ATLASHUB_ANCHOR_SANDBOX_COMPLIANCE_WEBHOOK_URL:https://api.atlashub.example/api/v1/webhooks/anchor/sandbox/compliance}
+            token: ${ATLASHUB_ANCHOR_SANDBOX_COMPLIANCE_WEBHOOK_TOKEN:}
+          pay-accounts:
+            callback-url: ${ATLASHUB_ANCHOR_SANDBOX_PAY_ACCOUNTS_WEBHOOK_URL:https://api.atlashub.example/api/v1/webhooks/anchor/sandbox/pay-accounts}
+            token: ${ATLASHUB_ANCHOR_SANDBOX_PAY_ACCOUNTS_WEBHOOK_TOKEN:}
+      live:
+        base-url: ${ATLASHUB_ANCHOR_LIVE_BASE_URL:https://api.getanchor.co}
+        api-key: ${ATLASHUB_ANCHOR_LIVE_API_KEY:}
+        connect-timeout: ${ATLASHUB_ANCHOR_LIVE_CONNECT_TIMEOUT:PT5S}
+        read-timeout: ${ATLASHUB_ANCHOR_LIVE_READ_TIMEOUT:PT30S}
+        capabilities:
+          deposit-accounts: ${ATLASHUB_ANCHOR_LIVE_DEPOSIT_ACCOUNTS:true}
+          sub-accounts: ${ATLASHUB_ANCHOR_LIVE_SUB_ACCOUNTS:true}
+          reserved-accounts: ${ATLASHUB_ANCHOR_LIVE_RESERVED_ACCOUNTS:true}
+          transfers: ${ATLASHUB_ANCHOR_LIVE_TRANSFERS:true}
+          fbo-account-id: ${ATLASHUB_ANCHOR_LIVE_FBO_ACCOUNT_ID:}
+        webhooks:
+          compliance:
+            callback-url: ${ATLASHUB_ANCHOR_LIVE_COMPLIANCE_WEBHOOK_URL:https://api.atlashub.example/api/v1/webhooks/anchor/live/compliance}
+            token: ${ATLASHUB_ANCHOR_LIVE_COMPLIANCE_WEBHOOK_TOKEN:}
+          pay-accounts:
+            callback-url: ${ATLASHUB_ANCHOR_LIVE_PAY_ACCOUNTS_WEBHOOK_URL:https://api.atlashub.example/api/v1/webhooks/anchor/live/pay-accounts}
+            token: ${ATLASHUB_ANCHOR_LIVE_PAY_ACCOUNTS_WEBHOOK_TOKEN:}
   cache:
     user-ttl: ${ATLASHUB_CACHE_USER_TTL:PT12H}
     organization-ttl: ${ATLASHUB_CACHE_ORGANIZATION_TTL:PT12H}

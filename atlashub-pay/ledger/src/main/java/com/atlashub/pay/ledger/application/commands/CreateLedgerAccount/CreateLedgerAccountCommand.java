@@ -2,7 +2,11 @@ package com.atlashub.pay.ledger.application.commands.CreateLedgerAccount;
 
 public record CreateLedgerAccountCommand(
     Long organizationId,
+    String environment,
     String accountType,
     Long outletId,
-    String currency
+    String partyType,
+    String partyReferenceId,
+    String currency,
+    String normalBalance
 ) {}

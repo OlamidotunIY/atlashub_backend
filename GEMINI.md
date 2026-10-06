@@ -6,6 +6,12 @@
 
 ---
 
+## Mandatory skill gateway
+
+Before changing backend code, load and follow `.agents/skills/atlashub-module-workflow/SKILL.md`, then the artifact-specific skill. Run the context resolver and read every returned design document before code changes. Complete dependent skills using `.agents/skills/atlashub-module-workflow/references/dependency-routing.md`.
+
+The architecture validator is mandatory before completion. Listeners and schedulers call command handlers only; cross-module reads use shared application ports; cross-module writes use events; controllers are per resource with DTOs in `presentation/dto`; authenticated user and active organization IDs come from `AuthenticatedPrincipal`; entities throw module-specific exceptions. Every leaf skill creates or updates its matching tests, runs all required unit/integration/context tests, and then makes one scoped commit containing only that skill's production and test files. Failed or untested changes are never committed. Never push unless explicitly requested. Where this older convention guide conflicts with the mandatory workflow or current module docs, the workflow and current docs win.
+
 ## 0. Non-Negotiable Directives
 
 - **Do nothing you were not asked to do.** If something is unclear, ask before acting. Most importantly, **you MUST NEVER do anything without a skill**. If the skill does not exist, you MUST do nothing!!
@@ -63,7 +69,8 @@ com.atlashub.<module>/
 ├── infrastructure/
 │   ├── messaging/
 │   │   ├── events/                            ← Kafka event payload records
-│   │   └── listeners/                         ← Kafka listener classes
+│   │   ├── listeners/                         ← Kafka listener classes
+│   │   └── schedulers/                        ← scheduled command triggers
 │   ├── persistence/
 │   │   ├── adapters/                          ← Repository adapter implementations
 │   │   ├── entities/                          ← JPA entities
@@ -75,7 +82,7 @@ com.atlashub.<module>/
 └── presentation/
     ├── dto/                               ← Request/Response DTOs (NEVER inside the controller, NEVER inside rest/)
     └── rest/
-        └── <ModuleName>Controller.java    ← REST controller
+        └── <ResourceName>Controller.java  ← one REST controller per resource/entity
 ```
 
 ---
@@ -356,11 +363,11 @@ public class AuthAccountRepositoryAdapter
 
 ### 5.5 Cross-Module Query Port Adapters
 
-Live in `infrastructure/services/`. Implement port interfaces defined in `atlashub-shared`.
+Live in `infrastructure/persistence/adapters/`, alongside every other persistence-backed adapter. Implement port interfaces defined in `atlashub-shared`.
 Query directly from the Spring Data repository without going through the domain mapper —
 they return DTOs, not domain objects.
 
-**Case study: [`UserQueryPortAdapter.java`](atlashub-platform/accounts/src/main/java/com/atlashub/accounts/infrastructure/services/UserQueryPortAdapter.java)**
+**Case study: [`UserQueryPortAdapter.java`](atlashub-platform/accounts/src/main/java/com/atlashub/accounts/infrastructure/persistence/adapters/UserQueryPortAdapter.java)**
 
 ```java
 @Component
@@ -424,7 +431,7 @@ Lives in `presentation/rest/`. Rules:
 - Each endpoint annotated with the HTTP method, `@Operation` (Swagger), and
   `@SecurityRequirement(name = "bearerAuth")` for authenticated endpoints
 - Public endpoints also annotated with `@PublicEndpoint`
-- `@AuthenticationPrincipal Long userId` extracts the authenticated user ID from the JWT
+- `@AuthenticationPrincipal AuthenticatedPrincipal principal` supplies the authenticated user ID and active organization ID from the JWT
 - The controller maps DTOs → commands/queries, calls the handler, wraps result in `ApiResponse`
 - **NO logic in the controller beyond mapping and delegation**
 - **NO inner classes or records** — all DTOs must live in the `dto` package
@@ -503,7 +510,7 @@ Cross-module reads MUST go through the shared query port interfaces.
 | `@Service` on a handler | `@Component` on a handler |
 | Handler calls `eventPublisher.publish(...)` | `repository.save()` publishes events automatically |
 | `BaseUseCase` on any handler | `Command<I,O>` or `Query<I,O>` |
-| DTOs as inner records in the controller | DTOs in `presentation/rest/dto/` package |
+| DTOs as inner records in the controller | DTOs in `presentation/dto/` package |
 | Cross-module repository injection | Use shared query port interface |
 | Manual MapStruct mapping without `uses = {ValueObjectMapper.class}` | Always include `uses = {ValueObjectMapper.class}` |
 | `@GeneratedValue` on JPA `@Id` | No `@GeneratedValue` — use sequence generator |
