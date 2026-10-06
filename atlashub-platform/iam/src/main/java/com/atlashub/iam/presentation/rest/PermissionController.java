@@ -4,6 +4,8 @@ import com.atlashub.iam.application.queries.ListPermissions.ListPermissionsHandl
 import com.atlashub.iam.application.queries.ListPermissions.ListPermissionsQuery;
 import com.atlashub.iam.application.queries.ListPermissions.PermissionResult;
 import com.atlashub.shared.application.dto.ApiResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -13,7 +15,8 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/iam/permissions")
+@RequestMapping("/api/v1/permissions")
+@Tag(name = "Permissions", description = "Platform permission catalog")
 public class PermissionController {
     private final ListPermissionsHandler listPermissionsHandler;
 
@@ -22,6 +25,7 @@ public class PermissionController {
     }
 
     @GetMapping
+    @Operation(summary = "List available permissions")
     public ResponseEntity<ApiResponse<List<PermissionResult>>> list(
             @RequestParam(required = false) String module) {
         return ok(listPermissionsHandler.execute(new ListPermissionsQuery(module)));

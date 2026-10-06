@@ -10,14 +10,14 @@ import java.time.ZonedDateTime;
 @Getter
 public class Permission extends AggregateRoot<Long> {
     private final Long id;
-    private String code;
-    private String module;
-    private String resource;
-    private PermissionAction action;
-    private String displayName;
-    private String description;
-    private boolean active;
-    private ZonedDateTime createdAt;
+    private final String code;
+    private final String module;
+    private final String resource;
+    private final PermissionAction action;
+    private final String displayName;
+    private final String description;
+    private final boolean active;
+    private final ZonedDateTime createdAt;
     private ZonedDateTime updatedAt;
 
     public Permission(Long id, String code, String module, String resource, PermissionAction action, String displayName, String description, boolean active, ZonedDateTime createdAt, ZonedDateTime updatedAt) {
@@ -40,8 +40,8 @@ public class Permission extends AggregateRoot<Long> {
         if (code == null || code.isBlank()) {
             throw new InvalidPermissionDataException("Permission code cannot be null or blank");
         }
-        if (!code.matches("[a-z][a-z0-9-]*:[a-z][a-z0-9-]*:[a-z][a-z0-9-]*")) {
-            throw new InvalidPermissionDataException("Permission code must use module:resource:action format");
+        if (!code.matches("[a-z][a-z0-9-]*:[a-z][a-z0-9-]*(?::[a-z][a-z0-9-]*)?")) {
+            throw new InvalidPermissionDataException("Permission code must use module:action or module:resource:action format");
         }
         if (module == null || module.isBlank()) {
             throw new InvalidPermissionDataException("Permission module cannot be null or blank");

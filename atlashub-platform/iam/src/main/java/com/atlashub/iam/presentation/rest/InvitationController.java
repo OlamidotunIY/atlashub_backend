@@ -15,6 +15,8 @@ import com.atlashub.iam.presentation.dto.InvitationTokenRequest;
 import com.atlashub.iam.presentation.dto.InviteMemberRequest;
 import com.atlashub.shared.application.dto.ApiResponse;
 import com.atlashub.shared.application.security.AuthenticatedPrincipal;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -30,7 +32,8 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/iam/invitations")
+@RequestMapping("/api/v1/invitations")
+@Tag(name = "Invitations", description = "Organization member invitations")
 public class InvitationController {
     private final InviteMemberHandler inviteHandler;
     private final ListInvitationsHandler listHandler;
@@ -51,6 +54,7 @@ public class InvitationController {
     }
 
     @PostMapping
+    @Operation(summary = "Invite an organization member")
     public ResponseEntity<ApiResponse<Void>> invite(
             @AuthenticationPrincipal AuthenticatedPrincipal principal,
             @Valid @RequestBody InviteMemberRequest request) {
@@ -60,6 +64,7 @@ public class InvitationController {
     }
 
     @GetMapping
+    @Operation(summary = "List organization invitations")
     public ResponseEntity<ApiResponse<List<InvitationResult>>> list(
             @AuthenticationPrincipal AuthenticatedPrincipal principal,
             @RequestParam(required = false) String status) {
@@ -67,6 +72,7 @@ public class InvitationController {
     }
 
     @DeleteMapping("/{id}")
+    @Operation(summary = "Cancel an invitation")
     public ResponseEntity<ApiResponse<Void>> revoke(
             @AuthenticationPrincipal AuthenticatedPrincipal principal,
             @PathVariable Long id) {
@@ -76,6 +82,7 @@ public class InvitationController {
     }
 
     @PostMapping("/accept")
+    @Operation(summary = "Accept an invitation")
     public ResponseEntity<ApiResponse<Void>> accept(
             @AuthenticationPrincipal AuthenticatedPrincipal principal,
             @Valid @RequestBody InvitationTokenRequest request) {
@@ -84,6 +91,7 @@ public class InvitationController {
     }
 
     @PostMapping("/decline")
+    @Operation(summary = "Decline an invitation")
     public ResponseEntity<ApiResponse<Void>> decline(
             @Valid @RequestBody InvitationTokenRequest request) {
         declineHandler.execute(new DeclineInvitationCommand(request.token()));

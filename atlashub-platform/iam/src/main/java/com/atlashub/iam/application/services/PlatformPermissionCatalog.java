@@ -62,7 +62,12 @@ public final class PlatformPermissionCatalog {
 
     private static Definition permission(String code, String description) {
         String[] parts = code.split(":");
-        return new Definition(code, parts[0], parts[1], PermissionAction.valueOf(parts[2].toUpperCase()),
+        if (parts.length != 2 && parts.length != 3) {
+            throw new IllegalArgumentException("Permission code must use module:action or module:resource:action format: " + code);
+        }
+        String resource = parts.length == 2 ? parts[0] : parts[1];
+        String action = parts[parts.length - 1];
+        return new Definition(code, parts[0], resource, PermissionAction.valueOf(action.toUpperCase()),
                 description, description);
     }
 

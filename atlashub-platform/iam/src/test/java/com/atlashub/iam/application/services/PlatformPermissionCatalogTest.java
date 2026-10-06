@@ -2,14 +2,29 @@ package com.atlashub.iam.application.services;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 class PlatformPermissionCatalogTest {
+
     @Test
-    void catalog_codes_are_unique_and_include_iam_permissions() {
-        var definitions = PlatformPermissionCatalog.definitions();
-        assertEquals(definitions.size(), definitions.stream().map(PlatformPermissionCatalog.Definition::code).distinct().count());
-        assertTrue(definitions.stream().anyMatch(value -> value.code().equals("iam:roles:manage")));
+    void defines_only_supported_permission_actions() {
+        assertDoesNotThrow(PlatformPermissionCatalog::definitions);
+        assertFalse(PlatformPermissionCatalog.definitions().isEmpty());
+    }
+
+    @Test
+    void maps_two_segment_permission_codes_to_their_module_resource() {
+        Map<String, PlatformPermissionCatalog.Definition> definitions = PlatformPermissionCatalog.definitions().stream()
+                .collect(java.util.stream.Collectors.toMap(PlatformPermissionCatalog.Definition::code, definition -> definition));
+
+        PlatformPermissionCatalog.Definition complianceRead = definitions.get("compliance:read");
+
+        assertEquals("compliance", complianceRead.module());
+        assertEquals("compliance", complianceRead.resource());
+        assertEquals("READ", complianceRead.action().name());
     }
 }

@@ -13,6 +13,8 @@ import com.atlashub.iam.application.queries.ListMembers.MemberResult;
 import com.atlashub.iam.presentation.dto.AssignRoleRequest;
 import com.atlashub.shared.application.dto.ApiResponse;
 import com.atlashub.shared.application.security.AuthenticatedPrincipal;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -28,7 +30,8 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/iam/members")
+@RequestMapping("/api/v1/members")
+@Tag(name = "Organization Members", description = "Organization membership and role assignment")
 public class OrganizationMemberController {
     private final ListMembersHandler listHandler;
     private final GetMemberDetailsHandler detailsHandler;
@@ -46,6 +49,7 @@ public class OrganizationMemberController {
     }
 
     @GetMapping
+    @Operation(summary = "List organization members")
     public ResponseEntity<ApiResponse<List<MemberResult>>> list(
             @AuthenticationPrincipal AuthenticatedPrincipal principal,
             @RequestParam(required = false) String status) {
@@ -53,6 +57,7 @@ public class OrganizationMemberController {
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "Get organization member")
     public ResponseEntity<ApiResponse<MemberDetailsResult>> details(
             @AuthenticationPrincipal AuthenticatedPrincipal principal,
             @PathVariable Long id) {
@@ -60,6 +65,7 @@ public class OrganizationMemberController {
     }
 
     @PatchMapping("/{id}/role")
+    @Operation(summary = "Assign a member role")
     public ResponseEntity<ApiResponse<Void>> assignRole(
             @AuthenticationPrincipal AuthenticatedPrincipal principal,
             @PathVariable Long id,
@@ -70,6 +76,7 @@ public class OrganizationMemberController {
     }
 
     @DeleteMapping("/{id}")
+    @Operation(summary = "Deactivate an organization member")
     public ResponseEntity<ApiResponse<Void>> deactivate(
             @AuthenticationPrincipal AuthenticatedPrincipal principal,
             @PathVariable Long id) {

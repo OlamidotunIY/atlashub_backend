@@ -15,6 +15,8 @@ import com.atlashub.iam.application.queries.ListCustomRoles.ListCustomRolesQuery
 import com.atlashub.iam.presentation.dto.RoleRequest;
 import com.atlashub.shared.application.dto.ApiResponse;
 import com.atlashub.shared.application.security.AuthenticatedPrincipal;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -30,7 +32,8 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/iam/roles")
+@RequestMapping("/api/v1/roles")
+@Tag(name = "Custom Roles", description = "Organization role and permission management")
 public class CustomRoleController {
     private final ListCustomRolesHandler listHandler;
     private final GetCustomRolePermissionsHandler permissionsHandler;
@@ -51,12 +54,14 @@ public class CustomRoleController {
     }
 
     @GetMapping
+    @Operation(summary = "List custom roles")
     public ResponseEntity<ApiResponse<List<CustomRoleResult>>> list(
             @AuthenticationPrincipal AuthenticatedPrincipal principal) {
         return ok(listHandler.execute(new ListCustomRolesQuery(principal.activeOrganizationId())));
     }
 
     @GetMapping("/{id}/permissions")
+    @Operation(summary = "Get role permissions")
     public ResponseEntity<ApiResponse<CustomRolePermissionsResult>> permissions(
             @AuthenticationPrincipal AuthenticatedPrincipal principal,
             @PathVariable Long id) {
@@ -65,6 +70,7 @@ public class CustomRoleController {
     }
 
     @PostMapping
+    @Operation(summary = "Create a custom role")
     public ResponseEntity<ApiResponse<Void>> create(
             @AuthenticationPrincipal AuthenticatedPrincipal principal,
             @Valid @RequestBody RoleRequest request) {
@@ -75,6 +81,7 @@ public class CustomRoleController {
     }
 
     @PutMapping("/{id}")
+    @Operation(summary = "Update a custom role")
     public ResponseEntity<ApiResponse<Void>> update(
             @AuthenticationPrincipal AuthenticatedPrincipal principal,
             @PathVariable Long id,
@@ -86,6 +93,7 @@ public class CustomRoleController {
     }
 
     @DeleteMapping("/{id}")
+    @Operation(summary = "Delete a custom role")
     public ResponseEntity<ApiResponse<Void>> delete(
             @AuthenticationPrincipal AuthenticatedPrincipal principal,
             @PathVariable Long id) {
