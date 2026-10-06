@@ -31,14 +31,14 @@ start:
 deploy-stack:
 	@echo "=> Checking if Docker and K3s are installed and ready..."
 	$(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "while ! command -v docker >/dev/null 2>&1; do echo 'Waiting for Docker...'; sleep 5; done; while ! command -v k3s >/dev/null 2>&1; do echo 'Waiting for K3s...'; sleep 5; done; while ! sudo k3s kubectl get node >/dev/null 2>&1; do echo 'Waiting for Kubernetes to be ready...'; sleep 5; done; echo 'Infrastructure is Ready!'"
-	@echo "=> Copying Secrets to VM (if not exists)..."
+	@echo "=> Syncing Secrets to VM..."
 	$(eval FIREBASE_JSON := $(wildcard infrastructure/Firebase/*.json))
 	$(eval FIREBASE_JSON_NAME := $(notdir $(FIREBASE_JSON)))
 	@echo "=> Syncing .env from the local deployment source..."
-	@$(SCP) $(SSH_OPTIONS) -i $(SSH_KEY) .env ubuntu@$(VM_IP):/tmp/.env
-	@$(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "test -f /tmp/$(FIREBASE_JSON_NAME)" && echo "=> Firebase JSON already exists on VM, skipping." || $(SCP) $(SSH_OPTIONS) -i $(SSH_KEY) $(FIREBASE_JSON) ubuntu@$(VM_IP):/tmp/$(FIREBASE_JSON_NAME)
-	@$(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "test -f /tmp/atlashub-jwt-private.pem" && echo "=> JWT private key already exists on VM, skipping." || $(SCP) $(SSH_OPTIONS) -i $(SSH_KEY) $(JWT_PRIVATE_KEY) ubuntu@$(VM_IP):/tmp/atlashub-jwt-private.pem
-	@$(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "test -f /tmp/atlashub-jwt-public.pem" && echo "=> JWT public key already exists on VM, skipping." || $(SCP) $(SSH_OPTIONS) -i $(SSH_KEY) $(JWT_PUBLIC_KEY) ubuntu@$(VM_IP):/tmp/atlashub-jwt-public.pem
+	@$(CAT) .env | $(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "cat > /tmp/.env"
+	@$(CAT) $(FIREBASE_JSON) | $(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "umask 077 && cat > /tmp/$(FIREBASE_JSON_NAME)"
+	@$(CAT) $(JWT_PRIVATE_KEY) | $(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "umask 077 && cat > /tmp/atlashub-jwt-private.pem"
+	@$(CAT) $(JWT_PUBLIC_KEY) | $(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "umask 077 && cat > /tmp/atlashub-jwt-public.pem"
 	@echo "=> Ensuring Docker Image exists in K3s..."
 	@$(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "sudo k3s ctr images ls | grep -q atlashub/app:latest" || $(MAKE) build-image
 	@echo "=> Applying Kubernetes Secrets..."
