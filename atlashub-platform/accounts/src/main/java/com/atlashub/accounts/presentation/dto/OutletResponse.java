@@ -1,5 +1,7 @@
 package com.atlashub.accounts.presentation.dto;
 
+import com.atlashub.accounts.domain.valueobject.OutletStatus;
+
 import java.time.ZonedDateTime;
 
 public record OutletResponse(
@@ -12,7 +14,7 @@ public record OutletResponse(
         String country,
         String currency,
         Long managerId,
-        String status,
+        OutletStatus status,
         ZonedDateTime createdAt,
         ZonedDateTime updatedAt
 ) {}

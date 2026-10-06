@@ -148,7 +148,7 @@ public class OutletController {
                 result.country(),
                 result.currency(),
                 result.managerId(),
-                result.status().name(),
+                result.status(),
                 result.createdAt(),
                 result.updatedAt()
         );

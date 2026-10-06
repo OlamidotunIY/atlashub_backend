@@ -7,7 +7,6 @@ import com.atlashub.accounts.application.query.GetOrganizationDetails.GetOrganiz
 import com.atlashub.accounts.application.query.GetOrganizationDetails.OrganizationDetailsResult;
 import com.atlashub.accounts.presentation.dto.OrganizationDetailsResponse;
 import com.atlashub.accounts.presentation.dto.UpdateOrganizationRequest;
-import com.atlashub.accounts.domain.valueobject.SupportedIndustry;
 import com.atlashub.shared.application.security.AuthenticatedPrincipal;
 import com.atlashub.shared.application.dto.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -56,7 +55,7 @@ public class OrganizationController {
             @Valid @RequestBody UpdateOrganizationRequest request) {
         updateOrgHandler.execute(new UpdateOrganizationDetailsCommand(
                 principal.activeOrganizationId(), request.businessName(), request.description(),
-                request.logoUrl(), request.industry() == null ? null : SupportedIndustry.parse(request.industry()),
+                request.logoUrl(), request.industry(),
                 request.websiteUrl()
         ));
         return done("Organization updated");
