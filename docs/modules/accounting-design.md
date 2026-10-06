@@ -36,6 +36,14 @@ Every accounting listener uses `EventDeliveryTracker` with `(eventId, groupId)` 
 - **Consumes events from:** `commerce-events`, `hr-events`, `pay-events`, `logistics-events`, `compliance-events`
 - **Publishes to:** `accounting-events` topic consumed by `analytics`, `notifications`
 
+### Intelligence and Financing Data Contract
+
+Accounting is an essential input to Atlas Intelligence and AtlasScore. It remains the authoritative owner of journal-backed profit/loss, gross profit and margin, operating-expense growth, payroll burden, receivable/payable exposure, reconciled cash-flow, and financial-close corrections.
+
+It must publish normalized `FinancialPeriodClosed` and `FinancialHealthAdjusted` events for `atlashub-analytics` to materialize MySQL `FinancialHealthProjection` rows. It must not expose GL tables or aggregate internals to Analytics, Intelligence, or Financing. Historical score/application decisions reference the resulting immutable Analytics feature snapshot, not mutable current accounting rows.
+
+Accounting does not decide financing eligibility, lender underwriting, fund-use policy, or recovery. It supplies reproducible financial facts and audit evidence only.
+
 ---
 
 ## Gradle

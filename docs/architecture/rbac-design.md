@@ -298,7 +298,7 @@ Organization admins can define custom roles with arbitrary permission subsets. C
 
 ### Creating a Custom Role
 ```
-POST /api/v1/iam/roles
+POST /api/v1/roles
 {
   "name": "Payroll Officer",
   "permissionCodes": ["hr:payroll:initiate", "hr:employees:read", "hr:payroll:read"]
@@ -309,7 +309,7 @@ Handled by `CreateCustomRoleHandler` in `atlashub-platform:iam` (`@PreAuthorize(
 
 ### Assigning a Custom Role
 ```
-PATCH /api/v1/iam/members/{memberId}/role
+PATCH /api/v1/members/{memberId}/role
 {
   "customRoleId": 42
 }

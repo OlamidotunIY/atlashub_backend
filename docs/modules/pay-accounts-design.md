@@ -83,7 +83,8 @@ OrganizationBankingProfile
 **Rules:**
 
 - One profile per organization.
-- Provisioning starts only from an effective `OrganizationComplianceApprovedEvent`.
+- LIVE provisioning starts only from an effective `OrganizationComplianceApprovedEvent`.
+- TEST provisioning starts only from `OrganizationTestBankingReadyEvent`, which contains the separately persisted Anchor Sandbox business-customer ID created from a completed AtlasHub compliance submission.
 - The event's `anchorBusinessCustomerId` is mandatory.
 - `ACTIVE` requires both the deposit account and subaccount to be `ACTIVE`.
 - The profile is usable only when it has no active restriction.
@@ -228,7 +229,7 @@ ReservedAccount
 - Repeating an issuance command with the same idempotency key returns the existing local result.
 - Reserved-account activation never bootstraps organization ledger accounts.
 
-The API supports both individual and business customer identity variants without leaking Anchor request DTOs into the domain.
+The API supports an inline individual identity and an existing, internally resolved Anchor business-customer relationship without leaking Anchor request DTOs or provider IDs through the public API. Business reserved-account issuance requires the owning customer/vendor module to supply its stored provider-customer link; the client never submits an Anchor customer ID.
 
 ---
 
@@ -266,30 +267,35 @@ public interface AnchorBankingPort {
     DepositAccountProvisioningResult createBusinessDepositAccount(
         String anchorBusinessCustomerId,
         String productName,
-        String requestReference);
+        String requestReference,
+        String apiEnvironment);
 
     SubAccountProvisioningResult createBusinessSubAccount(
         String anchorBusinessCustomerId,
         String anchorParentFboAccountId,
         boolean createVirtualNuban,
-        String requestReference);
+        String requestReference,
+        String apiEnvironment);
 
     ReservedAccountProvisioningResult createReservedAccount(
         ReservedAccountCustomer customer,
         String provider,
         String anchorPayoutSubAccountId,
-        String requestReference);
+        String requestReference,
+        String apiEnvironment);
 
-    AnchorDepositAccountDetails fetchDepositAccount(String anchorAccountId);
-    AnchorSubAccountDetails fetchSubAccount(String anchorSubAccountId);
-    AnchorReservedAccountDetails fetchReservedAccount(String anchorReservedAccountId);
+    AnchorDepositAccountDetails fetchDepositAccount(String anchorAccountId, String apiEnvironment);
+    AnchorSubAccountDetails fetchSubAccount(String anchorSubAccountId, String apiEnvironment);
+    AnchorReservedAccountDetails fetchReservedAccount(String anchorReservedAccountId, String apiEnvironment);
 
-    void freezeDepositAccount(String anchorAccountId, FreezeReason reason);
-    void unfreezeDepositAccount(String anchorAccountId);
+    void freezeDepositAccount(String anchorAccountId, FreezeReason reason, String apiEnvironment);
+    void unfreezeDepositAccount(String anchorAccountId, String apiEnvironment);
 }
 ```
 
 Additional suspend/reactivate/close capabilities are exposed only after the matching Anchor operation is confirmed. Unsupported operations still block the resource locally and create an operations/reconciliation task; infrastructure must not invent provider success.
+
+Every create request sends the environment-scoped AtlasHub request reference as Anchor's `Idempotency-Key`; a timeout retry must reuse that same value.
 
 ---
 
@@ -297,7 +303,7 @@ Additional suspend/reactivate/close capabilities are exposed only after the matc
 
 ### `ProvisionOrganizationBankingCommand`
 
-Triggered only by `OrganizationComplianceApprovedEvent`.
+Triggered by `OrganizationComplianceApprovedEvent` for LIVE or `OrganizationTestBankingReadyEvent` for TEST. Each event carries the customer ID from its own Anchor environment; IDs are never reused across environments.
 
 1. Create/load `OrganizationBankingProfile` by organization ID.
 2. Verify the event has an Anchor business-customer ID and the compliance decision remains approved.
@@ -456,13 +462,14 @@ Reserved accounts are pageable; marketplace organizations can have many customer
 
 | Method | Path | Permission | Purpose |
 |---|---|---|---|
-| `GET` | `/api/v1/pay/accounts/business` | `pay:accounts:read` | Banking profile and masked business accounts |
-| `POST` | `/api/v1/pay/accounts/reserved` | `pay:accounts:create` | Issue customer/vendor reserved account |
-| `GET` | `/api/v1/pay/accounts/reserved` | `pay:accounts:read` | Page through reserved accounts |
-| `GET` | `/api/v1/pay/accounts/reserved/{id}` | `pay:accounts:read` | View one reserved account |
-| `POST` | `/api/v1/pay/accounts/reserved/{id}/suspend` | `pay:accounts:suspend` | Block account use |
-| `POST` | `/api/v1/pay/accounts/reserved/{id}/reactivate` | `pay:accounts:reactivate` | Restore suspended account |
-| `POST` | `/api/v1/pay/accounts/reserved/{id}/close` | `pay:accounts:close` | Permanently close after provider capability check |
+| `GET` | `/api/v1/business-accounts` | `pay:accounts:read` | Banking profile and masked business accounts |
+| `POST` | `/api/v1/reserved-accounts` | `pay:accounts:create` | Issue customer/vendor reserved account |
+| `GET` | `/api/v1/reserved-accounts` | `pay:accounts:read` | Page through reserved accounts |
+| `GET` | `/api/v1/reserved-accounts/{id}` | `pay:accounts:read` | View one reserved account |
+| `POST` | `/api/v1/reserved-accounts/{id}/suspend` | `pay:accounts:suspend` | Block account use |
+| `POST` | `/api/v1/reserved-accounts/{id}/reactivate` | `pay:accounts:reactivate` | Restore suspended account |
+| `POST` | `/api/v1/reserved-accounts/{id}/close` | `pay:accounts:close` | Permanently close after provider capability check |
+| `POST` | `/api/v1/payment-capabilities/{capability}/enable` | `pay:capabilities:manage` | Enable a payment collection or terminal capability |
 
 Organization and requester IDs come from authenticated context, not trusted request bodies. Full account numbers are returned only to authorized operations and are otherwise masked.
 

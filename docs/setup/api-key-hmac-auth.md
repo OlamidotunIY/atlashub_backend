@@ -169,7 +169,7 @@ The `secretKey` is returned in the API response **exactly once**. AtlasHub never
 
 ## Key Rotation
 
-`POST /api/v1/iam/api-keys/{id}/rotate` invokes `RotateApiKeyCommand`. In one transaction it locks and revokes the selected key, creates a replacement with the same environment and role binding, and returns the replacement secret once. The optional request name replaces the display name; otherwise the prior name is preserved.
+`POST /api/v1/api-keys/{id}/rotate` invokes `RotateApiKeyCommand`. In one transaction it locks and revokes the selected key, creates a replacement with the same environment and role binding, and returns the replacement secret once. The optional request name replaces the display name; otherwise the prior name is preserved.
 
 Successful HMAC authentication publishes `ApiKeyAuthenticatedEvent`. IAM consumes it asynchronously to update `lastUsedAt`, keeping the authentication read path free of synchronous audit writes.
 

@@ -6,11 +6,110 @@ The `analytics` module provides **advanced, real-time business intelligence** ac
 
 This is a **pure read + listener module**. It has **no user-initiated commands**. All data mutations are triggered by Kafka event listeners that react to domain events published by other modules. The presentation layer exposes GET-only endpoints.
 
+> **MySQL implementation decision (2026-10-04):** AtlasHub runs on MySQL. The PostgreSQL/TimescaleDB-specific persistence, secondary-datasource, hypertable, continuous-aggregate, `jsonb`, RLS, and `ON CONFLICT` examples later in this historical design are superseded by the MySQL implementation design below. The detailed projection/event/query responsibilities remain valid; this amendment replaces only the physical storage implementation and adds the accounting, feature-snapshot, ML, Intelligence, and Financing requirements.
+
 Analytics is built on two complementary foundations:
 
 1. **CQRS Event-Driven Projections**: Every domain event updates dedicated read models (materialized projection tables). Dashboard queries hit these pre-computed models — not the operational database. Query latency is O(1), regardless of transaction volume.
 
 2. **TimescaleDB Time-Series Database**: A PostgreSQL extension that treats time as a first-class dimension. Revenue per hour, orders per day, delivery times, payroll cost per month — all stored as time-series data with automatic compression and continuous aggregation.
+
+## MySQL Implementation Design for Intelligence and Financing
+
+### MySQL Storage Strategy
+
+Analytics remains a read/listener module but uses the primary MySQL platform database. Metric history is stored in append-only, indexed tables; dashboards and score/model reads use pre-aggregated projection tables. No operational table is joined at query time.
+
+| MySQL table/read model | Primary key or unique key | Required indexes | Purpose |
+|---|---|---|---|
+| `analytics_metric_events` | `event_id` | `(organization_id, environment, occurred_at)`, `(metric_type, occurred_at)` | Append-only normalized metric event history. |
+| `analytics_daily_sales` | `(organization_id, environment, outlet_id, metric_date)` | `(organization_id, metric_date)` | Daily sales, margin inputs, AOV and payment mix. |
+| `analytics_product_demand` | `(organization_id, environment, product_id, outlet_id, metric_month)` | `(organization_id, product_id, metric_month)` | Demand, sell-through and slow-moving inventory features. |
+| `analytics_inventory_health` | `(organization_id, environment, outlet_id, product_id)` | `(organization_id, stock_coverage_days)` | Turnover, stock-out, dead-stock and inventory-value features. |
+| `analytics_customer_performance` | `(organization_id, environment, customer_id, metric_month)` | `(organization_id, metric_month)` | Repeat purchase, retention and concentration features. |
+| `analytics_outlet_performance` | `(organization_id, environment, outlet_id, metric_month)` | `(organization_id, metric_month)` | Revenue/margin/expense attribution by outlet. |
+| `analytics_financial_health` | `(organization_id, environment, period_end)` | `(organization_id, period_end)` | Accounting-backed P&L, cash-flow, payroll and AP/AR facts. |
+| `analytics_financing_behaviour` | `(organization_id, environment, payment_context_key, occurred_at)` | `(organization_id, occurred_at)` | Withdrawal/payment baseline, category and beneficiary behaviour. |
+| `analytics_feature_snapshots` | `id` | unique `(organization_id, environment, schema_version, as_of)` | Immutable input bundle for score/model inference. |
+
+Projection writes use MySQL `INSERT ... ON DUPLICATE KEY UPDATE` and inbox deduplication. JSON columns contain schema-validated immutable metadata only; fields used for tenancy, authorization, filtering, correlation, amounts, timestamps, entity identifiers, and score inputs remain normalized columns. Every tenant table has `organization_id`, `environment`, source event/correlation references and a time index.
+
+### Accounting-Backed Financial Health
+
+Accounting is not an optional reporting add-on for this capability. `accounting:gl`, AP/AR, cash reconciliation, payroll and Pay bridge events feed a `FinancialHealthProjection` that is the only source for authoritative profitability and cash-flow features.
+
+```
+Sales/Pay/Inventory events ─┐
+Accounting close/adjustment ├─→ Analytics financial-health projection
+Payroll/AP-AR events ───────┘        ↓
+                         immutable BusinessFeatureSnapshot
+                              ↙              ↓               ↘
+                     AtlasScore         ML inference     Intelligence tools
+```
+
+The projection records revenue, cost of sales, gross profit, gross margin, operating expense, expense growth, payroll burden, receivable/payable exposure, cash-flow indicators, reconciliation status and source-period/as-of metadata. Analytics does not recreate journal accounting from Commerce events; it consumes normalized Accounting events and retains their traceable source references.
+
+### Feature Snapshot Contract
+
+`CreateBusinessFeatureSnapshot` runs after the relevant projection window is complete or when a score/forecast is requested. It creates an immutable record:
+
+```
+BusinessFeatureSnapshot
+├── id: Long
+├── organizationId: Long
+├── environment: Environment
+├── schemaVersion: String
+├── windowStart/windowEnd/asOf: ZonedDateTime
+├── completeness: DataQualityStatus
+├── metricValues: validated JSON + normalized key metrics
+├── sourceProjectionHashes: Map<String, String>
+├── generatedAt: ZonedDateTime
+└── expiresAt: ZonedDateTime
+```
+
+The snapshot contains the exact score/model input window, feature schema, data-quality flags and source hashes. It is never updated. Corrected source data yields a later snapshot, never a mutation of a score/application historical input.
+
+### New Projection Commands and Queries
+
+| Listener/scheduler command | Source | Result |
+|---|---|---|
+| `UpdateFinancialHealthProjection` | `FinancialPeriodClosed`, `FinancialHealthAdjusted`, Pay/Payroll summary events | Reconciled profitability/cash-flow metrics. |
+| `UpdateCustomerPerformanceProjection` | completed/refunded commerce events | Retention/repeat/concentration metrics. |
+| `UpdateOutletPerformanceProjection` | sales + accounting allocation events | Outlet comparison metrics. |
+| `UpdateFinancingBehaviourProjection` | supported Pay/control events | Behaviour baseline/anomaly inputs. |
+| `CreateBusinessFeatureSnapshot` | scheduler or approved score/forecast request | Immutable feature input. |
+
+| Query | Return type | Used by |
+|---|---|---|
+| `GetBusinessPerformanceQuery` | single `BusinessPerformanceResult` | Dashboard and Intelligence tools |
+| `GetFinancialHealthQuery` | single `FinancialHealthResult` | Intelligence, Financing and score inputs |
+| `GetInventoryHealthQuery` | `List<InventoryHealthResult>` | Restocking/forecast tooling |
+| `GetOutletPerformanceQuery` | `List<OutletPerformanceResult>` | Merchant explanation and risk monitoring |
+| `GetFinancingBehaviourQuery` | single `FinancingBehaviourResult` | Financing monitoring/control evaluation |
+| `GetBusinessFeatureSnapshotQuery` | single `BusinessFeatureSnapshotResult` | Score/ML inference by snapshot ID |
+
+The owning Analytics module implements shared `BusinessPerformanceQueryPort` and `FinancialHealthQueryPort` contracts in `atlashub-shared`. The contracts accept/return organization and environment-scoped DTOs. No caller imports Analytics entities/repositories, and no query permits cross-organization selection.
+
+### ML and Financing Boundaries
+
+Analytics owns deterministic feature production and data quality, not model inference or policy. `atlashub-intelligence` owns approved model releases, forecasting, conversational orchestration and explanation. `atlashub-financing` owns score policy, scoring snapshots, lender packages and facility monitoring. `atlashub-pay:controls` owns the execution decision on supported payment rails.
+
+Analytics publishes `AnalyticsFeatureSnapshotReady` and `AnalyticsDataQualityChanged`. It consumes only domain/integration events; it never calls a Financing, Intelligence, lender, or LLM adapter. An ML result is recorded by its owning module with model/version/confidence and can be referenced by an Analytics-aware dashboard, but it does not overwrite deterministic projections.
+
+### MySQL Retention and Operations
+
+- Aggregate projections retain the current and period rows needed for dashboard/feature queries; append-only metric events use a documented partition/archival schedule appropriate to MySQL operations.
+- `MetricRetentionScheduler` and `FeatureSnapshotScheduler` belong under `infrastructure/messaging/schedulers` and invoke only their command handlers.
+- High-volume MySQL maintenance uses bounded batches and index-backed ranges. It never deletes a feature snapshot referenced by an AtlasScore, financing application, control decision, model release, or audit record.
+- Data-quality monitors mark a stream incomplete when required events lag or fail. Scoring/ML must return an insufficient-data outcome rather than filling gaps with LLM-generated values.
+
+### Required Tests
+
+- MySQL upsert and compensation tests for every projection, including duplicate Kafka delivery.
+- Accounting close/adjustment integration tests proving the financial-health projection matches normalized financial event fixtures.
+- Tenant/environment isolation tests for all shared query ports and dashboard endpoints.
+- Feature snapshot immutability, schema-version mismatch and missing-data tests.
+- Listener/scheduler tests for inbox idempotency, retry, failure/quarantine and no direct operational-table reads.
 
 ---
 

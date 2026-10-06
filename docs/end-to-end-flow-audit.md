@@ -227,7 +227,7 @@ VirtualAccountActivatedEvent.payload
 ### 3.1 Inviting a Staff Member
 
 ```
-POST /api/v1/iam/invitations
+POST /api/v1/invitations
 Body: { email, roleId }
 ```
 
@@ -255,7 +255,7 @@ InvitationCreatedEvent.payload
 ### 3.2 Invited User Accepts Invitation
 
 ```
-POST /api/v1/iam/invitations/accept
+POST /api/v1/invitations/accept
 Body: { token, firstName, lastName, password }
 ```
 
@@ -413,7 +413,7 @@ Increases `Inventory.quantity`. No cross-module event for simple stock adjustmen
 ### 6.1 Creating an Outlet
 
 ```
-POST /api/v1/accounts/outlets
+POST /api/v1/outlets
 Body: { name, address, type: STORE | RESTAURANT | WAREHOUSE }
 ```
 

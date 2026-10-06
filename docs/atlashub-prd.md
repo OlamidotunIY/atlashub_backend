@@ -228,6 +228,15 @@ Webhook payloads are signed with an HMAC secret. Businesses validate the signatu
 | `logistics:returns` | Customer return shipments | Yes |
 | `logistics:transfers` | Inter-outlet stock transfers | Yes |
 
+### 7.7 Intelligence and Financing
+
+| Module | Purpose | Subscription required? |
+|---|---|---|
+| `analytics` | MySQL event-driven business, accounting and behaviour projections | Yes |
+| `intelligence` | Grounded conversational AI, ML forecasts, explanations and recommendations | Yes |
+| `financing` | AtlasScore, financing readiness, consented lender applications, offers, facilities and monitoring | Yes — subject to partner availability |
+| `pay:controls` | Policy enforcement for supported AtlasHub-controlled financing payment paths | Conditional on facility/product |
+
 ### 7.7 Hotel (atlashub-hotel)
 
 **Phase 2.** Covers room management, reservations, F&B, housekeeping.
@@ -332,6 +341,16 @@ A **management and analytics interface** — not a consumer app. Think Stripe da
 - Vendor/marketplace
 - JS SDK, Flutter SDK, Python SDK
 
+### 11.1 Atlas Intelligence and Financing Delivery Scope
+
+The Phase 1 exclusion of AI/ML is superseded for this capability only. AtlasHub will deliver it in stages:
+
+- **Hackathon/demo MVP:** MySQL projections from real AtlasHub flows; accounting-backed financial health; a versioned deterministic AtlasScore; explicit consent; one mock lender; offer and facility activation; policy-aware hold/block/freeze on supported AtlasHub payment paths; anomaly monitoring; and grounded conversational explanation/recommendations.
+- **Production MVP:** provider-neutral conversational AI and ML lifecycle, model/prompt versions, auditability, lender adapters, consented immutable application packages, normal repayment orchestration, facility health monitoring, and capability-aware payment controls.
+- **Later phases:** multiple lenders/products, additional ML models and model operations, expanded repayment rails, and richer control capabilities where legally and technically supported.
+
+AtlasHub does not become a lender. The lending partner retains underwriting and final credit approval. AtlasHub may automatically hold, block, or freeze only funds/transactions that its own ledger, virtual-account, or provider integration demonstrably controls. It does not perform debt recovery, GSI recovery, collateral enforcement, or post-default collections.
+
 ---
 
 ## 12. Out of Scope (Explicitly)
@@ -340,7 +359,8 @@ A **management and analytics interface** — not a consumer app. Think Stripe da
 - ❌ No consumer-facing UIs built by AtlasHub (professional services excluded)
 - ❌ No manufacturing module (Phase 1)
 - ❌ No multi-currency (Phase 1 — NGN only)
-- ❌ No AI/ML features (Phase 1)
+- ❌ No unrestricted LLM database access or LLM-generated authoritative financial calculations
+- ❌ No lender underwriting, debt recovery, GSI recovery, collateral enforcement, or post-default collections
 - ❌ No inter-business marketplace between AtlasHub subscribers
 - ❌ Hotel module (Phase 2)
 - ❌ Vendor/marketplace (Phase 2 — pending decision)

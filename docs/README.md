@@ -9,7 +9,7 @@ AtlasHub is a B2B multi-product platform combining payments, commerce, logistics
 - **Pattern**: Modular Monolith — Hexagonal Architecture (Ports & Adapters) + DDD + CQRS
 - **Language**: Java 21 (Records, Pattern Matching, Virtual Threads)
 - **Framework**: Spring Boot 3.x
-- **Database**: PostgreSQL 16 (OLTP) + TimescaleDB (analytics time-series)
+- **Database**: MySQL 8 (OLTP, event projections, analytics feature snapshots, and audit data)
 - **Cache**: Redis 7
 - **Search**: Elasticsearch 8
 - **Messaging**: Apache Kafka (event bus via Transactional Outbox)
@@ -42,7 +42,7 @@ atlashub-backend/
 ├── atlashub-logistics/       ← Fleet, dispatch, 3PL, stock transfers, returns
 ├── atlashub-hr/              ← Employees, payroll (maker-checker), leave, loans, attendance
 ├── atlashub-accounting/      ← General ledger, journal entries (maker-checker), AP/AR, assets
-├── atlashub-analytics/       ← CQRS projections + TimescaleDB time-series dashboards
+├── atlashub-analytics/       ← CQRS projections + MySQL feature snapshots and dashboards
 │
 └── atlashub-bootstrap/       ← Spring Boot application entry point, module wiring
 ```
@@ -74,7 +74,10 @@ atlashub-backend/
 | `logistics` | [logistics-design.md](./modules/logistics-design.md) | Fleet, dispatch, 3PL, stock transfers |
 | `hr` | [hr-design.md](./modules/hr-design.md) | Employees, payroll with maker-checker |
 | `accounting` | [accounting-design.md](./modules/accounting-design.md) | Double-entry GL, AP/AR, assets |
-| `analytics` | [analytics-design.md](./modules/analytics-design.md) | CQRS projections + time-series dashboards |
+| `analytics` | [analytics-design.md](./modules/analytics-design.md) | MySQL CQRS projections, feature snapshots and dashboards |
+| `intelligence` | [intelligence-design.md](./modules/intelligence-design.md) | Grounded conversational AI, ML forecasting, recommendations and traceability |
+| `financing` | [financing-design.md](./modules/financing-design.md) | AtlasScore, consent, lender applications/offers, facility monitoring |
+| `pay:controls` | [pay-controls-design.md](./modules/pay-controls-design.md) | Capability-aware hold/block/freeze enforcement for financed facilities |
 | `hotel` *(future)* | [hotel-design.md](./modules/hotel-design.md) | PMS — NOT in MVP |
 
 ---
@@ -84,10 +87,11 @@ atlashub-backend/
 | Doc | What It Covers |
 |---|---|
 | [module-communication.md](./architecture/module-communication.md) | Open Host Service (sync), Published Language (async events), Anti-Corruption Layer |
-| [multi-tenancy.md](./architecture/multi-tenancy.md) | Row-level tenancy + PostgreSQL RLS, ThreadLocal context, cross-tenant analytics |
+| [multi-tenancy.md](./architecture/multi-tenancy.md) | Application-enforced row-level tenancy, tenant context, cross-tenant analytics |
 | [multi-currency.md](./architecture/multi-currency.md) | `Money` value object, `Currency` enum, org base currency, FX entries |
 | [maker-checker.md](./architecture/maker-checker.md) | Four-eyes principle, domain-level enforcement, per-org thresholds |
 | [sagas-design.md](./architecture/sagas-design.md) | Choreography vs orchestration, 5 concrete sagas, compensation, timeout |
+| [atlas-intelligence-financing-delivery-plan.md](./architecture/atlas-intelligence-financing-delivery-plan.md) | MySQL-based delivery plan, build priorities and product boundaries |
 
 ---
 
@@ -101,7 +105,6 @@ atlashub-backend/
 | [setup/redis-setup.md](./setup/redis-setup.md) | Sessions, revocation, rate limiting, API key cache |
 | [setup/websocket-setup.md](./setup/websocket-setup.md) | STOMP channels, selective broadcaster, production scaling |
 | [setup/elasticsearch-setup.md](./setup/elasticsearch-setup.md) | Index schemas, CDC sync, full-text search |
-| [setup/timescaledb-analytics.md](./setup/timescaledb-analytics.md) | Hypertables, continuous aggregates, retention |
 | [setup/api-key-hmac-auth.md](./setup/api-key-hmac-auth.md) | HMAC signing algorithm, verification, key rotation |
 | [setup/webhook-infrastructure.md](./setup/webhook-infrastructure.md) | Outbound webhooks, delivery, retry, merchant verification |
 | [setup/anchor-integration.md](./setup/anchor-integration.md) | NUBAN issuance, inbound transfers |

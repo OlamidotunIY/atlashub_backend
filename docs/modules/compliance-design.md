@@ -162,7 +162,7 @@ ComplianceRecord
 - The five `ComplianceStep` values are `BUSINESS_PROFILE`, `CONTACT_INFO`, `OWNERS_AND_OFFICERS`, `COMPLIANCE_DOCUMENTS`, and `SERVICE_AGREEMENT`.
 - `StepStatus` is `NOT_STARTED`, `IN_PROGRESS`, `COMPLETE`, or `ACTION_REQUIRED`.
 - A provider document request can move only `COMPLIANCE_DOCUMENTS` from `COMPLETE` back to `ACTION_REQUIRED`; it does not erase the other steps.
-- An Anchor business customer is created at most once per organization.
+- An Anchor business customer is created at most once per organization and environment; Sandbox and LIVE customer IDs are persisted separately and never substituted for each other.
 - Provider customer and document identifiers are globally unique when present.
 - `APPROVED` requires `ELIGIBLE`, accepted current terms, and Anchor status `APPROVED`.
 - An AtlasHub administrator cannot override an Anchor rejection into banking approval.
@@ -238,7 +238,8 @@ The effective status is recomputed after relevant transitions. Provider status i
 
 ```java
 public interface AnchorCompliancePort {
-    AnchorBusinessCustomerResult createBusinessCustomer(BusinessCustomerRequest request);
+    AnchorBusinessCustomerResult createBusinessCustomer(
+        BusinessCustomerRequest request, ApiEnvironment environment);
     void triggerBusinessVerification(String anchorCustomerId);
     List<AnchorDocumentRequirement> previewDocumentRequirements(
         String registrationType, LocalDate registrationDate);
@@ -281,11 +282,13 @@ Anchor JSON:API request/response types stay in infrastructure. Domain/applicatio
 
 `ComplianceSubmittedListener`/orchestrator:
 
-1. Creates the Anchor `BusinessCustomer` if `anchorBusinessCustomerId` is absent.
+1. Creates the LIVE Anchor `BusinessCustomer` if `anchorBusinessCustomerId` is absent.
 2. Persists the returned customer ID and officer-ID mappings.
 3. Triggers business verification.
 4. Marks the record `UNDER_REVIEW` unless documents are immediately requested.
 5. Never repeats customer creation after a timeout without first reconciling by the AtlasHub correlation/idempotency reference.
+
+A separate command-only `ComplianceSubmittedTestBankingListener` creates/reuses the Sandbox business customer with a TEST-scoped idempotency key. Its ID is stored separately as `sandboxAnchorBusinessCustomerId`; it is never accepted as LIVE approval evidence. Once persisted, the aggregate publishes `OrganizationTestBankingReadyEvent`, allowing `pay:accounts` to provision TEST banking independently of LIVE KYB approval. Sandbox failure cannot change the LIVE compliance decision.
 
 ### Dynamic Documents
 
@@ -333,6 +336,7 @@ All local events are published on `compliance-events` and written to the outbox 
 |---|---|---|
 | `ComplianceRecordInitializedEvent` | Organization record initialized | Internal |
 | `ComplianceSubmittedEvent` | Eligible local application submitted | Compliance provider orchestrator, notifications |
+| `OrganizationTestBankingReadyEvent` | Sandbox business customer is persisted | `pay:accounts` |
 | `ComplianceActionRequiredEvent` | Provider requests/rejects a document | Notifications |
 | `ComplianceProviderErrorEvent` | Provider processing fails | Operations, notifications when user action is needed |
 | `OrganizationComplianceApprovedEvent` | Effective status becomes `APPROVED` | `pay:accounts`, billing, notifications |
@@ -432,7 +436,7 @@ Responses redact BVN, TIN, identity numbers, storage keys, and provider secrets.
 
 ## 12. Integration With Banking Provisioning
 
-`pay:accounts` starts organization banking provisioning only from `OrganizationComplianceApprovedEvent`.
+`pay:accounts` starts LIVE banking provisioning only from `OrganizationComplianceApprovedEvent`. TEST banking starts from `OrganizationTestBankingReadyEvent`, emitted after a separate Sandbox business customer is persisted. TEST resources never satisfy or influence LIVE compliance.
 
 ```
 effective compliance APPROVED

@@ -22,6 +22,7 @@ This submodule also provides the real-time balance query API used by dashboards,
 LedgerAccount
 ├── id: Long
 ├── organizationId: Long
+├── environment: ApiEnvironment       ← TEST or LIVE; accounts never cross environments
 ├── accountType: LedgerAccountType     ← OPERATING, PAYROLL_RESERVE, TAX_HOLDING,
 │                                         ESCROW, SUSPENSE, TILL, SPLIT_HOLDING,
 │                                         PROVIDER_CLEARING,
@@ -343,8 +344,7 @@ public record PostLedgerTransactionCommand(
 5. Do not persist or mutate a current-balance column. Balances remain derived from the latest snapshot plus later entries.
 6. Construct `LedgerTransaction` — `validateBalance()` is called in the constructor. If unbalanced, `UnbalancedLedgerTransactionException` is thrown and no persistence occurs.
 7. Save `LedgerTransaction` and all `LedgerEntry` records.
-8. Update each account's balance (stored on the `LedgerAccount` entity for fast queries).
-9. Publish `LedgerTransactionPostedEvent` via outbox.
+8. Publish `LedgerTransactionPostedEvent` via outbox. No mutable current-balance column is stored.
 
 **Response**: `PostLedgerTransactionResponse`
 ```java
@@ -364,6 +364,7 @@ public record PostLedgerTransactionResponse(
 ```java
 public record CreateLedgerAccountCommand(
     Long organizationId,
+    String environment,
     String accountType,
     Long outletId,       // nullable
     String partyType,    // nullable; CUSTOMER or VENDOR
@@ -545,6 +546,7 @@ public record LedgerTransactionResult(
 public class LedgerAccountJpa {
     @Id @GeneratedValue Long id;
     Long organizationId;
+    ApiEnvironment environment;
     @Enumerated(EnumType.STRING) LedgerAccountType accountType;
     Long outletId;
     @Enumerated(EnumType.STRING) LedgerPartyType partyType;
@@ -756,11 +758,13 @@ The ledger is the **single source of truth** for all money movements on the plat
 
 | Method | Path | Auth | RBAC | Request | Response |
 |---|---|---|---|---|---|
-| `GET` | `/api/v1/pay/ledger/balance` | Bearer JWT | `pay:ledger:read` | Query: `accountType` | `AccountBalanceResponse` |
-| `GET` | `/api/v1/pay/ledger/balances` | Bearer JWT | `pay:ledger:read` | — | `WalletBalancesResponse` |
-| `GET` | `/api/v1/pay/ledger/history` | Bearer JWT | `pay:ledger:read` | Query: `accountId`, `dateFrom`, `dateTo`, `page`, `size` | `PageResult<LedgerTransactionResponse>` |
-| `POST` | `/api/v1/admin/pay/ledger/freeze/{accountId}` | Platform staff auth | platform payment-operations authority | — | `ApiResponse<Void>` |
-| `POST` | `/api/v1/admin/pay/ledger/close/{accountId}` | Platform staff auth | platform payment-operations authority | — | `ApiResponse<Void>` |
+| `GET` | `/api/v1/ledger-accounts/balance` | Bearer JWT | `pay:ledger:read` | Query: `accountType` | `AccountBalanceResponse` |
+| `GET` | `/api/v1/ledger-accounts/balances` | Bearer JWT | `pay:ledger:read` | — | `WalletBalancesResponse` |
+| `GET` | `/api/v1/ledger-accounts/party-balance` | Bearer JWT | `pay:ledger:read` | Query: `partyType`, `partyReferenceId`, `currency` | `AccountBalanceResponse` |
+| `GET` | `/api/v1/ledger-entries` | Bearer JWT | `pay:ledger:read` | Query: `accountId`, `dateFrom`, `dateTo`, `page`, `size`; or required `partyType`, `partyReferenceId` for party history | `PageResult<LedgerTransactionResponse>` |
+| `POST` | `/api/v1/admin/ledger-accounts/{accountId}/freeze` | Platform staff auth | platform payment-operations authority | — | `ApiResponse<Void>` |
+| `POST` | `/api/v1/admin/ledger-accounts/{accountId}/unfreeze` | Platform staff auth | platform payment-operations authority | — | `ApiResponse<Void>` |
+| `POST` | `/api/v1/admin/ledger-accounts/{accountId}/close` | Platform staff auth | platform payment-operations authority | — | `ApiResponse<Void>` |
 
 ### DTOs
 
