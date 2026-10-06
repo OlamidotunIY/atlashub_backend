@@ -13,6 +13,7 @@ import com.atlashub.iam.application.commands.RotateApiKey.RotateApiKeyCommand;
 import com.atlashub.iam.application.commands.RotateApiKey.RotateApiKeyHandler;
 import com.atlashub.iam.presentation.dto.RotateApiKeyRequest;
 import com.atlashub.shared.application.dto.ApiResponse;
+import com.atlashub.shared.application.security.ApiEnvironment;
 import com.atlashub.shared.application.security.AuthenticatedPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -61,7 +62,7 @@ public class ApiKeyController {
     @Operation(summary = "List API keys")
     public ResponseEntity<ApiResponse<List<ApiKeyResult>>> list(
             @AuthenticationPrincipal AuthenticatedPrincipal principal,
-            @RequestParam(required = false) String environment) {
+            @RequestParam(required = false) ApiEnvironment environment) {
         return ok(listHandler.execute(new ListApiKeysQuery(principal.activeOrganizationId(), environment)));
     }
 

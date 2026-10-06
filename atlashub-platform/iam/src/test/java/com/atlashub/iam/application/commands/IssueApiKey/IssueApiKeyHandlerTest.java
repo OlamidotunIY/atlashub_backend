@@ -7,6 +7,7 @@ import com.atlashub.iam.domain.exception.InvalidApiKeyException;
 import com.atlashub.iam.domain.repositories.ApiKeyRepository;
 import com.atlashub.iam.domain.repositories.CustomRoleRepository;
 import com.atlashub.shared.application.port.ComplianceQueryPort;
+import com.atlashub.shared.application.security.ApiEnvironment;
 import org.junit.jupiter.api.Test;
 
 import java.util.Optional;
@@ -30,7 +31,7 @@ class IssueApiKeyHandlerTest {
                 CustomRole.create(4L, 2L, "Cashier", "Cashier", Set.of(8L), false, 3L)));
 
         var result = new IssueApiKeyHandler(keys, roles, compliance, protector)
-                .execute(new IssueApiKeyCommand(2L, "Default", "TEST", 3L, 4L));
+                .execute(new IssueApiKeyCommand(2L, "Default", ApiEnvironment.TEST, 3L, 4L));
 
         assertEquals("TEST", result.environment());
         verify(keys).save(any());
@@ -48,7 +49,7 @@ class IssueApiKeyHandlerTest {
 
         assertThrows(LiveApiKeyUnavailableException.class, () ->
                 new IssueApiKeyHandler(keys, roles, compliance, protector)
-                        .execute(new IssueApiKeyCommand(2L, "Production", "LIVE", 3L, 4L)));
+                        .execute(new IssueApiKeyCommand(2L, "Production", ApiEnvironment.LIVE, 3L, 4L)));
 
         verifyNoInteractions(roles, keys, protector);
     }
@@ -62,7 +63,7 @@ class IssueApiKeyHandlerTest {
 
         assertThrows(InvalidApiKeyException.class, () ->
                 new IssueApiKeyHandler(keys, roles, compliance, protector)
-                        .execute(new IssueApiKeyCommand(2L, "Test", "TEST", 3L, null)));
+                        .execute(new IssueApiKeyCommand(2L, "Test", ApiEnvironment.TEST, 3L, null)));
 
         verifyNoInteractions(roles, keys, compliance, protector);
     }

@@ -27,10 +27,7 @@ public class ListApiKeysHandler extends Query<ListApiKeysQuery, List<ApiKeyResul
     public List<ApiKeyResult> execute(ListApiKeysQuery query) {
         log.info("Executing ListApiKeysQuery for orgId: {}, environment: {}", query.orgId(), query.environment());
         
-        ApiEnvironment env = null;
-        if (query.environment() != null) {
-            env = ApiEnvironment.parse(query.environment());
-        }
+        ApiEnvironment env = query.environment();
 
         List<ApiKey> keys = env == null
                 ? apiKeyRepository.findByOrganizationId(query.orgId())
@@ -42,7 +39,7 @@ public class ListApiKeysHandler extends Query<ListApiKeysQuery, List<ApiKeyResul
                 key.getOrganizationId(),
                 key.getPublicKey(),
                 key.getName(),
-                key.getEnvironment().name(),
+                key.getEnvironment(),
                 key.getRevoked(),
                 key.getBoundRoleId(),
                 key.getLastUsedAt(),

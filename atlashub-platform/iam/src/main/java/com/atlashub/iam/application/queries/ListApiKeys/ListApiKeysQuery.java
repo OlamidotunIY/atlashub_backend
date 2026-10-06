@@ -1,3 +1,5 @@
 package com.atlashub.iam.application.queries.ListApiKeys;
 
-public record ListApiKeysQuery(Long orgId, String environment) {}
+import com.atlashub.shared.application.security.ApiEnvironment;
+
+public record ListApiKeysQuery(Long orgId, ApiEnvironment environment) {}
