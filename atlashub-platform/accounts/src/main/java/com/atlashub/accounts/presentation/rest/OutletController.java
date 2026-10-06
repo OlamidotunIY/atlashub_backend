@@ -27,17 +27,17 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping("/api/v1/outlets")
 @Tag(name = "Outlets", description = "Outlet / branch management")
 @Validated
 public class OutletController {
@@ -63,7 +63,7 @@ public class OutletController {
         this.listOutletsHandler = listOutletsHandler;
     }
 
-    @PostMapping("/outlets")
+    @PostMapping
     @Operation(summary = "Create a new outlet / branch", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<ApiResponse<Long>> createOutlet(
             @AuthenticationPrincipal AuthenticatedPrincipal principal,
@@ -79,16 +79,16 @@ public class OutletController {
         return ok(outletId);
     }
 
-    @GetMapping("/outlets")
+    @GetMapping("/{outletId}")
     @Operation(summary = "Get a single outlet by ID", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<ApiResponse<OutletResponse>> getOutlet(
             @AuthenticationPrincipal AuthenticatedPrincipal principal,
-            @RequestParam @Positive Long id) {
-        OutletResult result = getOutletHandler.execute(new GetOutletQuery(principal.activeOrganizationId(), id));
+            @PathVariable @Positive Long outletId) {
+        OutletResult result = getOutletHandler.execute(new GetOutletQuery(principal.activeOrganizationId(), outletId));
         return ok(toOutletResponse(result));
     }
 
-    @GetMapping("/outlets/all")
+    @GetMapping
     @Operation(summary = "List all outlets for an organization", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<ApiResponse<List<OutletResponse>>> listOutlets(
             @AuthenticationPrincipal AuthenticatedPrincipal principal) {
@@ -98,34 +98,34 @@ public class OutletController {
         return ok(results);
     }
 
-    @PutMapping("/outlets")
+    @PutMapping("/{outletId}")
     @Operation(summary = "Update outlet details", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<ApiResponse<Void>> updateOutlet(
             @AuthenticationPrincipal AuthenticatedPrincipal principal,
-            @RequestParam @Positive Long id,
+            @PathVariable @Positive Long outletId,
             @Valid @RequestBody UpdateOutletRequest request) {
         updateOutletHandler.execute(new UpdateOutletCommand(
-                principal.activeOrganizationId(), id, request.name(), request.address(),
+                principal.activeOrganizationId(), outletId, request.name(), request.address(),
                 request.city(), request.state(), request.managerId()
         ));
         return done("Outlet updated");
     }
 
-    @PostMapping("/outlets/suspend")
+    @PostMapping("/{outletId}/suspend")
     @Operation(summary = "Suspend an outlet", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<ApiResponse<Void>> suspendOutlet(
             @AuthenticationPrincipal AuthenticatedPrincipal principal,
-            @RequestParam @Positive Long id) {
-        suspendOutletHandler.execute(new SuspendOutletCommand(principal.activeOrganizationId(), id));
+            @PathVariable @Positive Long outletId) {
+        suspendOutletHandler.execute(new SuspendOutletCommand(principal.activeOrganizationId(), outletId));
         return done("Outlet suspended");
     }
 
-    @PostMapping("/outlets/close")
+    @PostMapping("/{outletId}/close")
     @Operation(summary = "Permanently close an outlet", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<ApiResponse<Void>> closeOutlet(
             @AuthenticationPrincipal AuthenticatedPrincipal principal,
-            @RequestParam @Positive Long id) {
-        closeOutletHandler.execute(new CloseOutletCommand(principal.activeOrganizationId(), id));
+            @PathVariable @Positive Long outletId) {
+        closeOutletHandler.execute(new CloseOutletCommand(principal.activeOrganizationId(), outletId));
         return done("Outlet closed");
     }
 

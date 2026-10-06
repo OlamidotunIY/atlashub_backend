@@ -101,6 +101,7 @@ public class AuthenticationController {
 
     @PublicEndpoint
     @PostMapping("/email/verify")
+    @Operation(summary = "Verify email address")
     public ResponseEntity<ApiResponse<Void>> verifyEmail(@Valid @RequestBody VerifyEmailRequest request) {
         verifyEmailHandler.execute(new VerifyEmailCommand(request.email(), request.otp()));
         return done("Email verified successfully");
@@ -108,6 +109,7 @@ public class AuthenticationController {
 
     @PublicEndpoint
     @PostMapping("/email/resend-verification")
+    @Operation(summary = "Resend email verification code")
     public ResponseEntity<ApiResponse<Void>> resendVerification(@Valid @RequestBody EmailRequest request) {
         sendVerificationEmailHandler.execute(new SendVerificationEmailCommand(request.email()));
         return done("Verification email sent if account exists");
@@ -115,6 +117,7 @@ public class AuthenticationController {
 
     @PublicEndpoint
     @PostMapping("/password/forgot")
+    @Operation(summary = "Request password reset code")
     public ResponseEntity<ApiResponse<Void>> forgotPassword(@Valid @RequestBody EmailRequest request) {
         initiatePasswordResetHandler.execute(new InitiatePasswordResetCommand(request.email()));
         return done("Password reset email sent if account exists");
@@ -122,6 +125,7 @@ public class AuthenticationController {
 
     @PublicEndpoint
     @PostMapping("/password/reset")
+    @Operation(summary = "Reset password with verification code")
     public ResponseEntity<ApiResponse<Void>> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
         resetPasswordHandler.execute(new ResetPasswordCommand(
                 request.email(), request.otp(), request.newPassword()));
@@ -129,6 +133,7 @@ public class AuthenticationController {
     }
 
     @PostMapping("/logout")
+    @Operation(summary = "Log out current session")
     @SecurityRequirement(name = "bearerAuth")
     @PreAuthorize("principal.userId() != null")
     public ResponseEntity<ApiResponse<Void>> logout(
@@ -140,6 +145,7 @@ public class AuthenticationController {
     }
 
     @PostMapping("/logout-all")
+    @Operation(summary = "Log out from all sessions")
     @SecurityRequirement(name = "bearerAuth")
     @PreAuthorize("principal.userId() != null")
     public ResponseEntity<ApiResponse<Void>> logoutAll(
@@ -149,6 +155,7 @@ public class AuthenticationController {
     }
 
     @PostMapping("/password/change")
+    @Operation(summary = "Change current password")
     @SecurityRequirement(name = "bearerAuth")
     @PreAuthorize("principal.userId() != null")
     public ResponseEntity<ApiResponse<Void>> changePassword(

@@ -11,6 +11,8 @@ import com.atlashub.authentication.presentation.dto.TrustedDeviceWebResponse;
 import com.atlashub.shared.application.annotation.PublicEndpoint;
 import com.atlashub.shared.application.dto.ApiResponse;
 import com.atlashub.shared.application.security.AuthenticatedPrincipal;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -28,6 +30,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/devices")
+@Tag(name = "Trusted Devices", description = "Trusted device verification and management")
 public class TrustedDeviceController {
     private final AuthorizeDeviceHandler authorizeHandler;
     private final RevokeTrustedDeviceHandler revokeHandler;
@@ -42,6 +45,7 @@ public class TrustedDeviceController {
     }
 
     @GetMapping
+    @Operation(summary = "List trusted devices")
     @PreAuthorize("principal.userId() != null")
     public ResponseEntity<ApiResponse<List<TrustedDeviceWebResponse>>> list(
             @AuthenticationPrincipal AuthenticatedPrincipal principal) {
@@ -55,6 +59,7 @@ public class TrustedDeviceController {
     }
 
     @DeleteMapping
+    @Operation(summary = "Remove a trusted device")
     @PreAuthorize("principal.userId() != null")
     public ResponseEntity<ApiResponse<Void>> revoke(
             @AuthenticationPrincipal AuthenticatedPrincipal principal,
@@ -65,6 +70,7 @@ public class TrustedDeviceController {
 
     @PublicEndpoint
     @PostMapping("/verify")
+    @Operation(summary = "Verify a trusted device")
     public ResponseEntity<ApiResponse<Void>> verify(
             @Valid @RequestBody AuthorizeDeviceRequest request,
             HttpServletRequest httpRequest) {

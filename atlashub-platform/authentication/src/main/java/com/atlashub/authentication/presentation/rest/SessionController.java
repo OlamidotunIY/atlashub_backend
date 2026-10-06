@@ -13,6 +13,8 @@ import com.atlashub.authentication.presentation.dto.SwitchEnvironmentRequest;
 import com.atlashub.authentication.presentation.dto.SwitchOrganizationRequest;
 import com.atlashub.shared.application.dto.ApiResponse;
 import com.atlashub.shared.application.security.AuthenticatedPrincipal;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -28,6 +30,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1")
+@Tag(name = "Sessions", description = "Active session and context switching")
 @PreAuthorize("principal.userId() != null")
 public class SessionController {
     private final GetActiveSessionsHandler getActiveSessionsHandler;
@@ -45,6 +48,7 @@ public class SessionController {
     }
 
     @GetMapping("/sessions")
+    @Operation(summary = "List active sessions")
     public ResponseEntity<ApiResponse<List<SessionWebResponse>>> list(
             @AuthenticationPrincipal AuthenticatedPrincipal principal) {
         List<SessionWebResponse> sessions = getActiveSessionsHandler
@@ -57,6 +61,7 @@ public class SessionController {
     }
 
     @PostMapping("/organizations/switch")
+    @Operation(summary = "Switch active organization")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<ApiResponse<RefreshTokenWebResponse>> switchOrganization(
             @AuthenticationPrincipal AuthenticatedPrincipal principal,
@@ -67,6 +72,7 @@ public class SessionController {
     }
 
     @PostMapping("/environments/switch")
+    @Operation(summary = "Switch API environment")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<ApiResponse<RefreshTokenWebResponse>> switchEnvironment(
             @AuthenticationPrincipal AuthenticatedPrincipal principal,
