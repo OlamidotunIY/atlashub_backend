@@ -5,6 +5,8 @@ import com.atlashub.anchor.application.commands.ReceiveAnchorWebhook.ReceiveAnch
 import com.atlashub.anchor.configuration.AnchorEnvironment;
 import com.atlashub.anchor.configuration.AnchorWebhookConsumer;
 import com.atlashub.shared.application.dto.ApiResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 @RestController
 @RequestMapping("/api/v1/webhooks/anchor/{environment}/{consumer}")
 @ConditionalOnProperty(prefix = "atlashub.integrations.anchor", name = "enabled", havingValue = "true")
+@Tag(name = "Anchor Webhooks", description = "Anchor provider callback endpoints")
 public class AnchorWebhookController {
     private final ReceiveAnchorWebhookHandler handler;
 
@@ -26,6 +29,7 @@ public class AnchorWebhookController {
     }
 
     @PostMapping
+    @Operation(summary = "Receive an Anchor webhook")
     public ResponseEntity<ApiResponse<Void>> receive(
             @PathVariable String environment,
             @PathVariable String consumer,

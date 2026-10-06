@@ -32,7 +32,6 @@ public record CreateReservedAccountData(
             if (provider == null || provider.isBlank()) {
                 throw new IllegalArgumentException("Reserved-account provider is required");
             }
-            Objects.requireNonNull(customer, "Reserved-account customer is required");
         }
     }
 
@@ -62,7 +61,10 @@ public record CreateReservedAccountData(
         }
     }
 
-    public record Relationships(AnchorRelationship payoutAccount) {
+    public record Relationships(AnchorRelationship payoutAccount, AnchorRelationship customer) {
+        public Relationships(AnchorRelationship payoutAccount) {
+            this(payoutAccount, null);
+        }
         public Relationships {
             Objects.requireNonNull(payoutAccount, "Reserved-account payout-account relationship is required");
         }

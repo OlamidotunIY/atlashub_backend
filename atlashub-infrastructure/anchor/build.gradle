@@ -18,9 +18,9 @@ dependencies {
     implementation 'org.springframework:spring-web'
     implementation 'org.springframework.kafka:spring-kafka'
 
-    testImplementation platform('org.junit:junit-bom:6.0.0')
-    testImplementation 'org.junit.jupiter:junit-jupiter'
-    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    // Optional: Swagger for API docs
+    implementation 'io.swagger.core.v3:swagger-annotations:2.2.20'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
 }
 
 test {
