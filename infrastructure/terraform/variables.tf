@@ -1,7 +1,7 @@
 variable "location" {
-  description = "Azure Region (Sweden Central has excellent capacity and prices)"
+  description = "Azure Region (East US)"
   type        = string
-  default     = "swedencentral"
+  default     = "eastus"
 }
 
 variable "resource_group_name" {
@@ -10,13 +10,18 @@ variable "resource_group_name" {
   default     = "atlashub-k3s-rg"
 }
 
+variable "subscription_id" {
+  description = "Azure subscription ID used for deployment"
+  type        = string
+}
+
 variable "ssh_public_key" {
   description = "SSH Public Key string for accessing the VM"
   type        = string
 }
 
 variable "vm_size" {
-  description = "Azure VM Size (AMD Burstable tier - excellent for multiple backends on a budget)"
+  description = "Azure VM size for the K3s node"
   type        = string
-  default     = "Standard_B4as_v2" # 4 vCPUs, 16 GB RAM ($113/mo)
+  default     = "Standard_D2ads_v7"
 }
