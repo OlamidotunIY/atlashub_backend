@@ -74,7 +74,7 @@ public class GetAccountBalanceHandler extends Query<GetAccountBalanceQuery, Acco
 
         return new AccountBalanceResult(
                 account.getId(),
-                account.getAccountType().name(),
+                account.getAccountType(),
                 balance,
                 account.getCurrency().name(),
                 ZonedDateTime.now()

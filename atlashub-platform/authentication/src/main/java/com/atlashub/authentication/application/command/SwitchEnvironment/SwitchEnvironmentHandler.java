@@ -44,7 +44,7 @@ public class SwitchEnvironmentHandler extends Command<SwitchEnvironmentCommand, 
                 .filter(session -> session.getUserId().equals(command.userId().toString()))
                 .filter(session -> !session.isExpired())
                 .orElseThrow(InvalidTokenException::new);
-        ApiEnvironment target = ApiEnvironment.parse(command.targetEnvironment());
+        ApiEnvironment target = command.targetEnvironment();
         if (target == ApiEnvironment.LIVE
                 && !complianceQueryPort.isApproved(current.getOrganizationId())) {
             throw new LiveEnvironmentUnavailableException();

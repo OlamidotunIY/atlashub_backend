@@ -6,6 +6,7 @@ import com.atlashub.authentication.domain.exceptions.LiveEnvironmentUnavailableE
 import com.atlashub.authentication.domain.repositories.SessionRepository;
 import com.atlashub.shared.application.port.ComplianceQueryPort;
 import com.atlashub.shared.application.port.MembershipQueryPort;
+import com.atlashub.shared.application.security.ApiEnvironment;
 import org.junit.jupiter.api.Test;
 
 import java.time.ZonedDateTime;
@@ -33,6 +34,6 @@ class SwitchEnvironmentHandlerTest {
                 sessions, memberships, compliance, tokens);
 
         assertThrows(LiveEnvironmentUnavailableException.class,
-                () -> handler.execute(new SwitchEnvironmentCommand(2L, 10L, "LIVE")));
+                () -> handler.execute(new SwitchEnvironmentCommand(2L, 10L, ApiEnvironment.LIVE)));
     }
 }

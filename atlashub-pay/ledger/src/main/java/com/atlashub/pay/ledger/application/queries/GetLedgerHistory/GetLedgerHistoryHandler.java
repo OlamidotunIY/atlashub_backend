@@ -66,7 +66,7 @@ public class GetLedgerHistoryHandler extends Query<GetLedgerHistoryQuery, PageRe
         return new LedgerTransactionResult(
                 transaction.getId(),
                 transaction.getReference(),
-                transaction.getSourceSystem().name(),
+                transaction.getSourceSystem(),
                 transaction.getSourceReferenceId(),
                 transaction.getDescription(),
                 transaction.getCurrency().name(),
@@ -78,7 +78,7 @@ public class GetLedgerHistoryHandler extends Query<GetLedgerHistoryQuery, PageRe
     private LedgerEntryResult mapEntry(LedgerEntry entry) {
         return new LedgerEntryResult(
                 entry.getAccountId(),
-                entry.getType().name(),
+                entry.getType(),
                 entry.getAmount().amount()
         );
     }

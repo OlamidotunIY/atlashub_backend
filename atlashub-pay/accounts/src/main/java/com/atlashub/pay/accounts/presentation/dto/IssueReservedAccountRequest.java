@@ -1,10 +1,12 @@
 package com.atlashub.pay.accounts.presentation.dto;
 
+import com.atlashub.pay.accounts.domain.valueobject.ReservedAccountOwnerType;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 public record IssueReservedAccountRequest(
-        @NotBlank String ownerType,
+        @NotNull ReservedAccountOwnerType ownerType,
         @NotBlank String ownerReferenceId,
         @NotBlank String customerType,
         @NotBlank String customerReferenceId,

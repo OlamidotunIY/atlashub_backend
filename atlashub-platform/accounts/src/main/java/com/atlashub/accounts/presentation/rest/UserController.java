@@ -7,8 +7,6 @@ import com.atlashub.accounts.application.command.UpdateUserProfile.UpdateUserPro
 import com.atlashub.accounts.application.query.GetUserProfile.GetUserProfileHandler;
 import com.atlashub.accounts.application.query.GetUserProfile.GetUserProfileQuery;
 import com.atlashub.accounts.application.query.GetUserProfile.UserProfileResult;
-import com.atlashub.accounts.domain.valueobject.AtlasHubRegistrationType;
-import com.atlashub.accounts.domain.valueobject.SupportedIndustry;
 import com.atlashub.accounts.presentation.dto.OrganizationSummaryResponse;
 import com.atlashub.accounts.presentation.dto.RegisterRequest;
 import com.atlashub.accounts.presentation.dto.UpdateProfileRequest;
@@ -56,8 +54,8 @@ public class UserController {
     public ResponseEntity<ApiResponse<Void>> register(@Valid @RequestBody RegisterRequest request) {
         registerHandler.execute(new RegisterOrganizationCommand(
                 request.businessName(),
-                AtlasHubRegistrationType.parse(request.registrationType()),
-                SupportedIndustry.parse(request.industry()),
+                request.registrationType(),
+                request.industry(),
                 request.description(),
                 request.logoUrl(),
                 request.websiteUrl(),

@@ -1,5 +1,8 @@
 package com.atlashub.pay.accounts.application.queries;
 
+import com.atlashub.pay.accounts.domain.valueobject.ExternalAccountStatus;
+import com.atlashub.pay.accounts.domain.valueobject.ReservedAccountOwnerType;
+
 import java.time.ZonedDateTime;
 
 public final class AccountResults {
@@ -8,7 +11,7 @@ public final class AccountResults {
 
     public record ExternalAccountResult(
             Long id, String accountName, String maskedAccountNumber, String bankName,
-            String bankCode, String currency, String status, ZonedDateTime activatedAt) {
+            String bankCode, String currency, ExternalAccountStatus status, ZonedDateTime activatedAt) {
     }
 
     public record BusinessBankingResult(
@@ -17,8 +20,8 @@ public final class AccountResults {
     }
 
     public record ReservedAccountResult(
-            Long id, String ownerType, String ownerReferenceId, String provider,
+            Long id, ReservedAccountOwnerType ownerType, String ownerReferenceId, String provider,
             String accountName, String maskedAccountNumber, String bankName,
-            String bankCode, String currency, String status, ZonedDateTime activatedAt) {
+            String bankCode, String currency, ExternalAccountStatus status, ZonedDateTime activatedAt) {
     }
 }

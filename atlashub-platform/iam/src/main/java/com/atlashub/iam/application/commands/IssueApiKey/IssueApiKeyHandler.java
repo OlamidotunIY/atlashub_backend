@@ -45,7 +45,10 @@ public class IssueApiKeyHandler extends Command<IssueApiKeyCommand, IssuedApiKey
     public IssuedApiKeyResult execute(IssueApiKeyCommand command) {
         log.info("Executing IssueApiKeyCommand");
 
-        ApiEnvironment environment = ApiEnvironment.parse(command.environment());
+        ApiEnvironment environment = command.environment();
+        if (environment == null) {
+            throw new InvalidApiKeyException("API key environment is required");
+        }
         if (environment == ApiEnvironment.LIVE && !complianceQueryPort.isApproved(command.orgId())) {
             throw new LiveApiKeyUnavailableException("Live API keys require approved compliance");
         }

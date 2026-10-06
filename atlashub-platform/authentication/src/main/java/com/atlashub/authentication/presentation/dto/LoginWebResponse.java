@@ -1,9 +1,11 @@
 package com.atlashub.authentication.presentation.dto;
 
+import com.atlashub.authentication.domain.valueobject.LoginStatus;
+
 import java.time.ZonedDateTime;
 
 public record LoginWebResponse(
-        String status,
+        LoginStatus status,
         String accessToken,
         ZonedDateTime accessTokenExpiresAt,
         String refreshToken,

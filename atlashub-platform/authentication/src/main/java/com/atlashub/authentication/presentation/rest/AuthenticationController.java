@@ -174,7 +174,7 @@ public class AuthenticationController {
 
     private LoginWebResponse toWebResponse(LoginResponse response) {
         return new LoginWebResponse(
-                response.status().name(), response.accessToken(), response.accessTokenExpiresAt(),
+                response.status(), response.accessToken(), response.accessTokenExpiresAt(),
                 response.refreshToken(), response.refreshTokenExpiresAt(), response.message());
     }
 

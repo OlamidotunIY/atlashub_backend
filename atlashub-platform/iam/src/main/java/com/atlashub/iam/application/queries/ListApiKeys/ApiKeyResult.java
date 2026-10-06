@@ -1,5 +1,7 @@
 package com.atlashub.iam.application.queries.ListApiKeys;
 
+import com.atlashub.shared.application.security.ApiEnvironment;
+
 import java.time.ZonedDateTime;
 
 public record ApiKeyResult(
@@ -7,7 +9,7 @@ public record ApiKeyResult(
     Long organizationId,
     String publicKey,
     String name,
-    String environment,
+    ApiEnvironment environment,
     Boolean isRevoked,
     Long boundRoleId,
     ZonedDateTime lastUsedAt,

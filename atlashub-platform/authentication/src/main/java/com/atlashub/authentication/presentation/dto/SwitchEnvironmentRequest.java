@@ -1,11 +1,10 @@
 package com.atlashub.authentication.presentation.dto;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
+import com.atlashub.shared.application.security.ApiEnvironment;
+import jakarta.validation.constraints.NotNull;
 
 public record SwitchEnvironmentRequest(
-        @NotBlank
-        @Pattern(regexp = "(?i)TEST|LIVE", message = "environment must be TEST or LIVE")
-        String environment
+        @NotNull
+        ApiEnvironment environment
 ) {
 }
