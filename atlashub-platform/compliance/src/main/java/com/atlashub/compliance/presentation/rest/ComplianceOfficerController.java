@@ -31,7 +31,7 @@ public class ComplianceOfficerController {
 
     private ReplaceBusinessOfficersCommand.OfficerInput input(BusinessOfficerRequest request) {
         AddressRequest address = request.address();
-        return new ReplaceBusinessOfficersCommand.OfficerInput(OfficerRole.valueOf(request.role()), request.firstName(),
+        return new ReplaceBusinessOfficersCommand.OfficerInput(request.role(), request.firstName(),
                 request.middleName(), request.lastName(), request.maidenName(), request.nationality(), request.dateOfBirth(),
                 new EmailAddress(request.email()), new PhoneNumber(request.phoneNumber()),
                 new AddressData(address.addressLine1(), address.addressLine2(), address.city(), address.state(),
