@@ -6,13 +6,16 @@ import com.atlashub.pay.accounts.application.commands.EnablePaymentCapability.En
 import com.atlashub.pay.accounts.presentation.dto.EnablePaymentCapabilityRequest;
 import com.atlashub.shared.application.dto.ApiResponse;
 import com.atlashub.shared.application.security.AuthenticatedPrincipal;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/v1/pay/capabilities")
+@RequestMapping("/api/v1/payment-capabilities")
+@Tag(name = "Payment Capabilities", description = "Payment collection and terminal capabilities")
 public class PaymentCapabilityController {
     private final EnablePaymentCapabilityHandler enableHandler;
 
@@ -21,6 +24,7 @@ public class PaymentCapabilityController {
     }
 
     @PostMapping("/{capability}/enable")
+    @Operation(summary = "Enable a payment capability")
     @PreAuthorize("hasAuthority('pay:capabilities:manage')")
     public ResponseEntity<ApiResponse<EnablePaymentCapabilityResult>> enable(
             @AuthenticationPrincipal AuthenticatedPrincipal principal,

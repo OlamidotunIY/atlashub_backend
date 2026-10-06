@@ -9,9 +9,12 @@ import com.atlashub.shared.application.port.DomainEventPublisher;
 import com.atlashub.shared.infrastructure.persistence.repository.JpaBaseRepository;
 import com.atlashub.shared.infrastructure.service.DomainSequenceGenerator;
 import org.springframework.stereotype.Component;
+import org.springframework.data.domain.PageRequest;
 
+import java.util.List;
 import java.util.Optional;
 import com.atlashub.shared.application.security.ApiEnvironment;
+import com.atlashub.pay.accounts.domain.valueobject.ExternalAccountStatus;
 
 @Component
 public class BusinessDepositAccountRepositoryAdapter
@@ -32,5 +35,9 @@ public class BusinessDepositAccountRepositoryAdapter
     }
     @Override public Optional<BusinessDepositAccount> findByAnchorAccountIdAndEnvironment(String anchorAccountId, ApiEnvironment environment) {
         return repository.findByAnchorAccountIdAndEnvironment(anchorAccountId, environment).map(mapper::toDomain);
+    }
+    @Override public List<BusinessDepositAccount> findPendingReconciliation(int limit) {
+        return repository.findByStatusInOrderByUpdatedAt(List.of(ExternalAccountStatus.PENDING), PageRequest.of(0, limit))
+                .stream().map(mapper::toDomain).toList();
     }
 }

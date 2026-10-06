@@ -15,7 +15,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.PageRequest;
 import com.atlashub.shared.application.security.ApiEnvironment;
 
 @Component
@@ -59,5 +61,13 @@ public class ReservedAccountRepositoryAdapter extends JpaBaseRepository<Reserved
         if (status != null) specification = specification.and((root, query, builder) ->
                 builder.equal(root.get("status"), status));
         return repository.findAll(specification, pageable).map(mapper::toDomain);
+    }
+    @Override public List<ReservedAccount> findByOrganizationIdAndEnvironment(Long organizationId, ApiEnvironment environment) {
+        return repository.findByOrganizationIdAndEnvironment(organizationId, environment)
+                .stream().map(mapper::toDomain).toList();
+    }
+    @Override public List<ReservedAccount> findPendingReconciliation(int limit) {
+        return repository.findByStatusInOrderByUpdatedAt(List.of(ExternalAccountStatus.PENDING), PageRequest.of(0, limit))
+                .stream().map(mapper::toDomain).toList();
     }
 }

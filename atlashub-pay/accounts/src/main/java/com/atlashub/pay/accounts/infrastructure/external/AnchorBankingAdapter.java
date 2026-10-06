@@ -63,7 +63,7 @@ public class AnchorBankingAdapter implements AnchorBankingPort {
     @Override
     public DepositAccountResult createBusinessDepositAccount(String customerId, String productName, String requestReference, String apiEnvironment) {
         requireCapability("DEPOSIT_ACCOUNT", apiEnvironment);
-        DepositAccountResource resource = requireData(clients(apiEnvironment).depositAccounts().createDepositAccount(new AnchorRequest<>(
+        DepositAccountResource resource = requireData(clients(apiEnvironment).depositAccounts().createDepositAccount(requestReference, new AnchorRequest<>(
                 new CreateDepositAccountData(
                         new CreateDepositAccountData.Attributes(productName),
                         new CreateDepositAccountData.Relationships(relationship(customerId, "BusinessCustomer"))
@@ -81,7 +81,7 @@ public class AnchorBankingAdapter implements AnchorBankingPort {
             String apiEnvironment
     ) {
         requireCapability("SUB_ACCOUNT", apiEnvironment);
-        SubAccountResource resource = requireData(clients(apiEnvironment).subAccounts().createSubAccount(new AnchorRequest<>(
+        SubAccountResource resource = requireData(clients(apiEnvironment).subAccounts().createSubAccount(requestReference, new AnchorRequest<>(
                 new CreateSubAccountData(
                         new CreateSubAccountData.Attributes(createVirtualNuban),
                         new CreateSubAccountData.Relationships(
@@ -102,17 +102,21 @@ public class AnchorBankingAdapter implements AnchorBankingPort {
             String apiEnvironment
     ) {
         requireCapability("RESERVED_ACCOUNT", apiEnvironment);
-        ReservedAccountResource resource = requireData(clients(apiEnvironment).reservedAccounts().createReservedAccount(new AnchorRequest<>(
-                new CreateReservedAccountData(
-                        new CreateReservedAccountData.Attributes(
-                                provider,
-                                new CreateReservedAccountData.Customer(
-                                        new CreateReservedAccountData.IndividualCustomer(splitName(customer.fullName()), customer.email(), customer.bvn())
-                                )
-                        ),
-                        new CreateReservedAccountData.Relationships(relationship(payoutSubAccountId, "SubAccount"))
-                )
-        )).data(), "Anchor did not return a reserved account");
+        boolean businessCustomer = "BUSINESS".equalsIgnoreCase(customer.type());
+        if (businessCustomer && (customer.providerCustomerId() == null || customer.providerCustomerId().isBlank())) {
+            throw new IllegalArgumentException("Anchor business-customer ID is required for a business reserved account");
+        }
+        CreateReservedAccountData.Customer inlineCustomer = businessCustomer ? null
+                : new CreateReservedAccountData.Customer(new CreateReservedAccountData.IndividualCustomer(
+                        splitName(customer.fullName()), customer.email(), customer.bvn()));
+        AnchorRelationship customerRelationship = businessCustomer
+                ? relationship(customer.providerCustomerId(), "BusinessCustomer") : null;
+        ReservedAccountResource resource = requireData(clients(apiEnvironment).reservedAccounts()
+                .createReservedAccount(requestReference, new AnchorRequest<>(new CreateReservedAccountData(
+                        new CreateReservedAccountData.Attributes(provider, inlineCustomer),
+                        new CreateReservedAccountData.Relationships(
+                                relationship(payoutSubAccountId, "SubAccount"), customerRelationship))))
+                .data(), "Anchor did not return a reserved account");
         String anchorCustomerId = resource.relationships() == null || resource.relationships().customer() == null
                 || resource.relationships().customer().data() == null
                 ? null : resource.relationships().customer().data().id();
@@ -131,7 +135,7 @@ public class AnchorBankingAdapter implements AnchorBankingPort {
     @Override
     public AccountDetails fetchSubAccount(String anchorSubAccountId, String apiEnvironment) {
         SubAccountResource resource = requireData(clients(apiEnvironment).subAccounts().getSubAccount(anchorSubAccountId).data(), "Anchor subaccount was not found");
-        return new AccountDetails(resource.id(), null, null, null, null, null, "NGN", "PENDING");
+        return new AccountDetails(resource.id(), null, null, null, null, null, "NGN", "ACTIVE");
     }
 
     @Override

@@ -13,6 +13,8 @@ import com.atlashub.pay.accounts.domain.ports.AnchorBankingPort.ReservedAccountC
 import com.atlashub.pay.accounts.presentation.dto.IssueReservedAccountRequest;
 import com.atlashub.shared.application.dto.ApiResponse;
 import com.atlashub.shared.application.security.AuthenticatedPrincipal;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import com.atlashub.shared.domain.valueobject.PageResult;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -27,7 +29,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/v1/pay/accounts/reserved")
+@RequestMapping("/api/v1/reserved-accounts")
+@Tag(name = "Reserved Accounts", description = "Customer and vendor virtual account management")
 public class ReservedAccountController {
     private final IssueReservedAccountHandler issueHandler;
     private final ChangeReservedAccountStatusHandler statusHandler;
@@ -45,6 +48,7 @@ public class ReservedAccountController {
     }
 
     @PostMapping
+    @Operation(summary = "Issue a reserved account")
     public ResponseEntity<ApiResponse<Long>> issue(
             @AuthenticationPrincipal AuthenticatedPrincipal principal,
             @RequestHeader("Idempotency-Key") String idempotencyKey,
@@ -58,6 +62,7 @@ public class ReservedAccountController {
     }
 
     @GetMapping
+    @Operation(summary = "List reserved accounts")
     public ResponseEntity<ApiResponse<PageResult<ReservedAccountResult>>> list(
             @AuthenticationPrincipal AuthenticatedPrincipal principal,
             @RequestParam(required = false) String ownerType,
@@ -70,6 +75,7 @@ public class ReservedAccountController {
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "Get a reserved account")
     public ResponseEntity<ApiResponse<ReservedAccountResult>> get(
             @AuthenticationPrincipal AuthenticatedPrincipal principal,
             @PathVariable Long id) {
@@ -77,6 +83,7 @@ public class ReservedAccountController {
     }
 
     @PostMapping("/{id}/suspend")
+    @Operation(summary = "Suspend a reserved account")
     public ResponseEntity<ApiResponse<Void>> suspend(
             @AuthenticationPrincipal AuthenticatedPrincipal principal, @PathVariable Long id) {
         statusHandler.execute(new ChangeReservedAccountStatusCommand(
@@ -85,6 +92,7 @@ public class ReservedAccountController {
     }
 
     @PostMapping("/{id}/reactivate")
+    @Operation(summary = "Reactivate a reserved account")
     public ResponseEntity<ApiResponse<Void>> reactivate(
             @AuthenticationPrincipal AuthenticatedPrincipal principal, @PathVariable Long id) {
         statusHandler.execute(new ChangeReservedAccountStatusCommand(
@@ -93,6 +101,7 @@ public class ReservedAccountController {
     }
 
     @PostMapping("/{id}/close")
+    @Operation(summary = "Close a reserved account")
     public ResponseEntity<ApiResponse<Void>> close(
             @AuthenticationPrincipal AuthenticatedPrincipal principal, @PathVariable Long id) {
         statusHandler.execute(new ChangeReservedAccountStatusCommand(

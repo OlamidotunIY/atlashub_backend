@@ -40,6 +40,7 @@ public class BankingProviderRequestJpa implements BaseJpaEntity {
     @Column(name = "customer_full_name") private String customerFullName;
     @Column(name = "customer_email") private String customerEmail;
     @Column(name = "customer_bvn") private String customerBvn;
+    @Column(name = "operation_reason") private String operationReason;
     @Enumerated(EnumType.STRING) @Column(nullable = false) private RequestStatus status;
     @Column(nullable = false) private int attempts;
     @Column(name = "failure_reason") private String failureReason;
