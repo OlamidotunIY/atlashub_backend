@@ -55,6 +55,11 @@ public class LedgerTransactionRepositoryAdapter implements LedgerTransactionRepo
     }
 
     @Override
+    public Long nextEntryIdentity() {
+        return sequenceGenerator.nextIdentity("ledger_entry_seq");
+    }
+
+    @Override
     @Transactional
     public LedgerTransaction save(LedgerTransaction entity) {
         LedgerTransactionJpa record = txMapper.toPersistence(entity);
@@ -62,15 +67,15 @@ public class LedgerTransactionRepositoryAdapter implements LedgerTransactionRepo
                 .map(entryMapper::toPersistence)
                 .collect(Collectors.toList());
 
+        LedgerTransactionJpa savedTx = txRepo.save(record);
+        List<LedgerEntryJpa> savedEntries = entryRepo.saveAll(entryRecords);
+
         List<DomainEvent<?>> events = entity.pullDomainEvents();
         if (events != null) {
             for (DomainEvent<?> event : events) {
                 eventPublisher.publish(EnvelopedDomainEvent.wrap(event));
             }
         }
-
-        LedgerTransactionJpa savedTx = txRepo.save(record);
-        List<LedgerEntryJpa> savedEntries = entryRepo.saveAll(entryRecords);
 
         return txMapper.toDomain(savedTx, savedEntries.stream().map(entryMapper::toDomain).collect(Collectors.toList()));
     }
@@ -146,11 +151,6 @@ public class LedgerTransactionRepositoryAdapter implements LedgerTransactionRepo
             Long accountId, ApiEnvironment environment, ZonedDateTime postedAt) {
         List<LedgerTransactionJpa> txs = txRepo.findByAccountIdAndEnvironmentAndPostedAtAfter(accountId, environment, postedAt);
         return mapTransactions(txs);
-    }
-
-    @Override
-    public List<LedgerTransaction> findByAccountIdAndPostedAtAfter(Long accountId, ZonedDateTime postedAt) {
-        return mapTransactions(txRepo.findByAccountIdAndPostedAtAfter(accountId, postedAt));
     }
 
     private List<LedgerTransaction> mapTransactions(List<LedgerTransactionJpa> txs) {

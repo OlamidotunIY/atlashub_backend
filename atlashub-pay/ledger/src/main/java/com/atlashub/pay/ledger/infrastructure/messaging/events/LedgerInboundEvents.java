@@ -24,7 +24,9 @@ public final class LedgerInboundEvents {
     }
 
     public record OutletCreatedEvent(
-            Long outletId, Long organizationId, String outletName, String currency) {
+            String eventId, Long aggregateId, ZonedDateTime occurredAt, String correlationId, Payload payload) {
+        public record Payload(Long outletId, Long organizationId, String name, String address,
+                              String city, String state, String country, String currency) {}
     }
 
     public record ChargeSuccessfulEvent(
@@ -39,14 +41,18 @@ public final class LedgerInboundEvents {
     }
 
     public record ReservedAccountFundedEvent(
-            Long reservedAccountId, Long organizationId, String environment, String ownerType, String ownerReferenceId,
-            Long businessSubAccountId, String anchorTransferReference, BigDecimal amount,
-            String currency, String senderAccountName, String senderBankCode, ZonedDateTime receivedAt) {
+            String eventId, Long aggregateId, ZonedDateTime occurredAt, String correlationId, Payload payload) {
+        public record Payload(Long reservedAccountId, Long organizationId, String environment,
+                              String ownerType, String ownerReferenceId, Long businessSubAccountId,
+                              String anchorTransferReference, BigDecimal amount, String currency,
+                              String senderAccountName, String senderBankCode, ZonedDateTime receivedAt) {}
     }
 
     public record OrganizationAccountFundedEvent(
-            Long organizationId, String environment, Long businessAccountId, String anchorTransferReference,
-            BigDecimal amount, String currency, ZonedDateTime receivedAt) {
+            String eventId, Long aggregateId, ZonedDateTime occurredAt, String correlationId, Payload payload) {
+        public record Payload(Long organizationId, String environment, Long businessAccountId,
+                              String anchorTransferReference, BigDecimal amount, String currency,
+                              ZonedDateTime receivedAt) {}
     }
 
     public record PayoutCompletedEvent(
@@ -66,18 +72,24 @@ public final class LedgerInboundEvents {
     }
 
     public record OrganizationBannedEvent(
-            Long organizationId, Long bannedByStaffId, String reason, ZonedDateTime bannedAt) {
+            String eventId, Long aggregateId, ZonedDateTime occurredAt, String correlationId, Payload payload) {
+        public record Payload(Long organizationId, String reason, ZonedDateTime bannedAt) {}
     }
 
     public record OrganizationUnbannedEvent(
-            Long organizationId, Long unbannedByStaffId, ZonedDateTime unbannedAt) {
+            String eventId, Long aggregateId, ZonedDateTime occurredAt, String correlationId, Payload payload) {
+        public record Payload(Long organizationId, ZonedDateTime unbannedAt) {}
     }
 
     public record OrganizationComplianceSuspendedEvent(
-            Long organizationId, String reason, ZonedDateTime suspendedAt) {
+            String eventId, Long aggregateId, ZonedDateTime occurredAt, String correlationId, Payload payload) {
+        public record Payload(Long organizationId, String anchorBusinessCustomerId,
+                              String reason, ZonedDateTime suspendedAt) {}
     }
 
     public record OrganizationComplianceReinstatedEvent(
-            Long organizationId, ZonedDateTime reinstatedAt) {
+            String eventId, Long aggregateId, ZonedDateTime occurredAt, String correlationId, Payload payload) {
+        public record Payload(Long organizationId, String anchorBusinessCustomerId,
+                              String reason, ZonedDateTime reinstatedAt) {}
     }
 }

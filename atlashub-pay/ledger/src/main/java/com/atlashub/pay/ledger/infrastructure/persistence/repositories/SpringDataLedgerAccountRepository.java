@@ -11,21 +11,27 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
+import com.atlashub.shared.application.security.ApiEnvironment;
 
 public interface SpringDataLedgerAccountRepository extends JpaRepository<LedgerAccountJpa, Long> {
     
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @QueryHints({@QueryHint(name = "jakarta.persistence.lock.timeout", value = "3000")})
-    Optional<LedgerAccountJpa> findById(Long id); 
+    @Query("select account from LedgerAccountJpa account where account.id = :id")
+    Optional<LedgerAccountJpa> findByIdForUpdate(@Param("id") Long id);
 
     List<LedgerAccountJpa> findAllByOrganizationId(Long organizationId);
+    List<LedgerAccountJpa> findAllByOrganizationIdAndEnvironment(Long organizationId, ApiEnvironment environment);
     
-    Optional<LedgerAccountJpa> findByOrganizationIdAndAccountType(Long organizationId, String accountType);
+    Optional<LedgerAccountJpa> findByOrganizationIdAndEnvironmentAndAccountTypeAndCurrency(
+            Long organizationId, ApiEnvironment environment, String accountType, String currency);
     
-    Optional<LedgerAccountJpa> findByOrganizationIdAndOutletId(Long organizationId, Long outletId);
+    Optional<LedgerAccountJpa> findByOrganizationIdAndEnvironmentAndOutletIdAndCurrency(
+            Long organizationId, ApiEnvironment environment, Long outletId, String currency);
 
-    Optional<LedgerAccountJpa> findByOrganizationIdAndPartyTypeAndPartyReferenceIdAndAccountType(
-            Long organizationId, String partyType, String partyReferenceId, String accountType);
+    Optional<LedgerAccountJpa> findByOrganizationIdAndEnvironmentAndPartyTypeAndPartyReferenceIdAndAccountTypeAndCurrency(
+            Long organizationId, ApiEnvironment environment, String partyType,
+            String partyReferenceId, String accountType, String currency);
     
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @QueryHints({@QueryHint(name = "jakarta.persistence.lock.timeout", value = "3000")})

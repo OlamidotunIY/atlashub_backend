@@ -32,6 +32,4 @@ public interface SpringDataLedgerTransactionRepository extends JpaRepository<Led
     @Query("SELECT t FROM LedgerTransactionJpa t WHERE t.environment = :environment AND t.id IN (SELECT e.transactionId FROM LedgerEntryJpa e WHERE e.accountId = :accountId) AND t.postedAt > :postedAt")
     List<LedgerTransactionJpa> findByAccountIdAndEnvironmentAndPostedAtAfter(@Param("accountId") Long accountId, @Param("environment") ApiEnvironment environment, @Param("postedAt") ZonedDateTime postedAt);
 
-    @Query("SELECT t FROM LedgerTransactionJpa t WHERE t.id IN (SELECT e.transactionId FROM LedgerEntryJpa e WHERE e.accountId = :accountId) AND t.postedAt > :postedAt")
-    List<LedgerTransactionJpa> findByAccountIdAndPostedAtAfter(@Param("accountId") Long accountId, @Param("postedAt") ZonedDateTime postedAt);
 }

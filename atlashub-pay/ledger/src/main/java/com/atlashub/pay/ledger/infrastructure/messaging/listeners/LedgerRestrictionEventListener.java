@@ -28,10 +28,10 @@ public class LedgerRestrictionEventListener extends BaseKafkaEventListener {
 
     @PostConstruct
     public void init() {
-        registerSubscription(OrganizationBannedEvent.class.getName(), "pay-ledger-org-banned");
-        registerSubscription(OrganizationUnbannedEvent.class.getName(), "pay-ledger-org-unbanned");
-        registerSubscription(OrganizationComplianceSuspendedEvent.class.getName(), "pay-ledger-compliance-suspended");
-        registerSubscription(OrganizationComplianceReinstatedEvent.class.getName(), "pay-ledger-compliance-reinstated");
+        registerSubscription("OrganizationBannedEvent", "pay-ledger-org-banned");
+        registerSubscription("OrganizationUnbannedEvent", "pay-ledger-org-unbanned");
+        registerSubscription("OrganizationComplianceSuspendedEvent", "pay-ledger-compliance-suspended");
+        registerSubscription("OrganizationComplianceReinstatedEvent", "pay-ledger-compliance-reinstated");
     }
 
     @KafkaListener(topics = "admin-events", groupId = "pay-ledger-org-banned")
@@ -67,10 +67,10 @@ public class LedgerRestrictionEventListener extends BaseKafkaEventListener {
         processEventIfMatches(message, eventName, eventClass, log, groupId,
                 e -> e instanceof TimeoutException, event -> {
                     Long organizationId;
-                    if (event instanceof OrganizationBannedEvent value) organizationId = value.organizationId();
-                    else if (event instanceof OrganizationUnbannedEvent value) organizationId = value.organizationId();
-                    else if (event instanceof OrganizationComplianceSuspendedEvent value) organizationId = value.organizationId();
-                    else organizationId = ((OrganizationComplianceReinstatedEvent) event).organizationId();
+                    if (event instanceof OrganizationBannedEvent value) organizationId = value.payload().organizationId();
+                    else if (event instanceof OrganizationUnbannedEvent value) organizationId = value.payload().organizationId();
+                    else if (event instanceof OrganizationComplianceSuspendedEvent value) organizationId = value.payload().organizationId();
+                    else organizationId = ((OrganizationComplianceReinstatedEvent) event).payload().organizationId();
                     handler.execute(new ProcessLedgerEventCommand(action, organizationId, null, null, restriction,
                             null, null, "SYSTEM", null, null, null));
                 });

@@ -26,15 +26,15 @@ public class AccountsLedgerEventListener extends BaseKafkaEventListener {
 
     @PostConstruct
     public void init() {
-        registerSubscription(OutletCreatedEvent.class.getName(), GROUP_ID);
+        registerSubscription("OutletCreatedEvent", GROUP_ID);
     }
 
     @KafkaListener(topics = "accounts-events", groupId = GROUP_ID)
     public void outletCreated(String message) {
         processEventIfMatches(message, "OutletCreatedEvent", OutletCreatedEvent.class, log, GROUP_ID,
                 e -> e instanceof TimeoutException, event -> handler.execute(new ProcessLedgerEventCommand(
-                        ProcessLedgerEventCommand.Action.CREATE_TILL_ACCOUNT, event.organizationId(),
-                        null, event.outletId(), null, null, null, "SYSTEM", event.outletId().toString(),
-                        null, event.currency())));
+                        ProcessLedgerEventCommand.Action.CREATE_TILL_ACCOUNT, event.payload().organizationId(),
+                        null, event.payload().outletId(), null, null, null, "SYSTEM",
+                        event.payload().outletId().toString(), null, event.payload().currency())));
     }
 }

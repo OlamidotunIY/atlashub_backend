@@ -20,12 +20,14 @@ import lombok.NoArgsConstructor;
 import java.time.ZonedDateTime;
 import java.util.Set;
 import com.atlashub.pay.ledger.domain.valueobject.LedgerRestrictionType;
+import com.atlashub.shared.application.security.ApiEnvironment;
 
 @Entity
 @Table(
         name = "ledger_accounts",
         indexes = {
                 @Index(name = "Idx_ledger_account_org_id", columnList = "organization_id"),
+                @Index(name = "Idx_ledger_account_org_env", columnList = "organization_id,api_environment"),
                 @Index(name = "Idx_ledger_account_outlet_id", columnList = "outlet_id")
                 ,@Index(name = "Idx_ledger_account_party", columnList = "organization_id,party_type,party_reference_id")
         }
@@ -40,6 +42,10 @@ public class LedgerAccountJpa implements BaseJpaEntity {
 
     @Column(name = "organization_id", nullable = false)
     private Long organizationId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "api_environment", nullable = false)
+    private ApiEnvironment environment;
 
     @Column(name = "account_type", nullable = false)
     private String accountType;

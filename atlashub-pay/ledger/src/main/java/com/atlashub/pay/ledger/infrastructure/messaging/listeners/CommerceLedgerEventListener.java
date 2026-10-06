@@ -26,8 +26,8 @@ public class CommerceLedgerEventListener extends BaseKafkaEventListener {
 
     @PostConstruct
     public void init() {
-        registerSubscription(TillOpenedEvent.class.getName(), "pay-ledger-till-opened");
-        registerSubscription(TillClosedEvent.class.getName(), "pay-ledger-till-closed");
+        registerSubscription("TillOpenedEvent", "pay-ledger-till-opened");
+        registerSubscription("TillClosedEvent", "pay-ledger-till-closed");
     }
 
     @KafkaListener(topics = "commerce-events", groupId = "pay-ledger-till-opened")
