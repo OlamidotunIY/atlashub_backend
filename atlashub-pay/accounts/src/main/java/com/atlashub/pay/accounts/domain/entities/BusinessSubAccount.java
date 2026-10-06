@@ -6,8 +6,12 @@ import com.atlashub.shared.domain.entities.AggregateRoot;
 import com.atlashub.shared.domain.valueobject.CurrencyCode;
 import lombok.Getter;
 import com.atlashub.shared.application.security.ApiEnvironment;
+import com.atlashub.pay.accounts.domain.exceptions.InvalidBankingAccountDataException;
+import com.atlashub.pay.accounts.domain.events.BusinessSubAccountActivatedEvent;
+import com.atlashub.shared.domain.valueobject.CorrelationId;
 
 import java.time.ZonedDateTime;
+import java.util.UUID;
 
 @Getter
 public class BusinessSubAccount extends AggregateRoot<Long> {
@@ -47,14 +51,24 @@ public class BusinessSubAccount extends AggregateRoot<Long> {
 
     public static BusinessSubAccount request(Long id, Long orgId, ApiEnvironment environment, Long profileId, String customerId,
                                              String parentFboId, CurrencyCode currency) {
-        if (parentFboId == null || parentFboId.isBlank()) throw new IllegalArgumentException("AtlasHub FBO account id is required");
+        if (parentFboId == null || parentFboId.isBlank()) throw new InvalidBankingAccountDataException("AtlasHub FBO account id is required");
         ZonedDateTime now=ZonedDateTime.now();
         return new BusinessSubAccount(id,orgId,environment,profileId,customerId,parentFboId,null,null,
                 null,null,null,null,null,currency,ExternalAccountStatus.REQUESTED,null,now,null,now);
     }
 
     public void markSubmitted(String subAccountId, String virtualNubanId) { this.anchorSubAccountId=subAccountId; this.anchorVirtualNubanId=virtualNubanId; status=ExternalAccountStatus.PENDING; touch(); }
-    public void activate(ConfirmedBankingDetails d) { if (status == ExternalAccountStatus.ACTIVE) return; if (d == null) throw new IllegalArgumentException("Confirmed banking details are required"); accountName=d.accountName(); accountNumber=d.accountNumber(); maskedAccountNumber=d.maskedAccountNumber(); bankName=d.bankName(); bankCode=d.bankCode(); status=ExternalAccountStatus.ACTIVE; activatedAt=ZonedDateTime.now(); touch(); }
+    public void activate(ConfirmedBankingDetails d) {
+        if (status == ExternalAccountStatus.ACTIVE) return;
+        if (d == null) throw new InvalidBankingAccountDataException("Confirmed banking details are required");
+        accountName=d.accountName(); accountNumber=d.accountNumber(); maskedAccountNumber=d.maskedAccountNumber();
+        bankName=d.bankName(); bankCode=d.bankCode(); status=ExternalAccountStatus.ACTIVE;
+        activatedAt=ZonedDateTime.now(); touch();
+        registerEvent(new BusinessSubAccountActivatedEvent(
+                UUID.randomUUID().toString(), id, ZonedDateTime.now(), CorrelationId.getOrCreate(),
+                new BusinessSubAccountActivatedEvent.Payload(
+                        organizationId, bankingProfileId, environment.name(), currency.name(), activatedAt)));
+    }
     public void fail(String reason) { status=ExternalAccountStatus.FAILED; failureReason=reason; touch(); }
     public void suspend(String reason) { status=ExternalAccountStatus.SUSPENDED; failureReason=reason; touch(); }
     public void reactivate() { status=ExternalAccountStatus.ACTIVE; failureReason=null; touch(); }

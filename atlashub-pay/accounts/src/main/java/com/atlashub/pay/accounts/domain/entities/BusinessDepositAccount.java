@@ -6,8 +6,15 @@ import com.atlashub.shared.domain.entities.AggregateRoot;
 import com.atlashub.shared.domain.valueobject.CurrencyCode;
 import lombok.Getter;
 import com.atlashub.shared.application.security.ApiEnvironment;
+import com.atlashub.pay.accounts.domain.exceptions.InvalidBankingAccountDataException;
+import com.atlashub.pay.accounts.domain.exceptions.InvalidBankingStateException;
+import com.atlashub.pay.accounts.domain.events.BusinessDepositAccountActivatedEvent;
+import com.atlashub.pay.accounts.domain.events.OrganizationAccountFundedEvent;
+import com.atlashub.shared.domain.valueobject.CorrelationId;
 
+import java.math.BigDecimal;
 import java.time.ZonedDateTime;
+import java.util.UUID;
 
 @Getter
 public class BusinessDepositAccount extends AggregateRoot<Long> {
@@ -52,16 +59,34 @@ public class BusinessDepositAccount extends AggregateRoot<Long> {
     }
 
     public void markSubmitted(String anchorAccountId) {
-        if (anchorAccountId == null || anchorAccountId.isBlank()) throw new IllegalArgumentException("Anchor account id is required");
+        if (anchorAccountId == null || anchorAccountId.isBlank()) throw new InvalidBankingAccountDataException("Anchor account id is required");
         this.anchorAccountId=anchorAccountId; this.status=ExternalAccountStatus.PENDING; touch();
     }
 
     public void activate(ConfirmedBankingDetails details) {
         if (status == ExternalAccountStatus.ACTIVE) return;
         if (status != ExternalAccountStatus.PENDING && status != ExternalAccountStatus.REQUESTED)
-            throw new IllegalStateException("Only requested or pending accounts can be activated");
-        if (details == null) throw new IllegalArgumentException("Confirmed banking details are required");
+            throw new InvalidBankingStateException("Only requested or pending accounts can be activated");
+        if (details == null || !details.hasAccountNumberDetails())
+            throw new InvalidBankingAccountDataException("Confirmed deposit-account name and number are required");
         apply(details); status=ExternalAccountStatus.ACTIVE; activatedAt=ZonedDateTime.now(); touch();
+        registerEvent(new BusinessDepositAccountActivatedEvent(
+                UUID.randomUUID().toString(), id, ZonedDateTime.now(), CorrelationId.getOrCreate(),
+                new BusinessDepositAccountActivatedEvent.Payload(
+                        organizationId, bankingProfileId, environment.name(), currency.name(), activatedAt)));
+    }
+
+    public void recordFunding(String transferReference, BigDecimal amount, CurrencyCode fundingCurrency,
+                              ZonedDateTime receivedAt) {
+        if (transferReference == null || transferReference.isBlank() || amount == null
+                || amount.signum() <= 0 || fundingCurrency == null) {
+            throw new InvalidBankingAccountDataException("Valid funding reference, amount and currency are required");
+        }
+        registerEvent(new OrganizationAccountFundedEvent(
+                UUID.randomUUID().toString(), id, ZonedDateTime.now(), CorrelationId.getOrCreate(),
+                new OrganizationAccountFundedEvent.Payload(organizationId, environment.name(), id,
+                        transferReference, amount, fundingCurrency.name(),
+                        receivedAt == null ? ZonedDateTime.now() : receivedAt)));
     }
 
     public void freeze(String reason) { frozen=true; status=ExternalAccountStatus.FROZEN; failureReason=reason; touch(); }

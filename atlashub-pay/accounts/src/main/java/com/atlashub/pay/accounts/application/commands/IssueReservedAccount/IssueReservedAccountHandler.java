@@ -8,7 +8,7 @@ import com.atlashub.pay.accounts.domain.repositories.BusinessSubAccountRepositor
 import com.atlashub.pay.accounts.domain.repositories.BankingProviderRequestRepository;
 import com.atlashub.pay.accounts.domain.repositories.OrganizationBankingProfileRepository;
 import com.atlashub.pay.accounts.domain.repositories.ReservedAccountRepository;
-import com.atlashub.pay.accounts.domain.valueobject.BankingProfileStatus;
+import com.atlashub.pay.accounts.domain.exceptions.InvalidBankingStateException;
 import com.atlashub.pay.accounts.domain.valueobject.ExternalAccountStatus;
 import com.atlashub.pay.accounts.domain.valueobject.ReservedAccountOwnerType;
 import com.atlashub.shared.application.usecase.Command;
@@ -44,16 +44,16 @@ public class IssueReservedAccountHandler extends Command<IssueReservedAccountCom
         if (existing != null) return existing.getId();
         if (reservedAccountRepository.findActiveByOwner(
                 command.organizationId(), environment, ownerType, command.ownerReferenceId(), command.provider()).isPresent()) {
-            throw new IllegalStateException("An active reserved account already exists for this owner and provider");
+            throw new InvalidBankingStateException("An active reserved account already exists for this owner and provider");
         }
         OrganizationBankingProfile profile = profileRepository.findByOrganizationIdAndEnvironment(command.organizationId(), environment)
-                .orElseThrow(() -> new IllegalStateException("Organization banking is not provisioned"));
-        if (profile.getStatus() != BankingProfileStatus.ACTIVE || !profile.getActiveRestrictions().isEmpty()) {
-            throw new IllegalStateException("Organization banking is not active");
+                .orElseThrow(() -> new InvalidBankingStateException("Organization banking is not provisioned"));
+        if (!profile.isUsable()) {
+            throw new InvalidBankingStateException("Organization banking is not active");
         }
         BusinessSubAccount subAccount = subAccountRepository.findById(profile.getBusinessSubAccountId())
                 .filter(value -> value.getStatus() == ExternalAccountStatus.ACTIVE)
-                .orElseThrow(() -> new IllegalStateException("Organization subaccount is not active"));
+                .orElseThrow(() -> new InvalidBankingStateException("Organization subaccount is not active"));
         ReservedAccount account = ReservedAccount.request(
                 reservedAccountRepository.nextIdentity(), command.organizationId(), environment, ownerType,
                 command.ownerReferenceId(), subAccount.getId(), subAccount.getAnchorSubAccountId(),
@@ -61,7 +61,8 @@ public class IssueReservedAccountHandler extends Command<IssueReservedAccountCom
         reservedAccountRepository.save(account);
         providerRequestRepository.save(BankingProviderRequest.create(
                 providerRequestRepository.nextIdentity(), BankingProviderRequest.RequestType.RESERVED_ACCOUNT,
-                account.getId(), command.idempotencyKey(), command.apiEnvironment(), null, subAccount.getAnchorSubAccountId(),
+                account.getId(), command.idempotencyKey(), command.apiEnvironment(),
+                command.customer().providerCustomerId(), subAccount.getAnchorSubAccountId(),
                 command.provider(), command.customer().type(), command.customer().referenceId(),
                 command.customer().fullName(), command.customer().email(), command.customer().bvn()));
         return account.getId();

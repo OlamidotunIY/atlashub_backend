@@ -4,6 +4,9 @@ import com.atlashub.pay.accounts.domain.valueobject.BankingProfileStatus;
 import com.atlashub.pay.accounts.domain.valueobject.BankingRestrictionType;
 import com.atlashub.shared.domain.entities.AggregateRoot;
 import com.atlashub.pay.accounts.domain.events.OrganizationBankingActivatedEvent;
+import com.atlashub.pay.accounts.domain.events.OrganizationBankingProvisioningFailedEvent;
+import com.atlashub.pay.accounts.domain.exceptions.InvalidBankingAccountDataException;
+import com.atlashub.pay.accounts.domain.exceptions.InvalidBankingStateException;
 import com.atlashub.shared.domain.valueobject.CorrelationId;
 import com.atlashub.shared.application.security.ApiEnvironment;
 import lombok.Getter;
@@ -51,7 +54,7 @@ public class OrganizationBankingProfile extends AggregateRoot<Long> {
                                                      String anchorBusinessCustomerId) {
         if (id == null || organizationId == null || environment == null || anchorBusinessCustomerId == null
                 || anchorBusinessCustomerId.isBlank()) {
-            throw new IllegalArgumentException("Profile id, organization id and Anchor customer id are required");
+            throw new InvalidBankingAccountDataException("Profile id, organization id and Anchor customer id are required");
         }
         ZonedDateTime now = ZonedDateTime.now();
         return new OrganizationBankingProfile(id, organizationId, environment, anchorBusinessCustomerId,
@@ -72,7 +75,7 @@ public class OrganizationBankingProfile extends AggregateRoot<Long> {
 
     public void activate() {
         if (businessDepositAccountId == null || businessSubAccountId == null) {
-            throw new IllegalStateException("Deposit account and subaccount are required");
+            throw new InvalidBankingStateException("Deposit account and subaccount are required");
         }
         boolean firstActivation = this.status != BankingProfileStatus.ACTIVE;
         this.status = activeRestrictions.isEmpty() ? BankingProfileStatus.ACTIVE : BankingProfileStatus.SUSPENDED;
@@ -88,16 +91,42 @@ public class OrganizationBankingProfile extends AggregateRoot<Long> {
 
     public void restrict(BankingRestrictionType restriction) {
         activeRestrictions.add(restriction);
-        status = BankingProfileStatus.SUSPENDED;
+        if (status == BankingProfileStatus.ACTIVE) status = BankingProfileStatus.SUSPENDED;
         touch();
     }
 
     public void removeRestriction(BankingRestrictionType restriction) {
         activeRestrictions.remove(restriction);
-        if (activeRestrictions.isEmpty() && businessDepositAccountId != null && businessSubAccountId != null) {
-            status = BankingProfileStatus.ACTIVE;
-        }
         touch();
+    }
+
+    public void reactivate() {
+        if (!activeRestrictions.isEmpty())
+            throw new InvalidBankingStateException("Restricted banking profile cannot be reactivated");
+        if (status == BankingProfileStatus.SUSPENDED) status = BankingProfileStatus.ACTIVE;
+        touch();
+    }
+
+    public void markPartiallyProvisioned(String code, String message) {
+        status = BankingProfileStatus.PARTIALLY_PROVISIONED;
+        failureCode = code;
+        failureMessage = message;
+        touch();
+    }
+
+    public void fail(String code, String message) {
+        status = BankingProfileStatus.FAILED;
+        failureCode = code;
+        failureMessage = message;
+        touch();
+        registerEvent(new OrganizationBankingProvisioningFailedEvent(
+                UUID.randomUUID().toString(), id, ZonedDateTime.now(), CorrelationId.getOrCreate(),
+                new OrganizationBankingProvisioningFailedEvent.Payload(
+                        organizationId, environment.name(), code, message, ZonedDateTime.now())));
+    }
+
+    public boolean isUsable() {
+        return status == BankingProfileStatus.ACTIVE && activeRestrictions.isEmpty();
     }
 
     private void touch() { updatedAt = ZonedDateTime.now(); }

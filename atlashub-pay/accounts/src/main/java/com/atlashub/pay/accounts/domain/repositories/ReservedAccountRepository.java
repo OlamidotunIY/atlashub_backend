@@ -7,6 +7,7 @@ import com.atlashub.shared.domain.repository.Repository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.util.List;
 import java.util.Optional;
 import com.atlashub.shared.application.security.ApiEnvironment;
 
@@ -18,4 +19,6 @@ public interface ReservedAccountRepository extends Repository<ReservedAccount> {
             Long organizationId, ApiEnvironment environment, ReservedAccountOwnerType ownerType, String ownerReferenceId, String provider);
     Page<ReservedAccount> search(Long organizationId, ApiEnvironment environment, ReservedAccountOwnerType ownerType,
                                  String ownerReferenceId, ExternalAccountStatus status, Pageable pageable);
+    List<ReservedAccount> findByOrganizationIdAndEnvironment(Long organizationId, ApiEnvironment environment);
+    List<ReservedAccount> findPendingReconciliation(int limit);
 }

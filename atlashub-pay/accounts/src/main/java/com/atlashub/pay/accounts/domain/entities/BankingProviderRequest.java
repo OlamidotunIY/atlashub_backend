@@ -1,13 +1,14 @@
 package com.atlashub.pay.accounts.domain.entities;
 
 import com.atlashub.shared.domain.entities.AggregateRoot;
+import com.atlashub.pay.accounts.domain.exceptions.InvalidBankingAccountDataException;
 import lombok.Getter;
 
 import java.time.ZonedDateTime;
 
 @Getter
 public class BankingProviderRequest extends AggregateRoot<Long> {
-    public enum RequestType { DEPOSIT, SUB_ACCOUNT, RESERVED_ACCOUNT }
+    public enum RequestType { DEPOSIT, SUB_ACCOUNT, RESERVED_ACCOUNT, FREEZE_DEPOSIT, UNFREEZE_DEPOSIT }
     public enum RequestStatus { PENDING, COMPLETED, FAILED }
 
     private final Long id;
@@ -23,6 +24,7 @@ public class BankingProviderRequest extends AggregateRoot<Long> {
     private final String customerFullName;
     private final String customerEmail;
     private final String customerBvn;
+    private final String operationReason;
     private RequestStatus status;
     private int attempts;
     private String failureReason;
@@ -33,6 +35,7 @@ public class BankingProviderRequest extends AggregateRoot<Long> {
             String requestReference, String apiEnvironment, String anchorCustomerId, String parentOrPayoutAccountId,
             String provider, String customerType, String customerReferenceId,
             String customerFullName, String customerEmail, String customerBvn,
+            String operationReason,
             RequestStatus status, int attempts, String failureReason,
             ZonedDateTime createdAt, ZonedDateTime updatedAt) {
         this.id = id; this.requestType = requestType; this.aggregateId = aggregateId;
@@ -40,7 +43,8 @@ public class BankingProviderRequest extends AggregateRoot<Long> {
         this.parentOrPayoutAccountId = parentOrPayoutAccountId; this.provider = provider;
         this.customerType = customerType; this.customerReferenceId = customerReferenceId;
         this.customerFullName = customerFullName; this.customerEmail = customerEmail;
-        this.customerBvn = customerBvn; this.status = status; this.attempts = attempts;
+        this.customerBvn = customerBvn; this.operationReason = operationReason;
+        this.status = status; this.attempts = attempts;
         this.failureReason = failureReason; this.createdAt = createdAt; this.updatedAt = updatedAt;
     }
 
@@ -51,8 +55,18 @@ public class BankingProviderRequest extends AggregateRoot<Long> {
         ZonedDateTime now = ZonedDateTime.now();
         return new BankingProviderRequest(id, type, aggregateId, requestReference, apiEnvironment, anchorCustomerId,
                 parentOrPayoutAccountId, provider, customerType, customerReferenceId,
-                customerFullName, customerEmail, customerBvn, RequestStatus.PENDING,
+                customerFullName, customerEmail, customerBvn, null, RequestStatus.PENDING,
                 0, null, now, now);
+    }
+
+    public static BankingProviderRequest createDepositLifecycle(Long id, RequestType type, Long aggregateId,
+            String requestReference, String apiEnvironment, String reason) {
+        if (type != RequestType.FREEZE_DEPOSIT && type != RequestType.UNFREEZE_DEPOSIT)
+            throw new InvalidBankingAccountDataException("Deposit lifecycle request type is required");
+        ZonedDateTime now = ZonedDateTime.now();
+        return new BankingProviderRequest(id, type, aggregateId, requestReference, apiEnvironment,
+                null, null, null, null, null, null, null, null, reason,
+                RequestStatus.PENDING, 0, null, now, now);
     }
 
     public void complete() { status = RequestStatus.COMPLETED; failureReason = null; updatedAt = ZonedDateTime.now(); }
@@ -62,7 +76,7 @@ public class BankingProviderRequest extends AggregateRoot<Long> {
 
     private static String requireApiEnvironment(String apiEnvironment) {
         if (apiEnvironment == null || (!"TEST".equalsIgnoreCase(apiEnvironment) && !"LIVE".equalsIgnoreCase(apiEnvironment))) {
-            throw new IllegalArgumentException("Banking provider request environment must be TEST or LIVE");
+            throw new InvalidBankingAccountDataException("Banking provider request environment must be TEST or LIVE");
         }
         return apiEnvironment.toUpperCase();
     }

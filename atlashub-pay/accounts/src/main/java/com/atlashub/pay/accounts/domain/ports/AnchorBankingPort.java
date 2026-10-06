@@ -24,7 +24,12 @@ public interface AnchorBankingPort {
     record DepositAccountResult(String anchorAccountId, String status) {}
     record SubAccountResult(String anchorSubAccountId, String anchorVirtualNubanId, String status) {}
     record ReservedAccountResult(String anchorReservedAccountId, String anchorCustomerId, String status) {}
-    record ReservedAccountCustomer(String type, String referenceId, String fullName, String email, String bvn) {}
+    record ReservedAccountCustomer(String type, String referenceId, String providerCustomerId,
+                                   String fullName, String email, String bvn) {
+        public ReservedAccountCustomer(String type, String referenceId, String fullName, String email, String bvn) {
+            this(type, referenceId, null, fullName, email, bvn);
+        }
+    }
     record AccountDetails(
             String resourceId, String accountName, String accountNumber, String maskedAccountNumber,
             String bankName, String bankCode, String currency, String status) {}

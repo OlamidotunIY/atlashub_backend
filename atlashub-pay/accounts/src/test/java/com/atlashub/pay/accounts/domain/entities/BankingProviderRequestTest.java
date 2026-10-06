@@ -1,5 +1,6 @@
 package com.atlashub.pay.accounts.domain.entities;
 
+import com.atlashub.pay.accounts.domain.exceptions.InvalidBankingAccountDataException;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -19,9 +20,19 @@ class BankingProviderRequestTest {
 
     @Test
     void rejects_an_unknown_api_environment() {
-        assertThrows(IllegalArgumentException.class, () -> BankingProviderRequest.create(
+        assertThrows(InvalidBankingAccountDataException.class, () -> BankingProviderRequest.create(
                 1L, BankingProviderRequest.RequestType.DEPOSIT, 2L, "request-1", "sandbox",
                 "customer-1", null, null, null, null, null, null, null
         ));
+    }
+
+    @Test
+    void creates_environment_scoped_deposit_lifecycle_request() {
+        BankingProviderRequest request = BankingProviderRequest.createDepositLifecycle(
+                1L, BankingProviderRequest.RequestType.FREEZE_DEPOSIT, 2L,
+                "freeze-1", "live", "Compliance suspended");
+
+        assertEquals("LIVE", request.getApiEnvironment());
+        assertEquals("Compliance suspended", request.getOperationReason());
     }
 }

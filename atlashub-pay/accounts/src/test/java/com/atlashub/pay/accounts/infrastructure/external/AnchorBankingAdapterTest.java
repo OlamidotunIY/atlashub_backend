@@ -23,6 +23,7 @@ import java.time.Duration;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -43,7 +44,7 @@ class AnchorBankingAdapterTest {
         );
         ObjectProvider<AnchorClientRegistry> provider = provider(registry);
         when(registry.forEnvironment(AnchorEnvironment.SANDBOX)).thenReturn(clients);
-        when(depositAccounts.createDepositAccount(any())).thenReturn(new AnchorResponse<>(
+        when(depositAccounts.createDepositAccount(eq("atlas-reference"), any())).thenReturn(new AnchorResponse<>(
                 new DepositAccountResource("deposit-1", "DepositAccount",
                         new DepositAccountResource.Attributes(null, null, "AtlasHub", false, "NGN", "1234567890", "CURRENT", "PENDING"),
                         null)
@@ -55,7 +56,7 @@ class AnchorBankingAdapterTest {
         assertEquals("deposit-1", result.anchorAccountId());
         assertEquals("PENDING", result.status());
         org.mockito.ArgumentCaptor<AnchorRequest<CreateDepositAccountData>> request = org.mockito.ArgumentCaptor.forClass(AnchorRequest.class);
-        verify(depositAccounts).createDepositAccount(request.capture());
+        verify(depositAccounts).createDepositAccount(eq("atlas-reference"), request.capture());
         assertEquals("customer-1", request.getValue().data().relationships().customer().data().id());
         assertEquals("BusinessCustomer", request.getValue().data().relationships().customer().data().type());
     }

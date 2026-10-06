@@ -11,10 +11,13 @@ import com.atlashub.pay.accounts.domain.repositories.BusinessSubAccountRepositor
 import com.atlashub.pay.accounts.domain.repositories.OrganizationBankingProfileRepository;
 import com.atlashub.pay.accounts.domain.repositories.ReservedAccountRepository;
 import com.atlashub.pay.accounts.domain.ports.AnchorBankingPort;
+import com.atlashub.pay.accounts.domain.valueobject.BankingRestrictionType;
+import com.atlashub.pay.accounts.domain.valueobject.ExternalAccountStatus;
 import com.atlashub.shared.application.security.ApiEnvironment;
 import com.atlashub.shared.application.usecase.Command;
 import com.atlashub.shared.domain.valueobject.CurrencyCode;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
 public class ApplyAnchorAccountStatusHandler extends Command<ApplyAnchorAccountStatusCommand, Void> {
@@ -39,6 +42,7 @@ public class ApplyAnchorAccountStatusHandler extends Command<ApplyAnchorAccountS
     }
 
     @Override
+    @Transactional
     public Void execute(ApplyAnchorAccountStatusCommand command) {
         switch (command.resourceType().toUpperCase()) {
             case "DEPOSIT_ACCOUNT" -> applyDeposit(command);
@@ -53,28 +57,51 @@ public class ApplyAnchorAccountStatusHandler extends Command<ApplyAnchorAccountS
         ApiEnvironment environment = ApiEnvironment.parse(command.environment());
         BusinessDepositAccount deposit = depositRepository.findByAnchorAccountIdAndEnvironment(command.anchorResourceId(), environment)
                 .orElseThrow(() -> new IllegalArgumentException("Deposit account not found"));
+        OrganizationBankingProfile profile = profileRepository.findById(deposit.getBankingProfileId()).orElseThrow();
         if ("FAILED".equalsIgnoreCase(command.status())) {
             deposit.fail(command.failureReason());
             depositRepository.save(deposit);
+            profile.fail("DEPOSIT_ACCOUNT_FAILED", command.failureReason());
+            profileRepository.save(profile);
             return;
         }
+        if (deposit.getStatus() == ExternalAccountStatus.FROZEN
+                && !profile.getActiveRestrictions().isEmpty()) return;
         deposit.activate(command.details());
         depositRepository.save(deposit);
-        OrganizationBankingProfile profile = profileRepository.findById(deposit.getBankingProfileId()).orElseThrow();
+        if (profile.getActiveRestrictions().contains(BankingRestrictionType.COMPLIANCE)) {
+            String freezeReference = "org-banking-freeze-" + deposit.getOrganizationId() + "-"
+                    + environment.name().toLowerCase() + "-activation";
+            if (providerRequestRepository.findByRequestReferenceAndApiEnvironment(
+                    freezeReference, environment.name()).isEmpty()) {
+                providerRequestRepository.save(BankingProviderRequest.createDepositLifecycle(
+                        providerRequestRepository.nextIdentity(), BankingProviderRequest.RequestType.FREEZE_DEPOSIT,
+                        deposit.getId(), freezeReference, environment.name(), "Compliance suspended"));
+            }
+        }
         if (profile.getBusinessSubAccountId() != null) return;
-        if (!anchorBankingPort.supports("SUB_ACCOUNT", command.environment())) return;
+        if (!anchorBankingPort.supports("SUB_ACCOUNT", command.environment())) {
+            profile.markPartiallyProvisioned("SUB_ACCOUNT_UNAVAILABLE",
+                    "Anchor subaccounts are unavailable in " + command.environment().toUpperCase());
+            profileRepository.save(profile);
+            return;
+        }
         String parentFboAccountId = anchorBankingPort.requireFboAccountId(command.environment());
-        BusinessSubAccount subAccount = BusinessSubAccount.request(
-                subAccountRepository.nextIdentity(), deposit.getOrganizationId(), environment, profile.getId(),
-                deposit.getAnchorBusinessCustomerId(), parentFboAccountId, CurrencyCode.NGN);
-        subAccountRepository.save(subAccount);
+        BusinessSubAccount subAccount = subAccountRepository
+                .findByOrganizationIdAndEnvironment(deposit.getOrganizationId(), environment)
+                .orElseGet(() -> subAccountRepository.save(BusinessSubAccount.request(
+                        subAccountRepository.nextIdentity(), deposit.getOrganizationId(), environment, profile.getId(),
+                        deposit.getAnchorBusinessCustomerId(), parentFboAccountId, CurrencyCode.NGN)));
         profile.linkSubAccount(subAccount.getId());
         profileRepository.save(profile);
         String reference = "org-banking-subaccount-" + deposit.getOrganizationId();
-        providerRequestRepository.save(BankingProviderRequest.create(
-                providerRequestRepository.nextIdentity(), BankingProviderRequest.RequestType.SUB_ACCOUNT,
-                subAccount.getId(), reference + "-" + environment.name().toLowerCase(), environment.name(), deposit.getAnchorBusinessCustomerId(), parentFboAccountId,
-                null, null, null, null, null, null));
+        String requestReference = reference + "-" + environment.name().toLowerCase();
+        if (providerRequestRepository.findByRequestReferenceAndApiEnvironment(requestReference, environment.name()).isEmpty()) {
+            providerRequestRepository.save(BankingProviderRequest.create(
+                    providerRequestRepository.nextIdentity(), BankingProviderRequest.RequestType.SUB_ACCOUNT,
+                    subAccount.getId(), requestReference, environment.name(), deposit.getAnchorBusinessCustomerId(), parentFboAccountId,
+                    null, null, null, null, null, null));
+        }
     }
 
     private void applySubAccount(ApplyAnchorAccountStatusCommand command) {
@@ -84,6 +111,9 @@ public class ApplyAnchorAccountStatusHandler extends Command<ApplyAnchorAccountS
         if ("FAILED".equalsIgnoreCase(command.status())) {
             subAccount.fail(command.failureReason());
             subAccountRepository.save(subAccount);
+            OrganizationBankingProfile profile = profileRepository.findById(subAccount.getBankingProfileId()).orElseThrow();
+            profile.markPartiallyProvisioned("SUB_ACCOUNT_FAILED", command.failureReason());
+            profileRepository.save(profile);
             return;
         }
         subAccount.activate(command.details());

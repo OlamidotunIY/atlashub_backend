@@ -1,5 +1,7 @@
 package com.atlashub.pay.accounts.domain.valueobject;
 
+import com.atlashub.pay.accounts.domain.exceptions.InvalidBankingAccountDataException;
+
 public record ConfirmedBankingDetails(
         String accountName,
         String accountNumber,
@@ -8,8 +10,14 @@ public record ConfirmedBankingDetails(
         String bankCode
 ) {
     public ConfirmedBankingDetails {
-        if (accountName == null || accountName.isBlank() || accountNumber == null || accountNumber.isBlank()) {
-            throw new IllegalArgumentException("Confirmed account name and number are required");
+        boolean hasName = accountName != null && !accountName.isBlank();
+        boolean hasNumber = accountNumber != null && !accountNumber.isBlank();
+        if (hasName != hasNumber) {
+            throw new InvalidBankingAccountDataException("Confirmed account name and number must be supplied together");
         }
+    }
+
+    public boolean hasAccountNumberDetails() {
+        return accountName != null && !accountName.isBlank() && accountNumber != null && !accountNumber.isBlank();
     }
 }
