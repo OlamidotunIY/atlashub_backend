@@ -1,5 +1,8 @@
 TF_DIR = infrastructure/terraform
 VM_IP = $(shell terraform -chdir=$(TF_DIR) output -raw k3s_vm_public_ip)
+JWT_KEY_DIR = infrastructure/JWT
+JWT_PRIVATE_KEY = $(JWT_KEY_DIR)/atlashub-jwt-private.pem
+JWT_PUBLIC_KEY = $(JWT_KEY_DIR)/atlashub-jwt-public.pem
 
 ifeq ($(OS),Windows_NT)
     SSH = C:\Windows\sysnative\OpenSSH\ssh.exe
@@ -30,12 +33,15 @@ deploy-stack:
 	@echo "=> Copying Secrets to VM (if not exists)..."
 	$(eval FIREBASE_JSON := $(wildcard infrastructure/Firebase/*.json))
 	$(eval FIREBASE_JSON_NAME := $(notdir $(FIREBASE_JSON)))
-	@$(SSH) -i $(SSH_KEY) -o StrictHostKeyChecking=no ubuntu@$(VM_IP) "test -f /tmp/.env" && echo "=> .env already exists on VM, skipping." || $(SCP) -i $(SSH_KEY) -o StrictHostKeyChecking=no .env ubuntu@$(VM_IP):/tmp/.env
+	@echo "=> Syncing .env from the local deployment source..."
+	@$(SCP) -i $(SSH_KEY) -o StrictHostKeyChecking=no .env ubuntu@$(VM_IP):/tmp/.env
 	@$(SSH) -i $(SSH_KEY) -o StrictHostKeyChecking=no ubuntu@$(VM_IP) "test -f /tmp/$(FIREBASE_JSON_NAME)" && echo "=> Firebase JSON already exists on VM, skipping." || $(SCP) -i $(SSH_KEY) -o StrictHostKeyChecking=no $(FIREBASE_JSON) ubuntu@$(VM_IP):/tmp/$(FIREBASE_JSON_NAME)
+	@$(SSH) -i $(SSH_KEY) -o StrictHostKeyChecking=no ubuntu@$(VM_IP) "test -f /tmp/atlashub-jwt-private.pem" && echo "=> JWT private key already exists on VM, skipping." || $(SCP) -i $(SSH_KEY) -o StrictHostKeyChecking=no $(JWT_PRIVATE_KEY) ubuntu@$(VM_IP):/tmp/atlashub-jwt-private.pem
+	@$(SSH) -i $(SSH_KEY) -o StrictHostKeyChecking=no ubuntu@$(VM_IP) "test -f /tmp/atlashub-jwt-public.pem" && echo "=> JWT public key already exists on VM, skipping." || $(SCP) -i $(SSH_KEY) -o StrictHostKeyChecking=no $(JWT_PUBLIC_KEY) ubuntu@$(VM_IP):/tmp/atlashub-jwt-public.pem
 	@echo "=> Ensuring Docker Image exists in K3s..."
 	@$(SSH) -i $(SSH_KEY) -o StrictHostKeyChecking=no ubuntu@$(VM_IP) "sudo k3s ctr images ls | grep -q atlashub/app:latest" || "$(MAKE)" build-image
 	@echo "=> Applying Kubernetes Secrets..."
-	$(SSH) -i $(SSH_KEY) -o StrictHostKeyChecking=no ubuntu@$(VM_IP) "export KUBECONFIG=/home/ubuntu/.kube/config && kubectl delete secret atlashub-secrets firebase-secrets --ignore-not-found && kubectl create secret generic atlashub-secrets --from-env-file=/tmp/.env && kubectl create secret generic firebase-secrets --from-file=/tmp/$(FIREBASE_JSON_NAME)"
+	$(SSH) -i $(SSH_KEY) -o StrictHostKeyChecking=no ubuntu@$(VM_IP) "export KUBECONFIG=/home/ubuntu/.kube/config && kubectl delete secret atlashub-secrets firebase-secrets jwt-signing-keys --ignore-not-found && kubectl create secret generic atlashub-secrets --from-env-file=/tmp/.env && kubectl create secret generic firebase-secrets --from-file=/tmp/$(FIREBASE_JSON_NAME) && kubectl create secret generic jwt-signing-keys --from-file=private.pem=/tmp/atlashub-jwt-private.pem --from-file=public.pem=/tmp/atlashub-jwt-public.pem"
 	@echo "=> Applying Kubernetes Manifests..."
 	$(SSH) -i $(SSH_KEY) -o StrictHostKeyChecking=no ubuntu@$(VM_IP) "if [ ! -d 'atlashub' ]; then git clone https://github.com/OlamidotunIY/atlashub_backend.git atlashub; fi && cd atlashub && git checkout master && git pull origin master"
 	$(SSH) -i $(SSH_KEY) -o StrictHostKeyChecking=no ubuntu@$(VM_IP) "export KUBECONFIG=/home/ubuntu/.kube/config && kubectl apply -k atlashub/infrastructure/k8s/base"

@@ -18,19 +18,13 @@ spring:
 
   # JPA & Hibernate Settings
   jpa:
-    database-platform: org.hibernate.dialect.MySQLDialect
+    open-in-view: false
     hibernate:
-      open-in-view: false
       ddl-auto: update
     show-sql: false # Prints SQL queries to the console so you can debug
     properties:
       hibernate:
         format_sql: true
-
-  security:
-    user:
-      name: admin
-      password: atlashub
 
 # Custom Application Properties
 jwt:
@@ -47,6 +41,8 @@ atlashub:
   jwt:
     private-key: ${ATLASHUB_JWT_PRIVATE_KEY:}
     public-key: ${ATLASHUB_JWT_PUBLIC_KEY:}
+    private-key-path: ${ATLASHUB_JWT_PRIVATE_KEY_PATH:}
+    public-key-path: ${ATLASHUB_JWT_PUBLIC_KEY_PATH:}
     key-id: ${ATLASHUB_JWT_KEY_ID:atlashub-rs256-1}
     issuer: ${ATLASHUB_JWT_ISSUER:atlashub-authentication}
     audience: ${ATLASHUB_JWT_AUDIENCE:atlashub-api}

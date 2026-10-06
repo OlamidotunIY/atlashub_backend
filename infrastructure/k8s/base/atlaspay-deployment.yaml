@@ -46,10 +46,16 @@ spec:
         - name: firebase-secrets
           mountPath: /app/infrastructure/Firebase
           readOnly: true
+        - name: jwt-signing-keys
+          mountPath: /app/secrets/jwt
+          readOnly: true
       volumes:
       - name: firebase-secrets
         secret:
           secretName: firebase-secrets
+      - name: jwt-signing-keys
+        secret:
+          secretName: jwt-signing-keys
 ---
 apiVersion: v1
 kind: Service

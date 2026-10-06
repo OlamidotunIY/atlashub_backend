@@ -3,8 +3,15 @@ package com.atlashub.authentication.infrastructure.security;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -26,12 +33,26 @@ public class RsaSigningKeyProvider {
     private final RSAPublicKey publicKey;
     private final String keyId;
 
+    @Autowired
     public RsaSigningKeyProvider(
             @Value("${atlashub.jwt.private-key:${ATLASHUB_JWT_PRIVATE_KEY:}}") String privateKeyValue,
             @Value("${atlashub.jwt.public-key:${ATLASHUB_JWT_PUBLIC_KEY:}}") String publicKeyValue,
-            @Value("${atlashub.jwt.key-id:atlashub-rs256-1}") String keyId) {
+            @Value("${atlashub.jwt.private-key-path:${ATLASHUB_JWT_PRIVATE_KEY_PATH:}}") String privateKeyPath,
+            @Value("${atlashub.jwt.public-key-path:${ATLASHUB_JWT_PUBLIC_KEY_PATH:}}") String publicKeyPath,
+            @Value("${atlashub.jwt.key-id:atlashub-rs256-1}") String keyId,
+            Environment environment) {
+        this(privateKeyValue, publicKeyValue, privateKeyPath, publicKeyPath, keyId,
+                environment.acceptsProfiles(Profiles.of("local")));
+    }
+
+    RsaSigningKeyProvider(String privateKeyValue, String publicKeyValue,
+                          String privateKeyPath, String publicKeyPath, String keyId,
+                          boolean allowEphemeralDevelopmentKeys) {
         this.keyId = keyId;
-        KeyPair keyPair = loadOrGenerate(privateKeyValue, publicKeyValue);
+        KeyPair keyPair = loadOrGenerate(
+                resolveKeyMaterial(privateKeyValue, privateKeyPath, "private"),
+                resolveKeyMaterial(publicKeyValue, publicKeyPath, "public"),
+                allowEphemeralDevelopmentKeys);
         this.privateKey = keyPair.getPrivate();
         this.publicKey = (RSAPublicKey) keyPair.getPublic();
     }
@@ -61,7 +82,8 @@ public class RsaSigningKeyProvider {
         return Map.of("keys", List.of(key));
     }
 
-    private KeyPair loadOrGenerate(String privateKeyValue, String publicKeyValue) {
+    private KeyPair loadOrGenerate(String privateKeyValue, String publicKeyValue,
+                                   boolean allowEphemeralDevelopmentKeys) {
         try {
             if (privateKeyValue != null && !privateKeyValue.isBlank()
                     && publicKeyValue != null && !publicKeyValue.isBlank()) {
@@ -72,7 +94,11 @@ public class RsaSigningKeyProvider {
                         new X509EncodedKeySpec(decodePem(publicKeyValue)));
                 return new KeyPair(loadedPublic, loadedPrivate);
             }
-            log.warn("JWT RSA keys are not configured; generating an ephemeral development key pair");
+            if (!allowEphemeralDevelopmentKeys) {
+                throw new IllegalStateException(
+                        "JWT RSA keys must be configured outside the explicit local profile");
+            }
+            log.warn("JWT RSA keys are not configured; generating an ephemeral local-development key pair");
             KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
             generator.initialize(2048);
             return generator.generateKeyPair();
@@ -89,6 +115,17 @@ public class RsaSigningKeyProvider {
                 .replace("-----END PUBLIC KEY-----", "")
                 .replaceAll("\\s", "");
         return Base64.getDecoder().decode(normalized);
+    }
+
+    private String resolveKeyMaterial(String inlineValue, String filePath, String keyType) {
+        if (filePath == null || filePath.isBlank()) {
+            return inlineValue;
+        }
+        try {
+            return Files.readString(Path.of(filePath), StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            throw new IllegalStateException("Unable to read JWT " + keyType + " key file: " + filePath, e);
+        }
     }
 
     private byte[] unsigned(byte[] value) {
