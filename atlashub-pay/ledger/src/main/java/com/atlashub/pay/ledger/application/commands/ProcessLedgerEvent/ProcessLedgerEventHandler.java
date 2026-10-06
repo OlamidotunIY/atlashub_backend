@@ -8,7 +8,10 @@ import com.atlashub.pay.ledger.domain.entities.LedgerAccount;
 import com.atlashub.pay.ledger.domain.repositories.LedgerAccountRepository;
 import com.atlashub.pay.ledger.domain.valueobject.LedgerAccountType;
 import com.atlashub.pay.ledger.domain.valueobject.LedgerRestrictionType;
+import com.atlashub.pay.ledger.domain.valueobject.LedgerPartyType;
+import com.atlashub.shared.application.security.ApiEnvironment;
 import com.atlashub.shared.application.usecase.Command;
+import com.atlashub.shared.domain.valueobject.CurrencyCode;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -40,11 +43,20 @@ public class ProcessLedgerEventHandler extends Command<ProcessLedgerEventCommand
     public Void execute(ProcessLedgerEventCommand command) {
         switch (command.action()) {
             case BOOTSTRAP_ORGANIZATION -> ORGANIZATION_ACCOUNT_TYPES.forEach(type ->
-                    createIfMissing(command.organizationId(), type, null, null, null, command.currency()));
+                    createIfMissing(command.organizationId(), command.environment(), type,
+                            null, null, null, command.currency()));
             case CREATE_PARTY_ACCOUNT -> createPartyAccount(command);
-            case CREATE_TILL_ACCOUNT -> createIfMissing(
-                    command.organizationId(), LedgerAccountType.TILL, command.outletId(), null, null,
-                    command.currency());
+            case CREATE_TILL_ACCOUNT -> {
+                if (command.environment() == null) {
+                    for (ApiEnvironment environment : ApiEnvironment.values()) {
+                        createIfMissing(command.organizationId(), environment.name(), LedgerAccountType.TILL,
+                                command.outletId(), null, null, command.currency());
+                    }
+                } else {
+                    createIfMissing(command.organizationId(), command.environment(), LedgerAccountType.TILL,
+                            command.outletId(), null, null, command.currency());
+                }
+            }
             case CHARGE_RECEIVED -> post(
                     command, LedgerAccountType.PROVIDER_CLEARING, LedgerAccountType.OPERATING, null, null);
             case PROVIDER_SETTLED -> post(
@@ -83,7 +95,7 @@ public class ProcessLedgerEventHandler extends Command<ProcessLedgerEventCommand
 
     private void createPartyAccount(ProcessLedgerEventCommand command) {
         LedgerAccountType type = partyAccountType(command.partyType());
-        createIfMissing(command.organizationId(), type, null, command.partyType(),
+        createIfMissing(command.organizationId(), command.environment(), type, null, command.partyType(),
                 command.partyReferenceId(), command.currency());
     }
 
@@ -93,17 +105,22 @@ public class ProcessLedgerEventHandler extends Command<ProcessLedgerEventCommand
         post(command, LedgerAccountType.SUSPENSE, partyAccount, null, null);
     }
 
-    private void createIfMissing(Long organizationId, LedgerAccountType type, Long outletId,
+    private void createIfMissing(Long organizationId, String apiEnvironment, LedgerAccountType type, Long outletId,
                                  String partyType, String partyReferenceId, String currency) {
+        ApiEnvironment environment = ApiEnvironment.parse(apiEnvironment);
+        CurrencyCode currencyCode = CurrencyCode.valueOf(currency.toUpperCase());
         boolean exists = type == LedgerAccountType.TILL
-                ? accountRepository.findByOrganizationIdAndOutletId(organizationId, outletId).isPresent()
+                ? accountRepository.findByOrganizationIdAndEnvironmentAndOutletIdAndCurrency(
+                        organizationId, environment, outletId, currencyCode).isPresent()
                 : type == LedgerAccountType.CUSTOMER_FUNDS || type == LedgerAccountType.VENDOR_PAYABLE
-                ? accountRepository.findByOrganizationIdAndParty(
-                        organizationId, partyType, partyReferenceId, type).isPresent()
-                : accountRepository.findByOrganizationIdAndAccountType(organizationId, type).isPresent();
+                ? accountRepository.findByOrganizationIdAndEnvironmentAndParty(
+                        organizationId, environment, LedgerPartyType.valueOf(partyType.toUpperCase()),
+                        partyReferenceId, type, currencyCode).isPresent()
+                : accountRepository.findByOrganizationIdAndEnvironmentAndAccountTypeAndCurrency(
+                        organizationId, environment, type, currencyCode).isPresent();
         if (!exists) {
             createAccountHandler.execute(new CreateLedgerAccountCommand(
-                    organizationId, type.name(), outletId, partyType, partyReferenceId,
+                    organizationId, environment.name(), type.name(), outletId, partyType, partyReferenceId,
                     currency, normalBalance(type)));
         }
     }
@@ -123,22 +140,29 @@ public class ProcessLedgerEventHandler extends Command<ProcessLedgerEventCommand
     }
 
     private LedgerAccount resolve(ProcessLedgerEventCommand command, LedgerAccountType type, Long outletId) {
+        CurrencyCode currency = CurrencyCode.valueOf(command.currency().toUpperCase());
         if (type == LedgerAccountType.TILL) {
-            return accountRepository.findByOrganizationIdAndOutletId(command.organizationId(), outletId)
+            return accountRepository.findByOrganizationIdAndEnvironmentAndOutletIdAndCurrency(
+                            command.organizationId(), ApiEnvironment.parse(command.environment()), outletId, currency)
                     .orElseThrow(() -> new IllegalStateException("TILL ledger account not found"));
         }
         if (type == LedgerAccountType.CUSTOMER_FUNDS || type == LedgerAccountType.VENDOR_PAYABLE) {
-            return accountRepository.findByOrganizationIdAndParty(
-                            command.organizationId(), command.partyType(), command.partyReferenceId(), type)
+            return accountRepository.findByOrganizationIdAndEnvironmentAndParty(
+                            command.organizationId(), ApiEnvironment.parse(command.environment()),
+                            LedgerPartyType.valueOf(command.partyType().toUpperCase()),
+                            command.partyReferenceId(), type, currency)
                     .orElseThrow(() -> new IllegalStateException("Party ledger account not found"));
         }
-        return accountRepository.findByOrganizationIdAndAccountType(command.organizationId(), type)
+        return accountRepository.findByOrganizationIdAndEnvironmentAndAccountTypeAndCurrency(
+                        command.organizationId(), ApiEnvironment.parse(command.environment()), type, currency)
                 .orElseThrow(() -> new IllegalStateException(type + " ledger account not found"));
     }
 
     private LedgerAccountType partyAccountType(String partyType) {
-        return "VENDOR".equalsIgnoreCase(partyType)
-                ? LedgerAccountType.VENDOR_PAYABLE : LedgerAccountType.CUSTOMER_FUNDS;
+        return switch (LedgerPartyType.valueOf(partyType.toUpperCase())) {
+            case CUSTOMER -> LedgerAccountType.CUSTOMER_FUNDS;
+            case VENDOR -> LedgerAccountType.VENDOR_PAYABLE;
+        };
     }
 
     private String normalBalance(LedgerAccountType type) {

@@ -45,14 +45,17 @@ public class GetWalletBalancesHandler extends Query<GetWalletBalancesQuery, Wall
     }
 
     @Override
-    @PreAuthorize("hasAuthority('pay:wallets:read')")
+    @PreAuthorize("hasAuthority('pay:ledger:read')")
     public WalletBalancesResult execute(GetWalletBalancesQuery query) {
         log.info("Executing GetWalletBalancesQuery for organizationId={}", query.organizationId());
 
-        List<LedgerAccount> accounts = accountRepository.findAllByOrganizationId(query.organizationId());
+        List<LedgerAccount> accounts = accountRepository.findAllByOrganizationIdAndEnvironment(
+                query.organizationId(), ApiEnvironment.parse(query.environment())).stream()
+                .filter(account -> account.getOutletId() == null && account.getPartyType() == null)
+                .toList();
         
         if (accounts.isEmpty()) {
-            return new WalletBalancesResult(query.organizationId(), new HashMap<>(), "USD");
+            return new WalletBalancesResult(query.organizationId(), new HashMap<>(), "NGN");
         }
         
         String currency = accounts.getFirst().getCurrency().name();

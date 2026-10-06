@@ -85,6 +85,9 @@ public class PostLedgerTransactionHandler extends Command<PostLedgerTransactionC
             if (!account.getOrganizationId().equals(command.organizationId())) {
                 throw new IllegalArgumentException("Account " + accountId + " does not belong to organization " + command.organizationId());
             }
+            if (account.getEnvironment() != environment) {
+                throw new IllegalArgumentException("Account " + accountId + " belongs to a different API environment");
+            }
             if (account.getStatus() == LedgerAccountStatus.FROZEN) {
                 throw new LedgerAccountFrozenException(accountId.toString());
             }
@@ -98,7 +101,7 @@ public class PostLedgerTransactionHandler extends Command<PostLedgerTransactionC
         Long txId = transactionRepository.nextIdentity();
 
         for (PostLedgerTransactionCommand.LedgerEntryRequest req : command.entries()) {
-            Long entryId = transactionRepository.nextIdentity();
+            Long entryId = transactionRepository.nextEntryIdentity();
             
             LedgerEntry entry = LedgerEntry.create(
                     entryId,
@@ -126,10 +129,6 @@ public class PostLedgerTransactionHandler extends Command<PostLedgerTransactionC
 
         // 8. Save
         transactionRepository.save(transaction);
-        for (LedgerAccount acc : accounts) {
-            accountRepository.save(acc);
-        }
-
         return new PostLedgerTransactionResponse(transaction.getId(), transaction.getReference(), transaction.getPostedAt());
     }
 }

@@ -11,10 +11,10 @@ import java.util.List;
 import java.util.Optional;
 
 public interface LedgerTransactionRepository extends Repository<LedgerTransaction> {
+    Long nextEntryIdentity();
     Optional<LedgerTransaction> findByReferenceAndEnvironment(String reference, ApiEnvironment environment);
     List<LedgerTransaction> findByOrganizationIdAndEnvironment(Long organizationId, ApiEnvironment environment, Pageable pageable);
     
     Page<LedgerTransaction> findHistory(Long organizationId, ApiEnvironment environment, Long accountId, LocalDate dateFrom, LocalDate dateTo, Pageable pageable);
     List<LedgerTransaction> findByAccountIdAndEnvironmentAndPostedAtAfter(Long accountId, ApiEnvironment environment, java.time.ZonedDateTime postedAt);
-    List<LedgerTransaction> findByAccountIdAndPostedAtAfter(Long accountId, java.time.ZonedDateTime postedAt);
 }

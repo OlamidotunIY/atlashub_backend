@@ -35,24 +35,20 @@ public class CloseAccountHandler extends Command<CloseAccountCommand, Void> {
     }
 
     @Override
-    @PreAuthorize("hasAuthority('pay:ledger:close')")
+    @PreAuthorize("hasAuthority('platform:pay:operations')")
     public Void execute(CloseAccountCommand command) {
         log.info("Executing CloseAccountCommand for account id: {}", command.ledgerAccountId());
 
         LedgerAccount account = ledgerAccountRepository.findByIdWithLock(command.ledgerAccountId())
                 .orElseThrow(() -> new LedgerAccountNotFoundException(command.ledgerAccountId().toString()));
 
-        if (!account.getOrganizationId().equals(command.organizationId())) {
-            throw new IllegalArgumentException("Account does not belong to the active organization");
-        }
-
         BalanceSnapshot snapshot = balanceSnapshotRepository.findLatestByAccountId(account.getId())
                 .orElseThrow(() -> new IllegalStateException("Account missing initial balance snapshot"));
         Money balance = new Money(
                 balanceCalculator.calculateRunningBalance(
                         account.getId(), account.getNormalBalance(), snapshot.getBalance().amount(),
-                        transactionRepository.findByAccountIdAndPostedAtAfter(
-                                account.getId(), snapshot.getSnapshotAt())),
+                        transactionRepository.findByAccountIdAndEnvironmentAndPostedAtAfter(
+                                account.getId(), account.getEnvironment(), snapshot.getSnapshotAt())),
                 account.getCurrency());
 
         account.close(balance);

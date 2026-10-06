@@ -22,16 +22,12 @@ public class FreezeAccountHandler extends Command<FreezeAccountCommand, Void> {
     }
 
     @Override
-    @PreAuthorize("hasAuthority('pay:ledger:freeze')")
+    @PreAuthorize("hasAuthority('platform:pay:operations')")
     public Void execute(FreezeAccountCommand command) {
         log.info("Executing FreezeAccountCommand for account id: {}", command.ledgerAccountId());
 
         LedgerAccount account = ledgerAccountRepository.findByIdWithLock(command.ledgerAccountId())
                 .orElseThrow(() -> new LedgerAccountNotFoundException(command.ledgerAccountId().toString()));
-
-        if (!account.getOrganizationId().equals(command.organizationId())) {
-            throw new IllegalArgumentException("Account does not belong to the active organization");
-        }
 
         account.freeze(LedgerRestrictionType.valueOf(command.restrictionType().toUpperCase()));
         ledgerAccountRepository.save(account);

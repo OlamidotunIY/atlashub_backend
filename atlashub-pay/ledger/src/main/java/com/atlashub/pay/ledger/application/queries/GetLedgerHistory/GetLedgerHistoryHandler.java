@@ -29,7 +29,7 @@ public class GetLedgerHistoryHandler extends Query<GetLedgerHistoryQuery, PageRe
     }
 
     @Override
-    @PreAuthorize("hasAuthority('pay:transfers:read')")
+    @PreAuthorize("hasAuthority('pay:ledger:read')")
     public PageResult<LedgerTransactionResult> execute(GetLedgerHistoryQuery query) {
         log.info("Executing GetLedgerHistoryQuery for organization {} and account {}", 
                 query.organizationId(), query.accountId());

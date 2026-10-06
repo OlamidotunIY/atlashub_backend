@@ -6,6 +6,8 @@ import com.atlashub.pay.ledger.domain.repositories.BalanceSnapshotRepository;
 import com.atlashub.pay.ledger.domain.repositories.LedgerAccountRepository;
 import com.atlashub.pay.ledger.domain.valueobject.LedgerAccountType;
 import com.atlashub.pay.ledger.domain.valueobject.NormalBalance;
+import com.atlashub.pay.ledger.domain.valueobject.LedgerPartyType;
+import com.atlashub.shared.application.security.ApiEnvironment;
 import com.atlashub.shared.application.usecase.Command;
 import com.atlashub.shared.domain.exception.BusinessRuleException;
 import com.atlashub.shared.domain.valueobject.CurrencyCode;
@@ -35,37 +37,44 @@ public class CreateLedgerAccountHandler extends Command<CreateLedgerAccountComma
         log.info("Executing CreateLedgerAccountCommand for organizationId: {}", command.organizationId());
 
         LedgerAccountType accountType = LedgerAccountType.valueOf(command.accountType().toUpperCase());
+        ApiEnvironment environment = ApiEnvironment.parse(command.environment());
+        CurrencyCode currency = CurrencyCode.valueOf(command.currency().toUpperCase());
         
         if (accountType == LedgerAccountType.TILL) {
             if (command.outletId() == null) {
                 throw new BusinessRuleException("Outlet ID is required for TILL accounts.");
             }
-            if (ledgerAccountRepository.findByOrganizationIdAndOutletId(command.organizationId(), command.outletId()).isPresent()) {
+            if (ledgerAccountRepository.findByOrganizationIdAndEnvironmentAndOutletIdAndCurrency(
+                    command.organizationId(), environment, command.outletId(), currency).isPresent()) {
                 throw new BusinessRuleException("A TILL account already exists for this outlet.");
             }
         } else if (accountType == LedgerAccountType.CUSTOMER_FUNDS
                 || accountType == LedgerAccountType.VENDOR_PAYABLE) {
-            if (ledgerAccountRepository.findByOrganizationIdAndParty(
-                    command.organizationId(), command.partyType(), command.partyReferenceId(), accountType).isPresent()) {
-                return new CreateLedgerAccountResponse(ledgerAccountRepository.findByOrganizationIdAndParty(
-                        command.organizationId(), command.partyType(), command.partyReferenceId(), accountType)
+            LedgerPartyType partyType = LedgerPartyType.valueOf(command.partyType().toUpperCase());
+            if (ledgerAccountRepository.findByOrganizationIdAndEnvironmentAndParty(
+                    command.organizationId(), environment, partyType,
+                    command.partyReferenceId(), accountType, currency).isPresent()) {
+                return new CreateLedgerAccountResponse(ledgerAccountRepository.findByOrganizationIdAndEnvironmentAndParty(
+                        command.organizationId(), environment, partyType,
+                        command.partyReferenceId(), accountType, currency)
                         .orElseThrow().getId());
             }
         } else {
-            if (ledgerAccountRepository.findByOrganizationIdAndAccountType(command.organizationId(), accountType).isPresent()) {
+            if (ledgerAccountRepository.findByOrganizationIdAndEnvironmentAndAccountTypeAndCurrency(
+                    command.organizationId(), environment, accountType, currency).isPresent()) {
                 throw new BusinessRuleException("A " + accountType + " account already exists for this organization.");
             }
         }
 
-        CurrencyCode currency = CurrencyCode.valueOf(command.currency().toUpperCase());
         Long newId = ledgerAccountRepository.nextIdentity();
 
         LedgerAccount account = LedgerAccount.create(
                 newId,
                 command.organizationId(),
+                environment,
                 accountType,
                 command.outletId(),
-                command.partyType(),
+                command.partyType() == null ? null : LedgerPartyType.valueOf(command.partyType().toUpperCase()),
                 command.partyReferenceId(),
                 currency,
                 NormalBalance.valueOf(command.normalBalance().toUpperCase())

@@ -9,6 +9,9 @@ import com.atlashub.pay.ledger.domain.valueobject.LedgerAccountStatus;
 import com.atlashub.pay.ledger.domain.valueobject.LedgerAccountType;
 import com.atlashub.pay.ledger.domain.valueobject.NormalBalance;
 import com.atlashub.pay.ledger.domain.valueobject.LedgerRestrictionType;
+import com.atlashub.pay.ledger.domain.valueobject.LedgerPartyType;
+import com.atlashub.pay.ledger.domain.exceptions.LedgerInvariantException;
+import com.atlashub.shared.application.security.ApiEnvironment;
 import com.atlashub.shared.domain.entities.AggregateRoot;
 import com.atlashub.shared.domain.valueobject.CorrelationId;
 import com.atlashub.shared.domain.valueobject.CurrencyCode;
@@ -25,9 +28,10 @@ public class LedgerAccount extends AggregateRoot<Long> {
 
     private final Long id;
     private final Long organizationId;
+    private final ApiEnvironment environment;
     private final LedgerAccountType accountType;
     private final Long outletId;
-    private final String partyType;
+    private final LedgerPartyType partyType;
     private final String partyReferenceId;
     private final CurrencyCode currency;
     private final NormalBalance normalBalance;
@@ -36,13 +40,14 @@ public class LedgerAccount extends AggregateRoot<Long> {
     private final ZonedDateTime createdAt;
     private ZonedDateTime updatedAt;
 
-    public LedgerAccount(Long id, Long organizationId, LedgerAccountType accountType,
-                         Long outletId, String partyType, String partyReferenceId,
+    public LedgerAccount(Long id, Long organizationId, ApiEnvironment environment, LedgerAccountType accountType,
+                         Long outletId, LedgerPartyType partyType, String partyReferenceId,
                          CurrencyCode currency, NormalBalance normalBalance, LedgerAccountStatus status,
                          Set<LedgerRestrictionType> activeRestrictions,
                          ZonedDateTime createdAt, ZonedDateTime updatedAt) {
         this.id = id;
         this.organizationId = organizationId;
+        this.environment = environment;
         this.accountType = accountType;
         this.outletId = outletId;
         this.partyType = partyType;
@@ -55,33 +60,42 @@ public class LedgerAccount extends AggregateRoot<Long> {
         this.updatedAt = updatedAt;
     }
 
-    public static LedgerAccount create(Long id, Long organizationId, LedgerAccountType accountType,
-                                       Long outletId, String partyType, String partyReferenceId,
+    public static LedgerAccount create(Long id, Long organizationId, ApiEnvironment environment,
+                                       LedgerAccountType accountType, Long outletId,
+                                       LedgerPartyType partyType, String partyReferenceId,
                                        CurrencyCode currency, NormalBalance normalBalance) {
         if (id == null) {
-            throw new IllegalArgumentException("id cannot be null");
+            throw new LedgerInvariantException("Ledger account id is required");
         }
         if (organizationId == null) {
-            throw new IllegalArgumentException("organizationId cannot be null");
+            throw new LedgerInvariantException("Ledger account organization is required");
         }
+        if (environment == null) throw new LedgerInvariantException("Ledger account environment is required");
         if (accountType == null) {
-            throw new IllegalArgumentException("accountType cannot be null");
+            throw new LedgerInvariantException("Ledger account type is required");
         }
         if (currency == null) {
-            throw new IllegalArgumentException("currency cannot be null");
+            throw new LedgerInvariantException("Ledger account currency is required");
         }
         if (normalBalance == null) {
-            throw new IllegalArgumentException("normalBalance cannot be null");
+            throw new LedgerInvariantException("Ledger account normal balance is required");
         }
         boolean partyAccount = accountType == LedgerAccountType.CUSTOMER_FUNDS
                 || accountType == LedgerAccountType.VENDOR_PAYABLE;
         if (partyAccount && (partyType == null || partyReferenceId == null || partyReferenceId.isBlank())) {
-            throw new IllegalArgumentException("Party type and reference are required for party ledger accounts");
+            throw new LedgerInvariantException("Party type and reference are required for party ledger accounts");
         }
+        if (!partyAccount && (partyType != null || partyReferenceId != null))
+            throw new LedgerInvariantException("Only party ledger accounts may have party ownership");
+        if (accountType == LedgerAccountType.TILL && outletId == null)
+            throw new LedgerInvariantException("TILL ledger accounts require an outlet");
+        if (accountType != LedgerAccountType.TILL && outletId != null)
+            throw new LedgerInvariantException("Only TILL ledger accounts may have an outlet");
         ZonedDateTime now = ZonedDateTime.now();
         return new LedgerAccount(
                 id,
                 organizationId,
+                environment,
                 accountType,
                 outletId,
                 partyType,
