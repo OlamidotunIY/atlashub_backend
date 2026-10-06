@@ -1,6 +1,7 @@
 package com.atlashub.compliance.domain.entities;
 
 import com.atlashub.compliance.domain.events.OrganizationComplianceApprovedEvent;
+import com.atlashub.compliance.domain.events.OrganizationTestBankingReadyEvent;
 import com.atlashub.compliance.domain.exception.StepNotCompleteException;
 import com.atlashub.compliance.domain.valueobject.*;
 import com.atlashub.shared.domain.valueobject.EmailAddress;
@@ -16,6 +17,17 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ComplianceRecordTest {
+    @Test
+    void records_sandbox_customer_once_and_publishes_test_banking_readiness() {
+        ComplianceRecord record = ComplianceRecord.create(1L, 10L);
+
+        record.recordSandboxAnchorCustomerCreated("sandbox-customer");
+        record.recordSandboxAnchorCustomerCreated("sandbox-customer");
+
+        assertEquals("sandbox-customer", record.getSandboxAnchorBusinessCustomerId());
+        assertEquals(1, record.peekDomainEvents().stream()
+                .filter(OrganizationTestBankingReadyEvent.class::isInstance).count());
+    }
     @Test
     void requires_all_five_semantically_complete_steps_before_submission() {
         ComplianceRecord record = ComplianceRecord.create(1L, 10L);

@@ -24,7 +24,7 @@ class OrchestrateAnchorComplianceHandlerTest {
         when(repository.findByOrganizationId(10L)).thenReturn(Optional.of(record));
         when(repository.save(any())).thenAnswer(call -> call.getArgument(0));
         when(repository.nextIdentity()).thenReturn(99L);
-        when(anchor.createBusinessCustomer(any())).thenReturn(
+        when(anchor.createBusinessCustomer(any(), eq(com.atlashub.shared.application.security.ApiEnvironment.LIVE))).thenReturn(
                 new AnchorCompliancePort.BusinessCustomerResult("anchor-customer", Map.of(20L, "anchor-officer")));
         when(anchor.fetchCustomerDocumentRequirements("anchor-customer")).thenReturn(List.of(
                 new AnchorCompliancePort.DocumentRequirement("anchor-document", "CERTIFICATE", "Certificate", true)));

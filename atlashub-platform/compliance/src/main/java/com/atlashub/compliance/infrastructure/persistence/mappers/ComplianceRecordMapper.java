@@ -1,13 +1,16 @@
 package com.atlashub.compliance.infrastructure.persistence.mappers;
 
-import com.atlashub.compliance.domain.entities.*;
+import com.atlashub.compliance.domain.entities.BusinessOfficer;
+import com.atlashub.compliance.domain.entities.ComplianceDocumentRequirement;
+import com.atlashub.compliance.domain.entities.ComplianceRecord;
 import com.atlashub.compliance.domain.valueobject.BusinessProfileData;
-import com.atlashub.compliance.infrastructure.persistence.entities.*;
+import com.atlashub.compliance.infrastructure.persistence.entities.BusinessOfficerJpa;
+import com.atlashub.compliance.infrastructure.persistence.entities.ComplianceDocumentRequirementJpa;
+import com.atlashub.compliance.infrastructure.persistence.entities.ComplianceRecordJpa;
 import com.atlashub.shared.domain.valueobject.EmailAddress;
 import com.atlashub.shared.domain.valueobject.PhoneNumber;
 import com.atlashub.shared.infrastructure.persistence.mappers.DomainMapper;
 import org.springframework.stereotype.Component;
-import java.util.List;
 
 @Component
 public class ComplianceRecordMapper implements DomainMapper<ComplianceRecord, ComplianceRecordJpa> {
@@ -17,9 +20,11 @@ public class ComplianceRecordMapper implements DomainMapper<ComplianceRecord, Co
                 row.getLegalName(), row.getRegistrationType(), row.getRegistrationDate(),
                 row.getBusinessRegistrationNumber(), row.getBusinessBvn(), row.getIndustry(),
                 row.getBusinessDescription(), row.getWebsite());
+
         return new ComplianceRecord(row.getId(), row.getOrganizationId(), row.getStatus(), row.getCurrentStep(),
                 row.getStepProgress(), row.getEligibilityStatus(), row.getAnchorVerificationStatus(),
-                row.getAnchorBusinessCustomerId(), row.getFailureCode(), row.getRejectionReason(),
+                row.getAnchorBusinessCustomerId(), row.getSandboxAnchorBusinessCustomerId(),
+                row.getFailureCode(), row.getRejectionReason(),
                 row.getSubmittedAt(), row.getApprovedAt(), profile, row.getContactInfo(),
                 row.getOfficers().stream().map(this::toDomain).toList(),
                 row.getDocumentRequirements().stream().map(this::toDomain).toList(),
@@ -33,7 +38,9 @@ public class ComplianceRecordMapper implements DomainMapper<ComplianceRecord, Co
                 .id(domain.getId()).organizationId(domain.getOrganizationId()).status(domain.getStatus())
                 .currentStep(domain.getCurrentStep()).stepProgress(domain.getStepProgress())
                 .eligibilityStatus(domain.getEligibilityStatus()).anchorVerificationStatus(domain.getAnchorVerificationStatus())
-                .anchorBusinessCustomerId(domain.getAnchorBusinessCustomerId()).failureCode(domain.getFailureCode())
+                .anchorBusinessCustomerId(domain.getAnchorBusinessCustomerId())
+                .sandboxAnchorBusinessCustomerId(domain.getSandboxAnchorBusinessCustomerId())
+                .failureCode(domain.getFailureCode())
                 .rejectionReason(domain.getRejectionReason()).submittedAt(domain.getSubmittedAt()).approvedAt(domain.getApprovedAt())
                 .legalName(profile == null ? null : profile.legalName())
                 .registrationType(profile == null ? null : profile.registrationType())

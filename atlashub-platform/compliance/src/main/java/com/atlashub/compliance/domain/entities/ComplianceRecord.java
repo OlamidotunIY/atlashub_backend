@@ -20,6 +20,7 @@ public class ComplianceRecord extends AggregateRoot<Long> {
     private AtlasHubEligibilityStatus eligibilityStatus;
     private AnchorVerificationStatus anchorVerificationStatus;
     private String anchorBusinessCustomerId;
+    private String sandboxAnchorBusinessCustomerId;
     private String failureCode;
     private String rejectionReason;
     private ZonedDateTime submittedAt;
@@ -37,6 +38,7 @@ public class ComplianceRecord extends AggregateRoot<Long> {
                             Map<ComplianceStep, StepStatus> stepProgress,
                             AtlasHubEligibilityStatus eligibilityStatus,
                             AnchorVerificationStatus anchorVerificationStatus, String anchorBusinessCustomerId,
+                            String sandboxAnchorBusinessCustomerId,
                             String failureCode, String rejectionReason, ZonedDateTime submittedAt,
                             ZonedDateTime approvedAt, BusinessProfileData businessProfile, ContactInfoData contactInfo,
                             List<BusinessOfficer> officers, List<ComplianceDocumentRequirement> documentRequirements,
@@ -50,7 +52,9 @@ public class ComplianceRecord extends AggregateRoot<Long> {
         if (stepProgress != null) this.stepProgress.putAll(stepProgress);
         this.eligibilityStatus = eligibilityStatus == null ? AtlasHubEligibilityStatus.PENDING : eligibilityStatus;
         this.anchorVerificationStatus = anchorVerificationStatus == null ? AnchorVerificationStatus.NOT_CREATED : anchorVerificationStatus;
-        this.anchorBusinessCustomerId = anchorBusinessCustomerId; this.failureCode = failureCode;
+        this.anchorBusinessCustomerId = anchorBusinessCustomerId;
+        this.sandboxAnchorBusinessCustomerId = sandboxAnchorBusinessCustomerId;
+        this.failureCode = failureCode;
         this.rejectionReason = rejectionReason; this.submittedAt = submittedAt; this.approvedAt = approvedAt;
         this.businessProfile = businessProfile; this.contactInfo = contactInfo;
         this.officers = new ArrayList<>(officers == null ? List.of() : officers);
@@ -64,7 +68,7 @@ public class ComplianceRecord extends AggregateRoot<Long> {
     public static ComplianceRecord create(Long id, Long organizationId) {
         ComplianceRecord record = new ComplianceRecord(id, organizationId, ComplianceStatus.NOT_STARTED,
                 ComplianceStep.BUSINESS_PROFILE, null, AtlasHubEligibilityStatus.PENDING,
-                AnchorVerificationStatus.NOT_CREATED, null, null, null, null, null,
+                AnchorVerificationStatus.NOT_CREATED, null, null, null, null, null, null,
                 null, null, null, null, null, ZonedDateTime.now(), ZonedDateTime.now(), null);
         record.registerEvent(new ComplianceRecordInitializedEvent(UUID.randomUUID().toString(), id,
                 ZonedDateTime.now(), CorrelationId.getOrCreate(),
@@ -140,6 +144,21 @@ public class ComplianceRecord extends AggregateRoot<Long> {
         });
         anchorVerificationStatus = AnchorVerificationStatus.CUSTOMER_CREATED;
         status = ComplianceStatus.UNDER_REVIEW; touch();
+    }
+
+    public void recordSandboxAnchorCustomerCreated(String customerId) {
+        requireText(customerId, "Sandbox Anchor customer id");
+        if (sandboxAnchorBusinessCustomerId != null) {
+            if (!sandboxAnchorBusinessCustomerId.equals(customerId))
+                throw new StepOutOfOrderException("Sandbox Anchor customer has already been created");
+            return;
+        }
+        sandboxAnchorBusinessCustomerId = customerId;
+        touch();
+        ZonedDateTime readyAt = ZonedDateTime.now();
+        registerEvent(new OrganizationTestBankingReadyEvent(UUID.randomUUID().toString(), id, readyAt,
+                CorrelationId.getOrCreate(), new OrganizationTestBankingReadyEvent.Payload(
+                organizationId, customerId, "TEST", readyAt)));
     }
 
     public void recordVerificationTriggered() {

@@ -8,6 +8,7 @@ import com.atlashub.compliance.domain.valueobject.DocumentStatus;
 import com.atlashub.compliance.domain.valueobject.RequirementSource;
 import com.atlashub.compliance.domain.valueobject.AnchorVerificationStatus;
 import com.atlashub.shared.application.port.StoredObjectQueryPort;
+import com.atlashub.shared.application.security.ApiEnvironment;
 import com.atlashub.shared.application.usecase.Command;
 import org.springframework.stereotype.Component;
 
@@ -29,7 +30,7 @@ public class OrchestrateAnchorComplianceHandler extends Command<OrchestrateAncho
         ComplianceRecord record = repository.findByOrganizationId(command.organizationId())
                 .orElseThrow(() -> new ComplianceRecordNotFoundException("Compliance record not found"));
         if (record.getAnchorBusinessCustomerId() == null) {
-            AnchorCompliancePort.BusinessCustomerResult created = anchor.createBusinessCustomer(request(record));
+            AnchorCompliancePort.BusinessCustomerResult created = anchor.createBusinessCustomer(request(record), ApiEnvironment.LIVE);
             record.recordAnchorCustomerCreated(created.customerId(), created.officerIds());
             record = repository.save(record);
         }

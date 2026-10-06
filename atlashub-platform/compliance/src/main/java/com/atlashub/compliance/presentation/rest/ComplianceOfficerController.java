@@ -5,6 +5,8 @@ import com.atlashub.compliance.domain.valueobject.*;
 import com.atlashub.compliance.presentation.dto.*;
 import com.atlashub.shared.application.dto.ApiResponse;
 import com.atlashub.shared.application.security.AuthenticatedPrincipal;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import com.atlashub.shared.domain.valueobject.EmailAddress;
 import com.atlashub.shared.domain.valueobject.PhoneNumber;
 import jakarta.validation.Valid;
@@ -13,11 +15,13 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController @RequestMapping("/api/v1/compliance/officers")
+@Tag(name = "Compliance Officers", description = "Business officer verification details")
 public class ComplianceOfficerController {
     private final ReplaceBusinessOfficersHandler handler;
     public ComplianceOfficerController(ReplaceBusinessOfficersHandler handler) { this.handler = handler; }
 
     @PutMapping
+    @Operation(summary = "Replace business officers")
     public ResponseEntity<ApiResponse<Void>> replace(@AuthenticationPrincipal AuthenticatedPrincipal principal,
                                                      @Valid @RequestBody ReplaceBusinessOfficersRequest request) {
         handler.execute(new ReplaceBusinessOfficersCommand(principal.activeOrganizationId(), request.officers().stream()

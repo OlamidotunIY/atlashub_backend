@@ -1,6 +1,7 @@
 package com.atlashub.compliance.application.port;
 
 import com.atlashub.compliance.domain.valueobject.*;
+import com.atlashub.shared.application.security.ApiEnvironment;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -8,7 +9,7 @@ import java.util.Map;
 
 public interface AnchorCompliancePort {
     List<DocumentRequirement> previewDocumentRequirements(LegalRegistrationType type, LocalDate registrationDate);
-    BusinessCustomerResult createBusinessCustomer(BusinessCustomerRequest request);
+    BusinessCustomerResult createBusinessCustomer(BusinessCustomerRequest request, ApiEnvironment environment);
     List<DocumentRequirement> fetchCustomerDocumentRequirements(String customerId);
     void uploadDocument(String customerId, String documentId, String textValue, StoredDocument file);
     void triggerBusinessVerification(String customerId);

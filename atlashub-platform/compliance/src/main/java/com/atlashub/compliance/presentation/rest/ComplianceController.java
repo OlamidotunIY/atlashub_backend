@@ -16,6 +16,8 @@ import com.atlashub.compliance.presentation.dto.ContactInfoRequest;
 import com.atlashub.compliance.presentation.dto.ServiceAgreementRequest;
 import com.atlashub.shared.application.dto.ApiResponse;
 import com.atlashub.shared.application.security.AuthenticatedPrincipal;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import com.atlashub.shared.domain.valueobject.EmailAddress;
 import com.atlashub.shared.domain.valueobject.PhoneNumber;
 import jakarta.servlet.http.HttpServletRequest;
@@ -31,6 +33,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/compliance")
+@Tag(name = "Compliance", description = "Business compliance collection and submission")
 public class ComplianceController {
     private final UpdateBusinessProfileHandler businessProfileHandler;
     private final UpdateContactInfoHandler contactInfoHandler;
@@ -51,6 +54,7 @@ public class ComplianceController {
     }
 
     @PutMapping("/business")
+    @Operation(summary = "Save business compliance details")
     public ResponseEntity<ApiResponse<Void>> updateBusinessProfile(
             @AuthenticationPrincipal AuthenticatedPrincipal principal,
             @Valid @RequestBody BusinessProfileRequest request) {
@@ -61,6 +65,7 @@ public class ComplianceController {
     }
 
     @PutMapping("/contact")
+    @Operation(summary = "Save compliance contact details")
     public ResponseEntity<ApiResponse<Void>> updateContactInfo(
             @AuthenticationPrincipal AuthenticatedPrincipal principal,
             @Valid @RequestBody ContactInfoRequest request) {
@@ -73,6 +78,7 @@ public class ComplianceController {
     }
 
     @PostMapping("/agreement")
+    @Operation(summary = "Accept the compliance service agreement")
     public ResponseEntity<ApiResponse<Void>> acceptAgreement(
             @AuthenticationPrincipal AuthenticatedPrincipal principal,
             @Valid @RequestBody ServiceAgreementRequest request,
@@ -83,6 +89,7 @@ public class ComplianceController {
     }
 
     @PostMapping("/submit")
+    @Operation(summary = "Submit compliance for verification")
     public ResponseEntity<ApiResponse<Void>> submit(
             @AuthenticationPrincipal AuthenticatedPrincipal principal) {
         submitHandler.execute(new SubmitComplianceCommand(principal.activeOrganizationId()));
@@ -90,6 +97,7 @@ public class ComplianceController {
     }
 
     @GetMapping
+    @Operation(summary = "Get compliance status and requirements")
     public ResponseEntity<ApiResponse<ComplianceDetailsResult>> details(
             @AuthenticationPrincipal AuthenticatedPrincipal principal) {
         return ok(detailsHandler.execute(new GetComplianceDetailsQuery(principal.activeOrganizationId())));
