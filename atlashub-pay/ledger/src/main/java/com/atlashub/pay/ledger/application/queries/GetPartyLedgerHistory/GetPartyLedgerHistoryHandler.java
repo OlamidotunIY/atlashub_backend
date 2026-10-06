@@ -47,9 +47,9 @@ public class GetPartyLedgerHistoryHandler
 
     private LedgerTransactionResult result(LedgerTransaction transaction) {
         return new LedgerTransactionResult(transaction.getId(), transaction.getReference(),
-                transaction.getSourceSystem().name(), transaction.getSourceReferenceId(),
+                transaction.getSourceSystem(), transaction.getSourceReferenceId(),
                 transaction.getDescription(), transaction.getCurrency().name(), transaction.getPostedAt(),
                 transaction.getEntries().stream().map(entry -> new LedgerEntryResult(
-                        entry.getAccountId(), entry.getType().name(), entry.getAmount().amount())).toList());
+                        entry.getAccountId(), entry.getType(), entry.getAmount().amount())).toList());
     }
 }

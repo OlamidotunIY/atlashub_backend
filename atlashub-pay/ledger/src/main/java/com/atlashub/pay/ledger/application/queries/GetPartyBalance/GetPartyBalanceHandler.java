@@ -52,7 +52,7 @@ public class GetPartyBalanceHandler extends Query<GetPartyBalanceQuery, AccountB
         BigDecimal balance = calculator.calculateRunningBalance(account.getId(), account.getNormalBalance(),
                 snapshot.getBalance().amount(), transactionRepository.findByAccountIdAndEnvironmentAndPostedAtAfter(
                         account.getId(), environment, snapshot.getSnapshotAt()));
-        return new AccountBalanceResult(account.getId(), accountType.name(), balance,
+        return new AccountBalanceResult(account.getId(), accountType, balance,
                 account.getCurrency().name(), ZonedDateTime.now());
     }
 }
