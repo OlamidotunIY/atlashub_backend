@@ -40,7 +40,7 @@ deploy-stack:
 	@$(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "test -f /tmp/atlashub-jwt-private.pem" && echo "=> JWT private key already exists on VM, skipping." || $(SCP) $(SSH_OPTIONS) -i $(SSH_KEY) $(JWT_PRIVATE_KEY) ubuntu@$(VM_IP):/tmp/atlashub-jwt-private.pem
 	@$(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "test -f /tmp/atlashub-jwt-public.pem" && echo "=> JWT public key already exists on VM, skipping." || $(SCP) $(SSH_OPTIONS) -i $(SSH_KEY) $(JWT_PUBLIC_KEY) ubuntu@$(VM_IP):/tmp/atlashub-jwt-public.pem
 	@echo "=> Ensuring Docker Image exists in K3s..."
-	@$(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "sudo k3s ctr images ls | grep -q atlashub/app:latest" || "$(MAKE)" build-image
+	@$(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "sudo k3s ctr images ls | grep -q atlashub/app:latest" || $(MAKE) build-image
 	@echo "=> Applying Kubernetes Secrets..."
 	$(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "export KUBECONFIG=/home/ubuntu/.kube/config && kubectl delete secret atlashub-secrets firebase-secrets jwt-signing-keys --ignore-not-found && kubectl create secret generic atlashub-secrets --from-env-file=/tmp/.env && kubectl create secret generic firebase-secrets --from-file=/tmp/$(FIREBASE_JSON_NAME) && kubectl create secret generic jwt-signing-keys --from-file=private.pem=/tmp/atlashub-jwt-private.pem --from-file=public.pem=/tmp/atlashub-jwt-public.pem"
 	@echo "=> Applying Kubernetes Manifests..."
