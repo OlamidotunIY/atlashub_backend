@@ -34,7 +34,10 @@ class OrganizationCreatedListenerTest {
                     "aggregateId": 2,
                     "occurredAt": "2026-10-07T06:51:45Z",
                     "correlationId": "event-1",
-                    "payload": { "ownerUserId": 1 }
+                    "payload": {
+                      "ownerUserId": 1,
+                      "businessName": "Olami Test Store"
+                    }
                   }
                 }
                 """);

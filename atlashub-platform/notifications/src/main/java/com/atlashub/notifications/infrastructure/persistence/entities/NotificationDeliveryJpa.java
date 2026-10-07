@@ -27,7 +27,7 @@ public class NotificationDeliveryJpa implements BaseJpaEntity {
     @Enumerated(EnumType.STRING) @Column(nullable = false) private NotificationChannel channel;
     @Column(nullable = false) private String provider;
     @Column(length = 500) private String renderedSubject;
-    @Lob @Column(nullable = false) private String renderedBody;
+    @Column(columnDefinition = "LONGTEXT", nullable = false) private String renderedBody;
     @Enumerated(EnumType.STRING) @Column(nullable = false) private DeliveryStatus status;
     @Column(nullable = false) private Integer attemptCount;
     private String providerMessageId;

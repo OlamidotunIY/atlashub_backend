@@ -60,7 +60,12 @@ public abstract class JpaBaseRepository<TDomain extends AggregateRoot<Long>, TRe
     @Override
     @Transactional
     public TDomain save(TDomain entity) {
-        TRecord record = mapper.toPersistence(entity);
+        TRecord record = springDataRepository.findById(entity.getId())
+                .map(existing -> {
+                    mapper.updatePersistence(entity, existing);
+                    return existing;
+                })
+                .orElseGet(() -> springDataRepository.save(mapper.toPersistence(entity)));
 
         List<DomainEvent<?>> events = entity.pullDomainEvents();
 
@@ -68,8 +73,6 @@ public abstract class JpaBaseRepository<TDomain extends AggregateRoot<Long>, TRe
             eventPublisher.publish(EnvelopedDomainEvent.wrap(event));
         }
 
-        TRecord saved = springDataRepository.save(record);
-
-        return mapper.toDomain(saved);
+        return mapper.toDomain(record);
     }
 }
