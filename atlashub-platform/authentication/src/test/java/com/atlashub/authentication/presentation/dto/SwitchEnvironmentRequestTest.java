@@ -4,7 +4,6 @@ import com.atlashub.shared.application.security.ApiEnvironment;
 import jakarta.validation.Validation;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SwitchEnvironmentRequestTest {
@@ -19,13 +18,11 @@ class SwitchEnvironmentRequestTest {
     }
 
     @Test
-    void login_request_requires_environment() {
+    void login_request_does_not_accept_environment() {
         try (var factory = Validation.buildDefaultValidatorFactory()) {
             var violations = factory.getValidator().validate(
-                    new LoginRequest("a@b.com", "secret", null, "fp"));
-            assertFalse(violations.isEmpty());
-            assertTrue(violations.stream()
-                    .anyMatch(value -> value.getPropertyPath().toString().equals("environment")));
+                    new LoginRequest("a@b.com", "secret", "fp"));
+            assertTrue(violations.isEmpty());
         }
     }
 }

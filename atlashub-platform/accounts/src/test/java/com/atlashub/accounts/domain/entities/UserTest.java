@@ -5,6 +5,7 @@ import com.atlashub.accounts.domain.exceptions.InvalidUserException;
 import com.atlashub.accounts.domain.exceptions.WeakPasswordException;
 import com.atlashub.shared.domain.valueobject.Country;
 import com.atlashub.shared.domain.valueobject.EmailAddress;
+import com.atlashub.shared.application.security.ApiEnvironment;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -21,6 +22,7 @@ class UserTest {
         UserCreated event = (UserCreated) user.pullDomainEvents().getFirst();
         assertEquals("credential-reference", event.payload().credentialReference());
         assertEquals("tolu@example.com", event.payload().email());
+        assertEquals(ApiEnvironment.TEST, user.getActiveEnvironment());
     }
 
     @Test
