@@ -1,5 +1,7 @@
 package com.atlashub.accounts.application.query.GetUserProfile;
 
+import com.atlashub.shared.application.security.ApiEnvironment;
+
 import java.time.ZonedDateTime;
 import java.util.List;
 
@@ -11,7 +13,10 @@ public record UserProfileResult(
         String phone,
         String imageUrl,
         String country,
-        Long activeOrganizationId,
+        ApiEnvironment activeEnvironment,
+        boolean complianceApproved,
+        String activeOrganizationRole,
+        ActiveOrganization activeOrganization,
         ZonedDateTime createdAt,
         List<OrganizationSummary> organizations
 ) {

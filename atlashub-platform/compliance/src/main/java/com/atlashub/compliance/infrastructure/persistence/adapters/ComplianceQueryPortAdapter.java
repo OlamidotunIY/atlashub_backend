@@ -23,7 +23,10 @@ public class ComplianceQueryPortAdapter implements ComplianceQueryPort {
 
     @Override
     public boolean isApproved(Long organizationId) {
-        return getDecision(organizationId).canProvisionBanking();
+        return repository.findByOrganizationId(organizationId)
+                .map(mapper::toDomain)
+                .map(record -> record.getStatus() == APPROVED)
+                .orElse(false);
     }
 
     @Override

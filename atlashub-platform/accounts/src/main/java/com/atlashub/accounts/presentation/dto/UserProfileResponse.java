@@ -11,7 +11,10 @@ public record UserProfileResponse(
         String phone,
         String imageUrl,
         String country,
-        Long activeOrganizationId,
+        String activeEnvironment,
+        boolean complianceApproved,
+        String activeOrganizationRole,
+        OrganizationDetailsResponse activeOrganization,
         ZonedDateTime createdAt,
         List<OrganizationSummaryResponse> organizations
 ) {

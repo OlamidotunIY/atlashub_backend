@@ -8,6 +8,7 @@ import com.atlashub.accounts.application.query.GetUserProfile.GetUserProfileHand
 import com.atlashub.accounts.application.query.GetUserProfile.GetUserProfileQuery;
 import com.atlashub.accounts.application.query.GetUserProfile.UserProfileResult;
 import com.atlashub.accounts.presentation.dto.OrganizationSummaryResponse;
+import com.atlashub.accounts.presentation.dto.OrganizationDetailsResponse;
 import com.atlashub.accounts.presentation.dto.RegisterRequest;
 import com.atlashub.accounts.presentation.dto.UpdateProfileRequest;
 import com.atlashub.accounts.presentation.dto.UserProfileResponse;
@@ -108,7 +109,21 @@ public class UserController {
                 result.phone(),
                 result.imageUrl(),
                 result.country(),
-                result.activeOrganizationId(),
+                result.activeEnvironment().name(),
+                result.complianceApproved(),
+                result.activeOrganizationRole(),
+                result.activeOrganization() == null ? null : new OrganizationDetailsResponse(
+                        result.activeOrganization().id(),
+                        result.activeOrganization().businessName(),
+                        result.activeOrganization().registrationType(),
+                        result.activeOrganization().industry(),
+                        result.activeOrganization().registrationDate(),
+                        result.activeOrganization().description(),
+                        result.activeOrganization().logoUrl(),
+                        result.activeOrganization().websiteUrl(),
+                        result.activeOrganization().country(),
+                        result.activeOrganization().baseCurrency(),
+                        result.activeOrganization().createdAt()),
                 result.createdAt(),
                 result.organizations().stream()
                         .map(org -> new OrganizationSummaryResponse(
