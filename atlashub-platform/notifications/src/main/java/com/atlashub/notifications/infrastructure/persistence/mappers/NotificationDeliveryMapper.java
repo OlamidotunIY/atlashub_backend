@@ -3,6 +3,7 @@ package com.atlashub.notifications.infrastructure.persistence.mappers;
 import com.atlashub.notifications.domain.entities.NotificationDelivery;
 import com.atlashub.notifications.infrastructure.persistence.entities.NotificationDeliveryJpa;
 import com.atlashub.shared.infrastructure.persistence.mappers.DomainMapper;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -17,5 +18,10 @@ public class NotificationDeliveryMapper implements DomainMapper<NotificationDeli
     @Override
     public NotificationDeliveryJpa toPersistence(NotificationDelivery d) {
         return new NotificationDeliveryJpa(d.getId(), d.getTemplateCode(), d.getCorrelationId(), d.getTemplateVersion(), d.getRecipientType(), d.getRecipientId(), d.getChannel(), d.getProvider(), d.getRenderedSubject(), d.getRenderedBody(), d.getStatus(), d.getAttemptCount(), d.getProviderMessageId(), d.getFailureReason(), d.getNextRetryAt(), d.getDeliveredAt(), d.getCreatedAt(), d.getUpdatedAt(), null);
+    }
+
+    @Override
+    public void updatePersistence(NotificationDelivery domain, NotificationDeliveryJpa record) {
+        BeanUtils.copyProperties(toPersistence(domain), record, "id", "version");
     }
 }
