@@ -3,14 +3,18 @@ package com.atlashub.authentication.application.command.SwitchEnvironment;
 import com.atlashub.authentication.application.command.RefreshToken.RefreshTokenResponse;
 import com.atlashub.authentication.application.port.TokenPort;
 import com.atlashub.authentication.domain.entities.Session;
+import com.atlashub.authentication.domain.events.ActiveEnvironmentSwitchedEvent;
 import com.atlashub.authentication.domain.exceptions.InvalidTokenException;
 import com.atlashub.authentication.domain.exceptions.LiveEnvironmentUnavailableException;
 import com.atlashub.authentication.domain.repositories.SessionRepository;
 import com.atlashub.shared.application.port.ComplianceQueryPort;
+import com.atlashub.shared.application.port.DomainEventPublisher;
 import com.atlashub.shared.application.port.MembershipQueryPort;
 import com.atlashub.shared.application.security.ApiEnvironment;
 import com.atlashub.shared.application.service.HashingUtils;
 import com.atlashub.shared.application.usecase.Command;
+import com.atlashub.shared.domain.event.EnvelopedDomainEvent;
+import com.atlashub.shared.domain.valueobject.CorrelationId;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,17 +28,20 @@ public class SwitchEnvironmentHandler extends Command<SwitchEnvironmentCommand, 
     private final MembershipQueryPort membershipQueryPort;
     private final ComplianceQueryPort complianceQueryPort;
     private final TokenPort tokenPort;
+    private final DomainEventPublisher eventPublisher;
 
     public SwitchEnvironmentHandler(
             SessionRepository sessionRepository,
             MembershipQueryPort membershipQueryPort,
             ComplianceQueryPort complianceQueryPort,
-            TokenPort tokenPort
+            TokenPort tokenPort,
+            DomainEventPublisher eventPublisher
     ) {
         this.sessionRepository = sessionRepository;
         this.membershipQueryPort = membershipQueryPort;
         this.complianceQueryPort = complianceQueryPort;
         this.tokenPort = tokenPort;
+        this.eventPublisher = eventPublisher;
     }
 
     @Override
@@ -71,6 +78,10 @@ public class SwitchEnvironmentHandler extends Command<SwitchEnvironmentCommand, 
 
         sessionRepository.deleteById(current.getId());
         sessionRepository.save(replacement);
+        ActiveEnvironmentSwitchedEvent event = new ActiveEnvironmentSwitchedEvent(
+                UUID.randomUUID().toString(), command.userId(), ZonedDateTime.now(), CorrelationId.getOrCreate(),
+                new ActiveEnvironmentSwitchedEvent.Payload(command.userId(), target));
+        eventPublisher.publish(EnvelopedDomainEvent.wrap(event));
         return new RefreshTokenResponse(
                 access.token(), access.expiresAt(), refreshToken, refreshExpiresAt);
     }

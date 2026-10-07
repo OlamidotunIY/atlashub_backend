@@ -142,6 +142,7 @@ public class UserQueryPortAdapter implements UserQueryPort {
                 jpa.getEmail(),
                 jpa.getCountry(),
                 jpa.getActiveOrganizationId(),
+                jpa.getActiveEnvironment(),
                 jpa.isEmailVerified()
         );
     }

@@ -1,6 +1,7 @@
 package com.atlashub.accounts.infrastructure.persistence.entities;
 
 import com.atlashub.shared.infrastructure.persistence.entities.BaseJpaEntity;
+import com.atlashub.shared.application.security.ApiEnvironment;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -44,6 +45,10 @@ public class UserJPA implements BaseJpaEntity {
 
     @Column
     private Long activeOrganizationId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, columnDefinition = "VARCHAR(16) NOT NULL DEFAULT 'TEST'")
+    private ApiEnvironment activeEnvironment;
 
     @Column
     private boolean emailVerified;

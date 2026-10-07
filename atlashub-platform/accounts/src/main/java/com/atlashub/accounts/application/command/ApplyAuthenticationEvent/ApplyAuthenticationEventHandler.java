@@ -19,6 +19,7 @@ public class ApplyAuthenticationEventHandler extends Command<ApplyAuthentication
         repository.findById(command.userId()).ifPresent(user -> {
             if (command.emailVerified()) user.markEmailVerified();
             if (command.activeOrganizationId() != null) user.switchActiveOrganization(command.activeOrganizationId());
+            if (command.activeEnvironment() != null) user.switchActiveEnvironment(command.activeEnvironment());
             repository.save(user);
         });
         return null;
