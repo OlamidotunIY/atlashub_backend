@@ -31,11 +31,29 @@ public class GetUserProfileHandler extends Query<GetUserProfileQuery, UserProfil
         List<Long> orgIds = membershipQueryPort.listOrganizationIds(query.userId());
 
         List<OrganizationSummary> organizations = organizationRepository.findAllByIds(orgIds).stream().map(this::toSummary).toList();
+        Organization activeOrganization = user.getActiveOrganizationId() == null
+                ? null
+                : organizationRepository.findById(user.getActiveOrganizationId()).orElse(null);
+        String activeOrganizationRole = activeOrganization == null
+                ? null
+                : membershipQueryPort.getActiveRoleName(user.getId(), activeOrganization.getId()).orElse(null);
 
-        return new UserProfileResult(user.getId(), user.getFirstName(), user.getLastName(), user.getEmail().value(), user.getPhone() != null ? user.getPhone().value() : null, user.getImageUrl(), user.getCountry().code(), user.getActiveOrganizationId(), user.getCreatedAt(), organizations);
+        return new UserProfileResult(
+                user.getId(), user.getFirstName(), user.getLastName(), user.getEmail().value(),
+                user.getPhone() != null ? user.getPhone().value() : null, user.getImageUrl(), user.getCountry().code(),
+                user.getActiveEnvironment(), activeOrganizationRole, toActiveOrganization(activeOrganization), user.getCreatedAt(), organizations);
     }
 
     private OrganizationSummary toSummary(Organization org) {
         return new OrganizationSummary(org.getId(), org.getBusinessName(), org.getCountry().code(), org.getBaseCurrency().name(), org.getLogoUrl());
+    }
+
+    private ActiveOrganization toActiveOrganization(Organization organization) {
+        if (organization == null) return null;
+        return new ActiveOrganization(
+                organization.getId(), organization.getBusinessName(), organization.getRegistrationType(),
+                organization.getIndustry(), organization.getRegistrationDate(), organization.getDescription(),
+                organization.getLogoUrl(), organization.getWebsiteUrl(), organization.getCountry().code(),
+                organization.getBaseCurrency().name(), organization.getCreatedAt());
     }
 }
