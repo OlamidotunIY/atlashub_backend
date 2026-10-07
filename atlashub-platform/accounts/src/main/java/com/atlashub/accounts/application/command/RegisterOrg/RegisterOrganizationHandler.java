@@ -1,8 +1,8 @@
 package com.atlashub.accounts.application.command.RegisterOrg;
 
-import com.atlashub.accounts.domain.exceptions.EmailAlreadyExistsException;
 import com.atlashub.accounts.domain.entities.Organization;
 import com.atlashub.accounts.domain.entities.User;
+import com.atlashub.accounts.domain.exceptions.EmailAlreadyExistsException;
 import com.atlashub.accounts.domain.repositories.OrganizationRepository;
 import com.atlashub.accounts.domain.repositories.UserRepository;
 import com.atlashub.shared.application.port.OneTimeSecretStore;
@@ -23,7 +23,8 @@ public class RegisterOrganizationHandler extends Command<RegisterOrganizationCom
     private final UserRepository userRepository;
     private final OneTimeSecretStore oneTimeSecretStore;
 
-    public RegisterOrganizationHandler(OrganizationRepository organizationRepository, UserRepository userRepository, OneTimeSecretStore oneTimeSecretStore) {
+    public RegisterOrganizationHandler(OrganizationRepository organizationRepository, UserRepository userRepository,
+                                       OneTimeSecretStore oneTimeSecretStore) {
         this.organizationRepository = organizationRepository;
         this.userRepository = userRepository;
         this.oneTimeSecretStore = oneTimeSecretStore;
@@ -39,23 +40,23 @@ public class RegisterOrganizationHandler extends Command<RegisterOrganizationCom
         }
 
         String credentialReference = oneTimeSecretStore.store(command.password(), Duration.ofHours(24));
+        Long userId = userRepository.nextIdentity();
+        Long organizationId = organizationRepository.nextIdentity();
 
-        User user = User.create(userRepository.nextIdentity(), command.firstName(), command.lastName(), new EmailAddress(command.email()), command.country(), command.isInvited(), command.password(), credentialReference);
+        User user = User.create(userId, command.firstName(), command.lastName(), new EmailAddress(command.email()),
+                command.country(), command.isInvited(), command.password(), credentialReference);
 
+        Organization organization =
+                Organization.create(organizationId, command.businessName(), command.registrationType(),
+                        command.description(), command.country().deriveCurrency(), command.logoUrl(), command.country(),
+                        command.industry(), command.websiteUrl(), user.getId());
+
+        user.switchActiveOrganization(organization.getId());
         userRepository.save(user);
         log.debug("User registered with id: {}", user.getId());
 
-        Organization organization = Organization.create(
-                organizationRepository.nextIdentity(), command.businessName(), command.registrationType(),
-                command.description(), command.country().deriveCurrency(),
-                command.logoUrl(), command.country(), command.industry(), command.websiteUrl(), user.getId());
-
         organizationRepository.save(organization);
         log.debug("Organization saved with id: {}", organization.getId());
-
-        // Switch active organization for newly registered user
-        user.switchActiveOrganization(organization.getId());
-        userRepository.save(user);
 
         log.info("Successfully registered organization id: {}", organization.getId());
         return new RegisterOrganizationResult(organization, user);

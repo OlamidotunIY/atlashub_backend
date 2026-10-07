@@ -1,0 +1,32 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.java]
+indent_style = space
+indent_size = 4
+tab_width = 4
+max_line_length = 120
+
+# IntelliJ IDEA Java code style: compact related declarations, with clear
+# separation between methods and logical code blocks.
+ij_continuation_indent_size = 8
+ij_java_keep_line_breaks = false
+ij_java_keep_blank_lines_in_code = 1
+ij_java_keep_blank_lines_in_declarations = 1
+ij_java_keep_blank_lines_before_right_brace = 1
+ij_java_blank_lines_after_package = 1
+ij_java_blank_lines_after_imports = 1
+ij_java_blank_lines_around_field = 0
+ij_java_blank_lines_around_method = 1
+ij_java_blank_lines_around_initializer = 1
+ij_java_method_parameters_wrap = normal
+ij_java_call_parameters_wrap = normal
+ij_java_extends_list_wrap = normal
+ij_java_method_call_chain_wrap = normal
+ij_java_binary_operation_wrap = normal
+ij_java_assignment_wrap = normal
