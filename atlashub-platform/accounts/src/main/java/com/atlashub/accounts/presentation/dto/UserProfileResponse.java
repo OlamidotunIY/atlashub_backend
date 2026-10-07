@@ -12,6 +12,7 @@ public record UserProfileResponse(
         String imageUrl,
         String country,
         String activeEnvironment,
+        boolean complianceApproved,
         String activeOrganizationRole,
         OrganizationDetailsResponse activeOrganization,
         ZonedDateTime createdAt,

@@ -7,6 +7,7 @@ import com.atlashub.accounts.domain.repositories.UserRepository;
 import com.atlashub.accounts.domain.valueobject.AtlasHubRegistrationType;
 import com.atlashub.accounts.domain.valueobject.SupportedIndustry;
 import com.atlashub.shared.application.port.MembershipQueryPort;
+import com.atlashub.shared.application.port.ComplianceQueryPort;
 import com.atlashub.shared.application.security.ApiEnvironment;
 import com.atlashub.shared.domain.valueobject.Country;
 import com.atlashub.shared.domain.valueobject.CurrencyCode;
@@ -30,6 +31,7 @@ class GetUserProfileHandlerTest {
         UserRepository users = mock(UserRepository.class);
         OrganizationRepository organizations = mock(OrganizationRepository.class);
         MembershipQueryPort memberships = mock(MembershipQueryPort.class);
+        ComplianceQueryPort compliance = mock(ComplianceQueryPort.class);
         ZonedDateTime now = ZonedDateTime.now();
         User user = new User(1L, "Tolu", "Adebayo", new EmailAddress("tolu@example.com"), null,
                 null, new Country("NG"), 2L, ApiEnvironment.LIVE, true, null, null, now, now);
@@ -41,11 +43,13 @@ class GetUserProfileHandlerTest {
         when(organizations.findAllByIds(List.of(2L))).thenReturn(List.of(organization));
         when(organizations.findById(2L)).thenReturn(Optional.of(organization));
         when(memberships.getActiveRoleName(1L, 2L)).thenReturn(Optional.of("Owner"));
+        when(compliance.isApproved(2L)).thenReturn(true);
 
-        UserProfileResult result = new GetUserProfileHandler(users, organizations, memberships)
+        UserProfileResult result = new GetUserProfileHandler(users, organizations, memberships, compliance)
                 .execute(new GetUserProfileQuery(1L));
 
         assertEquals(ApiEnvironment.LIVE, result.activeEnvironment());
+        assertEquals(true, result.complianceApproved());
         assertEquals("Owner", result.activeOrganizationRole());
         assertNotNull(result.activeOrganization());
         assertEquals("Tolu's Store", result.activeOrganization().businessName());

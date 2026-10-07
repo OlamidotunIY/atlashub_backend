@@ -110,6 +110,7 @@ public class UserController {
                 result.imageUrl(),
                 result.country(),
                 result.activeEnvironment().name(),
+                result.complianceApproved(),
                 result.activeOrganizationRole(),
                 result.activeOrganization() == null ? null : new OrganizationDetailsResponse(
                         result.activeOrganization().id(),

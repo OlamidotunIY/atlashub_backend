@@ -14,6 +14,7 @@ public record UserProfileResult(
         String imageUrl,
         String country,
         ApiEnvironment activeEnvironment,
+        boolean complianceApproved,
         String activeOrganizationRole,
         ActiveOrganization activeOrganization,
         ZonedDateTime createdAt,
