@@ -66,6 +66,13 @@ public class MembershipQueryPortAdapter implements MembershipQueryPort {
     }
 
     @Override
+    public Optional<String> getActiveRoleName(Long userId, Long orgId) {
+        return activeMember(userId, orgId)
+                .flatMap(member -> roleRepository.findById(member.getCustomRoleId()))
+                .map(CustomRole::getName);
+    }
+
+    @Override
     public List<Long> listOrganizationIds(Long userId) {
         return memberRepository.findAllByUserId(userId).stream()
                 .filter(member -> member.getStatus() == MemberStatus.ACTIVE)
