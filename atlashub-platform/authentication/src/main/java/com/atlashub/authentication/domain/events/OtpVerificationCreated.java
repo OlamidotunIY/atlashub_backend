@@ -14,6 +14,7 @@ public record OtpVerificationCreated(
 ) implements DomainEvent<OtpVerificationCreated.Payload> {
 
     public record Payload(
+            String recipientEmail,
             VerificationType verificationType,
             ZonedDateTime expiresAt
     ) {

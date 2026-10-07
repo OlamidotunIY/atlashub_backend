@@ -14,6 +14,7 @@ public class NotificationDelivery extends AggregateRoot<Long> {
 
     private final Long id;
     private final String templateCode;
+    private final String correlationId;
     private final Integer templateVersion;
     private final RecipientType recipientType;
     private final String recipientId;
@@ -34,6 +35,7 @@ public class NotificationDelivery extends AggregateRoot<Long> {
     private NotificationDelivery(
             Long id,
             String templateCode,
+            String correlationId,
             Integer templateVersion,
             RecipientType recipientType,
             String recipientId,
@@ -44,6 +46,7 @@ public class NotificationDelivery extends AggregateRoot<Long> {
             String renderedBody) {
         this.id = id;
         this.templateCode = templateCode;
+        this.correlationId = correlationId;
         this.templateVersion = templateVersion;
         this.recipientType = recipientType;
         this.recipientId = recipientId;
@@ -58,9 +61,24 @@ public class NotificationDelivery extends AggregateRoot<Long> {
         this.updatedAt = this.createdAt;
     }
 
+    public NotificationDelivery(Long id, String templateCode, String correlationId, Integer templateVersion,
+                                RecipientType recipientType, String recipientId, NotificationChannel channel,
+                                String provider, Map<String, String> variables, String renderedSubject,
+                                String renderedBody, DeliveryStatus status, Integer attemptCount,
+                                String providerMessageId, String failureReason, ZonedDateTime nextRetryAt,
+                                ZonedDateTime deliveredAt, ZonedDateTime createdAt, ZonedDateTime updatedAt) {
+        this.id = id; this.templateCode = templateCode; this.correlationId = correlationId;
+        this.templateVersion = templateVersion; this.recipientType = recipientType; this.recipientId = recipientId;
+        this.channel = channel; this.provider = provider; this.variables = variables; this.renderedSubject = renderedSubject;
+        this.renderedBody = renderedBody; this.status = status; this.attemptCount = attemptCount;
+        this.providerMessageId = providerMessageId; this.failureReason = failureReason; this.nextRetryAt = nextRetryAt;
+        this.deliveredAt = deliveredAt; this.createdAt = createdAt; this.updatedAt = updatedAt;
+    }
+
     public static NotificationDelivery create(
             Long id,
             String templateCode,
+            String correlationId,
             Integer templateVersion,
             RecipientType recipientType,
             String recipientId,
@@ -72,6 +90,7 @@ public class NotificationDelivery extends AggregateRoot<Long> {
         return new NotificationDelivery(
                 id,
                 templateCode,
+                correlationId,
                 templateVersion,
                 recipientType,
                 recipientId,
@@ -81,6 +100,14 @@ public class NotificationDelivery extends AggregateRoot<Long> {
                 renderedSubject,
                 renderedBody
         );
+    }
+
+    public void markFailedAndScheduleRetry(String failureReason, ZonedDateTime nextRetryAt) {
+        this.failureReason = failureReason;
+        this.attemptCount++;
+        this.nextRetryAt = nextRetryAt;
+        this.status = DeliveryStatus.RETRYING;
+        touch();
     }
 
     public void markDelivered(String providerMessageId) {
