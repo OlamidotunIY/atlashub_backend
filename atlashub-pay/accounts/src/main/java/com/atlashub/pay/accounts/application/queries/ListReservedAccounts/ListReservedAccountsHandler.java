@@ -26,12 +26,8 @@ public class ListReservedAccountsHandler
     @Override
     @PreAuthorize("hasAuthority('pay:accounts:read')")
     public PageResult<ReservedAccountResult> execute(ListReservedAccountsQuery query) {
-        ReservedAccountOwnerType ownerType = query.ownerType() == null ? null
-                : ReservedAccountOwnerType.valueOf(query.ownerType().toUpperCase());
-        ExternalAccountStatus status = query.status() == null ? null
-                : ExternalAccountStatus.valueOf(query.status().toUpperCase());
         Page<ReservedAccount> page = repository.search(
-                query.organizationId(), ApiEnvironment.parse(query.environment()), ownerType, query.ownerReferenceId(), status,
+                query.organizationId(), ApiEnvironment.parse(query.environment()), query.ownerType(), query.ownerReferenceId(), query.status(),
                 PageRequest.of(query.page(), query.size()));
         return new PageResult<>(page.getContent().stream().map(GetReservedAccountHandler::map).toList(),
                 page.getNumber(), page.getSize(), page.getTotalElements(), page.getTotalPages());

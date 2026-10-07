@@ -1,5 +1,7 @@
 package com.atlashub.pay.accounts.presentation.rest;
 
+import com.atlashub.pay.accounts.domain.valueobject.ExternalAccountStatus;
+import com.atlashub.pay.accounts.domain.valueobject.ReservedAccountOwnerType;
 import com.atlashub.pay.accounts.application.commands.ChangeReservedAccountStatus.ChangeReservedAccountStatusCommand;
 import com.atlashub.pay.accounts.application.commands.ChangeReservedAccountStatus.ChangeReservedAccountStatusHandler;
 import com.atlashub.pay.accounts.application.commands.IssueReservedAccount.IssueReservedAccountCommand;
@@ -65,9 +67,9 @@ public class ReservedAccountController {
     @Operation(summary = "List reserved accounts")
     public ResponseEntity<ApiResponse<PageResult<ReservedAccountResult>>> list(
             @AuthenticationPrincipal AuthenticatedPrincipal principal,
-            @RequestParam(required = false) String ownerType,
+            @RequestParam(required = false) ReservedAccountOwnerType ownerType,
             @RequestParam(required = false) String ownerReferenceId,
-            @RequestParam(required = false) String status,
+            @RequestParam(required = false) ExternalAccountStatus status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         return ok(listHandler.execute(new ListReservedAccountsQuery(

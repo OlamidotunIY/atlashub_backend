@@ -25,8 +25,8 @@ public class GetReservedAccountHandler extends Query<GetReservedAccountQuery, Re
     }
 
     public static ReservedAccountResult map(ReservedAccount value) {
-        return new ReservedAccountResult(value.getId(), value.getOwnerType().name(), value.getOwnerReferenceId(),
+        return new ReservedAccountResult(value.getId(), value.getOwnerType(), value.getOwnerReferenceId(),
                 value.getProvider(), value.getAccountName(), value.getMaskedAccountNumber(), value.getBankName(),
-                value.getBankCode(), value.getCurrency().name(), value.getStatus().name(), value.getActivatedAt());
+                value.getBankCode(), value.getCurrency().name(), value.getStatus(), value.getActivatedAt());
     }
 }
