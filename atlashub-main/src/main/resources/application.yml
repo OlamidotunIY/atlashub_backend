@@ -15,6 +15,15 @@ spring:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
       password: ${REDIS_PASSWORD:}
+  mail:
+    host: ${ATLASHUB_SMTP_HOST:}
+    port: ${ATLASHUB_SMTP_PORT:587}
+    username: ${ATLASHUB_SMTP_USERNAME:}
+    password: ${ATLASHUB_SMTP_PASSWORD:}
+    properties:
+      mail.smtp.auth: ${ATLASHUB_SMTP_AUTH:true}
+      mail.smtp.starttls.enable: ${ATLASHUB_SMTP_STARTTLS:true}
+      mail.smtp.ssl.enable: ${ATLASHUB_SMTP_SSL:false}
 
   # JPA & Hibernate Settings
   jpa:
@@ -89,6 +98,10 @@ atlashub:
   cache:
     user-ttl: ${ATLASHUB_CACHE_USER_TTL:PT12H}
     organization-ttl: ${ATLASHUB_CACHE_ORGANIZATION_TTL:PT12H}
+  notifications:
+    mail:
+      from: ${ATLASHUB_SMTP_FROM:no-reply@atlashub.name.ng}
+    otp-retry-cron: '${ATLASHUB_NOTIFICATION_OTP_RETRY_CRON:0 */5 * * * *}'
 
 firebase:
   credentials:

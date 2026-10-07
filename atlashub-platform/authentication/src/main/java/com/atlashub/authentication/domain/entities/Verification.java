@@ -57,7 +57,7 @@ public class Verification extends AggregateRoot<Long> {
         verification.registerEvent(new OtpVerificationCreated(
                 UUID.randomUUID().toString(), id, now,
                 CorrelationId.getOrCreate(),
-                new OtpVerificationCreated.Payload(verificationType, expiresAt)));
+                new OtpVerificationCreated.Payload(identifier, verificationType, expiresAt)));
 
         return verification;
     }
