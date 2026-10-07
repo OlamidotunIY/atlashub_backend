@@ -32,7 +32,7 @@ public class OrganizationCreatedListener extends BaseKafkaEventListener {
         registerSubscription(OrganizationRegistered.class.getName(), GROUP_ID);
     }
 
-    @KafkaListener(topics = "accounts-events", groupId = GROUP_ID)
+    @KafkaListener(topics = "organization-events", groupId = GROUP_ID)
     public void listen(String messagePayload) {
         processEventIfMatches(messagePayload, "OrganizationRegistered", OrganizationRegistered.class, log, GROUP_ID,
                 e -> e instanceof TimeoutException, event -> {
