@@ -38,8 +38,17 @@ spec:
           value: "1"
         - name: KAFKA_TRANSACTION_STATE_LOG_MIN_ISR
           value: "1"
+        - name: KAFKA_HEAP_OPTS
+          value: "-Xms256m -Xmx512m"
         - name: CLUSTER_ID
           value: "4L6g3nShT-eMCtK--X86sw"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "768Mi"
+            cpu: "500m"
 ---
 apiVersion: v1
 kind: Service
