@@ -1,20 +1,66 @@
 <!doctype html>
 <html lang="en">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Verify your AtlasHub email</title></head>
-<body style="margin:0;padding:0;background:#f4f7fb;color:#1b2638;font-family:Inter,Arial,sans-serif;-webkit-font-smoothing:antialiased">
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f4f7fb;padding:32px 16px"><tr><td align="center">
-    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:600px;background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 10px 35px rgba(16,24,40,.08)">
-      <tr><td style="background:linear-gradient(135deg,#14213d 0%,#254f93 100%);padding:30px 40px"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr><td style="color:#fff;font-size:23px;font-weight:800;letter-spacing:-.4px">AtlasHub</td><td align="right" style="color:#c9dcff;font-size:12px;font-weight:600;letter-spacing:1px;text-transform:uppercase">Email verification</td></tr></table></td></tr>
-      <tr><td style="padding:42px 40px 32px">
-        <div style="width:46px;height:46px;line-height:46px;text-align:center;background:#e8f0ff;border-radius:50%;font-size:22px;margin-bottom:22px">✦</div>
-        <h1 style="margin:0 0 14px;font-size:27px;line-height:1.25;letter-spacing:-.6px;color:#14213d">Verify your email address</h1>
-        <p style="margin:0;color:#526174;font-size:16px;line-height:1.65">Thanks for creating an AtlasHub account. Enter the code below to confirm your email and continue setting up your business.</p>
-        <div style="margin:30px 0;background:#f6f8fc;border:1px solid #dce5f2;border-radius:12px;padding:24px;text-align:center"><div style="margin-bottom:10px;color:#69778a;font-size:12px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase">Your verification code</div><div style="color:#173d78;font-size:34px;font-weight:800;letter-spacing:10px;line-height:1.2">{{otp}}</div></div>
-        <p style="margin:0;color:#526174;font-size:14px;line-height:1.65">This code expires in <strong style="color:#1b2638">{{expiryMinutes}} minutes</strong>. For your security, never share it with anyone—including AtlasHub support.</p>
-      </td></tr>
-      <tr><td style="border-top:1px solid #edf1f6;padding:24px 40px 30px"><p style="margin:0;color:#7b8798;font-size:12px;line-height:1.6">Didn’t create an AtlasHub account? You can safely ignore this email. No changes will be made without the verification code.</p></td></tr>
-    </table>
-    <p style="margin:22px 0 0;color:#98a2b3;font-size:12px">© AtlasHub · Secure business infrastructure</p>
-  </td></tr></table>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark">
+    <meta name="supported-color-schemes" content="light dark">
+    <title>Verify your AtlasHub email</title>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            .bg-body { background: #111827 !important; }
+            .bg-box { background: #1f2937 !important; }
+            .text-main { color: #f9fafb !important; }
+            .text-muted { color: #9ca3af !important; }
+        }
+    </style>
+</head>
+<body class="bg-body text-main" style="margin:0;padding:0;background:#ffffff;color:#111827;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif,'Apple Color Emoji','Segoe UI Emoji','Segoe UI Symbol';-webkit-font-smoothing:antialiased">
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" class="bg-body" style="background:#ffffff;padding:40px 16px">
+    <tr>
+        <td align="center">
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:520px">
+                <tr>
+                    <td style="padding:40px 0 32px">
+                        <div style="text-align:center;margin-bottom:32px">
+                            <img src="https://res.cloudinary.com/dtvshonld/image/upload/v1791359772/Atlashub/icon-1_xj1xqo.png" alt="AtlasHub Logo" width="48" style="display:inline-block;border:none;outline:none;border-radius:8px">
+                        </div>
+                        <h1 class="text-main" style="margin:0 0 16px;font-size:24px;font-weight:700;line-height:1.25;letter-spacing:-0.5px;color:#111827;text-align:center">
+                            Verify your email address
+                        </h1>
+                        <p class="text-muted" style="margin:0;color:#4b5563;font-size:15px;line-height:1.6;text-align:center">
+                            Thanks for creating an AtlasHub account. Enter the code below to confirm your email and continue setting up your workspace.
+                        </p>
+                        
+                        <div class="bg-box" style="margin:32px 0;background:#f3f4f6;border-radius:12px;padding:28px 24px;text-align:center">
+                            <div class="text-muted" style="margin-bottom:12px;color:#6b7280;font-size:12px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase">
+                                Verification Code
+                            </div>
+                            <div class="text-main" style="color:#111827;font-size:36px;font-weight:800;letter-spacing:8px;line-height:1">
+                                {{otp}}
+                            </div>
+                        </div>
+                        
+                        <p class="text-muted" style="margin:0;color:#4b5563;font-size:14px;line-height:1.6;text-align:center">
+                            This code expires in <strong class="text-main" style="color:#111827;font-weight:600">{{expiryMinutes}} minutes</strong>. For your security, please don't share this code with anyone.
+                        </p>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding:24px 0">
+                        <p class="text-muted" style="margin:0;color:#6b7280;font-size:13px;line-height:1.5;text-align:center">
+                            Didn't request this email? You can safely ignore it. Your account is secure.
+                        </p>
+                    </td>
+                </tr>
+            </table>
+            
+            <p class="text-muted" style="margin:32px 0 0;color:#9ca3af;font-size:13px;text-align:center">
+                © AtlasHub · Secure business infrastructure<br>
+                <a href="#" class="text-muted" style="color:#9ca3af;text-decoration:underline">Privacy Policy</a> &bull; <a href="#" class="text-muted" style="color:#9ca3af;text-decoration:underline">Terms of Service</a>
+            </p>
+        </td>
+    </tr>
+</table>
 </body>
 </html>
