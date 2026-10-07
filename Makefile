@@ -17,7 +17,7 @@ else
     SSH_KEY = ~/.ssh/id_rsa_azure
 endif
 
-.PHONY: start stop backup-db restore-db ssh
+.PHONY: start stop backup-db restore-db ssh prune-runtime-images
 
 # 1. Build the infrastructure from scratch and restore the database
 start:
@@ -50,11 +50,18 @@ deploy-stack:
 	@$(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "export KUBECONFIG=/home/ubuntu/.kube/config && while true; do POD=$$(kubectl get pod -l app=mysql -o jsonpath='{.items[0].metadata.name}' 2>/dev/null); if [ -n \"$$POD\" ]; then if kubectl exec $$POD -- mysqladmin ping -u root -proot --silent 2>/dev/null; then break; fi; fi; echo 'Waiting for MySQL container...'; sleep 5; done; echo 'MySQL is fully ready!'"
 	@echo "=> Restoring Database..."
 	$(MAKE) restore-db
+	@echo "=> Rolling out the AtlasHub application..."
+	$(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "export KUBECONFIG=/home/ubuntu/.kube/config && kubectl rollout restart deployment/atlashub-app && kubectl rollout status deployment/atlashub-app --timeout=180s"
+	$(MAKE) prune-runtime-images
 	@echo "=> Environment is completely up and running!"
 
 build-image:
 	@echo "=> Building Docker Image and Loading into K3s..."
 	$(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "if [ ! -d 'atlashub' ]; then git clone https://github.com/OlamidotunIY/atlashub_backend.git atlashub; fi && cd atlashub && git checkout master && git pull origin master && sudo docker build -t atlashub/app:latest . && sudo docker save atlashub/app:latest | sudo k3s ctr images import -"
+
+prune-runtime-images:
+	@echo "=> Pruning unused Docker build cache and K3s images..."
+	$(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "sudo docker builder prune -af && sudo docker image prune -af && sudo k3s crictl rmi --prune"
 
 # 2. Backup the database and completely destroy the infrastructure
 stop:
