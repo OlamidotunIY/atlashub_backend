@@ -9,6 +9,7 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import java.time.ZonedDateTime;
 
 @Entity
@@ -16,7 +17,7 @@ import java.time.ZonedDateTime;
         @Index(name = "idx_notification_delivery_correlation", columnList = "correlation_id", unique = true),
         @Index(name = "idx_notification_delivery_retry", columnList = "status,next_retry_at")
 })
-@Getter @NoArgsConstructor(access = AccessLevel.PROTECTED) @AllArgsConstructor
+@Getter @Setter @NoArgsConstructor(access = AccessLevel.PROTECTED) @AllArgsConstructor
 public class NotificationDeliveryJpa implements BaseJpaEntity {
     @Id private Long id;
     @Column(nullable = false) private String templateCode;

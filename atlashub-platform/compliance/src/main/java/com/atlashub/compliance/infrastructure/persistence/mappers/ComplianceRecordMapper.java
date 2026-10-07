@@ -10,6 +10,7 @@ import com.atlashub.compliance.infrastructure.persistence.entities.ComplianceRec
 import com.atlashub.shared.domain.valueobject.EmailAddress;
 import com.atlashub.shared.domain.valueobject.PhoneNumber;
 import com.atlashub.shared.infrastructure.persistence.mappers.DomainMapper;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -54,6 +55,17 @@ public class ComplianceRecordMapper implements DomainMapper<ComplianceRecord, Co
                 .officers(domain.getOfficers().stream().map(this::toPersistence).toList())
                 .documentRequirements(domain.getDocumentRequirements().stream().map(this::toPersistence).toList())
                 .createdAt(domain.getCreatedAt()).updatedAt(domain.getUpdatedAt()).version(domain.getVersion()).build();
+    }
+
+    @Override
+    public void updatePersistence(ComplianceRecord domain, ComplianceRecordJpa record) {
+        ComplianceRecordJpa mapped = toPersistence(domain);
+        BeanUtils.copyProperties(mapped, record, "id", "version", "officers", "documentRequirements");
+
+        record.getOfficers().clear();
+        record.getOfficers().addAll(mapped.getOfficers());
+        record.getDocumentRequirements().clear();
+        record.getDocumentRequirements().addAll(mapped.getDocumentRequirements());
     }
 
     private BusinessOfficer toDomain(BusinessOfficerJpa row) {
