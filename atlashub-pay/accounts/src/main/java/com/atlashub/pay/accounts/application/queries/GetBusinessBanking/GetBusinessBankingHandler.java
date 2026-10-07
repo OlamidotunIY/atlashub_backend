@@ -39,13 +39,13 @@ public class GetBusinessBankingHandler extends Query<GetBusinessBankingQuery, Bu
 
     private ExternalAccountResult deposit(BusinessDepositAccount value) {
         return new ExternalAccountResult(value.getId(), value.getAccountName(), value.getMaskedAccountNumber(),
-                value.getBankName(), value.getBankCode(), value.getCurrency().name(), value.getStatus().name(),
+                value.getBankName(), value.getBankCode(), value.getCurrency().name(), value.getStatus(),
                 value.getActivatedAt());
     }
 
     private ExternalAccountResult subAccount(BusinessSubAccount value) {
         return new ExternalAccountResult(value.getId(), value.getAccountName(), value.getMaskedAccountNumber(),
-                value.getBankName(), value.getBankCode(), value.getCurrency().name(), value.getStatus().name(),
+                value.getBankName(), value.getBankCode(), value.getCurrency().name(), value.getStatus(),
                 value.getActivatedAt());
     }
 }

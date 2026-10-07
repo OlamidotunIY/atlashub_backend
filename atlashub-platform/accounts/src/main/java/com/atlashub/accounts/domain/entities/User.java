@@ -9,6 +9,7 @@ import com.atlashub.shared.domain.valueobject.CorrelationId;
 import com.atlashub.shared.domain.valueobject.Country;
 import com.atlashub.shared.domain.valueobject.EmailAddress;
 import com.atlashub.shared.domain.valueobject.PhoneNumber;
+import com.atlashub.shared.application.security.ApiEnvironment;
 import lombok.Getter;
 
 import java.time.ZonedDateTime;
@@ -25,6 +26,7 @@ public class User extends AggregateRoot<Long> {
     private PhoneNumber phone;
     private final Country country;
     private Long activeOrganizationId;
+    private ApiEnvironment activeEnvironment;
     private boolean emailVerified;
     private String locale;
     private String timezone;
@@ -47,7 +49,7 @@ public class User extends AggregateRoot<Long> {
             throw new InvalidUserException("Credential reference is required");
         }
 
-        User user = new User(id, firstName, lastName, email, null, null, country, null, false,
+        User user = new User(id, firstName, lastName, email, null, null, country, null, ApiEnvironment.TEST, false,
                 null, null, ZonedDateTime.now(), ZonedDateTime.now());
 
         user.registerEvent(new UserCreated(
@@ -69,7 +71,7 @@ public class User extends AggregateRoot<Long> {
      * Reconstitution constructor — used by mappers only. No events raised.
      */
     public User(Long id, String firstName, String lastName, EmailAddress email, String imageUrl,
-                PhoneNumber phone, Country country, Long activeOrganizationId, Boolean emailVerified,
+                PhoneNumber phone, Country country, Long activeOrganizationId, ApiEnvironment activeEnvironment, Boolean emailVerified,
                 String locale, String timezone,
                 ZonedDateTime createdAt, ZonedDateTime updatedAt) {
         this.id = id;
@@ -80,6 +82,7 @@ public class User extends AggregateRoot<Long> {
         this.phone = phone;
         this.country = country;
         this.activeOrganizationId = activeOrganizationId;
+        this.activeEnvironment = activeEnvironment == null ? ApiEnvironment.TEST : activeEnvironment;
         this.emailVerified = emailVerified != null && emailVerified;
         this.locale = locale;
         this.timezone = timezone;
@@ -137,6 +140,12 @@ public class User extends AggregateRoot<Long> {
                 CorrelationId.getOrCreate(),
                 new UserActiveOrganizationChanged.Payload(this.id, organizationId)
         ));
+    }
+
+    public void switchActiveEnvironment(ApiEnvironment environment) {
+        if (environment == null) throw new InvalidUserException("Active environment is required");
+        this.activeEnvironment = environment;
+        this.updatedAt = ZonedDateTime.now();
     }
 
     private static void validatePassword(String password) {

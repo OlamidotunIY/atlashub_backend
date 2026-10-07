@@ -1,3 +1,6 @@
 package com.atlashub.accounts.application.command.ApplyAuthenticationEvent;
 
-public record ApplyAuthenticationEventCommand(Long userId, Long activeOrganizationId, boolean emailVerified) {}
+import com.atlashub.shared.application.security.ApiEnvironment;
+
+public record ApplyAuthenticationEventCommand(Long userId, Long activeOrganizationId,
+                                              ApiEnvironment activeEnvironment, boolean emailVerified) {}

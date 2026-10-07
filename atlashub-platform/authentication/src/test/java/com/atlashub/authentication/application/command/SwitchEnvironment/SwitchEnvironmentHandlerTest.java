@@ -5,6 +5,7 @@ import com.atlashub.authentication.domain.entities.Session;
 import com.atlashub.authentication.domain.exceptions.LiveEnvironmentUnavailableException;
 import com.atlashub.authentication.domain.repositories.SessionRepository;
 import com.atlashub.shared.application.port.ComplianceQueryPort;
+import com.atlashub.shared.application.port.DomainEventPublisher;
 import com.atlashub.shared.application.port.MembershipQueryPort;
 import com.atlashub.shared.application.security.ApiEnvironment;
 import org.junit.jupiter.api.Test;
@@ -24,6 +25,7 @@ class SwitchEnvironmentHandlerTest {
         MembershipQueryPort memberships = mock(MembershipQueryPort.class);
         ComplianceQueryPort compliance = mock(ComplianceQueryPort.class);
         TokenPort tokens = mock(TokenPort.class);
+        DomainEventPublisher events = mock(DomainEventPublisher.class);
         Session current = Session.create(
                 10L, "hash", "2", 3L, "TEST", "fingerprint", "family",
                 ZonedDateTime.now().plusDays(30), null, null);
@@ -31,7 +33,7 @@ class SwitchEnvironmentHandlerTest {
         when(compliance.isApproved(3L)).thenReturn(false);
 
         SwitchEnvironmentHandler handler = new SwitchEnvironmentHandler(
-                sessions, memberships, compliance, tokens);
+                sessions, memberships, compliance, tokens, events);
 
         assertThrows(LiveEnvironmentUnavailableException.class,
                 () -> handler.execute(new SwitchEnvironmentCommand(2L, 10L, ApiEnvironment.LIVE)));

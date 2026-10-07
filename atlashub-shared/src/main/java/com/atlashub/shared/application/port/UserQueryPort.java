@@ -1,5 +1,7 @@
 package com.atlashub.shared.application.port;
 
+import com.atlashub.shared.application.security.ApiEnvironment;
+
 import java.util.Optional;
 
 public interface UserQueryPort {
@@ -15,6 +17,7 @@ public interface UserQueryPort {
             String email,
             String country,
             Long activeOrganizationId,
+            ApiEnvironment activeEnvironment,
             boolean emailVerified
     ) {
     }

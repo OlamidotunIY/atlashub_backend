@@ -4,6 +4,7 @@ import com.atlashub.accounts.application.command.ApplyAuthenticationEvent.ApplyA
 import com.atlashub.accounts.application.command.ApplyAuthenticationEvent.ApplyAuthenticationEventHandler;
 import com.atlashub.accounts.infrastructure.messaging.events.AuthEmailVerified;
 import com.atlashub.accounts.infrastructure.messaging.events.ActiveOrganizationSwitched;
+import com.atlashub.accounts.infrastructure.messaging.events.ActiveEnvironmentSwitched;
 import com.atlashub.shared.application.messaging.BaseKafkaEventListener;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
@@ -31,16 +32,19 @@ public class AuthEventListener extends BaseKafkaEventListener {
     public void init() {
         registerSubscription("AuthEmailVerifiedEvent", GROUP_ID);
         registerSubscription("ActiveOrganizationSwitchedEvent", GROUP_ID);
+        registerSubscription("ActiveEnvironmentSwitchedEvent", GROUP_ID);
     }
 
     @KafkaListener(topics = "auth-events", groupId = GROUP_ID)
     public void listen(String messagePayload) {
         processEventIfMatches(messagePayload, "AuthEmailVerifiedEvent", AuthEmailVerified.class, log, GROUP_ID, e -> e instanceof TimeoutException, event -> {
             Long userId = Long.parseLong(event.payload().userId());
-            handler.execute(new ApplyAuthenticationEventCommand(userId, null, true));
+            handler.execute(new ApplyAuthenticationEventCommand(userId, null, null, true));
         });
         processEventIfMatches(messagePayload, "ActiveOrganizationSwitchedEvent", ActiveOrganizationSwitched.class, log, GROUP_ID, e -> e instanceof TimeoutException, event -> {
-            handler.execute(new ApplyAuthenticationEventCommand(event.payload().userId(), event.payload().organizationId(), false));
+            handler.execute(new ApplyAuthenticationEventCommand(event.payload().userId(), event.payload().organizationId(), null, false));
         });
+        processEventIfMatches(messagePayload, "ActiveEnvironmentSwitchedEvent", ActiveEnvironmentSwitched.class, log, GROUP_ID, e -> e instanceof TimeoutException, event ->
+                handler.execute(new ApplyAuthenticationEventCommand(event.payload().userId(), null, event.payload().environment(), false)));
     }
 }

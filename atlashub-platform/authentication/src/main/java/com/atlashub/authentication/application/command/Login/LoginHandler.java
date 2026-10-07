@@ -1,6 +1,8 @@
 package com.atlashub.authentication.application.command.Login;
 
 import com.atlashub.authentication.application.port.OtpTransmissionPort;
+import com.atlashub.authentication.application.command.SendVerificationEmail.SendVerificationEmailCommand;
+import com.atlashub.authentication.application.command.SendVerificationEmail.SendVerificationEmailHandler;
 import com.atlashub.authentication.application.port.TokenPort;
 import com.atlashub.authentication.domain.entities.AuthAccount;
 import com.atlashub.authentication.domain.entities.Session;
@@ -8,14 +10,12 @@ import com.atlashub.authentication.domain.entities.TrustedDevice;
 import com.atlashub.authentication.domain.exceptions.AuthLocked;
 import com.atlashub.authentication.domain.exceptions.EmailVerificationRequired;
 import com.atlashub.authentication.domain.exceptions.InvalidCredentials;
-import com.atlashub.authentication.domain.exceptions.LiveEnvironmentUnavailableException;
 import com.atlashub.authentication.domain.repositories.AuthAccountRepository;
 import com.atlashub.authentication.domain.repositories.SessionRepository;
 import com.atlashub.authentication.domain.repositories.TrustedDeviceRepository;
 import com.atlashub.authentication.domain.repositories.VerificationRepository;
 import com.atlashub.authentication.domain.services.OtpVerificationIssuer;
 import com.atlashub.authentication.domain.valueobject.VerificationType;
-import com.atlashub.shared.application.port.ComplianceQueryPort;
 import com.atlashub.shared.application.port.MembershipQueryPort;
 import com.atlashub.shared.application.port.PasswordEncoderPort;
 import com.atlashub.shared.application.port.UserQueryPort;
@@ -45,14 +45,14 @@ public class LoginHandler extends Command<LoginCommand, LoginResponse> {
     final UserQueryPort userQueryPort;
     final SessionRepository sessionRepository;
     final TokenPort tokenPort;
-    final ComplianceQueryPort complianceQueryPort;
+    final SendVerificationEmailHandler sendVerificationEmailHandler;
 
     public LoginHandler(PasswordEncoderPort encoderPort, AuthAccountRepository accountRepository,
                         TrustedDeviceRepository deviceRepository, VerificationRepository verificationRepository,
                         OtpVerificationIssuer issuer, OtpTransmissionPort transmissionPort,
                         MembershipQueryPort membershipQueryPort, UserQueryPort userQueryPort,
                         SessionRepository sessionRepository, TokenPort tokenPort,
-                        ComplianceQueryPort complianceQueryPort) {
+                        SendVerificationEmailHandler sendVerificationEmailHandler) {
         this.encoderPort = encoderPort;
         this.accountRepository = accountRepository;
         this.deviceRepository = deviceRepository;
@@ -63,17 +63,12 @@ public class LoginHandler extends Command<LoginCommand, LoginResponse> {
         this.userQueryPort = userQueryPort;
         this.sessionRepository = sessionRepository;
         this.tokenPort = tokenPort;
-        this.complianceQueryPort = complianceQueryPort;
+        this.sendVerificationEmailHandler = sendVerificationEmailHandler;
     }
 
     @Override
     @Transactional
     public LoginResponse execute(LoginCommand input) {
-        if (input.environment() == null) {
-            throw new InvalidCredentials();
-        }
-        String environment = input.environment().name();
-
         AuthAccount account = accountRepository.findByAccountId(input.email()).orElseThrow(InvalidCredentials::new);
 
         UserQueryPort.UserDto user = userQueryPort.findById(account.getUserId()).orElseThrow(() -> new NotFoundException("User not found"));
@@ -83,8 +78,11 @@ public class LoginHandler extends Command<LoginCommand, LoginResponse> {
         }
 
         if (!user.emailVerified()) {
+            sendVerificationEmailHandler.execute(new SendVerificationEmailCommand(account.getAccountId()));
             throw new EmailVerificationRequired();
         }
+
+        String environment = (user.activeEnvironment() == null ? ApiEnvironment.TEST : user.activeEnvironment()).name();
 
         if (!encoderPort.matches(input.password(), account.getPassword())) {
             account.recordFailedLogin();
@@ -96,9 +94,6 @@ public class LoginHandler extends Command<LoginCommand, LoginResponse> {
         if (orgId == null || membershipQueryPort.getMemberStatus(account.getUserId(), orgId)
                 != MembershipQueryPort.MembershipStatus.ACTIVE) {
             throw new InvalidCredentials();
-        }
-        if (ApiEnvironment.LIVE.name().equals(environment) && !complianceQueryPort.isApproved(orgId)) {
-            throw new LiveEnvironmentUnavailableException();
         }
         Set<String> permissions = membershipQueryPort.getPermissions(account.getUserId(), orgId);
 

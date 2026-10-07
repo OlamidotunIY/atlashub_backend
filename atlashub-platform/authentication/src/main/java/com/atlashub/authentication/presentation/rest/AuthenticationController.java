@@ -85,7 +85,7 @@ public class AuthenticationController {
             @Valid @RequestBody LoginRequest request,
             HttpServletRequest httpRequest) {
         LoginResponse response = loginHandler.execute(new LoginCommand(
-                request.email(), request.password(), request.environment(), request.deviceFingerprint(),
+                request.email(), request.password(), request.deviceFingerprint(),
                 clientIp(httpRequest), httpRequest.getHeader("User-Agent")));
         return ok(toWebResponse(response));
     }

@@ -6,8 +6,8 @@ import com.atlashub.shared.application.port.EventTrackerPort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.ZonedDateTime;
 import java.util.Collections;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -17,7 +17,7 @@ public class EventTrackerApiImpl implements
         EventTrackerPort {
 
     private final JpaEventDeliveryTrackerRepository trackerRepository;
-    
+
     // In-memory registry for Dynamic Consumer Subscriptions
     private final ConcurrentMap<String, Set<String>> subscriptions = new ConcurrentHashMap<>();
 
@@ -33,27 +33,13 @@ public class EventTrackerApiImpl implements
     @Override
     @Transactional
     public void markSuccess(String eventId, String consumerId) {
-        Optional<EventDeliveryTrackerJpaEntity> entityOpt = trackerRepository.findById(
-                new EventDeliveryTrackerJpaEntity.TrackerId(eventId, consumerId));
-        
-        if (entityOpt.isPresent()) {
-            entityOpt.get().updateStatus("SUCCESS");
-        } else {
-            trackerRepository.save(new EventDeliveryTrackerJpaEntity(eventId, consumerId, "SUCCESS"));
-        }
+        trackerRepository.upsertStatus(eventId, consumerId, "SUCCESS", ZonedDateTime.now());
     }
 
     @Override
     @Transactional
     public void markDlq(String eventId, String consumerId) {
-        Optional<EventDeliveryTrackerJpaEntity> entityOpt = trackerRepository.findById(
-                new EventDeliveryTrackerJpaEntity.TrackerId(eventId, consumerId));
-        
-        if (entityOpt.isPresent()) {
-            entityOpt.get().updateStatus("DLQ");
-        } else {
-            trackerRepository.save(new EventDeliveryTrackerJpaEntity(eventId, consumerId, "DLQ"));
-        }
+        trackerRepository.upsertStatus(eventId, consumerId, "DLQ", ZonedDateTime.now());
     }
 
     @Override
@@ -73,11 +59,7 @@ public class EventTrackerApiImpl implements
     @Transactional
     public void createPendingTrackers(String eventId, Set<String> consumerIds) {
         for (String consumerId : consumerIds) {
-            Optional<EventDeliveryTrackerJpaEntity> existing = trackerRepository.findById(
-                    new EventDeliveryTrackerJpaEntity.TrackerId(eventId, consumerId));
-            if (existing.isEmpty()) {
-                trackerRepository.save(new EventDeliveryTrackerJpaEntity(eventId, consumerId, "PENDING"));
-            }
+            trackerRepository.insertPendingIfAbsent(eventId, consumerId, ZonedDateTime.now());
         }
     }
 }
