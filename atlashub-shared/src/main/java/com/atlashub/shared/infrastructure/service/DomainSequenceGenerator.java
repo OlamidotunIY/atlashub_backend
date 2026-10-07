@@ -41,8 +41,8 @@ public class DomainSequenceGenerator {
             currentVal = jdbcTemplate.queryForObject(selectSql, Long.class, sequenceName);
         } catch (org.springframework.dao.EmptyResultDataAccessException e) {
             // Auto-seed if it doesn't exist
-            jdbcTemplate.update("INSERT INTO domain_sequences (sequence_name, next_val) VALUES (?, ?)", sequenceName, 1000L);
-            currentVal = 1000L;
+            jdbcTemplate.update("INSERT INTO domain_sequences (sequence_name, next_val) VALUES (?, ?)", sequenceName, 1L);
+            currentVal = 1L;
         }
         
         if (currentVal == null) {
