@@ -13,6 +13,7 @@ import org.springframework.data.redis.core.ValueOperations;
 
 import java.time.ZonedDateTime;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -20,6 +21,23 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class SessionRepositoryAdapterTest {
+
+    @Test
+    void deserializes_the_redis_session_json_used_by_authentication() throws Exception {
+        ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
+        Session session = Session.create(
+                13L, "token-hash", "1", 1L, "TEST", "fingerprint", "family",
+                ZonedDateTime.now().plusDays(30), "127.0.0.1", "browser");
+
+        String redisJson = objectMapper.writeValueAsString(session);
+        Session restored = objectMapper.readValue(redisJson, Session.class);
+
+        assertEquals(session.getId(), restored.getId());
+        assertEquals(session.getTokenHash(), restored.getTokenHash());
+        assertEquals(session.getUserId(), restored.getUserId());
+        assertEquals(session.getOrganizationId(), restored.getOrganizationId());
+        assertEquals(session.getEnvironment(), restored.getEnvironment());
+    }
 
     @Test
     void invalidation_removes_only_runtime_state_and_retains_the_audit_row() throws Exception {

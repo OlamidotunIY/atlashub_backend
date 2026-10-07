@@ -3,11 +3,15 @@ package com.atlashub.authentication.domain.entities;
 import com.atlashub.authentication.domain.exceptions.AuthenticationInvariantException;
 import com.atlashub.shared.domain.entities.AggregateRoot;
 import com.atlashub.shared.application.security.ApiEnvironment;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 
 import java.time.ZonedDateTime;
 
 @Getter
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Session extends AggregateRoot<Long> {
 
     private final Long id;
@@ -24,10 +28,19 @@ public class Session extends AggregateRoot<Long> {
     private ZonedDateTime updatedAt;
 
     /** All-args constructor — used by MapStruct reconstitution. */
-    public Session(Long id, ZonedDateTime expiresAt, String tokenHash, String userId,
-                   Long organizationId, String environment, String deviceFingerprint, String tokenFamilyId,
-                   String ipAddress, String userAgent,
-                   ZonedDateTime createdAt, ZonedDateTime updatedAt) {
+    @JsonCreator
+    public Session(@JsonProperty("id") Long id,
+                   @JsonProperty("expiresAt") ZonedDateTime expiresAt,
+                   @JsonProperty("tokenHash") String tokenHash,
+                   @JsonProperty("userId") String userId,
+                   @JsonProperty("organizationId") Long organizationId,
+                   @JsonProperty("environment") String environment,
+                   @JsonProperty("deviceFingerprint") String deviceFingerprint,
+                   @JsonProperty("tokenFamilyId") String tokenFamilyId,
+                   @JsonProperty("ipAddress") String ipAddress,
+                   @JsonProperty("userAgent") String userAgent,
+                   @JsonProperty("createdAt") ZonedDateTime createdAt,
+                   @JsonProperty("updatedAt") ZonedDateTime updatedAt) {
         this.id = id;
         this.expiresAt = expiresAt;
         this.tokenHash = tokenHash;
