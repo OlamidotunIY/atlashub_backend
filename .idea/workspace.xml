@@ -9,34 +9,14 @@
   <component name="ChangeListManager">
     <list default="true" id="174f3fac-956e-4ce4-b2e2-bac8d3e75c4d" name="Changes" comment="fix: file system">
       <changelist_data name="Iyanda Olamidotun" email="olamidotun225@gmail.com" automatic="false" />
-      <change afterPath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/pay/accounts/domain/entities/VirtualAccount.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/pay/accounts/domain/events/VirtualAccountActivatedEvent.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/pay/accounts/domain/events/VirtualAccountClosedEvent.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/pay/accounts/domain/events/VirtualAccountSuspendedEvent.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/pay/accounts/domain/events/WalletFundedEvent.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/pay/accounts/domain/exceptions/VirtualAccountAlreadyActiveException.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/pay/accounts/domain/exceptions/VirtualAccountAlreadyClosedException.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/pay/accounts/domain/exceptions/VirtualAccountInactiveException.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/pay/accounts/domain/exceptions/VirtualAccountNotActiveException.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/pay/accounts/domain/exceptions/VirtualAccountNotFoundException.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/pay/accounts/domain/ports/AnchorPort.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/pay/accounts/domain/valueobject/OwnerType.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/atlashub-pay/accounts/src/main/java/com/atlashub/pay/accounts/domain/valueobject/VirtualAccountStatus.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.agents/skills/create-domain-event/scripts/generate-event.ps1" beforeDir="false" afterPath="$PROJECT_DIR$/.agents/skills/create-domain-event/scripts/generate-event.ps1" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.agents/skills/create-domain-valueobject/scripts/scaffold-valueobject.ps1" beforeDir="false" afterPath="$PROJECT_DIR$/.agents/skills/create-domain-valueobject/scripts/scaffold-valueobject.ps1" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/gradle.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/gradle.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/modules/accounts-design.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/modules/accounts-design.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/modules/admin-design.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/modules/admin-design.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/modules/commerce-storefront-design.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/modules/commerce-storefront-design.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/modules/compliance-design.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/modules/compliance-design.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/modules/hr-payroll-design.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/modules/hr-payroll-design.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/modules/pay-accounts-design.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/modules/pay-accounts-design.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/modules/pay-charges-design.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/modules/pay-charges-design.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/modules/pay-ledger-design.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/modules/pay-ledger-design.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/modules/pay-mandates-design.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/modules/pay-mandates-design.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/modules/pay-transfers-design.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/modules/pay-transfers-design.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/settings.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/settings.gradle" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-main/src/main/java/com/atlashub/main/AtlashubApplication.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-main/src/main/java/com/atlashub/main/AtlashubApplication.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-main/src/main/resources/application.yml" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-main/src/main/resources/application.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/domain/entities/Verification.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/domain/entities/Verification.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/domain/events/OtpVerificationCreated.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/authentication/src/main/java/com/atlashub/authentication/domain/events/OtpVerificationCreated.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/notifications/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/notifications/build.gradle" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/notifications/src/main/java/com/atlashub/notifications/domain/entities/NotificationDelivery.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/notifications/src/main/java/com/atlashub/notifications/domain/entities/NotificationDelivery.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlashub-platform/notifications/src/main/java/com/atlashub/notifications/domain/ports/EmailPort.java" beforeDir="false" afterPath="$PROJECT_DIR$/atlashub-platform/notifications/src/main/java/com/atlashub/notifications/domain/ports/EmailPort.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -152,61 +132,61 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.0" />
-      <entry key="MS500" value="1.0" />
-      <entry key="S2" value="1.0" />
-      <entry key="S5" value="1.0" />
-      <entry key="S10" value="1.0" />
-      <entry key="S30" value="1.0" />
-      <entry key="S60" value="1.0" />
-      <entry key="M2" value="1.0" />
-      <entry key="M5" value="1.0" />
-      <entry key="M10" value="1.000000000095363" />
-      <entry key="M15" value="1.0000002087309365" />
-      <entry key="M30" value="1.0004568708121022" />
-      <entry key="H1" value="1.0213882065460598" />
-      <entry key="H2" value="1.180034678764319" />
-      <entry key="H4" value="3.3214960521860766" />
-      <entry key="D1" value="241.044302906311" />
-      <entry key="W1" value="1580.1344428577663" />
+      <entry key="MS100" value="1.3277017143030934" />
+      <entry key="MS500" value="2.3722874209755096" />
+      <entry key="S2" value="2.819377711167032" />
+      <entry key="S5" value="2.9706638239737897" />
+      <entry key="S10" value="3.175085135143565" />
+      <entry key="S30" value="3.584342718120552" />
+      <entry key="S60" value="3.7663163505535113" />
+      <entry key="M2" value="3.8758355175973005" />
+      <entry key="M5" value="3.9484536278336084" />
+      <entry key="M10" value="3.9740017538164336" />
+      <entry key="M15" value="3.9886780468233116" />
+      <entry key="M30" value="4.479089007197079" />
+      <entry key="H1" value="9.988553213291908" />
+      <entry key="H2" value="28.914250216768533" />
+      <entry key="H4" value="58.27648313918097" />
+      <entry key="D1" value="309.04813233770295" />
+      <entry key="W1" value="1660.4654134442906" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
       <entry key="MS500" value="0.0" />
-      <entry key="S2" value="2.9301786956539456E-119" />
-      <entry key="S5" value="5.579725796400562E-48" />
-      <entry key="S10" value="3.8199384141645714E-24" />
-      <entry key="S30" value="3.200106343640738E-8" />
-      <entry key="S60" value="3.092296660220851E-4" />
-      <entry key="M2" value="0.030442977466388913" />
-      <entry key="M5" value="0.4782075569438787" />
-      <entry key="M10" value="1.197733883378275" />
-      <entry key="M15" value="1.6265924518089039" />
-      <entry key="M30" value="2.2090170062618393" />
-      <entry key="H1" value="2.5743214787212256" />
-      <entry key="H2" value="2.8198928950492093" />
-      <entry key="H4" value="5.3352748091393005" />
-      <entry key="D1" value="347.99610004016523" />
-      <entry key="W1" value="2079.2429463115127" />
+      <entry key="S2" value="0.0" />
+      <entry key="S5" value="0.0" />
+      <entry key="S10" value="1.3273939377803855E-217" />
+      <entry key="S30" value="5.1011325663357226E-73" />
+      <entry key="S60" value="7.142221339566365E-37" />
+      <entry key="M2" value="8.451166392614909E-19" />
+      <entry key="M5" value="5.8988406038915025E-8" />
+      <entry key="M10" value="2.4287529962919259E-4" />
+      <entry key="M15" value="0.0038928108310006234" />
+      <entry key="M30" value="0.06284823523488046" />
+      <entry key="H1" value="0.2867864121698532" />
+      <entry key="H2" value="0.8378629255880221" />
+      <entry key="H4" value="2.55430646986766" />
+      <entry key="D1" value="292.5566185220648" />
+      <entry key="W1" value="2028.386933082411" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="0.04358573957345017" />
-      <entry key="MS500" value="0.534402995605504" />
-      <entry key="S2" value="0.8550021778919727" />
-      <entry key="S5" value="0.9392622943045217" />
-      <entry key="S10" value="0.9691554541478481" />
-      <entry key="S30" value="0.9896109554257404" />
-      <entry key="S60" value="0.9950905157921904" />
-      <entry key="M2" value="1.0273134986214632" />
-      <entry key="M5" value="1.473885804097584" />
-      <entry key="M10" value="2.193107779670474" />
-      <entry key="M15" value="2.622529196388818" />
-      <entry key="M30" value="3.20677647255562" />
-      <entry key="H1" value="3.5941367302293186" />
-      <entry key="H2" value="3.9990169041494497" />
-      <entry key="H4" value="8.655710414757696" />
-      <entry key="D1" value="589.0301030218515" />
-      <entry key="W1" value="3659.3687323687104" />
+      <entry key="MS100" value="1.1670525995892143" />
+      <entry key="MS500" value="2.314167239242921" />
+      <entry key="S2" value="2.802110264836948" />
+      <entry key="S5" value="2.9632796594784496" />
+      <entry key="S10" value="3.170941951070587" />
+      <entry key="S30" value="3.5826407368467943" />
+      <entry key="S60" value="3.7653930136479095" />
+      <entry key="M2" value="3.8753520117194498" />
+      <entry key="M5" value="3.9482544836440794" />
+      <entry key="M10" value="3.9741427366494126" />
+      <entry key="M15" value="3.9924898770171007" />
+      <entry key="M30" value="4.54179099835185" />
+      <entry key="H1" value="10.275060806174022" />
+      <entry key="H2" value="29.751728275833127" />
+      <entry key="H4" value="60.83020855587269" />
+      <entry key="D1" value="601.5960661571147" />
+      <entry key="W1" value="3688.8438973417105" />
     </decayedShown>
   </component>
   <component name="ProblemsViewState">
@@ -336,6 +316,7 @@
       <method v="2" />
     </configuration>
     <configuration name="AtlashubApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+      <option name="ACTIVE_PROFILES" value="local" />
       <option name="ALTERNATIVE_JRE_PATH" value="dragonwell-21" />
       <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
       <option name="envFilePaths">
@@ -345,7 +326,14 @@
       <selectedOptions>
         <option name="environmentVariables" />
       </selectedOptions>
+      <option name="SHORTEN_COMMAND_LINE" value="ARGS_FILE" />
       <option name="SPRING_BOOT_MAIN_CLASS" value="com.atlashub.main.AtlashubApplication" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration default="true" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
+      <option name="SHORTEN_COMMAND_LINE" value="ARGS_FILE" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
@@ -412,11 +400,11 @@
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Docker.docker: Compose Deployment" />
         <item itemvalue="Makefile Target.start" />
         <item itemvalue="HTTP Request.generated-requests | #4" />
         <item itemvalue="HTTP Request.generated-requests | #2" />
         <item itemvalue="HTTP Request.generated-requests | #1" />
+        <item itemvalue="Docker.docker: Compose Deployment" />
       </list>
     </recent_temporary>
   </component>

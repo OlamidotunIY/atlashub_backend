@@ -11,6 +11,7 @@ import com.atlashub.pay.accounts.domain.repositories.BusinessDepositAccountRepos
 import com.atlashub.pay.accounts.domain.repositories.BusinessSubAccountRepository;
 import com.atlashub.pay.accounts.domain.repositories.ReservedAccountRepository;
 import com.atlashub.pay.accounts.domain.repositories.OrganizationBankingProfileRepository;
+import com.atlashub.pay.accounts.domain.valueobject.RequestStatus;
 import com.atlashub.shared.application.usecase.Command;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,7 +55,7 @@ public class DispatchBankingProviderRequestsHandler extends Command<DispatchBank
         } catch (RuntimeException error) {
             log.warn("Anchor request {} failed: {}", request.getRequestReference(), error.getMessage());
             request.fail(error.getMessage());
-            if (request.getStatus() == BankingProviderRequest.RequestStatus.FAILED) {
+            if (request.getStatus() == RequestStatus.FAILED) {
                 markTerminalFailure(request);
             }
         }

@@ -1,7 +1,7 @@
 package com.atlashub.pay.accounts.infrastructure.persistence.adapters;
 
 import com.atlashub.pay.accounts.domain.entities.BankingProviderRequest;
-import com.atlashub.pay.accounts.domain.entities.BankingProviderRequest.RequestStatus;
+import com.atlashub.pay.accounts.domain.valueobject.RequestStatus;
 import com.atlashub.pay.accounts.domain.repositories.BankingProviderRequestRepository;
 import com.atlashub.pay.accounts.infrastructure.persistence.entities.BankingProviderRequestJpa;
 import com.atlashub.pay.accounts.infrastructure.persistence.mappers.BankingProviderRequestMapper;

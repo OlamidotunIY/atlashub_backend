@@ -56,6 +56,8 @@ atlashub:
     issuer: ${ATLASHUB_JWT_ISSUER:atlashub-authentication}
     audience: ${ATLASHUB_JWT_AUDIENCE:atlashub-api}
   integrations:
+    paystack:
+      test-merchant-id: ${ATLASHUB_PAYSTACK_TEST_MERCHANT_ID:atlashub-paystack-test}
     anchor:
       enabled: ${ATLASHUB_ANCHOR_ENABLED:false}
       webhook-publish-timeout: ${ATLASHUB_ANCHOR_WEBHOOK_PUBLISH_TIMEOUT:PT5S}

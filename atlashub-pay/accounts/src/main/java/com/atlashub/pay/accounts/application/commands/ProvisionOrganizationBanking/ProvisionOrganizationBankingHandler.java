@@ -3,6 +3,7 @@ package com.atlashub.pay.accounts.application.commands.ProvisionOrganizationBank
 import com.atlashub.pay.accounts.domain.entities.BusinessDepositAccount;
 import com.atlashub.pay.accounts.domain.entities.OrganizationBankingProfile;
 import com.atlashub.pay.accounts.domain.entities.BankingProviderRequest;
+import com.atlashub.pay.accounts.domain.valueobject.RequestType;
 import com.atlashub.pay.accounts.domain.repositories.BankingProviderRequestRepository;
 import com.atlashub.pay.accounts.domain.repositories.BusinessDepositAccountRepository;
 import com.atlashub.pay.accounts.domain.repositories.OrganizationBankingProfileRepository;
@@ -51,7 +52,7 @@ public class ProvisionOrganizationBankingHandler extends Command<ProvisionOrgani
         String reference = "org-banking-deposit-" + command.organizationId() + "-" + environment.name().toLowerCase();
         if (providerRequestRepository.findByRequestReferenceAndApiEnvironment(reference, environment.name()).isEmpty()) {
             providerRequestRepository.save(BankingProviderRequest.create(providerRequestRepository.nextIdentity(),
-                    BankingProviderRequest.RequestType.DEPOSIT, deposit.getId(), reference, environment.name(),
+                    RequestType.DEPOSIT, deposit.getId(), reference, environment.name(),
                     command.anchorBusinessCustomerId(), null, null, null, null, null, null, null));
         }
         return null;

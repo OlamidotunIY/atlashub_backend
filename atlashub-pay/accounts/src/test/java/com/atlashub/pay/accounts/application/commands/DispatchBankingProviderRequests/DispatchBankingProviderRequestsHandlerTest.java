@@ -1,13 +1,17 @@
 package com.atlashub.pay.accounts.application.commands.DispatchBankingProviderRequests;
 
-import com.atlashub.pay.accounts.domain.entities.*;
+import com.atlashub.pay.accounts.domain.entities.BankingProviderRequest;
+import com.atlashub.pay.accounts.domain.entities.BusinessDepositAccount;
+import com.atlashub.pay.accounts.domain.entities.OrganizationBankingProfile;
 import com.atlashub.pay.accounts.domain.ports.AnchorBankingPort;
 import com.atlashub.pay.accounts.domain.repositories.*;
+import com.atlashub.pay.accounts.domain.valueobject.RequestStatus;
+import com.atlashub.pay.accounts.domain.valueobject.RequestType;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
 class DispatchBankingProviderRequestsHandlerTest {
@@ -20,7 +24,7 @@ class DispatchBankingProviderRequestsHandlerTest {
         OrganizationBankingProfileRepository profiles = mock(OrganizationBankingProfileRepository.class);
         AnchorBankingPort anchor = mock(AnchorBankingPort.class);
         BankingProviderRequest request = BankingProviderRequest.createDepositLifecycle(
-                1L, BankingProviderRequest.RequestType.UNFREEZE_DEPOSIT, 2L,
+                1L, RequestType.UNFREEZE_DEPOSIT, 2L,
                 "unfreeze-1", "LIVE", "Compliance reinstated");
         BusinessDepositAccount account = mock(BusinessDepositAccount.class);
         OrganizationBankingProfile profile = mock(OrganizationBankingProfile.class);
@@ -37,6 +41,6 @@ class DispatchBankingProviderRequestsHandlerTest {
         verify(anchor).unfreezeDepositAccount("anchor-account", "LIVE");
         verify(account).reactivate();
         verify(profile).reactivate();
-        assertEquals(BankingProviderRequest.RequestStatus.COMPLETED, request.getStatus());
+        Assertions.assertEquals(RequestStatus.COMPLETED, request.getStatus());
     }
 }

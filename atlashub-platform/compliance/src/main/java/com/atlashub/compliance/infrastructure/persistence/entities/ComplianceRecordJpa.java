@@ -1,19 +1,35 @@
 package com.atlashub.compliance.infrastructure.persistence.entities;
 
-import com.atlashub.compliance.domain.valueobject.*;
+import com.atlashub.compliance.domain.valueobject.AnchorVerificationStatus;
+import com.atlashub.compliance.domain.valueobject.AtlasHubEligibilityStatus;
+import com.atlashub.compliance.domain.valueobject.ComplianceStatus;
+import com.atlashub.compliance.domain.valueobject.ComplianceStep;
+import com.atlashub.compliance.domain.valueobject.ContactInfoData;
+import com.atlashub.compliance.domain.valueobject.LegalRegistrationType;
+import com.atlashub.compliance.domain.valueobject.ServiceAgreementData;
+import com.atlashub.compliance.domain.valueobject.StepStatus;
+import com.atlashub.compliance.domain.valueobject.SupportedBusinessIndustry;
 import com.atlashub.compliance.infrastructure.persistence.adapters.ComplianceSensitiveDataConverter;
 import com.atlashub.shared.infrastructure.persistence.entities.BaseJpaEntity;
-import jakarta.persistence.*;
-import lombok.*;
-import org.hibernate.annotations.Fetch;
-import org.hibernate.annotations.FetchMode;
+import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
+import jakarta.persistence.Version;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 @Entity
@@ -47,8 +63,6 @@ public class ComplianceRecordJpa implements BaseJpaEntity {
     private AnchorVerificationStatus anchorVerificationStatus;
     @Column(name = "anchor_business_customer_id", unique = true)
     private String anchorBusinessCustomerId;
-    @Column(name = "sandbox_anchor_business_customer_id", unique = true)
-    private String sandboxAnchorBusinessCustomerId;
     private String failureCode;
     private String rejectionReason;
     private ZonedDateTime submittedAt;
@@ -74,16 +88,6 @@ public class ComplianceRecordJpa implements BaseJpaEntity {
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "json")
     private ServiceAgreementData serviceAgreement;
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
-    @Fetch(FetchMode.SUBSELECT)
-    @JoinColumn(name = "compliance_record_id")
-    @Builder.Default
-    private List<BusinessOfficerJpa> officers = new ArrayList<>();
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
-    @Fetch(FetchMode.SUBSELECT)
-    @JoinColumn(name = "compliance_record_id")
-    @Builder.Default
-    private List<ComplianceDocumentRequirementJpa> documentRequirements = new ArrayList<>();
     @Column(nullable = false, updatable = false)
     private ZonedDateTime createdAt;
     @Column(nullable = false)

@@ -11,11 +11,10 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class OrganizationBankingProfileTest {
     @Test
-    void activates_once_after_both_accounts_are_linked() {
+    void activates_once_after_deposit_account_is_linked() {
         OrganizationBankingProfile profile = OrganizationBankingProfile.create(
                 1L, 10L, ApiEnvironment.TEST, "sandbox-customer");
         profile.linkDepositAccount(20L);
-        profile.linkSubAccount(30L);
 
         profile.activate();
         profile.activate();
@@ -31,7 +30,6 @@ class OrganizationBankingProfileTest {
         OrganizationBankingProfile profile = OrganizationBankingProfile.create(
                 1L, 10L, ApiEnvironment.LIVE, "live-customer");
         profile.linkDepositAccount(20L);
-        profile.linkSubAccount(30L);
         profile.activate();
         profile.restrict(BankingRestrictionType.COMPLIANCE);
         profile.restrict(BankingRestrictionType.RISK);

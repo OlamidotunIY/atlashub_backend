@@ -1,21 +1,20 @@
 package com.atlashub.pay.accounts.application.commands.ApplyAnchorAccountStatus;
 
-import com.atlashub.pay.accounts.domain.entities.BusinessDepositAccount;
 import com.atlashub.pay.accounts.domain.entities.BankingProviderRequest;
+import com.atlashub.pay.accounts.domain.entities.BusinessDepositAccount;
 import com.atlashub.pay.accounts.domain.entities.BusinessSubAccount;
 import com.atlashub.pay.accounts.domain.entities.OrganizationBankingProfile;
 import com.atlashub.pay.accounts.domain.entities.ReservedAccount;
-import com.atlashub.pay.accounts.domain.repositories.BusinessDepositAccountRepository;
 import com.atlashub.pay.accounts.domain.repositories.BankingProviderRequestRepository;
+import com.atlashub.pay.accounts.domain.repositories.BusinessDepositAccountRepository;
 import com.atlashub.pay.accounts.domain.repositories.BusinessSubAccountRepository;
 import com.atlashub.pay.accounts.domain.repositories.OrganizationBankingProfileRepository;
 import com.atlashub.pay.accounts.domain.repositories.ReservedAccountRepository;
-import com.atlashub.pay.accounts.domain.ports.AnchorBankingPort;
 import com.atlashub.pay.accounts.domain.valueobject.BankingRestrictionType;
 import com.atlashub.pay.accounts.domain.valueobject.ExternalAccountStatus;
+import com.atlashub.pay.accounts.domain.valueobject.RequestType;
 import com.atlashub.shared.application.security.ApiEnvironment;
 import com.atlashub.shared.application.usecase.Command;
-import com.atlashub.shared.domain.valueobject.CurrencyCode;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,19 +25,16 @@ public class ApplyAnchorAccountStatusHandler extends Command<ApplyAnchorAccountS
     private final ReservedAccountRepository reservedRepository;
     private final OrganizationBankingProfileRepository profileRepository;
     private final BankingProviderRequestRepository providerRequestRepository;
-    private final AnchorBankingPort anchorBankingPort;
 
     public ApplyAnchorAccountStatusHandler(BusinessDepositAccountRepository depositRepository,
             BusinessSubAccountRepository subAccountRepository, ReservedAccountRepository reservedRepository,
             OrganizationBankingProfileRepository profileRepository,
-            BankingProviderRequestRepository providerRequestRepository,
-            AnchorBankingPort anchorBankingPort) {
+            BankingProviderRequestRepository providerRequestRepository) {
         this.depositRepository = depositRepository;
         this.subAccountRepository = subAccountRepository;
         this.reservedRepository = reservedRepository;
         this.profileRepository = profileRepository;
         this.providerRequestRepository = providerRequestRepository;
-        this.anchorBankingPort = anchorBankingPort;
     }
 
     @Override
@@ -75,33 +71,12 @@ public class ApplyAnchorAccountStatusHandler extends Command<ApplyAnchorAccountS
             if (providerRequestRepository.findByRequestReferenceAndApiEnvironment(
                     freezeReference, environment.name()).isEmpty()) {
                 providerRequestRepository.save(BankingProviderRequest.createDepositLifecycle(
-                        providerRequestRepository.nextIdentity(), BankingProviderRequest.RequestType.FREEZE_DEPOSIT,
+                        providerRequestRepository.nextIdentity(), RequestType.FREEZE_DEPOSIT,
                         deposit.getId(), freezeReference, environment.name(), "Compliance suspended"));
             }
         }
-        if (profile.getBusinessSubAccountId() != null) return;
-        if (!anchorBankingPort.supports("SUB_ACCOUNT", command.environment())) {
-            profile.markPartiallyProvisioned("SUB_ACCOUNT_UNAVAILABLE",
-                    "Anchor subaccounts are unavailable in " + command.environment().toUpperCase());
-            profileRepository.save(profile);
-            return;
-        }
-        String parentFboAccountId = anchorBankingPort.requireFboAccountId(command.environment());
-        BusinessSubAccount subAccount = subAccountRepository
-                .findByOrganizationIdAndEnvironment(deposit.getOrganizationId(), environment)
-                .orElseGet(() -> subAccountRepository.save(BusinessSubAccount.request(
-                        subAccountRepository.nextIdentity(), deposit.getOrganizationId(), environment, profile.getId(),
-                        deposit.getAnchorBusinessCustomerId(), parentFboAccountId, CurrencyCode.NGN)));
-        profile.linkSubAccount(subAccount.getId());
+        profile.activate();
         profileRepository.save(profile);
-        String reference = "org-banking-subaccount-" + deposit.getOrganizationId();
-        String requestReference = reference + "-" + environment.name().toLowerCase();
-        if (providerRequestRepository.findByRequestReferenceAndApiEnvironment(requestReference, environment.name()).isEmpty()) {
-            providerRequestRepository.save(BankingProviderRequest.create(
-                    providerRequestRepository.nextIdentity(), BankingProviderRequest.RequestType.SUB_ACCOUNT,
-                    subAccount.getId(), requestReference, environment.name(), deposit.getAnchorBusinessCustomerId(), parentFboAccountId,
-                    null, null, null, null, null, null));
-        }
     }
 
     private void applySubAccount(ApplyAnchorAccountStatusCommand command) {

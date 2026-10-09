@@ -1,14 +1,43 @@
 package com.atlashub.compliance.domain.entities;
 
-import com.atlashub.compliance.domain.events.*;
-import com.atlashub.compliance.domain.exception.*;
-import com.atlashub.compliance.domain.valueobject.*;
+import com.atlashub.compliance.domain.events.ComplianceActionRequiredEvent;
+import com.atlashub.compliance.domain.events.ComplianceProviderErrorEvent;
+import com.atlashub.compliance.domain.events.ComplianceRecordInitializedEvent;
+import com.atlashub.compliance.domain.events.ComplianceStepCompletedEvent;
+import com.atlashub.compliance.domain.events.ComplianceSubmittedEvent;
+import com.atlashub.compliance.domain.events.OrganizationComplianceApprovedEvent;
+import com.atlashub.compliance.domain.events.OrganizationComplianceRejectedEvent;
+import com.atlashub.compliance.domain.events.OrganizationComplianceReinstatedEvent;
+import com.atlashub.compliance.domain.events.OrganizationComplianceSuspendedEvent;
+import com.atlashub.compliance.domain.exception.ComplianceAlreadyApprovedException;
+import com.atlashub.compliance.domain.exception.ComplianceAlreadySubmittedException;
+import com.atlashub.compliance.domain.exception.InvalidComplianceDataException;
+import com.atlashub.compliance.domain.exception.StepNotCompleteException;
+import com.atlashub.compliance.domain.exception.StepOutOfOrderException;
+import com.atlashub.compliance.domain.valueobject.AnchorVerificationStatus;
+import com.atlashub.compliance.domain.valueobject.AtlasHubEligibilityStatus;
+import com.atlashub.compliance.domain.valueobject.BusinessProfileData;
+import com.atlashub.compliance.domain.valueobject.ComplianceStatus;
+import com.atlashub.compliance.domain.valueobject.ComplianceStep;
+import com.atlashub.compliance.domain.valueobject.ContactInfoData;
+import com.atlashub.compliance.domain.valueobject.DocumentStatus;
+import com.atlashub.compliance.domain.valueobject.OfficerRole;
+import com.atlashub.compliance.domain.valueobject.RequirementSource;
+import com.atlashub.compliance.domain.valueobject.ServiceAgreementData;
+import com.atlashub.compliance.domain.valueobject.StepStatus;
 import com.atlashub.shared.domain.entities.AggregateRoot;
 import com.atlashub.shared.domain.valueobject.CorrelationId;
 import lombok.Getter;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.EnumMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
 
 @Getter
 public class ComplianceRecord extends AggregateRoot<Long> {
@@ -20,7 +49,6 @@ public class ComplianceRecord extends AggregateRoot<Long> {
     private AtlasHubEligibilityStatus eligibilityStatus;
     private AnchorVerificationStatus anchorVerificationStatus;
     private String anchorBusinessCustomerId;
-    private String sandboxAnchorBusinessCustomerId;
     private String failureCode;
     private String rejectionReason;
     private ZonedDateTime submittedAt;
@@ -38,7 +66,6 @@ public class ComplianceRecord extends AggregateRoot<Long> {
                             Map<ComplianceStep, StepStatus> stepProgress,
                             AtlasHubEligibilityStatus eligibilityStatus,
                             AnchorVerificationStatus anchorVerificationStatus, String anchorBusinessCustomerId,
-                            String sandboxAnchorBusinessCustomerId,
                             String failureCode, String rejectionReason, ZonedDateTime submittedAt,
                             ZonedDateTime approvedAt, BusinessProfileData businessProfile, ContactInfoData contactInfo,
                             List<BusinessOfficer> officers, List<ComplianceDocumentRequirement> documentRequirements,
@@ -53,7 +80,6 @@ public class ComplianceRecord extends AggregateRoot<Long> {
         this.eligibilityStatus = eligibilityStatus == null ? AtlasHubEligibilityStatus.PENDING : eligibilityStatus;
         this.anchorVerificationStatus = anchorVerificationStatus == null ? AnchorVerificationStatus.NOT_CREATED : anchorVerificationStatus;
         this.anchorBusinessCustomerId = anchorBusinessCustomerId;
-        this.sandboxAnchorBusinessCustomerId = sandboxAnchorBusinessCustomerId;
         this.failureCode = failureCode;
         this.rejectionReason = rejectionReason; this.submittedAt = submittedAt; this.approvedAt = approvedAt;
         this.businessProfile = businessProfile; this.contactInfo = contactInfo;
@@ -68,7 +94,7 @@ public class ComplianceRecord extends AggregateRoot<Long> {
     public static ComplianceRecord create(Long id, Long organizationId) {
         ComplianceRecord record = new ComplianceRecord(id, organizationId, ComplianceStatus.NOT_STARTED,
                 ComplianceStep.BUSINESS_PROFILE, null, AtlasHubEligibilityStatus.PENDING,
-                AnchorVerificationStatus.NOT_CREATED, null, null, null, null, null, null,
+                AnchorVerificationStatus.NOT_CREATED, null, null, null, null, null,
                 null, null, null, null, null, ZonedDateTime.now(), ZonedDateTime.now(), null);
         record.registerEvent(new ComplianceRecordInitializedEvent(UUID.randomUUID().toString(), id,
                 ZonedDateTime.now(), CorrelationId.getOrCreate(),
@@ -144,21 +170,6 @@ public class ComplianceRecord extends AggregateRoot<Long> {
         });
         anchorVerificationStatus = AnchorVerificationStatus.CUSTOMER_CREATED;
         status = ComplianceStatus.UNDER_REVIEW; touch();
-    }
-
-    public void recordSandboxAnchorCustomerCreated(String customerId) {
-        requireText(customerId, "Sandbox Anchor customer id");
-        if (sandboxAnchorBusinessCustomerId != null) {
-            if (!sandboxAnchorBusinessCustomerId.equals(customerId))
-                throw new StepOutOfOrderException("Sandbox Anchor customer has already been created");
-            return;
-        }
-        sandboxAnchorBusinessCustomerId = customerId;
-        touch();
-        ZonedDateTime readyAt = ZonedDateTime.now();
-        registerEvent(new OrganizationTestBankingReadyEvent(UUID.randomUUID().toString(), id, readyAt,
-                CorrelationId.getOrCreate(), new OrganizationTestBankingReadyEvent.Payload(
-                organizationId, customerId, "TEST", readyAt)));
     }
 
     public void recordVerificationTriggered() {

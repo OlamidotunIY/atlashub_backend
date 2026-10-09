@@ -1,7 +1,7 @@
 package com.atlashub.pay.accounts.infrastructure.persistence.entities;
 
-import com.atlashub.pay.accounts.domain.entities.BankingProviderRequest.RequestStatus;
-import com.atlashub.pay.accounts.domain.entities.BankingProviderRequest.RequestType;
+import com.atlashub.pay.accounts.domain.valueobject.RequestStatus;
+import com.atlashub.pay.accounts.domain.valueobject.RequestType;
 import com.atlashub.shared.infrastructure.persistence.entities.BaseJpaEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

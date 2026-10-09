@@ -18,6 +18,15 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class OrganizationProviderProfileTest {
+    @Test
+    void activates_shared_test_profile_without_provider_onboarding() {
+        OrganizationProviderProfile profile = OrganizationProviderProfile.activateTestProfile(1L, 10L, "platform-test");
+
+        assertTrue(profile.supports(PaymentCapability.CARD_COLLECTION));
+        assertTrue(profile.supports(PaymentCapability.USSD_COLLECTION));
+        assertEquals("platform-test", profile.getExternalMerchantId());
+    }
+
 
     @Test
     void requests_only_new_capabilities_and_activates_approved_capabilities() {

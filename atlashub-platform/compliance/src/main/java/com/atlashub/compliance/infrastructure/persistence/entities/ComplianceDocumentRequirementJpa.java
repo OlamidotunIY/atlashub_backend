@@ -1,9 +1,21 @@
 package com.atlashub.compliance.infrastructure.persistence.entities;
 
-import com.atlashub.compliance.domain.valueobject.*;
+import com.atlashub.compliance.domain.valueobject.DocumentStatus;
+import com.atlashub.compliance.domain.valueobject.RequirementSource;
 import com.atlashub.compliance.infrastructure.persistence.adapters.ComplianceSensitiveDataConverter;
-import jakarta.persistence.*;
-import lombok.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import java.time.ZonedDateTime;
 
 @Entity @Table(name = "compliance_document_requirements", indexes = {
@@ -12,7 +24,7 @@ import java.time.ZonedDateTime;
 @Data @Builder @NoArgsConstructor(access = AccessLevel.PROTECTED) @AllArgsConstructor
 public class ComplianceDocumentRequirementJpa {
     @Id private Long id;
-    @Column(name = "compliance_record_id", nullable = false, insertable = false, updatable = false) private Long complianceRecordId;
+    @Column(name = "compliance_record_id", nullable = false) private Long complianceRecordId;
     @Column(name = "anchor_document_id", unique = true) private String anchorDocumentId;
     @Column(nullable = false) private String documentType;
     private String description;
