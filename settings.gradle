@@ -8,6 +8,7 @@ include 'atlashub-pay'
 include 'atlashub-pay:ledger'
 include 'atlashub-pay:charges'
 include 'atlashub-pay:settlement'
+include 'atlashub-pay:tx-query'
 
 // Platform
 include 'atlashub-platform'
@@ -32,3 +33,9 @@ include 'atlashub-main'
 include 'atlashub-pay:accounts'
 include 'atlashub-infrastructure:anchor'
 include 'atlashub-pay:splits'
+
+// Commerce
+include 'atlashub-commerce'
+include 'atlashub-commerce:catalog'
+include 'atlashub-commerce:inventory'
+include 'atlashub-commerce:storefront'
