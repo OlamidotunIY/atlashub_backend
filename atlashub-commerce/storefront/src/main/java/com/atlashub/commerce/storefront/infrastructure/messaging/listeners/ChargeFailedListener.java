@@ -1,0 +1,52 @@
+package com.atlashub.commerce.storefront.infrastructure.messaging.listeners;
+
+import com.atlashub.commerce.storefront.application.commands.FailPayment.FailPaymentCommand;
+import com.atlashub.commerce.storefront.application.commands.FailPayment.FailPaymentHandler;
+import com.atlashub.commerce.storefront.infrastructure.messaging.events.ChargeFailedPayload;
+import com.atlashub.shared.application.messaging.BaseKafkaEventListener;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.annotation.PostConstruct;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.stereotype.Component;
+
+import java.util.Objects;
+import java.util.concurrent.TimeoutException;
+
+@Component
+public class ChargeFailedListener extends BaseKafkaEventListener {
+
+    private static final Logger log = LoggerFactory.getLogger(ChargeFailedListener.class);
+    private static final String GROUP_ID = "commerce-payment-group";
+
+    private final FailPaymentHandler handler;
+
+    public ChargeFailedListener(ObjectMapper objectMapper, FailPaymentHandler handler) {
+        super(objectMapper);
+        this.handler = Objects.requireNonNull(handler, "FailPaymentHandler must not be null");
+    }
+
+    @PostConstruct
+    public void init() {
+        registerSubscription("ChargeFailedEvent", GROUP_ID);
+    }
+
+    @KafkaListener(topics = "pay-events", groupId = GROUP_ID)
+    public void listen(String messagePayload) {
+        processEventIfMatches(
+                messagePayload,
+                "ChargeFailedEvent",
+                ChargeFailedPayload.class,
+                log,
+                GROUP_ID,
+                e -> e instanceof TimeoutException,
+                event -> {
+                    Long orderId = event.payload().orderId();
+                    if (orderId != null) {
+                        handler.execute(new FailPaymentCommand(orderId, event.payload().reason()));
+                    }
+                }
+        );
+    }
+}
