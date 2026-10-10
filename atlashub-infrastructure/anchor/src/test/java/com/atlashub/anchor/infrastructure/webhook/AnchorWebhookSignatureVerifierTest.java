@@ -1,8 +1,8 @@
-package com.atlashub.anchor.infrastructure.webhook;
+package com.atlashub.anchor.infrastructure.external.anchor.webhook;
 
-import com.atlashub.anchor.configuration.AnchorEnvironment;
-import com.atlashub.anchor.configuration.AnchorProperties;
-import com.atlashub.anchor.configuration.AnchorWebhookConsumer;
+import com.atlashub.anchor.infrastructure.external.anchor.configuration.AnchorEnvironment;
+import com.atlashub.anchor.infrastructure.external.anchor.configuration.AnchorProperties;
+import com.atlashub.anchor.infrastructure.external.anchor.configuration.AnchorWebhookConsumer;
 import com.atlashub.anchor.exception.InvalidAnchorWebhookSignatureException;
 import org.junit.jupiter.api.Test;
 

@@ -1,7 +1,7 @@
 package com.atlashub.anchor.application.commands.ReceiveAnchorWebhook;
 
-import com.atlashub.anchor.configuration.AnchorEnvironment;
-import com.atlashub.anchor.configuration.AnchorWebhookConsumer;
+import com.atlashub.anchor.infrastructure.external.anchor.configuration.AnchorEnvironment;
+import com.atlashub.anchor.infrastructure.external.anchor.configuration.AnchorWebhookConsumer;
 
 import java.util.Arrays;
 

@@ -12,7 +12,6 @@ repositories {
 dependencies {
     // Inherit standard domain, base use cases, and shared models
     implementation project(':atlashub-shared')
-    implementation project(':atlashub-infrastructure:anchor')
 
     // Core Spring dependencies for the adapters and services
     implementation 'org.springframework.boot:spring-boot-starter'

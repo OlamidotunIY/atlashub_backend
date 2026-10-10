@@ -2,8 +2,8 @@ package com.atlashub.anchor.presentation.rest;
 
 import com.atlashub.anchor.application.commands.ReceiveAnchorWebhook.ReceiveAnchorWebhookCommand;
 import com.atlashub.anchor.application.commands.ReceiveAnchorWebhook.ReceiveAnchorWebhookHandler;
-import com.atlashub.anchor.configuration.AnchorEnvironment;
-import com.atlashub.anchor.configuration.AnchorWebhookConsumer;
+import com.atlashub.anchor.infrastructure.external.anchor.configuration.AnchorEnvironment;
+import com.atlashub.anchor.infrastructure.external.anchor.configuration.AnchorWebhookConsumer;
 import com.atlashub.shared.application.dto.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

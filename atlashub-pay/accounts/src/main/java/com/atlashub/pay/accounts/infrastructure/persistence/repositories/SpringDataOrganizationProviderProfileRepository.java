@@ -1,6 +1,7 @@
 package com.atlashub.pay.accounts.infrastructure.persistence.repositories;
 
 import com.atlashub.pay.accounts.domain.valueobject.PaymentProvider;
+import com.atlashub.pay.accounts.domain.valueobject.ProviderProfileStatus;
 import com.atlashub.pay.accounts.infrastructure.persistence.entities.OrganizationProviderProfileJpa;
 import com.atlashub.shared.application.security.ApiEnvironment;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -15,4 +16,7 @@ public interface SpringDataOrganizationProviderProfileRepository
 
     List<OrganizationProviderProfileJpa> findByOrganizationIdAndEnvironment(
             Long organizationId, ApiEnvironment environment);
+
+    List<OrganizationProviderProfileJpa> findByEnvironmentAndProviderAndStatus(
+            ApiEnvironment environment, PaymentProvider provider, ProviderProfileStatus status);
 }

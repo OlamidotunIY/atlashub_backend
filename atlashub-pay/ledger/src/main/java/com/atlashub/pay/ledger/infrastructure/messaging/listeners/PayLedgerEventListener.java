@@ -69,8 +69,9 @@ public class PayLedgerEventListener extends BaseKafkaEventListener {
         processEventIfMatches(message, "ChargeSuccessfulEvent", ChargeSuccessfulEvent.class,
                 log, "pay-ledger-charge-successful", e -> e instanceof TimeoutException, event ->
                         handler.execute(command(ProcessLedgerEventCommand.Action.CHARGE_RECEIVED,
-                                event.organizationId(), event.environment(), null, null, null, event.chargeReference(),
-                                "CARD_CHARGE", event.sourceReferenceId(), event.amount(), event.currency())));
+                                event.payload().organizationId(), event.payload().environment(), null, null, null,
+                                event.payload().chargeReference(), "CARD_CHARGE", event.payload().sourceReferenceId(),
+                                event.payload().amount().amount(), event.payload().amount().currency().name())));
     }
 
     @KafkaListener(topics = "pay-events", groupId = "pay-ledger-reserved-account-funded")
@@ -111,9 +112,9 @@ public class PayLedgerEventListener extends BaseKafkaEventListener {
                 ProviderSettlementReceivedEvent.class, log, "pay-ledger-provider-settled",
                 e -> e instanceof TimeoutException, event ->
                         handler.execute(command(ProcessLedgerEventCommand.Action.PROVIDER_SETTLED,
-                                event.organizationId(), event.environment(), null, null, null,
-                                event.settlementReference(), "SETTLEMENT", event.provider(),
-                                event.amount(), event.currency())));
+                                event.payload().organizationId(), event.payload().environment(), null, null, null,
+                                event.payload().settlementReference(), "SETTLEMENT", event.payload().provider(),
+                                event.payload().amount().amount(), event.payload().amount().currency().name())));
     }
 
     private ProcessLedgerEventCommand command(ProcessLedgerEventCommand.Action action, Long organizationId,

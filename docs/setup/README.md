@@ -28,5 +28,5 @@ This directory contains setup, configuration, and integration guides for every i
 | Document | Provider | Handles |
 |---|---|---|
 | [anchor-integration.md](./anchor-integration.md) | Anchor | NUBAN issuance, inbound transfers, settlements |
-| [paystack-integration.md](./paystack-integration.md) | Paystack | Card/USSD charges, BVN verification, bank name enquiry |
+| [paystack-integration.md](./paystack-integration.md) | Paystack | Card/USSD checkout, refunds, settlement routing and payout evidence |
 | [moniepoint-integration.md](./moniepoint-integration.md) | Moniepoint | POS terminals, card-present, QR payments |

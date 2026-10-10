@@ -6,6 +6,8 @@ include 'atlashub-shared'
 // Pay
 include 'atlashub-pay'
 include 'atlashub-pay:ledger'
+include 'atlashub-pay:charges'
+include 'atlashub-pay:settlement'
 
 // Platform
 include 'atlashub-platform'
@@ -21,6 +23,7 @@ include 'atlashub-infrastructure'
 include 'atlashub-infrastructure:eventbus'
 include 'atlashub-infrastructure:rate-limiter'
 include 'atlashub-infrastructure:audit'
+include 'atlashub-infrastructure:paystack'
 
 // App
 include 'atlashub-main'

@@ -1,6 +1,6 @@
-package com.atlashub.anchor.configuration;
+package com.atlashub.anchor.infrastructure.external.anchor.configuration;
 
-import com.atlashub.anchor.client.AnchorClientRegistry;
+import com.atlashub.anchor.infrastructure.external.anchor.client.AnchorClientRegistry;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
@@ -20,6 +20,10 @@ class AnchorClientConfigurationTest {
                     "atlashub.integrations.anchor.webhook-publish-timeout=5s",
                     "atlashub.integrations.anchor.sandbox.base-url=https://api.sandbox.getanchor.co",
                     "atlashub.integrations.anchor.sandbox.api-key=sandbox-key",
+                    "atlashub.integrations.anchor.sandbox.capabilities.deposit-accounts=true",
+                    "atlashub.integrations.anchor.sandbox.capabilities.sub-accounts=false",
+                    "atlashub.integrations.anchor.sandbox.capabilities.reserved-accounts=false",
+                    "atlashub.integrations.anchor.sandbox.capabilities.transfers=true",
                     "atlashub.integrations.anchor.sandbox.webhooks.compliance.callback-url=https://sandbox.atlashub.com/api/v1/webhooks/anchor/sandbox/compliance",
                     "atlashub.integrations.anchor.sandbox.webhooks.compliance.token=sandbox-compliance-token",
                     "atlashub.integrations.anchor.sandbox.webhooks.pay-accounts.callback-url=https://sandbox.atlashub.com/api/v1/webhooks/anchor/sandbox/pay-accounts",
@@ -28,6 +32,10 @@ class AnchorClientConfigurationTest {
                     "atlashub.integrations.anchor.sandbox.read-timeout=10s",
                     "atlashub.integrations.anchor.live.base-url=https://api.getanchor.co",
                     "atlashub.integrations.anchor.live.api-key=live-key",
+                    "atlashub.integrations.anchor.live.capabilities.deposit-accounts=true",
+                    "atlashub.integrations.anchor.live.capabilities.sub-accounts=false",
+                    "atlashub.integrations.anchor.live.capabilities.reserved-accounts=false",
+                    "atlashub.integrations.anchor.live.capabilities.transfers=true",
                     "atlashub.integrations.anchor.live.webhooks.compliance.callback-url=https://api.atlashub.com/api/v1/webhooks/anchor/live/compliance",
                     "atlashub.integrations.anchor.live.webhooks.compliance.token=live-compliance-token",
                     "atlashub.integrations.anchor.live.webhooks.pay-accounts.callback-url=https://api.atlashub.com/api/v1/webhooks/anchor/live/pay-accounts",

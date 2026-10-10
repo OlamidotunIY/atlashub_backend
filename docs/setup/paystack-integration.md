@@ -1,188 +1,30 @@
 # Paystack Integration
 
-## Role in AtlasHub
+## Current role
 
-Paystack is the **card and USSD payment provider** in AtlasHub. It handles:
+Paystack provides AtlasHub's hosted card and USSD checkout, full-refund transport, live merchant settlement-route
+configuration, and settlement-batch evidence. It does not own AtlasHub charges, business balances, ledger entries,
+or final settlement confirmation.
 
-- Card payments (inline checkout or redirect)
-- USSD charges
-- Bank transfer charges (via Paystack's dedicated virtual accounts — distinct from Anchor NUBANs)
-- Direct debit mandates (recurring charges)
-- Bank account name enquiry (used by HR to verify employee bank details)
-- Identity verification: BVN and NIN validation (used by Compliance)
-- Refunds
+| Module | Responsibility |
+|---|---|
+| `atlashub-infrastructure:paystack` | Credentials, typed clients, provider DTOs, HMAC verification, webhook ingestion, shared-port adapters |
+| `atlashub-pay:accounts` | Organization provider profiles, capabilities, live settlement-route state |
+| `atlashub-platform:compliance` | `ProviderOnboardingCase` lifecycle |
+| `atlashub-pay:charges` | AtlasHub charge and refund lifecycle |
+| `atlashub-pay:settlement` | Paystack payout evidence plus Anchor credit reconciliation |
+| `atlashub-pay:ledger` | Idempotent charge-receipt and final-settlement postings |
 
----
+No business module imports Paystack clients or DTOs. The infrastructure module implements provider-neutral contracts
+from `atlashub-shared`.
 
-## Integration Architecture
+## Environment behavior
 
-Paystack is wrapped behind `PaymentGatewayPort` in `atlashub-pay:application/port/out`. The domain never references Paystack types.
-
-```java
-public interface PaymentGatewayPort {
-    ChargeInitResult initializeCharge(InitializeChargeRequest request);
-    ChargeVerifyResult verifyCharge(String reference);
-    MandateResult createMandate(CreateMandateRequest request);
-    MandateChargeResult chargeMandate(String mandateCode, BigDecimal amount, String reference);
-    RefundResult initiateRefund(String chargeReference, BigDecimal amount);
-    BankAccountDetails resolveAccountName(String accountNumber, String bankCode);
-    BvnVerificationResult verifyBvn(String bvn, String firstName, String lastName, LocalDate dob);
-    List<Bank> getSupportedBanks();
-}
-```
-
----
-
-## Charge Initialization
-
-```java
-@Component
-public class PaystackGatewayAdapter implements PaymentGatewayPort {
-
-    private final PaystackApiClient client;
-
-    @Override
-    public ChargeInitResult initializeCharge(InitializeChargeRequest req) {
-        // Convert to Paystack's unit: kobo (1 NGN = 100 kobo)
-        long amountInKobo = req.amount().multiply(BigDecimal.valueOf(100)).longValue();
-
-        PaystackInitRequest paystackReq = PaystackInitRequest.builder()
-            .amount(amountInKobo)
-            .currency(req.currency().name())
-            .email(req.email())
-            .reference(req.reference())
-            .callbackUrl(req.redirectUrl())
-            .metadata(Map.of(
-                "atlashub_charge_id",    req.chargeId(),
-                "atlashub_org_id",       req.organizationId(),
-                "atlashub_purpose",      req.purpose().name()
-            ))
-            .build();
-
-        PaystackInitResponse resp = client.initializeTransaction(paystackReq);
-
-        if (!resp.status()) {
-            throw new ExternalServiceException(PayErrorCode.GATEWAY_CHARGE_INIT_FAILED,
-                "Paystack: " + resp.message());
-        }
-
-        return new ChargeInitResult(
-            resp.data().authorizationUrl(),
-            resp.data().accessCode(),
-            req.reference()
-        );
-    }
-}
-```
-
----
-
-## Webhook: Charge Successful
-
-Paystack notifies AtlasHub when a payment completes:
-
-```http
-POST /api/v1/webhooks/paystack
-X-Paystack-Signature: {sha512_hmac}
-```
-
-```java
-@RestController
-@RequestMapping("/api/v1/webhooks/paystack")
-public class PaystackWebhookController {
-
-    private final PaystackSignatureVerifier verifier;
-    private final HandleChargeSuccessUseCase handleSuccess;
-    private final HandleChargeFailureUseCase handleFailure;
-    private final PaystackWebhookMapper mapper;
-
-    @PostMapping
-    public ResponseEntity<Void> onWebhook(
-            @RequestBody String rawBody,
-            @RequestHeader("X-Paystack-Signature") String signature) {
-
-        verifier.verify(rawBody, signature);
-
-        PaystackWebhookPayload payload = mapper.parse(rawBody);
-
-        switch (payload.event()) {
-            case "charge.success" -> handleSuccess.execute(
-                new HandleChargeSuccessCommand(
-                    payload.data().reference(),
-                    payload.data().amount(),      // in kobo — adapter converts back to NGN
-                    payload.data().gatewayResponse()
-                )
-            );
-            case "charge.failed" -> handleFailure.execute(
-                new HandleChargeFailureCommand(
-                    payload.data().reference(),
-                    payload.data().gatewayResponse()
-                )
-            );
-        }
-
-        return ResponseEntity.ok().build();
-    }
-}
-```
-
-**Kobo conversion**: Paystack amounts are in kobo. The adapter always converts: `amountInNaira = amountInKobo / 100`. This conversion happens exclusively inside the adapter — the domain only ever sees NGN amounts.
-
-### Signature Verification (SHA-512)
-
-Paystack uses HMAC-SHA512 (not SHA-256):
-
-```java
-@Component
-public class PaystackSignatureVerifier {
-    private final String secretKey;
-
-    public void verify(String payload, String signatureHeader) {
-        String expected = hmacSha512Hex(payload, secretKey);
-        if (!MessageDigest.isEqual(expected.getBytes(), signatureHeader.getBytes())) {
-            throw new SecurityException("Invalid Paystack webhook signature");
-        }
-    }
-}
-```
-
----
-
-## Bank Account Name Enquiry (HR Use Case)
-
-When HR adds an employee bank account, the system verifies the account name before saving:
-
-```java
-// In AddEmployeeBankUseCase
-BankAccountDetails account = paymentGatewayPort.resolveAccountName(
-    command.accountNumber(), command.bankCode());
-
-if (!nameMatchesEmployee(account.accountName(), command.employeeFullName())) {
-    throw new BusinessRuleException(HrErrorCode.BANK_ACCOUNT_NAME_MISMATCH,
-        "Account name '" + account.accountName() + "' does not match employee name");
-}
-```
-
----
-
-## BVN Verification (Compliance Use Case)
-
-```java
-// In CompleteOwnerIdentityUseCase (Compliance module)
-BvnVerificationResult bvn = paymentGatewayPort.verifyBvn(
-    command.bvn(),
-    command.firstName(),
-    command.lastName(),
-    command.dateOfBirth()
-);
-
-if (!bvn.isMatch()) {
-    throw new BusinessRuleException(ComplianceErrorCode.BVN_VERIFICATION_FAILED,
-        "BVN details do not match your provided identity information");
-}
-```
-
----
+- TEST uses AtlasHub's shared Paystack test credentials and an organization-scoped active test profile.
+- TEST never provisions Anchor resources and never falls back to LIVE credentials.
+- LIVE collection is disabled until the Anchor operating account and Paystack settlement route are confirmed and the
+  provider-onboarding approval event activates the profile.
+- Paystack keys and webhook secrets are configured independently for TEST and LIVE.
 
 ## Configuration
 
@@ -190,26 +32,79 @@ if (!bvn.isMatch()) {
 atlashub:
   integrations:
     paystack:
-      base-url: ${PAYSTACK_BASE_URL:https://api.paystack.co}
-      secret-key: ${PAYSTACK_SECRET_KEY}
-      webhook-secret: ${PAYSTACK_WEBHOOK_SECRET}    # same as secret-key for Paystack
-      timeout-seconds: 15
-      test-mode: ${PAYSTACK_TEST_MODE:true}
+      enabled: ${ATLASHUB_PAYSTACK_ENABLED:false}
+      test-merchant-id: ${ATLASHUB_PAYSTACK_TEST_MERCHANT_ID:atlashub-paystack-test}
+      test:
+        base-url: ${ATLASHUB_PAYSTACK_TEST_BASE_URL:https://api.paystack.co}
+        public-key: ${ATLASHUB_PAYSTACK_TEST_PUBLIC_KEY:}
+        secret-key: ${ATLASHUB_PAYSTACK_TEST_SECRET_KEY:}
+        webhook-secret: ${ATLASHUB_PAYSTACK_TEST_WEBHOOK_SECRET:}
+        connect-timeout: ${ATLASHUB_PAYSTACK_TEST_CONNECT_TIMEOUT:2s}
+        read-timeout: ${ATLASHUB_PAYSTACK_TEST_READ_TIMEOUT:10s}
+      live:
+        base-url: ${ATLASHUB_PAYSTACK_LIVE_BASE_URL:https://api.paystack.co}
+        public-key: ${ATLASHUB_PAYSTACK_LIVE_PUBLIC_KEY:}
+        secret-key: ${ATLASHUB_PAYSTACK_LIVE_SECRET_KEY:}
+        webhook-secret: ${ATLASHUB_PAYSTACK_LIVE_WEBHOOK_SECRET:}
+        connect-timeout: ${ATLASHUB_PAYSTACK_LIVE_CONNECT_TIMEOUT:2s}
+        read-timeout: ${ATLASHUB_PAYSTACK_LIVE_READ_TIMEOUT:10s}
 ```
 
----
+When enabled, every required environment property must be valid. Base URLs must use HTTPS. Secrets must come from
+deployment configuration and must never be committed.
 
-## Error Handling
+## Checkout flow
 
-```java
-catch (PaystackApiException ex) {
-    // Translate Paystack error codes to AtlasHub domain errors
-    PayErrorCode code = switch (ex.paystackCode()) {
-        case "DECLINED_CARD"         -> PayErrorCode.CARD_DECLINED;
-        case "INSUFFICIENT_FUNDS"    -> PayErrorCode.INSUFFICIENT_FUNDS;
-        case "INVALID_ACCOUNT"       -> PayErrorCode.INVALID_BANK_ACCOUNT;
-        default                      -> PayErrorCode.GATEWAY_ERROR;
-    };
-    throw new ExternalServiceException(code, ex.message());
-}
+1. A business module publishes `CheckoutPaymentRequestedEvent` or an authenticated caller uses
+   `POST /api/v1/pay/charges`.
+2. `pay:charges` resolves an active `CARD_COLLECTION` or `USSD_COLLECTION` profile.
+3. It persists local intent, then calls `ChargeProviderPort.initialize` outside the transaction.
+4. Paystack receives only card/USSD channels, AtlasHub metadata, and the LIVE subaccount settlement route.
+5. AtlasHub returns the hosted-checkout authorization URL/access code.
+6. Browser callbacks are advisory. Only a signature-verified webhook followed by server-side verification finalizes
+   a charge.
+7. Provider-neutral events update the source workflow and ledger idempotently.
+
+## Webhook endpoint
+
+```http
+POST /api/v1/webhooks/paystack/{environment}
+X-Paystack-Signature: <HMAC-SHA512 hex digest>
+Content-Type: application/json
 ```
+
+`environment` is `test` or `live`. The controller verifies the unmodified body with that environment's webhook
+secret before parsing or publishing. The charges consumer handles charge success/failure and refund lifecycle events.
+Duplicate provider events and transaction references cannot post duplicate ledger balances. Unrelated transfer events
+are ignored.
+
+## Refunds
+
+`POST /api/v1/pay/charges/{chargeId}/refunds` creates a full refund for a successful charge. AtlasHub persists intent
+first, then calls Paystack with the original transaction reference, exact amount/currency, reason, and a stable
+idempotency key. Initiation returns `REFUND_PENDING`; only verified `refund.processed` changes it to `REFUNDED`.
+`refund.failed` restores the charge to `SUCCESSFUL` with an auditable failure reason.
+
+## Live settlement routing
+
+After Anchor activates the organization's `CURRENT` operating deposit account, `pay:accounts` asks Paystack to resolve
+the bank code/account number and creates or updates one Paystack subaccount. A confirmed route advances the existing
+`ProviderOnboardingCase`; `OrganizationProviderProfile` remains provisioning until its approval event activates card
+and USSD capabilities.
+
+The Paystack subaccount code is `externalMerchantId`. The local Anchor deposit-account ID is
+`settlementAccountReference`. Anchor subaccounts and reserved accounts are not involved in card/USSD settlement.
+
+## Settlement reconciliation
+
+`pay:settlement` polls the Paystack Settlement API per active LIVE subaccount and records each batch plus transaction
+references. Paystack success is payout evidence, not proof of bank receipt. Final settlement requires a verified Anchor
+credit matching the operating account, environment, currency, and net amount.
+
+Unmatched batches remain pending for three business days, then move to operations reconciliation. The final ledger
+movement is keyed by provider settlement ID and emitted only after the two-sided match. `transfer.success` is not used
+as settlement confirmation.
+
+See [Paystack infrastructure design](../modules/paystack-design.md),
+[charges design](../modules/pay-charges-design.md), and
+[settlement design](../modules/pay-settlement-design.md).

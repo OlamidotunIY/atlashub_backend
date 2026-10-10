@@ -2,6 +2,7 @@ package com.atlashub.pay.accounts.domain.entities;
 
 import com.atlashub.pay.accounts.domain.events.PaymentProviderProfileActivatedEvent;
 import com.atlashub.pay.accounts.domain.events.ProviderOnboardingRequestedEvent;
+import com.atlashub.pay.accounts.domain.events.PaystackSettlementRouteConfiguredEvent;
 import com.atlashub.pay.accounts.domain.exceptions.InvalidProviderProfileStateException;
 import com.atlashub.pay.accounts.domain.valueobject.PaymentCapability;
 import com.atlashub.pay.accounts.domain.valueobject.PaymentProvider;
@@ -146,6 +147,37 @@ public class OrganizationProviderProfile extends AggregateRoot<Long> {
                             provider.name(), activeCapabilities.stream().map(Enum::name)
                             .collect(java.util.stream.Collectors.toUnmodifiableSet()), updatedAt)));
         }
+    }
+
+    public void recordSettlementRoute(String externalMerchantId, String externalAccountId,
+                                      String settlementAccountReference,
+                                      Set<PaymentCapability> capabilities) {
+        if (provider != PaymentProvider.PAYSTACK || environment != ApiEnvironment.LIVE) {
+            throw new InvalidProviderProfileStateException("Paystack settlement routes are live-only");
+        }
+        if (externalMerchantId == null || externalMerchantId.isBlank()
+                || settlementAccountReference == null || settlementAccountReference.isBlank()) {
+            throw new InvalidProviderProfileStateException("Confirmed Paystack and settlement references are required");
+        }
+        if (capabilities == null || capabilities.isEmpty() || !requestedCapabilities.containsAll(capabilities)) {
+            throw new InvalidProviderProfileStateException("Only requested capabilities can be configured");
+        }
+        this.externalMerchantId = externalMerchantId;
+        this.externalAccountId = externalAccountId;
+        this.settlementAccountReference = settlementAccountReference;
+        this.status = ProviderProfileStatus.PROVISIONING;
+        this.failureCode = null;
+        this.failureMessage = null;
+        touch();
+        registerEvent(new PaystackSettlementRouteConfiguredEvent(
+                UUID.randomUUID().toString(), id, updatedAt, CorrelationId.getOrCreate(),
+                new PaystackSettlementRouteConfiguredEvent.Payload(
+                        organizationId, environment.name(), provider.name(),
+                        capabilities.stream().map(Enum::name)
+                                .collect(java.util.stream.Collectors.toUnmodifiableSet()),
+                        externalMerchantId, externalAccountId, settlementAccountReference, updatedAt
+                )
+        ));
     }
 
     public void requireInformation(String message) {

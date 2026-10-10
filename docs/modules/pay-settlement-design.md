@@ -2,7 +2,7 @@
 
 ## Role & Purpose
 
-The `settlement` subpackage tracks batches of funds settled by payment providers (Paystack, Moniepoint) to the organization's linked bank account. When a provider settles, they send a webhook; this module records the settlement and posts the corresponding ledger credit.
+The `settlement` module tracks Paystack settlement batches paid into an organization's Anchor operating account. Paystack's Settlement API is the source of the provider payout state. Anchor's verified inbound-credit event is the source of the bank-receipt state. A settlement is complete only after both facts match; Paystack webhooks and `transfer.success` are not settlement confirmation.
 
 Gradle module: `atlashub-pay:settlement`  
 Package: `com.atlashub.pay.settlement`
@@ -19,11 +19,20 @@ Package: `com.atlashub.pay.settlement`
 Settlement
 ├── id                    : Long
 ├── organizationId        : Long
-├── provider              : PaymentProvider     ← PAYSTACK | MONIEPOINT
+├── environment           : ApiEnvironment
+├── provider              : PaymentProvider     ← PAYSTACK
 ├── providerSettlementId  : String              ← provider's settlement batch reference
-├── amount                : Money
+├── grossAmount            : Money
+├── netAmount              : Money
+├── providerFeeAmount      : Money
+├── providerSubaccountCode : String
+├── anchorDepositAccountId : Long
+├── transactionReferences  : List<String>       ← charge linkage/audit evidence
+├── anchorTransferReference: String?       ← required before confirmation
 ├── settledAt             : ZonedDateTime
-├── status                : SettlementStatus    ← PENDING | CONFIRMED | DISPUTED
+├── status                : SettlementStatus    ← PROVIDER_PENDING | AWAITING_ANCHOR_CREDIT
+│                                               | CONFIRMED | RECONCILIATION_REQUIRED
+│                                               | DISPUTED | FAILED
 └── description           : String
 ```
 
@@ -31,11 +40,18 @@ Settlement
 
 | Method | Guard | Events | Exceptions |
 |---|---|---|---|
-| `confirm()` | status == PENDING | `SettlementConfirmedEvent` | `InvalidSettlementStateException` |
-| `dispute(reason)` | status == PENDING or CONFIRMED | `SettlementDisputedEvent` | `InvalidSettlementStateException` |
+| `confirm(anchorTransferReference)` | status == AWAITING_ANCHOR_CREDIT and the handler has verified destination/currency/net amount | `ProviderSettlementReceivedEvent` | `InvalidSettlementStateException` |
+| `markProviderConfirmed()` | status == PROVIDER_PENDING | — | `InvalidSettlementStateException` |
+| `requireReconciliation(reason)` | unmatched for three business days | — | `InvalidSettlementStateException` |
+| `dispute(reason)` | status is not FAILED | `SettlementDisputedEvent` | `InvalidSettlementStateException` |
 | `resolveDispute()` | status == DISPUTED | — | — |
 
-**On `confirm()`:** The handler also calls `PostLedgerTransactionHandler` to credit the organization's Operating Account: Dr Bank Account, Cr Operating Account.
+Confirmation publishes `ProviderSettlementReceivedEvent`. `pay:ledger` consumes its own compatible copy and performs the idempotent `PROVIDER_SETTLED` posting keyed by provider settlement ID. Settlement never calls a ledger handler synchronously.
+
+### Supporting aggregates
+
+- `SettlementCreditEvidence` persists every verified Anchor inbound credit before matching. This allows both credit-before-settlement and settlement-before-credit delivery orders without losing evidence.
+- `SettlementPollCursor` stores the last provider settlement ID per environment and Paystack subaccount. Polling can restart safely and still uses provider/local uniqueness as the final idempotency guard.
 
 ---
 
@@ -43,7 +59,7 @@ Settlement
 
 | Event | Published When | Consumed By | Topic |
 |---|---|---|---|
-| `SettlementConfirmedEvent` | Settlement confirmed | `accounting:gl` (Dr Bank, Cr Clearing), `notifications` | `pay-events` |
+| `ProviderSettlementReceivedEvent` | Paystack payout is matched to an Anchor inbound credit | `pay:ledger`, `accounting:gl`, `notifications` | `pay-events` |
 | `SettlementDisputedEvent` | Settlement disputed | `notifications` (alert finance team) | `pay-events` |
 
 ---
@@ -76,30 +92,37 @@ public class DuplicateSettlementException extends ConflictException {
 #### `RecordSettlementCommand`
 ```java
 record RecordSettlementCommand(
-    Long organizationId, PaymentProvider provider,
-    String providerSettlementId, Money amount,
-    ZonedDateTime settledAt, String description
+    Long organizationId, ApiEnvironment environment, PaymentProvider provider,
+    String providerSettlementId, String providerSubaccountCode,
+    Long anchorDepositAccountId, Money grossAmount, Money netAmount,
+    Money providerFeeAmount, ZonedDateTime providerSettledAt,
+    List<String> transactionReferences
 )
 ```
 **Handler:** `RecordSettlementHandler` | **Response:** `Long settlementId`  
-**Invocation source:** Provider webhook listener (automatic)  
+**Invocation source:** `PaystackSettlementPollingScheduler` through its command handler
 **Flow:**
-1. Check `providerSettlementId` uniqueness → `DuplicateSettlementException`
-2. Create `Settlement` (status = PENDING)
+1. Check `(provider, environment, providerSettlementId)` uniqueness.
+2. Create `Settlement` in `AWAITING_ANCHOR_CREDIT` when Paystack reports success.
 3. `repository.save()`
 
 ---
 
 #### `ConfirmSettlementCommand`
 ```java
-record ConfirmSettlementCommand(Long settlementId)
+record ConfirmSettlementCommand(
+    Long settlementId, Long anchorDepositAccountId,
+    String anchorTransferReference, Money receivedAmount,
+    ZonedDateTime receivedAt
+)
 ```
 **Handler:** `ConfirmSettlementHandler` | **Response:** `void`  
-**Invocation source:** Controller (finance manager confirms) OR auto-confirm webhook listener  
+**Invocation source:** `AnchorFundingSettlementListener` only
 **Flow:**
-1. Load `Settlement` → `settlement.confirm()`
-2. Post ledger transaction: Dr Bank Account, Cr Operating Account (via `PostLedgerTransactionHandler`)
-3. `repository.save()` → `SettlementConfirmedEvent` published
+1. Load the single unmatched candidate by Anchor deposit account, currency, net amount, and pending status.
+2. Validate the destination, currency, amount, and environment.
+3. Call `settlement.confirm(anchorTransferReference)`.
+4. Save once; the outbox publishes `ProviderSettlementReceivedEvent` for ledger consumption.
 
 ---
 
@@ -140,7 +163,9 @@ record GetSettlementDetailsQuery(Long settlementId)
 
 | JPA Entity | Table | Locking |
 |---|---|---|
-| `SettlementJpaEntity` | `pay_settlements` | `@Version` optimistic |
+| `SettlementJpa` | `pay_settlements` | `@Version` optimistic |
+| `SettlementCreditEvidenceJpa` | `pay_settlement_credit_evidence` | unique Anchor credit reference |
+| `SettlementPollCursorJpa` | `pay_settlement_poll_cursors` | unique environment/provider/subaccount route |
 
 **Spring Data:**
 ```
@@ -153,24 +178,18 @@ SpringDataSettlementRepository
 
 ### Listeners — `infrastructure/messaging/listeners/`
 
-#### `PaystackSettlementListener`
+#### `PaystackSettlementPollingScheduler`
 | Attribute | Value |
 |---|---|
-| **Source** | Paystack webhook (HTTP, not Kafka) |
-| **Adapter** | `PaystackSettlementWebhookAdapter` in `infrastructure/services/` |
-| **Event** | Paystack `transfer.success` settlement event |
-| **Payload** | `settlementId`, `amount`, `settledAt`, `merchantCode` |
-| **Command called** | `RecordSettlementCommand` + `ConfirmSettlementCommand` |
-| **Idempotency** | `providerSettlementId` uniqueness check → `DuplicateSettlementException` |
+| **Source** | Paystack Settlement API, polled per active Paystack subaccount |
+| **Adapter** | `atlashub-infrastructure:paystack` implements shared `SettlementProviderPort`; this module depends only on that provider-neutral port |
+| **Provider fact** | successful settlement batch and its transaction references |
+| **Command called** | `RecordSettlementCommand`; confirmation waits for Anchor evidence |
+| **Idempotency** | `(provider, environment, providerSettlementId)` uniqueness |
 
-#### `MoniepointSettlementListener`
-| Attribute | Value |
-|---|---|
-| **Source** | Moniepoint webhook (HTTP) |
-| **Adapter** | `MoniepointSettlementWebhookAdapter` |
-| **Command called** | `RecordSettlementCommand` + `ConfirmSettlementCommand` |
+#### `AnchorFundingSettlementListener`
 
----
+Consumes `OrganizationAccountFundedEvent` from `pay:accounts`. It matches only the same Anchor operating account, currency, and net settlement amount. A missing, late, or mismatched credit leaves the batch pending for reconciliation; Paystack success alone never confirms a settlement.
 
 ## Presentation Layer
 
@@ -178,10 +197,11 @@ SpringDataSettlementRepository
 
 | Method | Path | RBAC | Request | Response |
 |---|---|---|---|---|
-| `GET` | `/settlements` | `pay:settlement:manage` | `?orgId&status&from&to&page&size` | `PageResult<SettlementResult>` |
+| `GET` | `/settlements` | `pay:settlement:manage` | `?status&from&to&page&size` | `PageResult<SettlementResult>` |
 | `GET` | `/settlements/{id}` | `pay:settlement:manage` | — | `SettlementResult` |
-| `POST` | `/settlements/{id}/confirm` | `pay:settlement:manage` | — | `void` |
 | `POST` | `/settlements/{id}/dispute` | `pay:settlement:manage` | `DisputeSettlementRequest` | `void` |
+| `POST` | `/settlements/{id}/retry-reconciliation` | `pay:settlement:manage` | — | `void` |
+| `POST` | `/settlements/{id}/resolve-dispute` | `pay:settlement:manage` | — | `void` |
 
 ---
 
@@ -189,7 +209,7 @@ SpringDataSettlementRepository
 
 | Permission | Commands |
 |---|---|
-| `pay:settlement:manage` | `ConfirmSettlementHandler`, `DisputeSettlementHandler` |
+| `pay:settlement:manage` | `DisputeSettlementHandler`, retry reconciliation, resolve dispute |
 
 ---
 
@@ -199,11 +219,13 @@ SpringDataSettlementRepository
 - `Settlement` — Optimistic (`@Version`) — low contention
 
 ### Outbox
-- `SettlementConfirmedEvent` — triggers GL accounting entry; must not be lost
+- `ProviderSettlementReceivedEvent` — triggers the idempotent ledger and GL accounting entries; must not be lost
 
 ### Idempotency
-- Provider webhook idempotency via `providerSettlementId` uniqueness constraint in DB
-- `DuplicateSettlementException` returned on replay
+- Provider discovery idempotency via `(provider, environment, providerSettlementId)` uniqueness.
+- Anchor matching idempotency via unique `anchorTransferReference` once attached.
+- Scheduler polling uses a persisted per-subaccount watermark and overlapping lookback; replay returns the existing settlement.
+- `AWAITING_ANCHOR_CREDIT` records older than three business days transition to `RECONCILIATION_REQUIRED`; they are never auto-confirmed from Paystack alone.
 
 ---
 
@@ -213,16 +235,20 @@ SpringDataSettlementRepository
 atlashub-pay/settlement/src/main/java/com/atlashub/pay/settlement/
 ├── domain/
 │   ├── entities/
-│   │   └── Settlement.java
+│   │   ├── Settlement.java
+│   │   ├── SettlementCreditEvidence.java
+│   │   └── SettlementPollCursor.java
 │   ├── events/
-│   │   ├── SettlementConfirmedEvent.java
+│   │   ├── ProviderSettlementReceivedEvent.java
 │   │   └── SettlementDisputedEvent.java
 │   ├── exceptions/
 │   │   ├── SettlementNotFoundException.java
 │   │   ├── InvalidSettlementStateException.java
 │   │   └── DuplicateSettlementException.java
 │   ├── repositories/
-│   │   └── SettlementRepository.java
+│   │   ├── SettlementRepository.java
+│   │   ├── SettlementCreditEvidenceRepository.java
+│   │   └── SettlementPollCursorRepository.java
 │   └── valueobject/
 │       ├── PaymentProvider.java
 │       └── SettlementStatus.java
@@ -230,15 +256,19 @@ atlashub-pay/settlement/src/main/java/com/atlashub/pay/settlement/
 │   ├── commands/
 │   │   ├── RecordSettlement/ [RecordSettlementCommand, RecordSettlementHandler]
 │   │   ├── ConfirmSettlement/ [ConfirmSettlementCommand, ConfirmSettlementHandler]
+│   │   ├── PollPaystackSettlements/ [PollPaystackSettlementsCommand, PollPaystackSettlementsHandler]
+│   │   ├── EscalateUnmatchedSettlements/ [command, handler]
+│   │   ├── RetrySettlementReconciliation/ [command, handler]
+│   │   ├── ResolveSettlementDispute/ [command, handler]
 │   │   └── DisputeSettlement/ [DisputeSettlementCommand, DisputeSettlementHandler]
 │   └── queries/
 │       ├── ListSettlements/ [ListSettlementsQuery, ListSettlementsHandler]
 │       └── GetSettlementDetails/ [GetSettlementDetailsQuery, GetSettlementDetailsHandler, SettlementResult]
 ├── infrastructure/
-│   ├── persistence/ [adapters, entities, mappers, repositories]
-│   └── services/
-│       ├── PaystackSettlementWebhookAdapter.java
-│       └── MoniepointSettlementWebhookAdapter.java
+│   └── persistence/ [settlement, credit-evidence and poll-cursor adapters/entities/mappers/repositories]
+├── infrastructure/messaging/
+│   ├── listeners/AnchorFundingSettlementListener.java
+│   └── schedulers/ [PaystackSettlementPollingScheduler, SettlementExceptionScheduler]
 └── presentation/
     ├── dto/ [DisputeSettlementRequest, SettlementResult]
     └── rest/

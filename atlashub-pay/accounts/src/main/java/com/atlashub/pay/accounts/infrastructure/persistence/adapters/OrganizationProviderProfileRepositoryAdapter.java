@@ -3,6 +3,7 @@ package com.atlashub.pay.accounts.infrastructure.persistence.adapters;
 import com.atlashub.pay.accounts.domain.entities.OrganizationProviderProfile;
 import com.atlashub.pay.accounts.domain.repositories.OrganizationProviderProfileRepository;
 import com.atlashub.pay.accounts.domain.valueobject.PaymentProvider;
+import com.atlashub.pay.accounts.domain.valueobject.ProviderProfileStatus;
 import com.atlashub.pay.accounts.infrastructure.persistence.entities.OrganizationProviderProfileJpa;
 import com.atlashub.pay.accounts.infrastructure.persistence.mappers.OrganizationProviderProfileMapper;
 import com.atlashub.pay.accounts.infrastructure.persistence.repositories.SpringDataOrganizationProviderProfileRepository;
@@ -44,6 +45,13 @@ public class OrganizationProviderProfileRepositoryAdapter
     public List<OrganizationProviderProfile> findByOrganizationIdAndEnvironment(
             Long organizationId, ApiEnvironment environment) {
         return repository.findByOrganizationIdAndEnvironment(organizationId, environment).stream()
+                .map(mapper::toDomain).toList();
+    }
+
+    @Override
+    public List<OrganizationProviderProfile> findByEnvironmentAndProviderAndStatus(
+            ApiEnvironment environment, PaymentProvider provider, ProviderProfileStatus status) {
+        return repository.findByEnvironmentAndProviderAndStatus(environment, provider, status).stream()
                 .map(mapper::toDomain).toList();
     }
 }

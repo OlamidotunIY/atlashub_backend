@@ -3,7 +3,7 @@ package com.atlashub.pay.accounts.application.commands.DispatchBankingProviderRe
 import com.atlashub.pay.accounts.domain.entities.BankingProviderRequest;
 import com.atlashub.pay.accounts.domain.entities.BusinessDepositAccount;
 import com.atlashub.pay.accounts.domain.entities.OrganizationBankingProfile;
-import com.atlashub.pay.accounts.domain.ports.AnchorBankingPort;
+import com.atlashub.shared.application.port.AnchorBankingPort;
 import com.atlashub.pay.accounts.domain.repositories.*;
 import com.atlashub.pay.accounts.domain.valueobject.RequestStatus;
 import com.atlashub.pay.accounts.domain.valueobject.RequestType;
