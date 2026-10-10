@@ -1,8 +1,8 @@
-package com.atlashub.anchor.infrastructure.messaging.events;
+package com.atlashub.anchor.infrastructure.external.anchor.messaging.events;
 
-import com.atlashub.anchor.configuration.AnchorEnvironment;
-import com.atlashub.anchor.configuration.AnchorWebhookConsumer;
-import com.atlashub.anchor.dto.common.AnchorResourceIdentifier;
+import com.atlashub.anchor.infrastructure.external.anchor.configuration.AnchorEnvironment;
+import com.atlashub.anchor.infrastructure.external.anchor.configuration.AnchorWebhookConsumer;
+import com.atlashub.anchor.infrastructure.external.anchor.dto.common.AnchorResourceIdentifier;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;

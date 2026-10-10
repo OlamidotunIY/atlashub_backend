@@ -56,6 +56,13 @@ public class LedgerAccountRepositoryAdapter
     }
 
     @Override
+    public Optional<LedgerAccount> findByOrganizationIdAndEnvironmentAndAccountNameAndCurrency(
+            Long organizationId, ApiEnvironment environment, String accountName, CurrencyCode currency) {
+        return springDataRepo.findByOrganizationIdAndEnvironmentAndAccountNameIgnoreCaseAndCurrency(
+                organizationId, environment, accountName, currency.name()).map(mapper::toDomain);
+    }
+
+    @Override
     public Optional<LedgerAccount> findByOrganizationIdAndEnvironmentAndAccountTypeAndCurrency(
             Long organizationId, ApiEnvironment environment, LedgerAccountType type, CurrencyCode currency) {
         return springDataRepo.findByOrganizationIdAndEnvironmentAndAccountTypeAndCurrency(

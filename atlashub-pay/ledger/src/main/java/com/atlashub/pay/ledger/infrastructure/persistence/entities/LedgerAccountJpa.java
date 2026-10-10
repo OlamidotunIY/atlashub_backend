@@ -50,6 +50,9 @@ public class LedgerAccountJpa implements BaseJpaEntity {
     @Column(name = "account_type", nullable = false)
     private String accountType;
 
+    @Column(name = "account_name")
+    private String accountName;
+
     @Column(name = "outlet_id")
     private Long outletId;
 

@@ -11,7 +11,7 @@ import com.atlashub.pay.accounts.application.queries.GetReservedAccount.GetReser
 import com.atlashub.pay.accounts.application.queries.GetReservedAccount.GetReservedAccountQuery;
 import com.atlashub.pay.accounts.application.queries.ListReservedAccounts.ListReservedAccountsHandler;
 import com.atlashub.pay.accounts.application.queries.ListReservedAccounts.ListReservedAccountsQuery;
-import com.atlashub.pay.accounts.domain.ports.AnchorBankingPort.ReservedAccountCustomer;
+import com.atlashub.shared.application.port.AnchorBankingPort.ReservedAccountCustomer;
 import com.atlashub.pay.accounts.presentation.dto.IssueReservedAccountRequest;
 import com.atlashub.shared.application.dto.ApiResponse;
 import com.atlashub.shared.application.security.AuthenticatedPrincipal;

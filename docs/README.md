@@ -108,7 +108,7 @@ atlashub-backend/
 | [setup/api-key-hmac-auth.md](./setup/api-key-hmac-auth.md) | HMAC signing algorithm, verification, key rotation |
 | [setup/webhook-infrastructure.md](./setup/webhook-infrastructure.md) | Outbound webhooks, delivery, retry, merchant verification |
 | [setup/anchor-integration.md](./setup/anchor-integration.md) | NUBAN issuance, inbound transfers |
-| [setup/paystack-integration.md](./setup/paystack-integration.md) | Card payments, BVN verification, bank name enquiry |
+| [setup/paystack-integration.md](./setup/paystack-integration.md) | Card/USSD checkout, refunds, settlement routing and reconciliation |
 | [setup/moniepoint-integration.md](./setup/moniepoint-integration.md) | POS terminals, card-present, QR payments |
 
 ---

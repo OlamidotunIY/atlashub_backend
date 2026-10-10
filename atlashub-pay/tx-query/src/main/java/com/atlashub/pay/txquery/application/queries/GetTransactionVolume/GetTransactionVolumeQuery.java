@@ -1,0 +1,1 @@
+package com.atlashub.pay.txquery.application.queries.GetTransactionVolume;import com.atlashub.shared.application.security.ApiEnvironment;import java.time.YearMonth;public record GetTransactionVolumeQuery(Long organizationId,ApiEnvironment environment,YearMonth month){}

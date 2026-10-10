@@ -1,9 +1,22 @@
 package com.atlashub.compliance.infrastructure.persistence.entities;
 
-import com.atlashub.compliance.domain.valueobject.*;
+import com.atlashub.compliance.domain.valueobject.AddressData;
+import com.atlashub.compliance.domain.valueobject.OfficerRole;
+import com.atlashub.compliance.domain.valueobject.OfficerVerificationStatus;
 import com.atlashub.compliance.infrastructure.persistence.adapters.ComplianceSensitiveDataConverter;
-import jakarta.persistence.*;
-import lombok.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import java.math.BigDecimal;
@@ -15,7 +28,7 @@ import java.time.LocalDate;
 @Data @Builder @NoArgsConstructor(access = AccessLevel.PROTECTED) @AllArgsConstructor
 public class BusinessOfficerJpa {
     @Id private Long id;
-    @Column(name = "compliance_record_id", nullable = false, insertable = false, updatable = false) private Long complianceRecordId;
+    @Column(name = "compliance_record_id", nullable = false) private Long complianceRecordId;
     @Enumerated(EnumType.STRING) @Column(nullable = false) private OfficerRole role;
     @Column(nullable = false) private String firstName;
     private String middleName;

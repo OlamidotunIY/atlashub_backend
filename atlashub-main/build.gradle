@@ -25,10 +25,22 @@ dependencies {
     // Pay Modules
     implementation project(':atlashub-pay:accounts')
     implementation project(':atlashub-pay:ledger')
+    implementation project(':atlashub-pay:charges')
+    implementation project(':atlashub-pay:settlement')
+    implementation project(':atlashub-pay:tx-query')
+
+    // Commerce Modules
+    implementation project(':atlashub-commerce:catalog')
+    implementation project(':atlashub-commerce:inventory')
+    implementation project(':atlashub-commerce:storefront')
+
+    // Accounting Modules
+    implementation project(':atlashub-accounting:gl')
 
     // Infrastructure Modules
     implementation project(':atlashub-infrastructure:eventbus')
     implementation project(':atlashub-infrastructure:anchor')
+    implementation project(':atlashub-infrastructure:paystack')
     implementation project(':atlashub-infrastructure:rate-limiter')
     implementation project(':atlashub-infrastructure:audit')
 

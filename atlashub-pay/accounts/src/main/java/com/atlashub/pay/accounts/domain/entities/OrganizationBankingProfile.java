@@ -1,14 +1,14 @@
 package com.atlashub.pay.accounts.domain.entities;
 
-import com.atlashub.pay.accounts.domain.valueobject.BankingProfileStatus;
-import com.atlashub.pay.accounts.domain.valueobject.BankingRestrictionType;
-import com.atlashub.shared.domain.entities.AggregateRoot;
 import com.atlashub.pay.accounts.domain.events.OrganizationBankingActivatedEvent;
 import com.atlashub.pay.accounts.domain.events.OrganizationBankingProvisioningFailedEvent;
 import com.atlashub.pay.accounts.domain.exceptions.InvalidBankingAccountDataException;
 import com.atlashub.pay.accounts.domain.exceptions.InvalidBankingStateException;
-import com.atlashub.shared.domain.valueobject.CorrelationId;
+import com.atlashub.pay.accounts.domain.valueobject.BankingProfileStatus;
+import com.atlashub.pay.accounts.domain.valueobject.BankingRestrictionType;
 import com.atlashub.shared.application.security.ApiEnvironment;
+import com.atlashub.shared.domain.entities.AggregateRoot;
+import com.atlashub.shared.domain.valueobject.CorrelationId;
 import lombok.Getter;
 
 import java.time.ZonedDateTime;
@@ -18,6 +18,7 @@ import java.util.UUID;
 
 @Getter
 public class OrganizationBankingProfile extends AggregateRoot<Long> {
+
     private final Long id;
     private final Long organizationId;
     private final ApiEnvironment environment;
@@ -31,11 +32,11 @@ public class OrganizationBankingProfile extends AggregateRoot<Long> {
     private final ZonedDateTime createdAt;
     private ZonedDateTime updatedAt;
 
-    public OrganizationBankingProfile(Long id, Long organizationId, ApiEnvironment environment, String anchorBusinessCustomerId,
-                                      Long businessDepositAccountId, Long businessSubAccountId,
-                                      BankingProfileStatus status, Set<BankingRestrictionType> activeRestrictions,
-                                      String failureCode, String failureMessage,
-                                      ZonedDateTime createdAt, ZonedDateTime updatedAt) {
+    public OrganizationBankingProfile(Long id, Long organizationId, ApiEnvironment environment,
+                                      String anchorBusinessCustomerId, Long businessDepositAccountId,
+                                      Long businessSubAccountId, BankingProfileStatus status,
+                                      Set<BankingRestrictionType> activeRestrictions, String failureCode,
+                                      String failureMessage, ZonedDateTime createdAt, ZonedDateTime updatedAt) {
         this.id = id;
         this.organizationId = organizationId;
         this.environment = environment;
@@ -51,14 +52,15 @@ public class OrganizationBankingProfile extends AggregateRoot<Long> {
     }
 
     public static OrganizationBankingProfile create(Long id, Long organizationId, ApiEnvironment environment,
-                                                     String anchorBusinessCustomerId) {
-        if (id == null || organizationId == null || environment == null || anchorBusinessCustomerId == null
-                || anchorBusinessCustomerId.isBlank()) {
-            throw new InvalidBankingAccountDataException("Profile id, organization id and Anchor customer id are required");
+                                                    String anchorBusinessCustomerId) {
+        if (id == null || organizationId == null || environment == null || anchorBusinessCustomerId == null ||
+                anchorBusinessCustomerId.isBlank()) {
+            throw new InvalidBankingAccountDataException(
+                    "Profile id, organization id and Anchor customer id are required");
         }
         ZonedDateTime now = ZonedDateTime.now();
-        return new OrganizationBankingProfile(id, organizationId, environment, anchorBusinessCustomerId,
-                null, null, BankingProfileStatus.PENDING, Set.of(), null, null, now, now);
+        return new OrganizationBankingProfile(id, organizationId, environment, anchorBusinessCustomerId, null, null,
+                BankingProfileStatus.PENDING, Set.of(), null, null, now, now);
     }
 
     public void linkDepositAccount(Long accountId) {
@@ -74,18 +76,17 @@ public class OrganizationBankingProfile extends AggregateRoot<Long> {
     }
 
     public void activate() {
-        if (businessDepositAccountId == null || businessSubAccountId == null) {
-            throw new InvalidBankingStateException("Deposit account and subaccount are required");
+        if (businessDepositAccountId == null) {
+            throw new InvalidBankingStateException("Deposit account is required");
         }
         boolean firstActivation = this.status != BankingProfileStatus.ACTIVE;
         this.status = activeRestrictions.isEmpty() ? BankingProfileStatus.ACTIVE : BankingProfileStatus.SUSPENDED;
         touch();
         if (firstActivation && status == BankingProfileStatus.ACTIVE) {
-            registerEvent(new OrganizationBankingActivatedEvent(
-                    UUID.randomUUID().toString(), id, ZonedDateTime.now(), CorrelationId.getOrCreate(),
-                    new OrganizationBankingActivatedEvent.Payload(
-                            organizationId, id, businessDepositAccountId, businessSubAccountId,
-                            environment.name(), "NGN", ZonedDateTime.now())));
+            registerEvent(new OrganizationBankingActivatedEvent(UUID.randomUUID().toString(), id, ZonedDateTime.now(),
+                    CorrelationId.getOrCreate(),
+                    new OrganizationBankingActivatedEvent.Payload(organizationId, id, businessDepositAccountId,
+                            businessSubAccountId, environment.name(), "NGN", ZonedDateTime.now())));
         }
     }
 
@@ -119,17 +120,23 @@ public class OrganizationBankingProfile extends AggregateRoot<Long> {
         failureCode = code;
         failureMessage = message;
         touch();
-        registerEvent(new OrganizationBankingProvisioningFailedEvent(
-                UUID.randomUUID().toString(), id, ZonedDateTime.now(), CorrelationId.getOrCreate(),
-                new OrganizationBankingProvisioningFailedEvent.Payload(
-                        organizationId, environment.name(), code, message, ZonedDateTime.now())));
+        registerEvent(
+                new OrganizationBankingProvisioningFailedEvent(UUID.randomUUID().toString(), id, ZonedDateTime.now(),
+                        CorrelationId.getOrCreate(),
+                        new OrganizationBankingProvisioningFailedEvent.Payload(organizationId, environment.name(), code,
+                                message, ZonedDateTime.now())));
     }
 
     public boolean isUsable() {
         return status == BankingProfileStatus.ACTIVE && activeRestrictions.isEmpty();
     }
 
-    private void touch() { updatedAt = ZonedDateTime.now(); }
+    private void touch() {
+        updatedAt = ZonedDateTime.now();
+    }
 
-    @Override public Long getId() { return id; }
+    @Override
+    public Long getId() {
+        return id;
+    }
 }

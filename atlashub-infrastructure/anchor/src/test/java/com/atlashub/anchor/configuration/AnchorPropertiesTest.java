@@ -1,4 +1,4 @@
-package com.atlashub.anchor.configuration;
+package com.atlashub.anchor.infrastructure.external.anchor.configuration;
 
 import org.junit.jupiter.api.Test;
 

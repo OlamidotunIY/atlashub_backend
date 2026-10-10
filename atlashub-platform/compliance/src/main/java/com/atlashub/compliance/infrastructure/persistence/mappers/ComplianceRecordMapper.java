@@ -13,10 +13,17 @@ import com.atlashub.shared.infrastructure.persistence.mappers.DomainMapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Component
 public class ComplianceRecordMapper implements DomainMapper<ComplianceRecord, ComplianceRecordJpa> {
     @Override
     public ComplianceRecord toDomain(ComplianceRecordJpa row) {
+        return toDomain(row, List.of(), List.of());
+    }
+
+    public ComplianceRecord toDomain(ComplianceRecordJpa row, List<BusinessOfficerJpa> officers,
+                                     List<ComplianceDocumentRequirementJpa> documentRequirements) {
         BusinessProfileData profile = row.getLegalName() == null ? null : new BusinessProfileData(
                 row.getLegalName(), row.getRegistrationType(), row.getRegistrationDate(),
                 row.getBusinessRegistrationNumber(), row.getBusinessBvn(), row.getIndustry(),
@@ -24,11 +31,11 @@ public class ComplianceRecordMapper implements DomainMapper<ComplianceRecord, Co
 
         return new ComplianceRecord(row.getId(), row.getOrganizationId(), row.getStatus(), row.getCurrentStep(),
                 row.getStepProgress(), row.getEligibilityStatus(), row.getAnchorVerificationStatus(),
-                row.getAnchorBusinessCustomerId(), row.getSandboxAnchorBusinessCustomerId(),
+                row.getAnchorBusinessCustomerId(),
                 row.getFailureCode(), row.getRejectionReason(),
                 row.getSubmittedAt(), row.getApprovedAt(), profile, row.getContactInfo(),
-                row.getOfficers().stream().map(this::toDomain).toList(),
-                row.getDocumentRequirements().stream().map(this::toDomain).toList(),
+                officers.stream().map(this::toDomain).toList(),
+                documentRequirements.stream().map(this::toDomain).toList(),
                 row.getServiceAgreement(), row.getCreatedAt(), row.getUpdatedAt(), row.getVersion());
     }
 
@@ -40,7 +47,6 @@ public class ComplianceRecordMapper implements DomainMapper<ComplianceRecord, Co
                 .currentStep(domain.getCurrentStep()).stepProgress(domain.getStepProgress())
                 .eligibilityStatus(domain.getEligibilityStatus()).anchorVerificationStatus(domain.getAnchorVerificationStatus())
                 .anchorBusinessCustomerId(domain.getAnchorBusinessCustomerId())
-                .sandboxAnchorBusinessCustomerId(domain.getSandboxAnchorBusinessCustomerId())
                 .failureCode(domain.getFailureCode())
                 .rejectionReason(domain.getRejectionReason()).submittedAt(domain.getSubmittedAt()).approvedAt(domain.getApprovedAt())
                 .legalName(profile == null ? null : profile.legalName())
@@ -52,20 +58,13 @@ public class ComplianceRecordMapper implements DomainMapper<ComplianceRecord, Co
                 .businessDescription(profile == null ? null : profile.businessDescription())
                 .website(profile == null ? null : profile.website()).contactInfo(domain.getContactInfo())
                 .serviceAgreement(domain.getServiceAgreement())
-                .officers(domain.getOfficers().stream().map(this::toPersistence).toList())
-                .documentRequirements(domain.getDocumentRequirements().stream().map(this::toPersistence).toList())
                 .createdAt(domain.getCreatedAt()).updatedAt(domain.getUpdatedAt()).version(domain.getVersion()).build();
     }
 
     @Override
     public void updatePersistence(ComplianceRecord domain, ComplianceRecordJpa record) {
         ComplianceRecordJpa mapped = toPersistence(domain);
-        BeanUtils.copyProperties(mapped, record, "id", "version", "officers", "documentRequirements");
-
-        record.getOfficers().clear();
-        record.getOfficers().addAll(mapped.getOfficers());
-        record.getDocumentRequirements().clear();
-        record.getDocumentRequirements().addAll(mapped.getDocumentRequirements());
+        BeanUtils.copyProperties(mapped, record, "id", "version");
     }
 
     private BusinessOfficer toDomain(BusinessOfficerJpa row) {
@@ -75,8 +74,8 @@ public class ComplianceRecordMapper implements DomainMapper<ComplianceRecord, Co
                 row.getBvn(), row.getTitle(), row.getPercentageOwned(), row.getAnchorOfficerId(), row.getVerificationStatus());
     }
 
-    private BusinessOfficerJpa toPersistence(BusinessOfficer officer) {
-        return BusinessOfficerJpa.builder().id(officer.getId()).role(officer.getRole())
+    public BusinessOfficerJpa toPersistence(Long complianceRecordId, BusinessOfficer officer) {
+        return BusinessOfficerJpa.builder().id(officer.getId()).complianceRecordId(complianceRecordId).role(officer.getRole())
                 .firstName(officer.getFirstName()).middleName(officer.getMiddleName()).lastName(officer.getLastName())
                 .maidenName(officer.getMaidenName()).nationality(officer.getNationality()).dateOfBirth(officer.getDateOfBirth())
                 .email(officer.getEmail().value()).phoneNumber(officer.getPhoneNumber().value())
@@ -91,8 +90,10 @@ public class ComplianceRecordMapper implements DomainMapper<ComplianceRecord, Co
                 row.getTextValue(), row.getRejectionReason(), row.getCreatedAt(), row.getUpdatedAt());
     }
 
-    private ComplianceDocumentRequirementJpa toPersistence(ComplianceDocumentRequirement document) {
-        return ComplianceDocumentRequirementJpa.builder().id(document.getId()).anchorDocumentId(document.getAnchorDocumentId())
+    public ComplianceDocumentRequirementJpa toPersistence(Long complianceRecordId,
+                                                            ComplianceDocumentRequirement document) {
+        return ComplianceDocumentRequirementJpa.builder().id(document.getId()).complianceRecordId(complianceRecordId)
+                .anchorDocumentId(document.getAnchorDocumentId())
                 .documentType(document.getDocumentType()).description(document.getDescription()).required(document.isRequired())
                 .source(document.getSource()).status(document.getStatus()).storageObjectKey(document.getStorageObjectKey())
                 .textValue(document.getTextValue()).rejectionReason(document.getRejectionReason())

@@ -10,5 +10,6 @@ public enum LedgerAccountType {
     TILL,
     SPLIT_HOLDING,
     CUSTOMER_FUNDS,
-    VENDOR_PAYABLE
+    VENDOR_PAYABLE,
+    CUSTOM
 }

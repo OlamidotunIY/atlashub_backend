@@ -9,16 +9,26 @@
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
+            <option value="$PROJECT_DIR$/atlashub-accounting" />
+            <option value="$PROJECT_DIR$/atlashub-accounting/gl" />
+            <option value="$PROJECT_DIR$/atlashub-commerce" />
+            <option value="$PROJECT_DIR$/atlashub-commerce/catalog" />
+            <option value="$PROJECT_DIR$/atlashub-commerce/inventory" />
+            <option value="$PROJECT_DIR$/atlashub-commerce/storefront" />
             <option value="$PROJECT_DIR$/atlashub-infrastructure" />
             <option value="$PROJECT_DIR$/atlashub-infrastructure/anchor" />
             <option value="$PROJECT_DIR$/atlashub-infrastructure/audit" />
             <option value="$PROJECT_DIR$/atlashub-infrastructure/eventbus" />
+            <option value="$PROJECT_DIR$/atlashub-infrastructure/paystack" />
             <option value="$PROJECT_DIR$/atlashub-infrastructure/rate-limiter" />
             <option value="$PROJECT_DIR$/atlashub-main" />
             <option value="$PROJECT_DIR$/atlashub-pay" />
             <option value="$PROJECT_DIR$/atlashub-pay/accounts" />
+            <option value="$PROJECT_DIR$/atlashub-pay/charges" />
             <option value="$PROJECT_DIR$/atlashub-pay/ledger" />
+            <option value="$PROJECT_DIR$/atlashub-pay/settlement" />
             <option value="$PROJECT_DIR$/atlashub-pay/splits" />
+            <option value="$PROJECT_DIR$/atlashub-pay/tx-query" />
             <option value="$PROJECT_DIR$/atlashub-platform" />
             <option value="$PROJECT_DIR$/atlashub-platform/accounts" />
             <option value="$PROJECT_DIR$/atlashub-platform/authentication" />

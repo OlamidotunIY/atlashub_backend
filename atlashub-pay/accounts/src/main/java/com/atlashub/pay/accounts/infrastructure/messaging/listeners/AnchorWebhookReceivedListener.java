@@ -1,10 +1,8 @@
 package com.atlashub.pay.accounts.infrastructure.messaging.listeners;
 
-import com.atlashub.anchor.configuration.AnchorEnvironment;
-import com.atlashub.anchor.configuration.AnchorWebhookConsumer;
-import com.atlashub.anchor.dto.common.AnchorResourceIdentifier;
-import com.atlashub.anchor.dto.common.AnchorIncludedResource;
-import com.atlashub.anchor.infrastructure.messaging.events.AnchorWebhookReceivedEvent;
+import com.atlashub.pay.accounts.infrastructure.messaging.events.AnchorWebhookReceivedEvent;
+import com.atlashub.pay.accounts.infrastructure.messaging.events.AnchorWebhookReceivedEvent.ResourceIdentifier;
+import com.atlashub.pay.accounts.infrastructure.messaging.events.AnchorWebhookReceivedEvent.IncludedResource;
 import com.atlashub.pay.accounts.application.commands.ApplyAnchorAccountStatus.ApplyAnchorAccountStatusCommand;
 import com.atlashub.pay.accounts.application.commands.ApplyAnchorAccountStatus.ApplyAnchorAccountStatusHandler;
 import com.atlashub.pay.accounts.application.commands.RecordAnchorFunding.RecordAnchorFundingCommand;
@@ -44,7 +42,7 @@ public class AnchorWebhookReceivedListener extends BaseKafkaEventListener {
 
     @PostConstruct
     public void init() {
-        registerSubscription(AnchorWebhookReceivedEvent.class.getName(), GROUP_ID);
+        registerSubscription("com.atlashub.anchor.infrastructure.external.anchor.messaging.events.AnchorWebhookReceivedEvent", GROUP_ID);
     }
 
     @KafkaListener(topics = "anchor-events", groupId = GROUP_ID)
@@ -55,7 +53,7 @@ public class AnchorWebhookReceivedListener extends BaseKafkaEventListener {
     }
 
     private void dispatch(AnchorWebhookReceivedEvent event) {
-        if (event.consumer() != AnchorWebhookConsumer.PAY_ACCOUNTS) {
+        if (!"PAY_ACCOUNTS".equalsIgnoreCase(event.consumer())) {
             return;
         }
         if (("payin.received".equalsIgnoreCase(event.eventType())
@@ -65,7 +63,7 @@ public class AnchorWebhookReceivedListener extends BaseKafkaEventListener {
             return;
         }
         if (!isAccountLifecycleEvent(event.eventType())) return;
-        AnchorIncludedResource resource = event.includedResources().stream()
+        IncludedResource resource = event.includedResources().stream()
                 .filter(value -> isAccountResource(value.type()))
                 .findFirst().orElse(null);
         Map<String, Object> attributes = resource == null
@@ -91,23 +89,23 @@ public class AnchorWebhookReceivedListener extends BaseKafkaEventListener {
                 text(attributes, "bankCode"));
         handler.execute(new ApplyAnchorAccountStatusCommand(
                 normalizeResourceType(resourceType),
-                event.environment() == AnchorEnvironment.SANDBOX ? "TEST" : "LIVE",
+                "SANDBOX".equalsIgnoreCase(event.environment()) ? "TEST" : "LIVE",
                 resourceId, status, details, text(attributes, "failureReason", "failureMessage")));
     }
 
     private void dispatchFunding(AnchorWebhookReceivedEvent event) {
-        AnchorIncludedResource payIn = event.includedResources().stream()
+        IncludedResource payIn = event.includedResources().stream()
                 .filter(value -> "PayIn".equalsIgnoreCase(value.type()))
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Anchor payin webhook must include PayIn details"));
         if (!"COMPLETED".equalsIgnoreCase(text(payIn.attributes(), "status"))) return;
         String reservedAccountId = relationshipId(payIn.relationships(), "reservedAccount");
         String depositAccountId = relationshipId(payIn.relationships(), "account", "depositAccount");
-        AnchorIncludedResource charge = event.includedResources().stream()
+        IncludedResource charge = event.includedResources().stream()
                 .filter(value -> "Charge".equalsIgnoreCase(value.type())).findFirst().orElse(null);
         Map<String, Object> transfer = nested(charge == null ? Map.of() : charge.attributes(), "transferDetails");
         fundingHandler.execute(new RecordAnchorFundingCommand(
-                event.environment() == AnchorEnvironment.SANDBOX ? "TEST" : "LIVE",
+                "SANDBOX".equalsIgnoreCase(event.environment()) ? "TEST" : "LIVE",
                 reservedAccountId, depositAccountId,
                 text(payIn.attributes(), "reference", "sessionId"),
                 decimal(payIn.attributes().get("amount")), text(payIn.attributes(), "currency"),
@@ -123,7 +121,7 @@ public class AnchorWebhookReceivedListener extends BaseKafkaEventListener {
     }
 
     private Map<String, Object> accountAttributes(
-            AnchorIncludedResource account,
+            IncludedResource account,
             AnchorWebhookReceivedEvent event
     ) {
         if (!"SUB_ACCOUNT".equals(normalizeResourceType(account.type()))) {
@@ -151,9 +149,9 @@ public class AnchorWebhookReceivedListener extends BaseKafkaEventListener {
                 .replaceAll("([a-z])([A-Z])", "$1_$2").toUpperCase();
     }
 
-    private String relationshipId(Map<String, AnchorResourceIdentifier> relationships, String... names) {
+    private String relationshipId(Map<String, ResourceIdentifier> relationships, String... names) {
         for (String name : names) {
-            AnchorResourceIdentifier identifier = relationships.get(name);
+            ResourceIdentifier identifier = relationships.get(name);
             if (identifier != null && identifier.id() != null && !identifier.id().isBlank()) {
                 return identifier.id();
             }

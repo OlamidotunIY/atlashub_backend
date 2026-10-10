@@ -2,7 +2,7 @@ package com.atlashub.pay.accounts.application.commands.ReconcileAnchorAccounts;
 
 import com.atlashub.pay.accounts.application.commands.ApplyAnchorAccountStatus.ApplyAnchorAccountStatusCommand;
 import com.atlashub.pay.accounts.application.commands.ApplyAnchorAccountStatus.ApplyAnchorAccountStatusHandler;
-import com.atlashub.pay.accounts.domain.ports.AnchorBankingPort;
+import com.atlashub.shared.application.port.AnchorBankingPort;
 import com.atlashub.pay.accounts.domain.repositories.BusinessDepositAccountRepository;
 import com.atlashub.pay.accounts.domain.repositories.BusinessSubAccountRepository;
 import com.atlashub.pay.accounts.domain.repositories.ReservedAccountRepository;

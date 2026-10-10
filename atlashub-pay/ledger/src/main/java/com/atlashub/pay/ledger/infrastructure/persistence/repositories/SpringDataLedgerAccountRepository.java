@@ -22,6 +22,8 @@ public interface SpringDataLedgerAccountRepository extends JpaRepository<LedgerA
 
     List<LedgerAccountJpa> findAllByOrganizationId(Long organizationId);
     List<LedgerAccountJpa> findAllByOrganizationIdAndEnvironment(Long organizationId, ApiEnvironment environment);
+    Optional<LedgerAccountJpa> findByOrganizationIdAndEnvironmentAndAccountNameIgnoreCaseAndCurrency(
+            Long organizationId, ApiEnvironment environment, String accountName, String currency);
     
     Optional<LedgerAccountJpa> findByOrganizationIdAndEnvironmentAndAccountTypeAndCurrency(
             Long organizationId, ApiEnvironment environment, String accountType, String currency);

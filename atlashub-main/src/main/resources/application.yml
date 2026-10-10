@@ -1,7 +1,7 @@
 spring:
   application:
     name: atlashub-backend
-  
+
   # Database Connection Details
   datasource:
     url: ${ATLASHUB_DB_URL:jdbc:mysql://localhost:3306/atlashub}
@@ -56,6 +56,24 @@ atlashub:
     issuer: ${ATLASHUB_JWT_ISSUER:atlashub-authentication}
     audience: ${ATLASHUB_JWT_AUDIENCE:atlashub-api}
   integrations:
+    paystack:
+      enabled: ${ATLASHUB_PAYSTACK_ENABLED:false}
+      test-merchant-id: ${ATLASHUB_PAYSTACK_TEST_MERCHANT_ID:atlashub-paystack-test}
+      webhook-publish-timeout: ${ATLASHUB_PAYSTACK_WEBHOOK_PUBLISH_TIMEOUT:PT5S}
+      test:
+        base-url: ${ATLASHUB_PAYSTACK_TEST_BASE_URL:https://api.paystack.co}
+        public-key: ${ATLASHUB_PAYSTACK_TEST_PUBLIC_KEY:}
+        secret-key: ${ATLASHUB_PAYSTACK_TEST_SECRET_KEY:}
+        webhook-secret: ${ATLASHUB_PAYSTACK_TEST_WEBHOOK_SECRET:}
+        connect-timeout: ${ATLASHUB_PAYSTACK_TEST_CONNECT_TIMEOUT:PT5S}
+        read-timeout: ${ATLASHUB_PAYSTACK_TEST_READ_TIMEOUT:PT30S}
+      live:
+        base-url: ${ATLASHUB_PAYSTACK_LIVE_BASE_URL:https://api.paystack.co}
+        public-key: ${ATLASHUB_PAYSTACK_LIVE_PUBLIC_KEY:}
+        secret-key: ${ATLASHUB_PAYSTACK_LIVE_SECRET_KEY:}
+        webhook-secret: ${ATLASHUB_PAYSTACK_LIVE_WEBHOOK_SECRET:}
+        connect-timeout: ${ATLASHUB_PAYSTACK_LIVE_CONNECT_TIMEOUT:PT5S}
+        read-timeout: ${ATLASHUB_PAYSTACK_LIVE_READ_TIMEOUT:PT30S}
     anchor:
       enabled: ${ATLASHUB_ANCHOR_ENABLED:false}
       webhook-publish-timeout: ${ATLASHUB_ANCHOR_WEBHOOK_PUBLISH_TIMEOUT:PT5S}
@@ -114,3 +132,4 @@ logging:
     root: INFO
     org.apache.kafka: ERROR
     org.springframework.kafka: ERROR
+  exception-conversion-word: "%wEx{short}"

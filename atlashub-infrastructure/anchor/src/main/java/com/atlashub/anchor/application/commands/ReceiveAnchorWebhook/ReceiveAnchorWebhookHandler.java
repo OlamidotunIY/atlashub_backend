@@ -1,14 +1,14 @@
 package com.atlashub.anchor.application.commands.ReceiveAnchorWebhook;
 
-import com.atlashub.anchor.configuration.AnchorEnvironment;
-import com.atlashub.anchor.dto.common.AnchorRelationship;
-import com.atlashub.anchor.dto.common.AnchorResourceIdentifier;
-import com.atlashub.anchor.dto.common.AnchorIncludedResource;
-import com.atlashub.anchor.dto.webhook.AnchorWebhookPayload;
+import com.atlashub.anchor.infrastructure.external.anchor.configuration.AnchorEnvironment;
+import com.atlashub.anchor.infrastructure.external.anchor.dto.common.AnchorRelationship;
+import com.atlashub.anchor.infrastructure.external.anchor.dto.common.AnchorResourceIdentifier;
+import com.atlashub.anchor.infrastructure.external.anchor.dto.common.AnchorIncludedResource;
+import com.atlashub.anchor.infrastructure.external.anchor.dto.webhook.AnchorWebhookPayload;
 import com.atlashub.anchor.exception.MalformedAnchorWebhookException;
-import com.atlashub.anchor.infrastructure.messaging.AnchorWebhookEventPublisher;
-import com.atlashub.anchor.infrastructure.messaging.events.AnchorWebhookReceivedEvent;
-import com.atlashub.anchor.infrastructure.webhook.AnchorWebhookSignatureVerifier;
+import com.atlashub.anchor.infrastructure.external.anchor.messaging.AnchorWebhookEventPublisher;
+import com.atlashub.anchor.infrastructure.external.anchor.messaging.events.AnchorWebhookReceivedEvent;
+import com.atlashub.anchor.infrastructure.external.anchor.webhook.AnchorWebhookSignatureVerifier;
 import com.atlashub.shared.application.usecase.Command;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -57,7 +57,7 @@ public class ReceiveAnchorWebhookHandler extends Command<ReceiveAnchorWebhookCom
 
     private AnchorWebhookReceivedEvent toEvent(
             AnchorEnvironment environment,
-            com.atlashub.anchor.configuration.AnchorWebhookConsumer consumer,
+            com.atlashub.anchor.infrastructure.external.anchor.configuration.AnchorWebhookConsumer consumer,
             AnchorWebhookPayload payload
     ) {
         AnchorWebhookPayload.EventData data = payload.data();

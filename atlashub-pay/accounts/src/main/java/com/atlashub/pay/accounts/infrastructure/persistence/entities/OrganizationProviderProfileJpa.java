@@ -5,11 +5,23 @@ import com.atlashub.pay.accounts.domain.valueobject.PaymentProvider;
 import com.atlashub.pay.accounts.domain.valueobject.ProviderProfileStatus;
 import com.atlashub.shared.application.security.ApiEnvironment;
 import com.atlashub.shared.infrastructure.persistence.entities.BaseJpaEntity;
-import jakarta.persistence.*;
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
+import jakarta.persistence.Version;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.ZonedDateTime;
 import java.util.Set;
@@ -17,6 +29,7 @@ import java.util.Set;
 @Entity
 @Table(name = "pay_organization_provider_profiles", uniqueConstraints = {@UniqueConstraint(name = "uk_pay_provider_profile_org_env_provider", columnNames = {"organization_id", "api_environment", "provider"})})
 @Getter
+@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 public class OrganizationProviderProfileJpa implements BaseJpaEntity {

@@ -1,6 +1,7 @@
 package com.atlashub.pay.accounts.application.commands.ApplyOrganizationBankingRestriction;
 
 import com.atlashub.pay.accounts.domain.entities.BankingProviderRequest;
+import com.atlashub.pay.accounts.domain.valueobject.RequestType;
 import com.atlashub.pay.accounts.domain.entities.BusinessDepositAccount;
 import com.atlashub.pay.accounts.domain.entities.OrganizationBankingProfile;
 import com.atlashub.pay.accounts.domain.repositories.BankingProviderRequestRepository;
@@ -8,6 +9,7 @@ import com.atlashub.pay.accounts.domain.repositories.BusinessDepositAccountRepos
 import com.atlashub.pay.accounts.domain.repositories.OrganizationBankingProfileRepository;
 import com.atlashub.pay.accounts.domain.repositories.ReservedAccountRepository;
 import com.atlashub.pay.accounts.domain.valueobject.BankingRestrictionType;
+import com.atlashub.pay.accounts.domain.valueobject.ExternalAccountStatus;
 import com.atlashub.shared.application.security.ApiEnvironment;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -30,6 +32,7 @@ class ApplyOrganizationBankingRestrictionHandlerTest {
         BusinessDepositAccount deposit = mock(BusinessDepositAccount.class);
         when(deposit.getId()).thenReturn(2L);
         when(deposit.getAnchorAccountId()).thenReturn("anchor-account");
+        when(deposit.getStatus()).thenReturn(ExternalAccountStatus.ACTIVE);
         when(profiles.findByOrganizationIdAndEnvironment(10L, ApiEnvironment.LIVE)).thenReturn(Optional.of(profile));
         when(reserved.findByOrganizationIdAndEnvironment(10L, ApiEnvironment.LIVE)).thenReturn(List.of());
         when(deposits.findByOrganizationIdAndEnvironment(10L, ApiEnvironment.LIVE)).thenReturn(Optional.of(deposit));
@@ -42,6 +45,6 @@ class ApplyOrganizationBankingRestrictionHandlerTest {
         assertTrue(profile.getActiveRestrictions().contains(BankingRestrictionType.COMPLIANCE));
         ArgumentCaptor<BankingProviderRequest> request = ArgumentCaptor.forClass(BankingProviderRequest.class);
         verify(requests).save(request.capture());
-        assertEquals(BankingProviderRequest.RequestType.FREEZE_DEPOSIT, request.getValue().getRequestType());
+        assertEquals(RequestType.FREEZE_DEPOSIT, request.getValue().getRequestType());
     }
 }

@@ -312,12 +312,13 @@ record ProcessPosCheckoutCommand(Long organizationId, Long outletId, Long tillId
 **Handler:** `ProcessPosCheckoutHandler` | **Response:** `ProcessPosCheckoutResponse(Long orderId, String chargeReference)`  
 **RBAC:** `@PreAuthorize("hasAuthority('commerce:orders:create')")`  
 **Flow (Checkout Saga Step 1–3):**
-1. Create `SalesOrder` (status = PENDING)
-2. For each item: `inventoryService.reserveStock(qty)` — in-module call to `commerce-inventory`; pessimistic lock; throws `InsufficientStockException`
-3. If paymentMethod == CASH: `order.completePayment()` immediately → `PosSaleCompletedEvent` published — saga ends here
-4. Else: Generate a `chargeReference` (UUID). Call `order.initiatePayment(chargeReference)` → status = `PAYMENT_PENDING`. Publish `SalesOrderPaymentInitiatedEvent` with full charge details. Return `orderId` + `chargeReference` to caller.
+1. Create `SalesOrder` (status = RESERVING_STOCK / PENDING)
+2. `repository.save()` publishes `SalesOrderCreatedEvent` via transactional Outbox.
+3. `commerce:inventory` listens to `SalesOrderCreatedEvent`, locks inventory rows (`PESSIMISTIC_WRITE`), and asynchronously publishes `StockReservedEvent` or `StockReservationFailedEvent`.
+4. On `StockReservedEvent`: if paymentMethod == CASH, order completes and publishes `PosSaleCompletedEvent`. Else, order transitions to `PAYMENT_PENDING` and publishes `SalesOrderPaymentInitiatedEvent`.
+5. On `StockReservationFailedEvent`: order marks `FAILED` and notifies cashier via WebSocket.
 
-> **Architecture note:** `PayInitializeChargePort` was a synchronous cross-module write port and has been **removed**. `pay:charges` now listens to `SalesOrderPaymentInitiatedEvent` and creates the `Charge` record asynchronously. Commerce stores the `chargeReference` as part of the order so `ChargeSuccessfulEvent` / `ChargeFailedEvent` can be correlated back via `sourceReferenceId`.
+> **Architecture note:** Synchronous cross-module writes between `storefront` and `inventory` are prohibited. Stock reservation is orchestrated asynchronously through Kafka domain events (`SalesOrderCreatedEvent`, `StockReservedEvent`, `StockReservationFailedEvent`, `PosSaleCompletedEvent`, `PosSaleFailedEvent`).
 
 ---
 
@@ -327,7 +328,7 @@ record CompletePaymentCommand(Long salesOrderId)
 ```
 **Handler:** `CompletePaymentHandler` | **Response:** `void`  
 **Invocation source:** `ChargeSuccessfulListener`  
-**Flow:** Load `SalesOrder` → `inventory.deductStock()` (converts reserved → sold) → `order.completePayment()` → `repository.save()` → `PosSaleCompletedEvent` published
+**Flow:** Load `SalesOrder` → `order.completePayment()` → `repository.save()` → `PosSaleCompletedEvent` published → `commerce:inventory` listens to `PosSaleCompletedEvent` and deducts reserved stock asynchronously.
 
 ---
 
@@ -337,7 +338,7 @@ record FailPaymentCommand(Long salesOrderId, String reason)
 ```
 **Handler:** `FailPaymentHandler` | **Response:** `void`  
 **Invocation source:** `ChargeFailedListener` or `StockReleaseScheduler` (timeout)  
-**Flow:** Load `SalesOrder` → `inventory.releaseReservedStock()` → `order.failPayment(reason)` → `repository.save()` → `PosSaleFailedEvent` published
+**Flow:** Load `SalesOrder` → `order.failPayment(reason)` → `repository.save()` → `PosSaleFailedEvent` published → `commerce:inventory` listens to `PosSaleFailedEvent` and releases reserved stock asynchronously.
 
 ---
 
@@ -503,11 +504,9 @@ record ListActiveTablesQuery(Long outletId)
 | **Action** | Calls `FailPaymentHandler` for each → releases reserved stock |
 | **Response** | `void` |
 
-### Application Ports — `application/port/`
+### Application Ports
 
-| Port | Responsibility |
-|---|---|
-| `PayInitializeChargePort` | Initialize a charge in `atlashub-pay:charges` |
+Storefront performs no synchronous cross-module writes. Cross-module orchestration is handled asynchronously via Kafka domain events through the transactional outbox. Cross-module reads go through shared query port interfaces in `atlashub-shared/src/main/java/com/atlashub/shared/application/port`.
 
 ---
 
@@ -559,19 +558,30 @@ record ListActiveTablesQuery(Long outletId)
 ```
 ProcessPosCheckoutHandler
   1. Create SalesOrder (PENDING)
-  2. inventory.reserveStock() [PESSIMISTIC_WRITE] — InsufficientStockException
-  3. PayInitializeChargePort.initialize() → chargeReference
-  4. SalesOrder → PAYMENT_PENDING
+  2. repository.save() emits SalesOrderCreatedEvent (commerce-events topic)
 
-  SUCCESS: ChargeSuccessfulEvent (pay-events)
-    → ChargeSuccessfulListener → CompletePaymentHandler
-    → inventory.deductStock() [convert reserved → sold]
-    → order.completePayment() → PosSaleCompletedEvent
+Asynchronous Choreography Saga:
+  Step 1: inventory: SalesOrderCreatedListener
+    → ReserveStockForOrderHandler (locks rows PESSIMISTIC_WRITE)
+    → Success: StockReservedEvent
+    → Failure: StockReservationFailedEvent
 
-  FAILURE: ChargeFailedEvent (pay-events) OR 15-min timeout (StockReleaseScheduler)
-    → ChargeFailedListener / scheduler → FailPaymentHandler
-    → inventory.releaseReservedStock()
-    → order.failPayment() → PosSaleFailedEvent
+  Step 2: storefront: StockReservedListener
+    → Cash payment: CompletePaymentHandler → PosSaleCompletedEvent
+    → Non-cash: InitiatePaymentHandler → SalesOrderPaymentInitiatedEvent
+
+  Step 3: pay:charges: SalesOrderPaymentInitiatedListener
+    → Initialize charge and listen for customer payment
+    → Success: ChargeSuccessfulEvent
+    → Failure: ChargeFailedEvent
+
+  Step 4: storefront: ChargeSuccessfulListener / ChargeFailedListener
+    → ChargeSuccessfulEvent → CompletePaymentHandler → PosSaleCompletedEvent
+    → ChargeFailedEvent (or StockReleaseScheduler timeout) → FailPaymentHandler → PosSaleFailedEvent
+
+  Step 5: inventory: PosSaleCompletedListener / PosSaleFailedListener
+    → PosSaleCompletedEvent → DeductReservedStockHandler (reserved → sold)
+    → PosSaleFailedEvent → ReleaseReservedStockHandler (release reservation)
 ```
 
 ---

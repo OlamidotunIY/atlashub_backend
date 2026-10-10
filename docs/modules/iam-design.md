@@ -207,7 +207,8 @@ ApiKey (extended)
 | `pay:charges:create` | Initiate payment collection |
 | `pay:transfers:create` | Initiate a bank transfer |
 | `pay:transfers:approve` | Approve a bank transfer (maker-checker) |
-| `pay:ledger:read` | View ledger transactions |
+| `pay:ledger:read` | View financial accounts, balances, and unified transaction history |
+| `pay:ledger:manage` | Create optional business accounts and transfer between them |
 | `pay:splits:manage` | Create and manage split rules |
 | `pay:settlements:read` | View settlement history |
 

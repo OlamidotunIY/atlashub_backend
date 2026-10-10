@@ -2,6 +2,7 @@ package com.atlashub.pay.ledger.infrastructure.messaging.events;
 
 import java.math.BigDecimal;
 import java.time.ZonedDateTime;
+import com.atlashub.shared.domain.valueobject.Money;
 
 public final class LedgerInboundEvents {
     private LedgerInboundEvents() {
@@ -30,14 +31,24 @@ public final class LedgerInboundEvents {
     }
 
     public record ChargeSuccessfulEvent(
-            Long chargeId, Long organizationId, String environment, String chargeReference, String gatewayReference,
-            BigDecimal amount, String currency, String channel, String sourceSystem,
-            String sourceReferenceId, Long customerId, ZonedDateTime succeededAt) {
+            String eventId, Long aggregateId, ZonedDateTime occurredAt, String correlationId, Payload payload) {
+        public record Payload(Long organizationId, String environment, String chargeReference,
+                              String gatewayReference, Money amount, Money providerFee, String channel,
+                              String provider, String sourceSystem, String sourceReferenceId,
+                              String customerReferenceId, ZonedDateTime succeededAt) {}
+    }
+
+    public record ChargeRefundedEvent(
+            String eventId, Long aggregateId, ZonedDateTime occurredAt, String correlationId, Payload payload) {
+        public record Payload(Long organizationId, String environment, String chargeReference,
+                              String providerRefundReference, Money amount, String sourceSystem,
+                              String sourceReferenceId, String customerReferenceId, ZonedDateTime refundedAt) {}
     }
 
     public record ProviderSettlementReceivedEvent(
-            Long organizationId, String environment, String provider, String settlementReference,
-            BigDecimal amount, String currency, ZonedDateTime settledAt) {
+            String eventId, Long aggregateId, ZonedDateTime occurredAt, String correlationId, Payload payload) {
+        public record Payload(Long organizationId, String environment, String provider,
+                              String settlementReference, Money amount, ZonedDateTime settledAt) {}
     }
 
     public record ReservedAccountFundedEvent(

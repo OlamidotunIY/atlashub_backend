@@ -4,13 +4,14 @@ import com.atlashub.pay.accounts.domain.entities.BankingProviderRequest;
 import com.atlashub.pay.accounts.domain.entities.BusinessDepositAccount;
 import com.atlashub.pay.accounts.domain.entities.BusinessSubAccount;
 import com.atlashub.pay.accounts.domain.entities.ReservedAccount;
-import com.atlashub.pay.accounts.domain.ports.AnchorBankingPort;
-import com.atlashub.pay.accounts.domain.ports.AnchorBankingPort.ReservedAccountCustomer;
+import com.atlashub.shared.application.port.AnchorBankingPort;
+import com.atlashub.shared.application.port.AnchorBankingPort.ReservedAccountCustomer;
 import com.atlashub.pay.accounts.domain.repositories.BankingProviderRequestRepository;
 import com.atlashub.pay.accounts.domain.repositories.BusinessDepositAccountRepository;
 import com.atlashub.pay.accounts.domain.repositories.BusinessSubAccountRepository;
 import com.atlashub.pay.accounts.domain.repositories.ReservedAccountRepository;
 import com.atlashub.pay.accounts.domain.repositories.OrganizationBankingProfileRepository;
+import com.atlashub.pay.accounts.domain.valueobject.RequestStatus;
 import com.atlashub.shared.application.usecase.Command;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,7 +55,7 @@ public class DispatchBankingProviderRequestsHandler extends Command<DispatchBank
         } catch (RuntimeException error) {
             log.warn("Anchor request {} failed: {}", request.getRequestReference(), error.getMessage());
             request.fail(error.getMessage());
-            if (request.getStatus() == BankingProviderRequest.RequestStatus.FAILED) {
+            if (request.getStatus() == RequestStatus.FAILED) {
                 markTerminalFailure(request);
             }
         }

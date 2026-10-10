@@ -1,6 +1,6 @@
 package com.atlashub.pay.accounts.infrastructure.persistence.repositories;
 
-import com.atlashub.pay.accounts.domain.entities.BankingProviderRequest.RequestStatus;
+import com.atlashub.pay.accounts.domain.valueobject.RequestStatus;
 import com.atlashub.pay.accounts.infrastructure.persistence.entities.BankingProviderRequestJpa;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

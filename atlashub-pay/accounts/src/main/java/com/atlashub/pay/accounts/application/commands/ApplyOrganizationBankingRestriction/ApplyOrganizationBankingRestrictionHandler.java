@@ -10,6 +10,7 @@ import com.atlashub.pay.accounts.domain.repositories.OrganizationBankingProfileR
 import com.atlashub.pay.accounts.domain.repositories.ReservedAccountRepository;
 import com.atlashub.pay.accounts.domain.valueobject.BankingRestrictionType;
 import com.atlashub.pay.accounts.domain.valueobject.ExternalAccountStatus;
+import com.atlashub.pay.accounts.domain.valueobject.RequestType;
 import com.atlashub.shared.application.security.ApiEnvironment;
 import com.atlashub.shared.application.usecase.Command;
 import org.springframework.stereotype.Component;
@@ -79,9 +80,9 @@ public class ApplyOrganizationBankingRestrictionHandler
                                          OrganizationBankingProfile profile,
                                          BusinessDepositAccount account) {
         if (!command.restricted() && !profile.getActiveRestrictions().isEmpty()) return;
-        BankingProviderRequest.RequestType type = command.restricted()
-                ? BankingProviderRequest.RequestType.FREEZE_DEPOSIT
-                : BankingProviderRequest.RequestType.UNFREEZE_DEPOSIT;
+        RequestType type = command.restricted()
+                ? RequestType.FREEZE_DEPOSIT
+                : RequestType.UNFREEZE_DEPOSIT;
         String action = command.restricted() ? "freeze" : "unfreeze";
         String reference = "org-banking-" + action + "-" + command.organizationId() + "-"
                 + environment.name().toLowerCase() + "-" + command.operationId();

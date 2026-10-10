@@ -2,19 +2,16 @@
 
 ## Status and purpose
 
-This module is designed but is not yet included in `settings.gradle`; changes remain documentation-only until activation.
+This module is active and included in `settings.gradle`.
 
 `pay:charges` owns AtlasHub universal checkout and inbound payment attempts. Businesses request a channel, not an internal online gateway:
 
 | Channel | AtlasHub routing |
 |---|---|
-| Bank transfer | Anchor banking/reserved-account collection |
 | Card | Paystack initially |
 | USSD | Paystack initially |
-| POS | The terminal provider selected by the business: Paystack, Moniepoint, or OPay |
-| International card | Stripe after country expansion |
 
-Provider names and merchant identifiers are infrastructure details. Public card/USSD APIs expose only AtlasHub channels, capability state, and checkout instructions. POS setup exposes the supported terminal-provider choices because the business must choose its physical terminal.
+Provider names and merchant identifiers are infrastructure details. Public APIs expose only AtlasHub card/USSD channels, capability state, and checkout instructions.
 
 The module never registers a business with a provider. It reads an active profile through `PaymentProviderProfileQueryPort`; `pay:accounts` owns capability intent and `platform:compliance` owns provider onboarding.
 
@@ -26,7 +23,7 @@ Every charge has `ApiEnvironment TEST | LIVE`.
 - Idempotency is unique by `(organizationId, environment, reference)`.
 - TEST uses sandbox resources only and never falls back to LIVE.
 - LIVE requires an active provider profile for the requested capability.
-- If a provider has no sandbox capability, AtlasHub may use a deterministic TEST simulator. Simulated facts are explicitly marked and cannot affect LIVE balances, settlements, or webhooks.
+- TEST uses AtlasHub's shared Paystack test profile and real Paystack sandbox verification; it never calls Anchor.
 - Commerce TEST checkout creates and consumes TEST charges only.
 
 ## `Charge` aggregate
@@ -34,12 +31,14 @@ Every charge has `ApiEnvironment TEST | LIVE`.
 ```text
 id, organizationId, environment, reference
 amount, currency, channel
-provider, providerProfileId, providerReference?
+provider, providerProfileId, providerReference?, providerFee?
 sourceSystem, sourceReferenceId, customerReferenceId?
 terminalAssignmentId?
 status: INITIALIZED | PENDING | SUCCESSFUL | FAILED | EXPIRED
         | REFUND_PENDING | PARTIALLY_REFUNDED | REFUNDED
 checkoutInstructions?, failureCode?, failureMessage?
+providerRefundReference?, refundReason?, refundedAt?
+disputeReference?, disputeStatus?, disputeReason?
 successfulAt?, expiresAt, createdAt, updatedAt, version
 ```
 
@@ -70,39 +69,37 @@ No active profile means capability-not-enabled. The error may direct the busines
 
 1. returns the existing organization/environment/reference result;
 2. resolves the active capability/provider profile;
-3. validates terminal ownership for POS;
-4. persists local intent and a provider-dispatch record;
-5. lets a worker call the provider outside the database transaction;
-6. stores safe checkout instructions;
-7. waits for verified webhook/reconciliation facts for final state.
+3. persists local intent before the remote call;
+4. calls the provider outside a database transaction;
+5. stores safe checkout instructions;
+6. waits for a signature-verified webhook and server-side transaction verification for final state.
 
 `ApplyChargeProviderStatusCommand` is called only by provider webhook/reconciliation listeners. It validates environment, provider profile, reference, amount, and currency before applying an idempotent transition.
 
-`RefundChargeCommand` persists refund intent. Provider completion is asynchronous; initiation is never reported as a completed refund.
+`RefundChargeCommand` persists refund intent before calling the provider, creates a full Paystack refund with a stable
+idempotency key, and stores the returned refund reference. Completion remains asynchronous; only verified
+`refund.processed` changes the charge to `REFUNDED`. `refund.failed` restores the charge to `SUCCESSFUL` with an
+auditable failure reason so the operation can be retried.
 
 ## Provider port and adapters
 
-The domain port is provider-neutral:
+The shared application port is provider-neutral:
 
 ```java
 public interface ChargeProviderPort {
     ChargeInitializationResult initialize(ChargeProviderRequest request);
-    RefundInitializationResult refund(RefundProviderRequest request);
+    RefundResult refund(RefundRequest request);
     ChargeProviderStatus fetchStatus(String providerReference, ApiEnvironment environment);
 }
 ```
 
 Provider modules own credentials, endpoints, signatures, DTOs, timeouts, and retry classification:
 
-- Paystack: card, USSD, Paystack terminal.
-- Moniepoint: Moniepoint terminal only.
-- OPay: OPay terminal only.
-- Anchor: no card charge API; Anchor supplies bank-transfer receipt facts.
-- Stripe: future international card capability.
+- Paystack: card and USSD.
 
 ## Webhooks and reconciliation
 
-A provider-specific public endpoint verifies the signature against the raw body before parsing and publishes one verified provider event containing provider event ID and environment. The charge listener deduplicates `(provider, environment, providerEventId, consumer)` and invokes a command only; it never uses repositories.
+A provider-specific public endpoint verifies the signature against the raw body before parsing and publishes one verified provider event containing provider event ID and environment. The charge listener deduplicates `(provider, environment, providerEventId, consumer)` and invokes a command only; it never uses repositories. It handles `charge.success`, charge failure, and Paystack's refund lifecycle events; unrelated transfer events are ignored.
 
 Unknown references, amount/currency conflicts, and state regressions are quarantined for reconciliation. Remote calls never run inside database transactions.
 
@@ -116,9 +113,14 @@ All events include `organizationId` and `environment`:
 - `ChargeExpiredEvent`
 - `ChargeRefundInitiatedEvent`
 - `ChargeRefundedEvent`
-- `ProviderSettlementReceivedEvent`
+- `ChargeDisputedEvent`
+- `ChargeDisputeResolvedEvent`
 
 Charge success is not provider settlement. `pay:ledger` posts a successful Paystack/terminal collection through `PROVIDER_CLEARING`. A later `ProviderSettlementReceivedEvent` clears that receivable into confirmed bank/settlement funds without recognizing the sale twice.
+
+Charge lifecycle events also carry the provider-neutral charge reference, amount, channel/provider attribution,
+source system/reference, and optional customer reference needed by `pay:tx-query`. `ChargeInitializedEvent` creates
+the pending unified-transaction projection; verified success/failure/refund/dispute events advance it idempotently.
 
 ## Commerce contract
 
@@ -126,7 +128,7 @@ Commerce publishes `CheckoutPaymentRequestedEvent`; charges later publishes succ
 
 ## API and persistence
 
-Controllers use `AuthenticatedPrincipal.activeOrganizationId()` and `.environment()`:
+Controllers use `AuthenticatedPrincipal.activeOrganizationId()` and `.apiEnvironment()`:
 
 | Method | Path | Purpose |
 |---|---|---|
@@ -144,6 +146,7 @@ Persistence requirements:
 - webhook inbox/delivery tracker;
 - strict TEST/LIVE separation in records, cache keys, events, ledger postings, and reconciliation.
 
-## Activation checklist
+## Runtime boundary
 
-Before adding this module to `settings.gradle`: implement and test the aggregate, provider-profile read, provider-neutral commands, Paystack card/USSD adapter, terminal assignment contracts, verified webhooks, refunds, reconciliation, and the TEST simulator fallback. Verify there is no synchronous cross-module write and no provider leakage in public card/USSD APIs.
+The module depends only on provider-neutral shared ports. `atlashub-infrastructure:paystack` implements those ports;
+no charges application or domain code imports Paystack infrastructure or provider DTOs.

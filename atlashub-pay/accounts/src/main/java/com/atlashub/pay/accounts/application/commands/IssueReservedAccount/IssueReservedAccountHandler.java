@@ -11,6 +11,7 @@ import com.atlashub.pay.accounts.domain.repositories.ReservedAccountRepository;
 import com.atlashub.pay.accounts.domain.exceptions.InvalidBankingStateException;
 import com.atlashub.pay.accounts.domain.valueobject.ExternalAccountStatus;
 import com.atlashub.pay.accounts.domain.valueobject.ReservedAccountOwnerType;
+import com.atlashub.pay.accounts.domain.valueobject.RequestType;
 import com.atlashub.shared.application.usecase.Command;
 import com.atlashub.shared.domain.valueobject.CurrencyCode;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -37,7 +38,7 @@ public class IssueReservedAccountHandler extends Command<IssueReservedAccountCom
     @Override
     @PreAuthorize("hasAuthority('pay:accounts:create')")
     public Long execute(IssueReservedAccountCommand command) {
-        ReservedAccountOwnerType ownerType = ReservedAccountOwnerType.valueOf(command.ownerType().toUpperCase());
+        ReservedAccountOwnerType ownerType = command.ownerType();
         ApiEnvironment environment = ApiEnvironment.parse(command.apiEnvironment());
         ReservedAccount existing = reservedAccountRepository.findByRequestReferenceAndEnvironment(command.idempotencyKey(), environment)
                 .orElse(null);
@@ -51,6 +52,9 @@ public class IssueReservedAccountHandler extends Command<IssueReservedAccountCom
         if (!profile.isUsable()) {
             throw new InvalidBankingStateException("Organization banking is not active");
         }
+        if (profile.getBusinessSubAccountId() == null) {
+            throw new InvalidBankingStateException("Transfer collection is not enabled for this organization");
+        }
         BusinessSubAccount subAccount = subAccountRepository.findById(profile.getBusinessSubAccountId())
                 .filter(value -> value.getStatus() == ExternalAccountStatus.ACTIVE)
                 .orElseThrow(() -> new InvalidBankingStateException("Organization subaccount is not active"));
@@ -60,7 +64,7 @@ public class IssueReservedAccountHandler extends Command<IssueReservedAccountCom
                 command.provider(), command.idempotencyKey(), CurrencyCode.NGN);
         reservedAccountRepository.save(account);
         providerRequestRepository.save(BankingProviderRequest.create(
-                providerRequestRepository.nextIdentity(), BankingProviderRequest.RequestType.RESERVED_ACCOUNT,
+                providerRequestRepository.nextIdentity(), RequestType.RESERVED_ACCOUNT,
                 account.getId(), command.idempotencyKey(), command.apiEnvironment(),
                 command.customer().providerCustomerId(), subAccount.getAnchorSubAccountId(),
                 command.provider(), command.customer().type(), command.customer().referenceId(),

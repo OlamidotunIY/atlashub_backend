@@ -152,10 +152,39 @@ ReturnItem
 
 ---
 
+### `StockReservation` (Aggregate Root)
+
+```
+StockReservation
+├── id             : Long
+├── salesOrderId   : Long
+├── organizationId : Long
+├── outletId       : Long
+├── items          : List<StockReservationItem>
+├── status         : ReservationStatus   ← ACTIVE | FULFILLED | RELEASED | FAILED
+├── failureReason  : String              ← nullable
+├── createdAt      : ZonedDateTime
+└── updatedAt      : ZonedDateTime
+```
+
+### `StockReservationItem` (Entity)
+
+```
+StockReservationItem
+├── id             : Long
+├── reservationId  : Long
+├── productId      : Long
+└── quantity       : Integer
+```
+
+---
+
 ### Domain Events — `com.atlashub.commerce.inventory.domain.events`
 
 | Event | Published When | Consumed By |
 |---|---|---|
+| `StockReservedEvent` | Stock successfully reserved for order | `commerce-storefront` (triggers payment initiation) |
+| `StockReservationFailedEvent` | Stock insufficient or missing | `commerce-storefront` (marks order FAILED) |
 | `StockAdjustedEvent` | Manual stock adjustment | `accounting` (Dr Loss/Gain, Cr/Dr Inventory) |
 | `StockTransferApprovedEvent` | Transfer approved | `logistics` (create inter-outlet shipment if inter-city) |
 | `StockTransferReceivedEvent` | Transfer received | `pay` (inter-outlet ledger entry), `accounting` |
@@ -280,6 +309,36 @@ record ApproveCustomerReturnCommand(Long returnId)
 
 ---
 
+#### `ReserveStockForOrderCommand`
+```java
+record ReserveStockForOrderCommand(Long salesOrderId, Long organizationId, Long outletId, List<OrderItemDto> items)
+```
+**Handler:** `ReserveStockForOrderHandler` | **Response:** `ReserveStockForOrderResult(Long reservationId, ReservationStatus status, boolean success, String message)`  
+**Invocation source:** `SalesOrderCreatedListener`  
+**Flow:** Idempotent check on `salesOrderId` → lock inventory rows with `PESSIMISTIC_WRITE` → if stock available: call `inventory.reserveStock(qty)`, confirm `StockReservation` → `repository.save()` publishes `StockReservedEvent`. If insufficient: fail `StockReservation` → `repository.save()` publishes `StockReservationFailedEvent`.
+
+---
+
+#### `DeductReservedStockCommand`
+```java
+record DeductReservedStockCommand(Long salesOrderId)
+```
+**Handler:** `DeductReservedStockHandler` | **Response:** `void`  
+**Invocation source:** `PosSaleCompletedListener`  
+**Flow:** Load `StockReservation` by `salesOrderId` → for each item: `inventory.deductStock(qty)` → fulfill reservation → `repository.save()`.
+
+---
+
+#### `ReleaseReservedStockCommand`
+```java
+record ReleaseReservedStockCommand(Long salesOrderId)
+```
+**Handler:** `ReleaseReservedStockHandler` | **Response:** `void`  
+**Invocation source:** `PosSaleFailedListener`  
+**Flow:** Load `StockReservation` by `salesOrderId` → for each item: `inventory.releaseReservedStock(qty)` → release reservation → `repository.save()`.
+
+---
+
 ### Queries — `com.atlashub.commerce.inventory.application.queries`
 
 #### `GetInventoryLevelQuery`
@@ -334,6 +393,8 @@ record ListStockTransfersQuery(Long organizationId, TransferStatus status, int p
 | `StockTransferItemJpaEntity` | `commerce_stock_transfer_items` | — |
 | `CustomerReturnJpaEntity` | `commerce_customer_returns` | `@Version` optimistic |
 | `ReturnItemJpaEntity` | `commerce_return_items` | — |
+| `StockReservationJpaEntity` | `commerce_stock_reservations` | `@Version` optimistic |
+| `StockReservationItemJpaEntity` | `commerce_stock_reservation_items` | — |
 
 **Spring Data Repositories:**
 
@@ -349,6 +410,10 @@ StockTransferJpaRepository
 
 CustomerReturnJpaRepository
   + findBySalesOrderId(Long salesOrderId): Optional<CustomerReturnJpaEntity>
+
+StockReservationJpaRepository
+  + findBySalesOrderId(Long salesOrderId): Optional<StockReservationJpaEntity>
+  + findByOrganizationIdAndStatus(Long orgId, ReservationStatus status): List<StockReservationJpaEntity>
 ```
 
 **Repository Adapters:**
@@ -357,6 +422,7 @@ CustomerReturnJpaRepository
 - `StockCountRepositoryAdapter` → `commerce_stock_count_seq`
 - `StockTransferRepositoryAdapter` → `commerce_stock_transfer_seq`
 - `CustomerReturnRepositoryAdapter` → `commerce_customer_return_seq`
+- `StockReservationRepositoryAdapter` → `commerce_stock_reservation_seq`
 
 ### Listeners — `infrastructure/messaging/listeners/`
 
@@ -368,6 +434,36 @@ CustomerReturnJpaRepository
 | **Event consumed** | `ProductCreatedEvent` |
 | **Payload** | `productId`, `organizationId`, `isService`, `outletIds` |
 | **Action** | Creates `Inventory` record (`quantity = 0`) for each outlet if `isService == false` |
+
+#### `SalesOrderCreatedListener` (Checkout Saga Step 2)
+| Attribute | Value |
+|---|---|
+| **Topic** | `commerce-events` |
+| **Group ID** | `commerce-inventory-order-created` |
+| **Event consumed** | `SalesOrderCreatedEvent` |
+| **Payload** | `salesOrderId`, `organizationId`, `outletId`, `items[]` |
+| **Command called** | `ReserveStockForOrderHandler` |
+| **Flow** | Asynchronously reserves stock with pessimistic row lock; publishes `StockReservedEvent` or `StockReservationFailedEvent` via Outbox. |
+
+#### `PosSaleCompletedListener` (Checkout Saga Finalization)
+| Attribute | Value |
+|---|---|
+| **Topic** | `commerce-events` |
+| **Group ID** | `commerce-inventory-sale-completed` |
+| **Event consumed** | `PosSaleCompletedEvent` |
+| **Payload** | `salesOrderId`, `organizationId`, `outletId` |
+| **Command called** | `DeductReservedStockHandler` |
+| **Flow** | Permanently converts reserved stock to deducted stock and fulfills the reservation. |
+
+#### `PosSaleFailedListener` (Checkout Saga Compensation)
+| Attribute | Value |
+|---|---|
+| **Topic** | `commerce-events` |
+| **Group ID** | `commerce-inventory-sale-failed` |
+| **Event consumed** | `PosSaleFailedEvent` |
+| **Payload** | `salesOrderId`, `organizationId`, `reason` |
+| **Command called** | `ReleaseReservedStockHandler` |
+| **Flow** | Releases reserved stock back to available inventory and marks reservation released. |
 
 #### `ReturnShipmentReceivedListener`
 
