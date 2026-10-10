@@ -13,6 +13,7 @@ public record ChargeRefundedEvent(
         Payload payload
 ) implements DomainEvent<ChargeRefundedEvent.Payload> {
     public record Payload(Long organizationId, String environment, String chargeReference,
-                          String providerRefundReference, Money amount, ZonedDateTime refundedAt) {
+                          String providerRefundReference, Money amount, String sourceSystem,
+                          String sourceReferenceId, String customerReferenceId, ZonedDateTime refundedAt) {
     }
 }

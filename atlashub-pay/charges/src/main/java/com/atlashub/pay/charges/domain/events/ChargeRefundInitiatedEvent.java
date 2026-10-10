@@ -18,6 +18,9 @@ public record ChargeRefundInitiatedEvent(
             String environment,
             String chargeReference,
             Money amount,
+            String sourceSystem,
+            String sourceReferenceId,
+            String customerReferenceId,
             String reason,
             ZonedDateTime initiatedAt
     ) {

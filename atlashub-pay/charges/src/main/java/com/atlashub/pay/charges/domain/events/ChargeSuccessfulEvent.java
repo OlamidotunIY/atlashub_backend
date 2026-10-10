@@ -8,7 +8,7 @@ import java.time.ZonedDateTime;
 public record ChargeSuccessfulEvent(String eventId, Long aggregateId, ZonedDateTime occurredAt, String correlationId,
                                     Payload payload) implements DomainEvent<ChargeSuccessfulEvent.Payload> {
     public record Payload(Long organizationId, String environment, String chargeReference, String gatewayReference,
-                          Money amount, String channel, String sourceSystem,
-                          String sourceReferenceId, ZonedDateTime succeededAt) {
+                          Money amount, Money providerFee, String channel, String provider, String sourceSystem,
+                          String sourceReferenceId, String customerReferenceId, ZonedDateTime succeededAt) {
     }
 }

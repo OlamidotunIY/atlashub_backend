@@ -6,6 +6,7 @@ import com.atlashub.pay.charges.domain.events.ChargeRefundedEvent;
 import com.atlashub.pay.charges.domain.events.ChargeSuccessfulEvent;
 import com.atlashub.pay.charges.domain.events.ChargeDisputedEvent;
 import com.atlashub.pay.charges.domain.events.ChargeDisputeResolvedEvent;
+import com.atlashub.pay.charges.domain.events.ChargeInitializedEvent;
 import com.atlashub.pay.charges.domain.exceptions.InvalidChargeException;
 import com.atlashub.pay.charges.domain.valueobject.ChargeChannel;
 import com.atlashub.pay.charges.domain.valueobject.ChargeStatus;
@@ -123,6 +124,10 @@ public class Charge extends AggregateRoot<Long> {
         this.accessCode = accessCode;
         status = ChargeStatus.PENDING;
         touch();
+        registerEvent(new ChargeInitializedEvent(UUID.randomUUID().toString(), id, updatedAt,
+                CorrelationId.getOrCreate(), new ChargeInitializedEvent.Payload(organizationId, environment.name(),
+                reference, amount, channel.name(), provider.name(), sourceSystem, sourceReferenceId,
+                customerReferenceId, updatedAt)));
     }
 
     public void succeed(String gatewayReference, Money confirmedAmount, CurrencyCode confirmedCurrency) {
@@ -147,8 +152,8 @@ public class Charge extends AggregateRoot<Long> {
         registerEvent(
                 new ChargeSuccessfulEvent(UUID.randomUUID().toString(), id, updatedAt, CorrelationId.getOrCreate(),
                         new ChargeSuccessfulEvent.Payload(organizationId, environment.name(), reference,
-                                gatewayReference, amount, channel.name(), sourceSystem, sourceReferenceId,
-                                successfulAt)));
+                        gatewayReference, amount, providerFee, channel.name(), provider.name(), sourceSystem,
+                        sourceReferenceId, customerReferenceId, successfulAt)));
     }
 
     public void fail(String reason) {
@@ -159,8 +164,8 @@ public class Charge extends AggregateRoot<Long> {
         failureMessage = reason;
         touch();
         registerEvent(new ChargeFailedEvent(UUID.randomUUID().toString(), id, updatedAt, CorrelationId.getOrCreate(),
-                new ChargeFailedEvent.Payload(organizationId, environment.name(), reference, sourceSystem,
-                        sourceReferenceId, reason, updatedAt)));
+                new ChargeFailedEvent.Payload(organizationId, environment.name(), reference, amount, channel.name(),
+                        provider.name(), sourceSystem, sourceReferenceId, customerReferenceId, reason, updatedAt)));
     }
 
     public void initiateRefund(String reason) {
@@ -185,6 +190,9 @@ public class Charge extends AggregateRoot<Long> {
                         environment.name(),
                         reference,
                         amount,
+                        sourceSystem,
+                        sourceReferenceId,
+                        customerReferenceId,
                         reason.trim(),
                         updatedAt
                 )
@@ -221,7 +229,8 @@ public class Charge extends AggregateRoot<Long> {
         touch();
         registerEvent(new ChargeRefundedEvent(UUID.randomUUID().toString(), id, updatedAt,
                 CorrelationId.getOrCreate(), new ChargeRefundedEvent.Payload(organizationId, environment.name(),
-                reference, providerRefundReference, amount, refundedAt)));
+                reference, providerRefundReference, amount, sourceSystem, sourceReferenceId,
+                customerReferenceId, refundedAt)));
     }
 
     public void failRefund(String reason) {
@@ -243,7 +252,8 @@ public class Charge extends AggregateRoot<Long> {
         touch();
         if (newlyOpened) registerEvent(new ChargeDisputedEvent(UUID.randomUUID().toString(), id, updatedAt,
                 CorrelationId.getOrCreate(), new ChargeDisputedEvent.Payload(organizationId, environment.name(),
-                this.reference, disputeReference, amount, disputeReason, updatedAt)));
+                this.reference, disputeReference, amount, sourceSystem, sourceReferenceId,
+                customerReferenceId, disputeReason, updatedAt)));
     }
 
     public void resolveDispute(String reference, String resolution) {
@@ -256,7 +266,8 @@ public class Charge extends AggregateRoot<Long> {
         touch();
         registerEvent(new ChargeDisputeResolvedEvent(UUID.randomUUID().toString(), id, updatedAt,
                 CorrelationId.getOrCreate(), new ChargeDisputeResolvedEvent.Payload(organizationId,
-                environment.name(), this.reference, disputeReference, disputeReason, updatedAt)));
+                environment.name(), this.reference, disputeReference, sourceSystem, sourceReferenceId,
+                customerReferenceId, disputeReason, updatedAt)));
     }
 
     private void validate() {

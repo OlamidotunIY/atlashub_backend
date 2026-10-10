@@ -1,6 +1,7 @@
 package com.atlashub.pay.charges.domain.entities;
 
 import com.atlashub.pay.charges.domain.events.ChargeFailedEvent;
+import com.atlashub.pay.charges.domain.events.ChargeInitializedEvent;
 import com.atlashub.pay.charges.domain.events.ChargeRefundInitiatedEvent;
 import com.atlashub.pay.charges.domain.events.ChargeSuccessfulEvent;
 import com.atlashub.pay.charges.domain.exceptions.InvalidChargeException;
@@ -44,6 +45,7 @@ class ChargeTest {
     private Charge createPendingCharge() {
         Charge charge = createInitializedCharge();
         charge.markPending("PAYSTACK-REF-100", "https://checkout.paystack.com/123", "AUTH_CODE_123");
+        charge.pullDomainEvents();
         return charge;
     }
 
@@ -86,6 +88,10 @@ class ChargeTest {
         assertEquals("PROV-REF", charge.getProviderReference());
         assertEquals("https://pay.com", charge.getAuthorizationUrl());
         assertEquals("ACCESS-123", charge.getAccessCode());
+
+        List<DomainEvent<?>> events = charge.pullDomainEvents();
+        assertEquals(1, events.size());
+        assertTrue(events.get(0) instanceof ChargeInitializedEvent);
     }
 
     @Test
