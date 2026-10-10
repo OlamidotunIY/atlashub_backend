@@ -44,5 +44,6 @@ Checkout is environment-bound. `TEST` commerce orders publish `CheckoutPaymentRe
 ```groovy
 // settings.gradle
 include 'atlashub-commerce'
+include 'atlashub-commerce:catalog'
 ```
 

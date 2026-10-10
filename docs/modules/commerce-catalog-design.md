@@ -4,7 +4,7 @@
 
 The `catalog` subpackage manages the organization's product catalog: products, variants, pricing, discounts, suppliers, purchase orders, and marketplace vendors. This is distinct from the platform-level `atlashub-platform:catalog` (which manages AtlasHub's own subscription products). Every organization manages its own catalog here.
 
-Gradle module: `atlashub-commerce`  
+Gradle module: `atlashub-commerce:catalog`  
 Package: `com.atlashub.commerce.catalog`
 
 ---

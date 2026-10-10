@@ -35,34 +35,44 @@ Compensation works in reverse: a failure event triggers compensating handlers in
 ### Steps
 
 ```
-1. Commerce: CreateSalesOrderHandler
-   → SalesOrder created (PENDING)
-   → Stock reservation placed (Inventory)
-   → SalesOrderCreatedEvent published
+1. Commerce (Storefront): ProcessPosCheckoutHandler / CreateSalesOrderHandler
+   → SalesOrder created (status: RESERVING_STOCK / PENDING)
+   → SalesOrderCreatedEvent published via Outbox
 
-2. Pay: InitializeChargeHandler (listens on SalesOrderCreatedEvent)
+2. Commerce (Inventory): SalesOrderCreatedListener → ReserveStockForOrderHandler
+   → Pessimistic write lock on Inventory rows
+   → If available: reserves stock, confirms StockReservation → StockReservedEvent published via Outbox
+   → If unavailable: fails StockReservation → StockReservationFailedEvent published via Outbox
+
+3a. On StockReservationFailedEvent (Failure Path before Payment):
+    → Commerce (Storefront): FailSalesOrderHandler marks SalesOrder FAILED
+    → WebSocket broadcasts failure to cashier / client
+
+3b. On StockReservedEvent (Proceed to Payment):
+    → If CASH: Storefront marks SalesOrder COMPLETED → PosSaleCompletedEvent published
+    → If Non-Cash: Storefront transitions SalesOrder to PAYMENT_PENDING → SalesOrderPaymentInitiatedEvent published
+
+4. Pay: InitializeChargeHandler (listens on SalesOrderPaymentInitiatedEvent)
    → Charge record created (PAYMENT_PENDING)
    → Payment gateway called
-   → ChargeInitializedEvent published
 
-3a. SUCCESS PATH — Pay: HandleChargeSuccessHandler (listens on gateway webhook)
-    → Charge transitions to SUCCESSFUL
-    → ChargeSuccessfulEvent published
-    → Commerce: CompletePosSaleHandler (listens on ChargeSuccessfulEvent)
-        → SalesOrder → COMPLETED
-        → Stock permanently deducted
-        → PosSaleCompletedEvent published
+5a. SUCCESS PATH — Pay: HandleChargeSuccessHandler
+    → Charge transitions to SUCCESSFUL → ChargeSuccessfulEvent published
+    → Commerce (Storefront): CompletePaymentHandler (listens on ChargeSuccessfulEvent)
+        → SalesOrder → COMPLETED → PosSaleCompletedEvent published
+    → Commerce (Inventory): PosSaleCompletedListener → DeductReservedStockHandler
+        → StockReservation → FULFILLED → stock permanently deducted
     → Accounting: PostSaleJournalEntryHandler (listens on PosSaleCompletedEvent)
     → Notifications: SendReceiptHandler (listens on PosSaleCompletedEvent)
     → Analytics: UpdateDailySalesProjectionHandler (listens on PosSaleCompletedEvent)
 
-3b. FAILURE PATH — Pay: HandleChargeFailedHandler (listens on gateway webhook or timeout)
-    → Charge transitions to FAILED
-    → ChargeFailedEvent published
-    → Commerce: FailPosSaleHandler (listens on ChargeFailedEvent)
-        → SalesOrder → FAILED
-        → Stock reservation released
-        → PosSaleFailedEvent published
+5b. FAILURE PATH — Pay: HandleChargeFailedHandler (or timeout)
+    → Charge transitions to FAILED → ChargeFailedEvent published
+    → Commerce (Storefront): FailPaymentHandler (listens on ChargeFailedEvent)
+        → SalesOrder → FAILED → PosSaleFailedEvent published
+    → Commerce (Inventory): PosSaleFailedListener → ReleaseReservedStockHandler
+        → StockReservation → RELEASED → reserved stock released back to available
+    → Notifications: NotifyCashierHandler (listens on PosSaleFailedEvent)
 ```
 
 ### Compensation
