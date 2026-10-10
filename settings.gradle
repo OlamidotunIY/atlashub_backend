@@ -39,3 +39,7 @@ include 'atlashub-commerce'
 include 'atlashub-commerce:catalog'
 include 'atlashub-commerce:inventory'
 include 'atlashub-commerce:storefront'
+
+// Accounting
+include 'atlashub-accounting'
+include 'atlashub-accounting:gl'

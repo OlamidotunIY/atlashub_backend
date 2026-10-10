@@ -34,6 +34,9 @@ dependencies {
     implementation project(':atlashub-commerce:inventory')
     implementation project(':atlashub-commerce:storefront')
 
+    // Accounting Modules
+    implementation project(':atlashub-accounting:gl')
+
     // Infrastructure Modules
     implementation project(':atlashub-infrastructure:eventbus')
     implementation project(':atlashub-infrastructure:anchor')
