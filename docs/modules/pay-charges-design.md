@@ -115,9 +115,12 @@ All events include `organizationId` and `environment`:
 - `ChargeRefundedEvent`
 - `ChargeDisputedEvent`
 - `ChargeDisputeResolvedEvent`
-- `ProviderSettlementReceivedEvent`
 
 Charge success is not provider settlement. `pay:ledger` posts a successful Paystack/terminal collection through `PROVIDER_CLEARING`. A later `ProviderSettlementReceivedEvent` clears that receivable into confirmed bank/settlement funds without recognizing the sale twice.
+
+Charge lifecycle events also carry the provider-neutral charge reference, amount, channel/provider attribution,
+source system/reference, and optional customer reference needed by `pay:tx-query`. `ChargeInitializedEvent` creates
+the pending unified-transaction projection; verified success/failure/refund/dispute events advance it idempotently.
 
 ## Commerce contract
 
@@ -125,7 +128,7 @@ Commerce publishes `CheckoutPaymentRequestedEvent`; charges later publishes succ
 
 ## API and persistence
 
-Controllers use `AuthenticatedPrincipal.activeOrganizationId()` and `.environment()`:
+Controllers use `AuthenticatedPrincipal.activeOrganizationId()` and `.apiEnvironment()`:
 
 | Method | Path | Purpose |
 |---|---|---|

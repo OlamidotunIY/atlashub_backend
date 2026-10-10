@@ -6,7 +6,7 @@ The `atlashub-pay` module is the **financial rails** of AtlasHub. Every movement
 
 Pay is also **B2B2C**: organizations subscribing to Atlas Pay can expose the payment infrastructure to their own end-customers via API key + HMAC authentication.
 
-The module is a parent Gradle project with nine independent submodules.
+The module is a parent Gradle project with ten independent submodules.
 
 ---
 
@@ -37,16 +37,11 @@ The module is a parent Gradle project with nine independent submodules.
 ### The Shadow Ledger Principle
 `atlashub-pay:ledger` maintains an internal double-entry ledger that shadows real money held at Anchor/Paystack. Every external money event produces a `LedgerTransaction` — giving AtlasHub a real-time, independently auditable balance per organization.
 
-### Internal Account Structure (bootstrapped on KYC approval)
-| Account | Type |
-|---|---|
-| Operating Account | Asset |
-| Payroll Reserve Account | Asset |
-| Tax Holding Account | Liability |
-| Escrow Account | Asset |
-| Suspense Account | Asset |
-| Till Accounts (per outlet) | Asset |
-| Split Holding Account | Asset |
+### Internal Account Structure
+
+Registration idempotently bootstraps `OPERATING`, `PROVIDER_CLEARING`, and `SUSPENSE` in both TEST and LIVE.
+Businesses create optional payroll, tax, escrow, split, and custom accounts when needed; outlet and party accounts are
+created lazily by their owning workflows.
 
 ### Critical Kafka Events
 | Event | Consumers |
@@ -54,8 +49,8 @@ The module is a parent Gradle project with nine independent submodules.
 | `ChargeSuccessfulEvent` | `commerce`, `billing`, `ledger`, `webhooks`, `tx-query`, `notifications` |
 | `PayoutCompletedEvent` | `hr`, `accounting`, `notifications`, `webhooks`, `tx-query` |
 | `BulkPayoutCompletedEvent` | `hr` (mark payroll DISBURSED) |
-| `LedgerTransactionPostedEvent` | `accounting:gl` (bridge listener) |
-| `SettlementConfirmedEvent` | `accounting`, `webhooks`, `tx-query` |
+| `LedgerTransactionPostedEvent` | `accounting:gl` (bridge listener), `pay:tx-query` |
+| `ProviderSettlementReceivedEvent` | `pay:ledger`, `accounting`, `webhooks`, `pay:tx-query` |
 | `PaymentHeld` / `PaymentBlocked` / `ControlledFundsFrozen` | `financing`, `notifications`, audit |
 
 ### Financing-Control Boundary

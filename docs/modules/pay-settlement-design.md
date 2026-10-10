@@ -59,7 +59,7 @@ Confirmation publishes `ProviderSettlementReceivedEvent`. `pay:ledger` consumes 
 
 | Event | Published When | Consumed By | Topic |
 |---|---|---|---|
-| `ProviderSettlementReceivedEvent` | Paystack payout is matched to an Anchor inbound credit | `pay:ledger`, `accounting:gl`, `notifications` | `pay-events` |
+| `ProviderSettlementReceivedEvent` | Paystack payout is matched to an Anchor inbound credit | `pay:ledger`, `pay:tx-query`, `accounting:gl`, `notifications` | `pay-events` |
 | `SettlementDisputedEvent` | Settlement disputed | `notifications` (alert finance team) | `pay-events` |
 
 ---
@@ -219,7 +219,7 @@ Consumes `OrganizationAccountFundedEvent` from `pay:accounts`. It matches only t
 - `Settlement` — Optimistic (`@Version`) — low contention
 
 ### Outbox
-- `ProviderSettlementReceivedEvent` — triggers the idempotent ledger and GL accounting entries; must not be lost
+- `ProviderSettlementReceivedEvent` — triggers the idempotent ledger/GL entries and unified transaction projection; must not be lost
 
 ### Idempotency
 - Provider discovery idempotency via `(provider, environment, providerSettlementId)` uniqueness.

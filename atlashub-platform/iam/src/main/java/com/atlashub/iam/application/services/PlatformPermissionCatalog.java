@@ -18,6 +18,7 @@ public final class PlatformPermissionCatalog {
                 permission("pay:transfers:create", "Initiate bank transfers"),
                 permission("pay:transfers:approve", "Approve bank transfers"),
                 permission("pay:ledger:read", "View ledger transactions"),
+                permission("pay:ledger:manage", "Create and fund business balance accounts"),
                 permission("pay:splits:manage", "Manage split rules"),
                 permission("pay:settlements:read", "View settlements"),
                 permission("commerce:products:manage", "Manage products"),

@@ -1,533 +1,110 @@
 # Pay Accounts Design (`atlashub-pay:accounts`)
 
-## Role & Purpose
+## Purpose
 
-The `accounts` submodule owns AtlasHub's model of Anchor banking resources and their lifecycle. Every banking-enabled AtlasHub organization receives:
+`pay:accounts` owns organization banking/provider profiles and Anchor banking resources. It does not own ledger
+balances or transaction history.
 
-1. An Anchor `CURRENT` **DepositAccount** for the verified business customer.
-2. An Anchor **SubAccount** belonging to that business customer and parented by AtlasHub's FBO deposit account.
+AtlasHub is the source of truth for provisioning intent, ownership, lifecycle, restrictions, idempotency, and local
+references. Anchor and Paystack remain execution systems whose external identifiers and confirmed statuses are
+recorded locally.
 
-Organizations may then issue Anchor **ReservedAccounts** to their customers and marketplace vendors. Each reserved account routes collections to the issuing organization's Anchor subaccount.
+## Registration and environment behavior
 
-AtlasHub is the system of record for ownership, provisioning intent, lifecycle, routing, idempotency, and links to local organizations/customers/vendors. Anchor is the banking execution system and supplies confirmed external identifiers, account numbers, bank details, and externally effective state.
+On `OrganizationRegistered`:
 
-This submodule does **not** own balances. AtlasHub balances and money movement are owned by `pay:ledger`. Anchor balances and transactions are reconciliation evidence.
+- TEST receives one active shared Paystack `OrganizationProviderProfile` with `CARD_COLLECTION` and
+  `USSD_COLLECTION`.
+- No Anchor sandbox customer, deposit account, subaccount, or reserved account is created.
+- LIVE collection remains unavailable until compliance approval, Anchor operating-account activation, and Paystack
+  settlement-route onboarding all succeed.
 
----
-
-## 1. Terminology and Boundaries
-
-| Concept | Meaning |
-|---|---|
-| `BusinessDepositAccount` | Full Anchor `DepositAccount` (`CURRENT`) issued to the AtlasHub organization's verified Anchor `BusinessCustomer` |
-| `BusinessSubAccount` | Anchor subledger account for the organization, parented by AtlasHub's FBO root account |
-| `ReservedAccount` | Permanent collection account assigned to an organization's customer or vendor and routed to the organization's subaccount |
-| `VirtualNuban` | Anchor account-number resource/pointer associated with an Anchor account; stored as external banking details, not used as the aggregate name |
-| `LedgerAccount` | AtlasHub-only double-entry account in `pay:ledger`; never interchangeable with an Anchor account/subaccount |
-
-The former generic `VirtualAccount` aggregate is deprecated because it conflated these resources.
-
-### API environment boundary
+TEST charges therefore exercise the real Paystack test API/webhook path and AtlasHub ledger, but do not pretend that
+test money was deposited into Anchor.
 
-Every banking profile, provider request, deposit account, subaccount, reserved account, and provider profile is scoped by AtlasHub `ApiEnvironment TEST | LIVE`. `TEST` maps to Anchor Sandbox and `LIVE` maps to Anchor Live. The environment comes from the authenticated principal/event, never an organization request body. Provider identifiers and idempotency references are unique together with environment; no adapter may fall back from TEST to LIVE.
+## Core aggregates
 
-Anchor Sandbox supports customers, deposit accounts, and transfers. Subaccounts and reserved accounts are enabled in TEST only when the configured Sandbox programme capabilities and Sandbox FBO account ID support them. When unavailable, AtlasHub rejects those TEST banking operations explicitly; simulated commerce/card flows remain in `pay:charges` and never create fake Anchor resources.
+### `OrganizationBankingProfile`
 
----
+Environment-scoped banking lifecycle and independent restrictions. A LIVE banking profile becomes active when its
+Anchor `BusinessDepositAccount` is confirmed active. `businessSubAccountId` is optional and is not a prerequisite for
+card/USSD collection.
 
-## 2. Platform Anchor Programme Account
+### `BusinessDepositAccount`
 
-AtlasHub's FBO account is a platform-level resource and the parent of every organization subaccount.
-
-```
-AnchorProgramAccount
-├── id: Long
-├── environment: AnchorEnvironment          SANDBOX | LIVE
-├── currency: Currency                       NGN initially
-├── accountType: ProgramAccountType          FBO
-├── anchorAccountId: String                  unique per environment/currency/type
-├── status: ProgramAccountStatus             ACTIVE | DISABLED
-├── createdAt: ZonedDateTime
-└── updatedAt: ZonedDateTime
-```
-
-The Anchor FBO ID must never be hard-coded or accepted from an organization request. It is secure, environment-aware platform configuration managed by authorized operations staff.
-
----
-
-## 3. Organization Banking Profile
-
-### `OrganizationBankingProfile` (Aggregate Root)
-
-Coordinates the two resources every organization must have.
-
-```
-OrganizationBankingProfile
-├── id: Long
-├── organizationId: Long                     unique with environment
-├── environment: ApiEnvironment              TEST | LIVE
-├── anchorBusinessCustomerId: String        supplied by approved compliance
-├── businessDepositAccountId: Long          nullable until locally requested
-├── businessSubAccountId: Long              nullable until locally requested
-├── status: BankingProfileStatus
-│   PENDING | PROVISIONING_DEPOSIT | PROVISIONING_SUBACCOUNT
-│   PARTIALLY_PROVISIONED | ACTIVE | SUSPENDED | FAILED
-├── activeRestrictions: Set<BankingRestrictionType>
-├── failureCode: String                     nullable
-├── failureMessage: String                  sanitized, nullable
-├── createdAt: ZonedDateTime
-├── updatedAt: ZonedDateTime
-└── version: Long
-```
-
-**Rules:**
-
-- One profile per organization.
-- LIVE provisioning starts only from an effective `OrganizationComplianceApprovedEvent`.
-- TEST provisioning starts only from `OrganizationTestBankingReadyEvent`, which contains the separately persisted Anchor Sandbox business-customer ID created from a completed AtlasHub compliance submission.
-- The event's `anchorBusinessCustomerId` is mandatory.
-- `ACTIVE` requires both the deposit account and subaccount to be `ACTIVE`.
-- The profile is usable only when it has no active restriction.
-- Partial success is retained and reconciled; successful Anchor resources are never recreated blindly.
-- `OrganizationBankingActivatedEvent` is emitted only on the first transition to `ACTIVE`.
-
----
-
-## 4. Business Deposit Account
-
-### `BusinessDepositAccount` (Aggregate Root)
-
-```
-BusinessDepositAccount
-├── id: Long                                  AtlasHub ID
-├── organizationId: Long
-├── bankingProfileId: Long
-├── anchorAccountId: String                  unique, nullable until accepted by Anchor
-├── anchorBusinessCustomerId: String
-├── productType: DepositProductType          CURRENT
-├── accountName: String                      nullable until confirmed
-├── accountNumber: String                    encrypted at rest, nullable until confirmed
-├── maskedAccountNumber: String              safe display value
-├── bankName: String                         nullable until confirmed
-├── bankCode: String                         nullable until confirmed
-├── currency: Currency                       NGN initially
-├── frozen: Boolean
-├── status: ExternalAccountStatus
-│   REQUESTED | PENDING | ACTIVE | SUSPENDED | FROZEN | CLOSED | FAILED
-├── failureReason: String                    nullable
-├── createdAt: ZonedDateTime
-├── activatedAt: ZonedDateTime               nullable
-├── updatedAt: ZonedDateTime
-└── version: Long
-```
-
-The provider request creates an Anchor `DepositAccount` with `productName = CURRENT` and a `BusinessCustomer` relationship using the approved compliance customer ID. A synchronous `200/202` response records acceptance, not necessarily final activation. Confirmed account details arrive through the provider response, webhook, or reconciliation fetch.
-
-Only one non-closed business deposit account is allowed per organization, environment, and currency.
-
----
-
-## 5. Business Subaccount
-
-### `BusinessSubAccount` (Aggregate Root)
-
-```
-BusinessSubAccount
-├── id: Long                                  AtlasHub ID
-├── organizationId: Long
-├── bankingProfileId: Long
-├── anchorSubAccountId: String               unique, nullable until accepted
-├── anchorBusinessCustomerId: String
-├── anchorParentFboAccountId: String
-├── anchorVirtualNubanId: String             nullable
-├── accountName: String                      nullable
-├── accountNumber: String                    encrypted, nullable
-├── maskedAccountNumber: String              nullable
-├── bankName: String                         nullable
-├── bankCode: String                         nullable
-├── currency: Currency                       NGN initially
-├── status: ExternalAccountStatus
-├── failureReason: String                    nullable
-├── createdAt: ZonedDateTime
-├── activatedAt: ZonedDateTime               nullable
-├── updatedAt: ZonedDateTime
-└── version: Long
-```
-
-Anchor request shape:
-
-```json
-{
-  "data": {
-    "type": "SubAccount",
-    "attributes": {
-      "createVirtualNuban": true
-    },
-    "relationships": {
-      "customer": {
-        "data": {
-          "id": "<organization-anchor-business-customer-id>",
-          "type": "BusinessCustomer"
-        }
-      },
-      "parentAccount": {
-        "data": {
-          "id": "<atlashub-fbo-anchor-account-id>",
-          "type": "DepositAccount"
-        }
-      }
-    }
-  }
-}
-```
-
-The parent is always AtlasHub's configured FBO account, **not** the organization's business deposit account.
-
-Only one non-closed business subaccount is allowed per organization, environment, and currency.
-
----
-
-## 6. Reserved Accounts
-
-### `ReservedAccount` (Aggregate Root)
-
-```
-ReservedAccount
-├── id: Long                                  AtlasHub ID
-├── organizationId: Long
-├── environment: ApiEnvironment              TEST | LIVE
-├── ownerType: ReservedAccountOwnerType      CUSTOMER | VENDOR
-├── ownerReferenceId: String                 local customer/vendor ID
-├── anchorReservedAccountId: String          unique, nullable until accepted
-├── anchorCustomerId: String                 customer created/reused by Anchor
-├── businessSubAccountId: Long
-├── anchorPayoutSubAccountId: String
-├── provider: ReservedAccountProvider        NINEPSB | PROVIDUS | ...
-├── accountName: String                      nullable until confirmed
-├── accountNumber: String                    encrypted, nullable until confirmed
-├── maskedAccountNumber: String
-├── bankName: String
-├── bankCode: String                         nullable
-├── currency: Currency                       NGN initially
-├── status: ExternalAccountStatus
-├── activeRestrictions: Set<AccountRestrictionType>
-├── requestReference: String                 unique AtlasHub idempotency/correlation key
-├── failureReason: String                    nullable
-├── createdAt: ZonedDateTime
-├── activatedAt: ZonedDateTime               nullable
-├── updatedAt: ZonedDateTime
-└── version: Long
-```
-
-**Rules:**
-
-- The owner must be an existing customer/vendor belonging to the organization.
-- The organization's banking profile and subaccount must be `ACTIVE`.
-- The reserved account's Anchor `payoutAccount` is the organization's Anchor subaccount.
-- The business deposit account is not used as the reserved-account payout route.
-- Default uniqueness is `(organizationId, ownerType, ownerReferenceId, provider)` for non-closed accounts.
-- Repeating an issuance command with the same idempotency key returns the existing local result.
-- Reserved-account activation never bootstraps organization ledger accounts.
-
-The API supports an inline individual identity and an existing, internally resolved Anchor business-customer relationship without leaking Anchor request DTOs or provider IDs through the public API. Business reserved-account issuance requires the owning customer/vendor module to supply its stored provider-customer link; the client never submits an Anchor customer ID.
-
----
-
-## 7. State Transitions
-
-`ExternalAccountStatus` values are `REQUESTED`, `PENDING`, `ACTIVE`, `SUSPENDED`, `FROZEN`, `CLOSED`, and `FAILED`. `FROZEN` represents an externally frozen banking resource; `SUSPENDED` represents an AtlasHub-blocked resource that may or may not have a matching provider lifecycle operation.
-
-Restriction sources are tracked independently, for example `COMPLIANCE`, `ORGANIZATION_BAN`, `MANUAL`, and `RISK`. Removing an organization ban clears only `ORGANIZATION_BAN`; it must not reactivate an account still restricted by compliance, risk, or a manual action.
-
-```
-REQUESTED → PENDING → ACTIVE → FROZEN/SUSPENDED → ACTIVE
-                         └────────────────────────→ CLOSED
-REQUESTED/PENDING → FAILED → REQUESTED (explicit retry after reconciliation)
-```
-
-Use separate domain methods:
-
-- `markSubmitted(anchorResourceId)`
-- `activate(confirmedBankingDetails)`
-- `freeze(reason)` / `suspend(reason)`
-- `reactivate()`
-- `close()`
-- `fail(code, reason)`
-
-`activate()` is only for initial activation. Reactivating a suspended/frozen account must call `reactivate()`; the old design's reuse of `activate()` for unbanning is invalid.
-
-Platform state can block use even when a particular provider resource lacks an equivalent lifecycle operation. The adapter calls only provider operations confirmed for that resource type; reconciliation records any difference between AtlasHub's desired state and Anchor's effective state.
-
----
-
-## 8. Anchor Banking Port
-
-```java
-public interface AnchorBankingPort {
-    DepositAccountProvisioningResult createBusinessDepositAccount(
-        String anchorBusinessCustomerId,
-        String productName,
-        String requestReference,
-        String apiEnvironment);
-
-    SubAccountProvisioningResult createBusinessSubAccount(
-        String anchorBusinessCustomerId,
-        String anchorParentFboAccountId,
-        boolean createVirtualNuban,
-        String requestReference,
-        String apiEnvironment);
-
-    ReservedAccountProvisioningResult createReservedAccount(
-        ReservedAccountCustomer customer,
-        String provider,
-        String anchorPayoutSubAccountId,
-        String requestReference,
-        String apiEnvironment);
-
-    AnchorDepositAccountDetails fetchDepositAccount(String anchorAccountId, String apiEnvironment);
-    AnchorSubAccountDetails fetchSubAccount(String anchorSubAccountId, String apiEnvironment);
-    AnchorReservedAccountDetails fetchReservedAccount(String anchorReservedAccountId, String apiEnvironment);
-
-    void freezeDepositAccount(String anchorAccountId, FreezeReason reason, String apiEnvironment);
-    void unfreezeDepositAccount(String anchorAccountId, String apiEnvironment);
-}
-```
-
-Additional suspend/reactivate/close capabilities are exposed only after the matching Anchor operation is confirmed. Unsupported operations still block the resource locally and create an operations/reconciliation task; infrastructure must not invent provider success.
-
-Every create request sends the environment-scoped AtlasHub request reference as Anchor's `Idempotency-Key`; a timeout retry must reuse that same value.
-
----
-
-## 9. Provisioning Commands
-
-### `ProvisionOrganizationBankingCommand`
-
-Triggered by `OrganizationComplianceApprovedEvent` for LIVE or `OrganizationTestBankingReadyEvent` for TEST. Each event carries the customer ID from its own Anchor environment; IDs are never reused across environments.
-
-1. Create/load `OrganizationBankingProfile` by organization ID.
-2. Verify the event has an Anchor business-customer ID and the compliance decision remains approved.
-3. Create a local `BusinessDepositAccount` in `REQUESTED` and persist the request intent.
-4. Submit the Anchor `CURRENT` deposit-account request through an outbox-driven worker.
-5. After the deposit account is active, create a local `BusinessSubAccount` in `REQUESTED`.
-6. Resolve the active AtlasHub FBO programme account for environment/currency.
-7. Submit the Anchor subaccount request with the business customer and FBO relationships.
-8. Mark the profile `ACTIVE` only after both accounts are active.
-9. Publish `OrganizationBankingActivatedEvent` once.
-
-The workflow is resumable from every persisted state and never wraps a remote API call inside a database transaction.
-
-### `IssueReservedAccountCommand`
-
-```java
-public record IssueReservedAccountCommand(
-    Long organizationId,
-    ReservedAccountOwnerType ownerType,
-    String ownerReferenceId,
-    ReservedAccountCustomer customer,
-    String provider,
-    String idempotencyKey
-) {}
-```
-
-The handler validates ownership and banking readiness, persists the local `REQUESTED` aggregate, and writes a provider request to the outbox. The worker calls Anchor using the active organization subaccount as `payoutAccount`.
-
-### Lifecycle Commands
-
-- `SuspendReservedAccountCommand`
-- `ReactivateReservedAccountCommand`
-- `CloseReservedAccountCommand`
-- `SuspendOrganizationBankingCommand`
-- `ReactivateOrganizationBankingCommand`
-- `ReconcileExternalAccountCommand`
-
-Organization ban or compliance suspension affects the banking profile and all associated payment capability. It does not delete or automatically close external accounts.
-
-- `OrganizationComplianceSuspendedEvent` adds the `COMPLIANCE` restriction.
-- `OrganizationComplianceReinstatedEvent` removes only the `COMPLIANCE` restriction.
-- `OrganizationBannedEvent` adds the `ORGANIZATION_BAN` restriction.
-- An unban event removes only `ORGANIZATION_BAN` and reactivates capability only when no restrictions remain.
-- Manual reserved-account suspension adds/removes only the `MANUAL` restriction.
-
----
-
-## 10. Provider Webhooks and Reconciliation
-
-Expected normalized provider facts include:
-
-- Deposit account accepted/created/failed/frozen/unfrozen
-- Subaccount created/failed and virtual-NUBAN relationship
-- Reserved account created/failed
-- Inbound transfer/collection
-
-The shared Anchor module verifies and publishes one `AnchorWebhookReceivedEvent`; consuming modules use that event directly and translate it into module-owned commands. They do not define a second Anchor event for the same webhook.
-
-Webhook processing:
-
-1. Validate the signature against the raw request body.
-2. Deduplicate by `(anchorEventId, consumerName)`.
-3. Resolve an existing local request by Anchor resource ID or AtlasHub request reference.
-4. Apply an idempotent state transition.
-5. Persist the state and outbox events in one local transaction.
-6. Quarantine unknown or contradictory resources for reconciliation.
-
-A scheduled reconciler fetches all non-terminal pending/failed-due-to-timeout resources and compares local desired state with Anchor's effective state. Reconciliation never overwrites ownership or routing using untrusted webhook payload fields.
-
----
-
-## 11. Funding Events
-
-Inbound Anchor transfers are normalized to `ReservedAccountFundedEvent` or `OrganizationAccountFundedEvent` after the destination is resolved locally.
-
-`ReservedAccountFundedEvent.payload`:
-
-```
-reservedAccountId
-organizationId
-ownerType
-ownerReferenceId
-businessSubAccountId
-anchorTransferReference
-amount
-currency
-senderAccountName
-senderBankCode
-receivedAt
-```
-
-The Anchor transfer reference is the ledger idempotency key. A reserved-account receipt does not automatically prove revenue: the ledger posts to customer funds, vendor payable, matched commerce transaction, or suspense according to the business context.
-
----
-
-## 12. Domain Events
-
-Account-domain events are published on `pay-events` through the transactional outbox.
-
-| Event | Published When | Consumers |
-|---|---|---|
-| `BusinessDepositAccountActivatedEvent` | Deposit account confirmed active | Banking orchestrator, notifications |
-| `BusinessSubAccountActivatedEvent` | FBO-backed subaccount confirmed active | Banking orchestrator, notifications |
-| `OrganizationBankingActivatedEvent` | Both mandatory business accounts are active | `pay:ledger`, notifications |
-| `OrganizationBankingProvisioningFailedEvent` | Terminal provisioning failure | Operations, notifications |
-| `ReservedAccountRequestedEvent` | Local issuance intent committed | Provider worker |
-| `ReservedAccountActivatedEvent` | Anchor confirms reserved account | Notifications, transaction query |
-| `ReservedAccountProvisioningFailedEvent` | Anchor rejects/fails issuance | Notifications, operations |
-| `ReservedAccountSuspendedEvent` | Account blocked | Notifications |
-| `ReservedAccountReactivatedEvent` | Account restored | Notifications |
-| `ReservedAccountClosedEvent` | Account permanently closed | Notifications |
-| `ReservedAccountFundedEvent` | Confirmed inbound transfer mapped to reserved account | `pay:ledger`, notifications, `pay:tx-query`, `pay:webhooks` |
-
-`OrganizationBankingActivatedEvent.payload`:
-
-```
-organizationId
-bankingProfileId
-businessDepositAccountId
-businessSubAccountId
-currency
-activatedAt
-```
-
-`ReservedAccountActivatedEvent.payload`:
-
-```
-reservedAccountId
-organizationId
-ownerType
-ownerReferenceId
-businessSubAccountId
-anchorReservedAccountId
-accountName
-maskedAccountNumber
-bankName
-currency
-activatedAt
-```
-
----
-
-## 13. Queries and REST API
-
-### Queries
-
-- `GetOrganizationBankingProfileQuery(organizationId)`
-- `GetBusinessDepositAccountQuery(organizationId)`
-- `GetBusinessSubAccountQuery(organizationId)`
-- `GetReservedAccountQuery(organizationId, reservedAccountId)`
-- `ListReservedAccountsQuery(organizationId, ownerType, ownerReferenceId, status, page, size)`
-
-Reserved accounts are pageable; marketplace organizations can have many customers/vendors.
-
-### Endpoints
-
-| Method | Path | Permission | Purpose |
-|---|---|---|---|
-| `GET` | `/api/v1/business-accounts` | `pay:accounts:read` | Banking profile and masked business accounts |
-| `POST` | `/api/v1/reserved-accounts` | `pay:accounts:create` | Issue customer/vendor reserved account |
-| `GET` | `/api/v1/reserved-accounts` | `pay:accounts:read` | Page through reserved accounts |
-| `GET` | `/api/v1/reserved-accounts/{id}` | `pay:accounts:read` | View one reserved account |
-| `POST` | `/api/v1/reserved-accounts/{id}/suspend` | `pay:accounts:suspend` | Block account use |
-| `POST` | `/api/v1/reserved-accounts/{id}/reactivate` | `pay:accounts:reactivate` | Restore suspended account |
-| `POST` | `/api/v1/reserved-accounts/{id}/close` | `pay:accounts:close` | Permanently close after provider capability check |
-| `POST` | `/api/v1/payment-capabilities/{capability}/enable` | `pay:capabilities:manage` | Enable a payment collection or terminal capability |
-
-Organization and requester IDs come from authenticated context, not trusted request bodies. Full account numbers are returned only to authorized operations and are otherwise masked.
-
----
-
-## 14. RBAC
-
-| Permission | Operation |
-|---|---|
-| `pay:accounts:create` | Issue customer/vendor reserved accounts |
-| `pay:accounts:read` | View organization banking profile and reserved accounts |
-| `pay:accounts:suspend` | Suspend a reserved account |
-| `pay:accounts:reactivate` | Reactivate a suspended reserved account |
-| `pay:accounts:close` | Permanently close a reserved account |
-
-Organization business deposit/subaccount creation is system-only. Organization-wide banking suspension/reactivation is a compliance/admin operation, not an organization self-service permission.
-
----
-
-## 15. Persistence Constraints
-
-- Unique active banking profile per organization.
-- Unique Anchor resource ID per resource table.
-- Unique non-closed deposit account per `(organizationId, currency)`.
-- Unique non-closed subaccount per `(organizationId, currency)`.
-- Unique non-closed reserved account per `(organizationId, ownerType, ownerReferenceId, provider)`.
-- Unique `requestReference`/idempotency key.
-- Optimistic locking on all account aggregates.
-- Store full account numbers with AES-256-GCM through the JPA converter only where operationally required; configure the Base64 32-byte key with `ATLASHUB_PAY_ACCOUNTS_ENCRYPTION_KEY`, and use masked variants for ordinary reads.
-
-Remote calls are outside database transactions. Local request intent is committed before dispatch. Provider responses/webhooks are applied in new transactions.
-
----
-
-## 16. Organization Payment Provider Profiles
-
-`OrganizationProviderProfile` is AtlasHub's source of truth for non-banking collection capability per organization and environment. It records AtlasHub capability names, the internally selected provider, provider onboarding case ID, safe external merchant/account references, requested capabilities, active capabilities, and lifecycle status.
-
-Public capability requests are:
-
-- `CARD_COLLECTION` and `USSD_COLLECTION` — internally route to Paystack initially;
-- `POS_TERMINAL` — requires the business to select Paystack, Moniepoint, or OPay;
-- `BANK_TRANSFER_COLLECTION` — backed by the Anchor banking profile.
-
-Enabling a missing capability publishes `ProviderOnboardingRequestedEvent`. `platform:compliance` owns the provider onboarding case and additional requirements. `ProviderOnboardingApprovedEvent` activates only the approved capabilities on the matching organization/environment/provider profile. `ProviderOnboardingStatusChangedEvent` synchronizes provisioning, information-required, rejected, suspended, and failed states through a command-only listener. Adding a later capability updates the existing profile and starts only the additional provider review; it does not reset the five-step AtlasHub compliance application.
-
-Provider names remain hidden from the public card/USSD checkout contract. A synchronous `PaymentProviderProfileQueryPort`, implemented under this module's `infrastructure.persistence.adapters`, allows consuming modules to read an active capability without performing cross-module writes.
-
----
-
-## 17. Legacy Migration
-
-1. Add the new profile, deposit-account, subaccount, programme-account, and reserved-account tables.
-2. Keep legacy `VirtualAccount` reads behind a compatibility facade.
-3. Query Anchor for every legacy `anchorAccountId` to determine its actual resource type.
-4. Migrate ownership and external IDs only after reconciliation; do not infer type from legacy `ownerType`.
-5. Change ledger bootstrap from `VirtualAccountActivatedEvent` to `OrganizationBankingActivatedEvent`.
-6. Change customer issuance endpoints to create `ReservedAccount` resources.
-7. Stop legacy writes, monitor reconciliation, then remove the old aggregate and routes.
-
-No legacy virtual account is automatically classified as a deposit account, subaccount, or reserved account without provider confirmation.
+The organization's Anchor `CURRENT` operating account. It stores the local aggregate ID, safe external Anchor
+reference, encrypted account number, bank code/name, account name, currency, lifecycle status, and timestamps.
+
+The deposit account is the settlement destination for the organization's Paystack collection route.
+
+### `OrganizationProviderProfile`
+
+The capability source of truth per organization/environment/provider. It stores requested and active capabilities,
+onboarding lifecycle, Paystack merchant/subaccount code in `externalMerchantId`, and the local Anchor deposit-account
+ID in `settlementAccountReference`.
+
+- TEST: activated from AtlasHub's shared Paystack test configuration.
+- LIVE: pending until Paystack verifies the confirmed Anchor bank destination and activates the route.
+
+### `ProviderOnboardingCase`
+
+Records pending, information-required, rejected, failed/retrying, and approved provider onboarding state. Provider
+errors do not fabricate an active capability and retain retry-safe local/external references.
+
+### Optional transfer collection
+
+`BusinessSubAccount`, `SUB_ACCOUNT` provider requests, and `ReservedAccount` remain available only behind the
+explicit transfer-collection enablement workflow. They are not used for Paystack card/USSD settlement.
+
+Transfer-collection state distinguishes:
+
+- not requested
+- provisioning requested/pending
+- active
+- failed/retryable
+
+Reserved-account issuance is rejected unless transfer collection is active and the organization subaccount is
+confirmed active. Existing external subaccounts/reserved accounts are preserved.
+
+## LIVE onboarding flow
+
+1. AtlasHub compliance is approved and supplies the real Anchor business-customer reference.
+2. `ProvisionOrganizationBankingHandler` creates only the local deposit-account request and `DEPOSIT` provider
+   request.
+3. The Anchor adapter creates a `CURRENT` deposit account.
+4. Provider response/webhook/reconciliation confirms status and complete account details.
+5. `ApplyAnchorAccountStatusHandler` activates the deposit account and banking profile; it does not create an FBO
+   subaccount.
+6. `BusinessDepositAccountActivatedEvent` triggers Paystack settlement-route configuration.
+7. The Paystack adapter resolves the account using bank code/account number and creates or updates exactly one
+   Paystack subaccount/merchant settlement destination.
+8. `ProviderOnboardingCase` and `OrganizationProviderProfile` reflect the Paystack result. Card/USSD capabilities
+   become active only after Paystack confirms the route.
+
+Anchor or Paystack failure leaves LIVE collection pending/failed with retry-safe references. It never falls back to
+TEST credentials or a different organization's route.
+
+## Funding and settlement events
+
+Verified Anchor credits to an organization operating account publish `OrganizationAccountFundedEvent`. Verified
+reserved-account credits publish `ReservedAccountFundedEvent` with customer/vendor attribution. Ledger and
+`pay:tx-query` consume compatible event contracts idempotently.
+
+An operating-account credit does not by itself mean a Paystack settlement is reconciled. `pay:settlement` matches it
+against Paystack settlement evidence using destination, currency, and net amount before publishing
+`ProviderSettlementReceivedEvent`.
+
+## Shared read contract
+
+`BusinessBankingQueryAdapter` implements shared `BusinessBankingQueryPort` from accounts-owned persistence. It returns
+only the active operating account's safe display data: local ID, account name, masked account number, bank name/code,
+currency, status, and activation time. Ledger uses this to enrich the organization operating-account response without
+importing accounts internals.
+
+## Security and persistence
+
+- Every aggregate and provider request is scoped to `ApiEnvironment`.
+- Full account numbers are encrypted at rest; ordinary APIs use masked values.
+- Provider IDs and idempotency references are unique with environment.
+- Organization and environment come from authenticated context/events, never trusted request bodies.
+- No destructive migration removes existing deposit/subaccount/reserved-account rows or external resources.
