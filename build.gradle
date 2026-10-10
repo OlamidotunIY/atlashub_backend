@@ -20,6 +20,10 @@ subprojects {
     apply plugin: 'java'
     apply plugin: 'io.spring.dependency-management'
 
+    base {
+        archivesName = project.path.replace(':', '-').replaceAll('^-', '')
+    }
+
     java {
         toolchain {
             languageVersion = JavaLanguageVersion.of(25)
