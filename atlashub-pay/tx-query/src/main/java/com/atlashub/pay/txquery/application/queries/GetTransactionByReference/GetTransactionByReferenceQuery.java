@@ -1,0 +1,1 @@
+package com.atlashub.pay.txquery.application.queries.GetTransactionByReference;import com.atlashub.shared.application.security.ApiEnvironment;public record GetTransactionByReferenceQuery(Long organizationId,ApiEnvironment environment,String reference){}

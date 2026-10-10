@@ -1,0 +1,1 @@
+package com.atlashub.pay.txquery.presentation.dto;import java.math.BigDecimal;public record TransactionVolumeResponse(Long organizationId,String month,long chargeCount,BigDecimal chargeAmount,long payoutCount,BigDecimal payoutAmount,String currency){}
