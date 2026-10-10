@@ -198,7 +198,7 @@ public class SalesOrder extends AggregateRoot<Long> {
     }
 
     public void completePayment() {
-        if (status != OrderStatus.PAYMENT_PENDING && !(status == OrderStatus.PENDING && paymentMethod == PaymentMethod.CASH)) {
+        if (status != OrderStatus.PAYMENT_PENDING && !(status == OrderStatus.PENDING && (paymentMethod == PaymentMethod.CASH || paymentMethod == PaymentMethod.CREDIT))) {
             throw new InvalidOrderStateException("Cannot complete payment for order in status: " + status);
         }
         this.status = OrderStatus.COMPLETED;
