@@ -34,8 +34,8 @@ deploy-stack:
 	@echo "=> Syncing Secrets to VM..."
 	$(eval FIREBASE_JSON := $(wildcard infrastructure/Firebase/*.json))
 	$(eval FIREBASE_JSON_NAME := $(notdir $(FIREBASE_JSON)))
-	@echo "=> Syncing .env from the local deployment source..."
-	@$(SCP) -O $(SSH_OPTIONS) -i $(SSH_KEY) .env ubuntu@$(VM_IP):/tmp/.env
+	@echo "=> Syncing .env.production from the local deployment source..."
+	@$(SCP) -O $(SSH_OPTIONS) -i $(SSH_KEY) .env.production ubuntu@$(VM_IP):/tmp/.env
 	@$(SCP) -O $(SSH_OPTIONS) -i $(SSH_KEY) $(FIREBASE_JSON) ubuntu@$(VM_IP):/tmp/$(FIREBASE_JSON_NAME)
 	@$(SCP) -O $(SSH_OPTIONS) -i $(SSH_KEY) $(JWT_PRIVATE_KEY) ubuntu@$(VM_IP):/tmp/atlashub-jwt-private.pem
 	@$(SCP) -O $(SSH_OPTIONS) -i $(SSH_KEY) $(JWT_PUBLIC_KEY) ubuntu@$(VM_IP):/tmp/atlashub-jwt-public.pem

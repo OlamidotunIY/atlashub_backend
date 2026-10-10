@@ -2,7 +2,7 @@ plugins {
     id 'java'
 }
 
-group = 'com.atlashub'
+group = 'com.atlashub.pay'
 version = '2.0-SNAPSHOT'
 
 repositories {

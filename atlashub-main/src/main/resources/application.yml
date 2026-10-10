@@ -1,7 +1,7 @@
 spring:
   application:
     name: atlashub-backend
-  
+
   # Database Connection Details
   datasource:
     url: ${ATLASHUB_DB_URL:jdbc:mysql://localhost:3306/atlashub}
@@ -132,3 +132,4 @@ logging:
     root: INFO
     org.apache.kafka: ERROR
     org.springframework.kafka: ERROR
+  exception-conversion-word: "%wEx{short}"
