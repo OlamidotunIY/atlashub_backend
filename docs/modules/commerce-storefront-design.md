@@ -504,11 +504,9 @@ record ListActiveTablesQuery(Long outletId)
 | **Action** | Calls `FailPaymentHandler` for each → releases reserved stock |
 | **Response** | `void` |
 
-### Application Ports — `application/port/`
+### Application Ports
 
-| Port | Responsibility |
-|---|---|
-| `PayInitializeChargePort` | Initialize a charge in `atlashub-pay:charges` |
+Storefront performs no synchronous cross-module writes. Cross-module orchestration is handled asynchronously via Kafka domain events through the transactional outbox. Cross-module reads go through shared query port interfaces in `atlashub-shared/src/main/java/com/atlashub/shared/application/port`.
 
 ---
 
@@ -560,19 +558,30 @@ record ListActiveTablesQuery(Long outletId)
 ```
 ProcessPosCheckoutHandler
   1. Create SalesOrder (PENDING)
-  2. inventory.reserveStock() [PESSIMISTIC_WRITE] — InsufficientStockException
-  3. PayInitializeChargePort.initialize() → chargeReference
-  4. SalesOrder → PAYMENT_PENDING
+  2. repository.save() emits SalesOrderCreatedEvent (commerce-events topic)
 
-  SUCCESS: ChargeSuccessfulEvent (pay-events)
-    → ChargeSuccessfulListener → CompletePaymentHandler
-    → inventory.deductStock() [convert reserved → sold]
-    → order.completePayment() → PosSaleCompletedEvent
+Asynchronous Choreography Saga:
+  Step 1: inventory: SalesOrderCreatedListener
+    → ReserveStockForOrderHandler (locks rows PESSIMISTIC_WRITE)
+    → Success: StockReservedEvent
+    → Failure: StockReservationFailedEvent
 
-  FAILURE: ChargeFailedEvent (pay-events) OR 15-min timeout (StockReleaseScheduler)
-    → ChargeFailedListener / scheduler → FailPaymentHandler
-    → inventory.releaseReservedStock()
-    → order.failPayment() → PosSaleFailedEvent
+  Step 2: storefront: StockReservedListener
+    → Cash payment: CompletePaymentHandler → PosSaleCompletedEvent
+    → Non-cash: InitiatePaymentHandler → SalesOrderPaymentInitiatedEvent
+
+  Step 3: pay:charges: SalesOrderPaymentInitiatedListener
+    → Initialize charge and listen for customer payment
+    → Success: ChargeSuccessfulEvent
+    → Failure: ChargeFailedEvent
+
+  Step 4: storefront: ChargeSuccessfulListener / ChargeFailedListener
+    → ChargeSuccessfulEvent → CompletePaymentHandler → PosSaleCompletedEvent
+    → ChargeFailedEvent (or StockReleaseScheduler timeout) → FailPaymentHandler → PosSaleFailedEvent
+
+  Step 5: inventory: PosSaleCompletedListener / PosSaleFailedListener
+    → PosSaleCompletedEvent → DeductReservedStockHandler (reserved → sold)
+    → PosSaleFailedEvent → ReleaseReservedStockHandler (release reservation)
 ```
 
 ---
