@@ -9,21 +9,29 @@ COPY gradle ./gradle
 COPY build.gradle settings.gradle ./
 
 # Copy all actual sub-module build files (for dependency resolution caching)
-COPY atlashub-shared/build.gradle               atlashub-shared/
-COPY atlashub-platform/accounts/build.gradle    atlashub-platform/accounts/
+COPY atlashub-shared/build.gradle                  atlashub-shared/
+COPY atlashub-platform/accounts/build.gradle       atlashub-platform/accounts/
 COPY atlashub-platform/authentication/build.gradle atlashub-platform/authentication/
-COPY atlashub-platform/storage/build.gradle     atlashub-platform/storage/
-COPY atlashub-platform/iam/build.gradle         atlashub-platform/iam/
-COPY atlashub-platform/compliance/build.gradle  atlashub-platform/compliance/
-COPY atlashub-platform/notifications/build.gradle atlashub-platform/notifications/
-COPY atlashub-pay/ledger/build.gradle           atlashub-pay/ledger/
-COPY atlashub-pay/accounts/build.gradle         atlashub-pay/accounts/
-COPY atlashub-pay/splits/build.gradle           atlashub-pay/splits/
+COPY atlashub-platform/storage/build.gradle        atlashub-platform/storage/
+COPY atlashub-platform/iam/build.gradle            atlashub-platform/iam/
+COPY atlashub-platform/compliance/build.gradle     atlashub-platform/compliance/
+COPY atlashub-platform/notifications/build.gradle  atlashub-platform/notifications/
+COPY atlashub-pay/accounts/build.gradle            atlashub-pay/accounts/
+COPY atlashub-pay/charges/build.gradle             atlashub-pay/charges/
+COPY atlashub-pay/ledger/build.gradle              atlashub-pay/ledger/
+COPY atlashub-pay/settlement/build.gradle          atlashub-pay/settlement/
+COPY atlashub-pay/splits/build.gradle              atlashub-pay/splits/
+COPY atlashub-pay/tx-query/build.gradle            atlashub-pay/tx-query/
+COPY atlashub-commerce/catalog/build.gradle        atlashub-commerce/catalog/
+COPY atlashub-commerce/inventory/build.gradle      atlashub-commerce/inventory/
+COPY atlashub-commerce/storefront/build.gradle     atlashub-commerce/storefront/
+COPY atlashub-accounting/gl/build.gradle           atlashub-accounting/gl/
+COPY atlashub-infrastructure/anchor/build.gradle   atlashub-infrastructure/anchor/
+COPY atlashub-infrastructure/audit/build.gradle    atlashub-infrastructure/audit/
 COPY atlashub-infrastructure/eventbus/build.gradle atlashub-infrastructure/eventbus/
+COPY atlashub-infrastructure/paystack/build.gradle atlashub-infrastructure/paystack/
 COPY atlashub-infrastructure/rate-limiter/build.gradle atlashub-infrastructure/rate-limiter/
-COPY atlashub-infrastructure/audit/build.gradle atlashub-infrastructure/audit/
-COPY atlashub-infrastructure/anchor/build.gradle atlashub-infrastructure/anchor/
-COPY atlashub-main/build.gradle                 atlashub-main/
+COPY atlashub-main/build.gradle                    atlashub-main/
 
 # Download dependencies (cached unless build files change)
 RUN chmod +x gradlew && ./gradlew dependencies --no-daemon --quiet || true
