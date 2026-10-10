@@ -20,6 +20,7 @@ public record ProcessLedgerEventCommand(
         CREATE_PARTY_ACCOUNT,
         CREATE_TILL_ACCOUNT,
         CHARGE_RECEIVED,
+        CHARGE_REFUNDED,
         PROVIDER_SETTLED,
         RESERVED_ACCOUNT_FUNDED,
         ORGANIZATION_ACCOUNT_FUNDED,

@@ -33,8 +33,16 @@ public final class LedgerInboundEvents {
     public record ChargeSuccessfulEvent(
             String eventId, Long aggregateId, ZonedDateTime occurredAt, String correlationId, Payload payload) {
         public record Payload(Long organizationId, String environment, String chargeReference,
-                              String gatewayReference, Money amount, String channel, String sourceSystem,
-                              String sourceReferenceId, ZonedDateTime succeededAt) {}
+                              String gatewayReference, Money amount, Money providerFee, String channel,
+                              String provider, String sourceSystem, String sourceReferenceId,
+                              String customerReferenceId, ZonedDateTime succeededAt) {}
+    }
+
+    public record ChargeRefundedEvent(
+            String eventId, Long aggregateId, ZonedDateTime occurredAt, String correlationId, Payload payload) {
+        public record Payload(Long organizationId, String environment, String chargeReference,
+                              String providerRefundReference, Money amount, String sourceSystem,
+                              String sourceReferenceId, String customerReferenceId, ZonedDateTime refundedAt) {}
     }
 
     public record ProviderSettlementReceivedEvent(

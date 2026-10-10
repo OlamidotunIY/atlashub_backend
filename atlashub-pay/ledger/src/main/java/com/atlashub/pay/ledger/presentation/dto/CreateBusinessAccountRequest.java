@@ -1,0 +1,1 @@
+package com.atlashub.pay.ledger.presentation.dto;import jakarta.validation.constraints.NotBlank;import jakarta.validation.constraints.Size;public record CreateBusinessAccountRequest(@NotBlank @Size(max=100)String name,@NotBlank String accountType,@NotBlank String currency){}

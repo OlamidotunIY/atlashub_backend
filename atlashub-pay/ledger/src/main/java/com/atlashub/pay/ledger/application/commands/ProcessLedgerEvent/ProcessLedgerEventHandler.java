@@ -20,12 +20,8 @@ import java.util.List;
 public class ProcessLedgerEventHandler extends Command<ProcessLedgerEventCommand, Void> {
     private static final List<LedgerAccountType> ORGANIZATION_ACCOUNT_TYPES = List.of(
             LedgerAccountType.OPERATING,
-            LedgerAccountType.PAYROLL_RESERVE,
-            LedgerAccountType.TAX_HOLDING,
-            LedgerAccountType.ESCROW,
             LedgerAccountType.SUSPENSE,
-            LedgerAccountType.PROVIDER_CLEARING,
-            LedgerAccountType.SPLIT_HOLDING);
+            LedgerAccountType.PROVIDER_CLEARING);
 
     private final CreateLedgerAccountHandler createAccountHandler;
     private final PostLedgerTransactionHandler postTransactionHandler;
@@ -59,6 +55,8 @@ public class ProcessLedgerEventHandler extends Command<ProcessLedgerEventCommand
             }
             case CHARGE_RECEIVED -> post(
                     command, LedgerAccountType.PROVIDER_CLEARING, LedgerAccountType.OPERATING, null, null);
+            case CHARGE_REFUNDED -> post(
+                    command, LedgerAccountType.OPERATING, LedgerAccountType.PROVIDER_CLEARING, null, null);
             case PROVIDER_SETTLED -> post(
                     command, LedgerAccountType.SUSPENSE, LedgerAccountType.PROVIDER_CLEARING, null, null);
             case ORGANIZATION_ACCOUNT_FUNDED -> post(

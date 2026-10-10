@@ -1,0 +1,1 @@
+package com.atlashub.pay.ledger.presentation.dto;import java.time.ZonedDateTime;public record ExternalBankAccountResponse(Long id,String accountName,String maskedAccountNumber,String bankName,String bankCode,String currency,String status,ZonedDateTime activatedAt){}

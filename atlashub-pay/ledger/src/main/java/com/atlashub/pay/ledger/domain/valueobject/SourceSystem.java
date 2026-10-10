@@ -16,5 +16,6 @@ public enum SourceSystem {
     ESCROW_RELEASE,
     ESCROW_REFUND,
     MANUAL,
-    SYSTEM
+    SYSTEM,
+    INTERNAL_TRANSFER
 }

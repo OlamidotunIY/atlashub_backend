@@ -3,6 +3,7 @@ package com.atlashub.pay.ledger.infrastructure.messaging.listeners;
 import com.atlashub.pay.ledger.application.commands.ProcessLedgerEvent.ProcessLedgerEventCommand;
 import com.atlashub.pay.ledger.application.commands.ProcessLedgerEvent.ProcessLedgerEventHandler;
 import com.atlashub.pay.ledger.infrastructure.messaging.events.LedgerInboundEvents.ChargeSuccessfulEvent;
+import com.atlashub.pay.ledger.infrastructure.messaging.events.LedgerInboundEvents.ChargeRefundedEvent;
 import com.atlashub.pay.ledger.infrastructure.messaging.events.LedgerInboundEvents.OrganizationAccountFundedEvent;
 import com.atlashub.pay.ledger.infrastructure.messaging.events.LedgerInboundEvents.PayoutCompletedEvent;
 import com.atlashub.pay.ledger.infrastructure.messaging.events.LedgerInboundEvents.ProviderSettlementReceivedEvent;
@@ -35,6 +36,7 @@ public class PayLedgerEventListener extends BaseKafkaEventListener {
         registerSubscription("com.atlashub.accounts.domain.events.OrganizationRegistered", "pay-ledger-organization-registered");
         registerSubscription("ReservedAccountActivatedEvent", "pay-ledger-reserved-account-activated");
         registerSubscription("ChargeSuccessfulEvent", "pay-ledger-charge-successful");
+        registerSubscription("ChargeRefundedEvent", "pay-ledger-charge-refunded");
         registerSubscription("ReservedAccountFundedEvent", "pay-ledger-reserved-account-funded");
         registerSubscription("OrganizationAccountFundedEvent", "pay-ledger-organization-account-funded");
         registerSubscription("PayoutCompletedEvent", "pay-ledger-payout-completed");
@@ -72,6 +74,18 @@ public class PayLedgerEventListener extends BaseKafkaEventListener {
                                 event.payload().organizationId(), event.payload().environment(), null, null, null,
                                 event.payload().chargeReference(), "CARD_CHARGE", event.payload().sourceReferenceId(),
                                 event.payload().amount().amount(), event.payload().amount().currency().name())));
+    }
+
+    @KafkaListener(topics = "pay-events", groupId = "pay-ledger-charge-refunded")
+    public void chargeRefunded(String message) {
+        processEventIfMatches(message, "ChargeRefundedEvent", ChargeRefundedEvent.class,
+                log, "pay-ledger-charge-refunded", e -> e instanceof TimeoutException, event ->
+                        handler.execute(command(ProcessLedgerEventCommand.Action.CHARGE_REFUNDED,
+                                event.payload().organizationId(), event.payload().environment(), null, "CUSTOMER",
+                                event.payload().customerReferenceId(),
+                                "refund:" + event.payload().providerRefundReference(), "COMMERCE_REFUND",
+                                event.payload().sourceReferenceId(), event.payload().amount().amount(),
+                                event.payload().amount().currency().name())));
     }
 
     @KafkaListener(topics = "pay-events", groupId = "pay-ledger-reserved-account-funded")

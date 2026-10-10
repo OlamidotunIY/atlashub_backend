@@ -1,0 +1,1 @@
+package com.atlashub.pay.ledger.application.commands.TransferBetweenAccounts;import java.time.ZonedDateTime;public record TransferBetweenAccountsResult(Long transactionId,String reference,ZonedDateTime postedAt){}

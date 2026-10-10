@@ -14,6 +14,8 @@ public interface LedgerAccountRepository extends Repository<LedgerAccount> {
     Optional<LedgerAccount> findByIdWithLock(Long id);
     List<LedgerAccount> findAllByOrganizationId(Long organizationId);
     List<LedgerAccount> findAllByOrganizationIdAndEnvironment(Long organizationId, ApiEnvironment environment);
+    Optional<LedgerAccount> findByOrganizationIdAndEnvironmentAndAccountNameAndCurrency(
+            Long organizationId, ApiEnvironment environment, String accountName, CurrencyCode currency);
     Optional<LedgerAccount> findByOrganizationIdAndEnvironmentAndAccountTypeAndCurrency(
             Long organizationId, ApiEnvironment environment, LedgerAccountType type, CurrencyCode currency);
     Optional<LedgerAccount> findByOrganizationIdAndEnvironmentAndOutletIdAndCurrency(

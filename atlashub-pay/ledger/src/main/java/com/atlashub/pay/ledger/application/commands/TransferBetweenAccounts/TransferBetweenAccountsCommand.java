@@ -1,0 +1,1 @@
+package com.atlashub.pay.ledger.application.commands.TransferBetweenAccounts;import java.math.BigDecimal;public record TransferBetweenAccountsCommand(Long organizationId,Long requestedByUserId,String environment,Long sourceAccountId,Long destinationAccountId,BigDecimal amount,String currency,String reference,String description){}
