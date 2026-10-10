@@ -9,6 +9,8 @@
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
+            <option value="$PROJECT_DIR$/atlashub-accounting" />
+            <option value="$PROJECT_DIR$/atlashub-accounting/gl" />
             <option value="$PROJECT_DIR$/atlashub-commerce" />
             <option value="$PROJECT_DIR$/atlashub-commerce/catalog" />
             <option value="$PROJECT_DIR$/atlashub-commerce/inventory" />
