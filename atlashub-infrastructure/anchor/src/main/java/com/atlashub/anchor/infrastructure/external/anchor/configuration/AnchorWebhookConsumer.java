@@ -19,7 +19,8 @@ public enum AnchorWebhookConsumer {
             List.of(
                     "account.opened", "account.closed", "account.frozen", "account.unfrozen",
                     "account.creation.failed", "sub_account.created", "accountNumber.created",
-                    "payin.received", "payment.received", "payment.settled"
+                    "payin.received", "payment.received", "payment.settled", "nip.inbound.completed",
+                    "nip.transfer.successful", "nip.transfer.reversed", "book.transfer.successful"
             )
     );
 

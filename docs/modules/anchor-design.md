@@ -36,6 +36,10 @@ translated into provider-neutral results before leaving the module.
 upload, verification triggering, and authoritative verification reads. The compliance module maps its domain value
 objects into this shared transport contract and never imports Anchor DTOs or clients.
 
+The pay-accounts webhook subscription enables included resources and consumes completed inbound NIP transfers,
+successful NIP/book transfers, and NIP reversals. Initiated and failed movements never produce balance-changing
+business events.
+
 ## Webhooks
 
 The endpoint verifies the Anchor signature over the unmodified request body before parsing and publishes a verified
