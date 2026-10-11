@@ -8,7 +8,6 @@ import com.atlashub.pay.ledger.domain.repositories.LedgerTransactionRepository;
 import com.atlashub.pay.ledger.domain.services.BalanceCalculator;
 import com.atlashub.pay.ledger.domain.valueobject.LedgerAccountType;
 import com.atlashub.pay.ledger.domain.valueobject.NormalBalance;
-import com.atlashub.shared.application.port.BusinessBankingQueryPort;
 import com.atlashub.shared.application.security.ApiEnvironment;
 import com.atlashub.shared.domain.valueobject.CurrencyCode;
 import com.atlashub.shared.domain.valueobject.Money;
@@ -23,7 +22,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -33,10 +32,8 @@ class ListFinancialAccountsHandlerTest {
     @Mock private BalanceSnapshotRepository snapshots;
     @Mock private LedgerTransactionRepository transactions;
     @Mock private BalanceCalculator calculator;
-    @Mock private BusinessBankingQueryPort banking;
-
     @Test
-    void returnsActiveBusinessAccountsWithBalancesAndOperatingBankDetails() {
+    void returnsActiveBusinessAccountSummariesWithoutBankingDetails() {
         LedgerAccount operating = LedgerAccount.create(1L, 42L, ApiEnvironment.LIVE,
                 LedgerAccountType.OPERATING, null, null, null, CurrencyCode.NGN, NormalBalance.DEBIT);
         LedgerAccount clearing = LedgerAccount.create(2L, 42L, ApiEnvironment.LIVE,
@@ -49,17 +46,12 @@ class ListFinancialAccountsHandlerTest {
         when(transactions.findByAccountIdAndEnvironmentAndPostedAtAfter(1L, ApiEnvironment.LIVE, now))
                 .thenReturn(List.of());
         when(calculator.calculateRunningBalance(any(), any(), any(), any())).thenReturn(new BigDecimal("9000"));
-        when(banking.findOperatingAccount(42L, ApiEnvironment.LIVE)).thenReturn(Optional.of(
-                new BusinessBankingQueryPort.OperatingBankAccount(50L, "AtlasHub Ltd", "******1234",
-                        "Anchor MFB", "090270", "NGN", "ACTIVE", now)));
-
-        var result = new ListFinancialAccountsHandler(accounts, snapshots, transactions, calculator, banking)
+        var result = new ListFinancialAccountsHandler(accounts, snapshots, transactions, calculator)
                 .execute(new ListFinancialAccountsQuery(42L, "LIVE"));
 
         assertEquals(1, result.size());
         assertEquals("Operating Account", result.getFirst().name());
         assertEquals(new BigDecimal("9000"), result.getFirst().balance());
-        assertNotNull(result.getFirst().bankAccount());
-        assertEquals("******1234", result.getFirst().bankAccount().maskedAccountNumber());
+        assertNull(result.getFirst().bankAccount());
     }
 }

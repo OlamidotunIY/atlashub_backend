@@ -69,9 +69,10 @@ external collection, payout, settlement, split, commerce, payroll, and `INTERNAL
 
 ### Queries
 
-- `ListFinancialAccountsQuery`: active business accounts with current balance, restrictions, and display metadata.
-  The LIVE operating account includes masked Anchor account details when provisioned.
-- `GetFinancialAccountQuery`: one owned active business account with the same balance/banking view.
+- `ListFinancialAccountsQuery`: active business-account summaries with current balance, restrictions, and display
+  metadata. Collection results never include external banking details.
+- `GetFinancialAccountQuery`: one owned active business account. When it is the operating account, the detail result
+  includes masked Anchor account information if an active deposit account exists.
 
 Transaction-history queries do not live here. `pay:tx-query` owns the unified organization, account, customer, and
 vendor transaction APIs populated from ledger/provider events.
@@ -82,8 +83,8 @@ Tenant and environment always come from `AuthenticatedPrincipal`.
 
 | Method | Endpoint | Permission | Purpose |
 |---|---|---|---|
-| `GET` | `/api/v1/pay/accounts` | `pay:ledger:read` | List active business accounts, balances, and operating-bank information |
-| `GET` | `/api/v1/pay/accounts/{accountId}` | `pay:ledger:read` | Get one owned active business account |
+| `GET` | `/api/v1/pay/accounts` | `pay:ledger:read` | List active business-account summaries and balances; no bank-account object |
+| `GET` | `/api/v1/pay/accounts/{accountId}` | `pay:ledger:read` | Get one account and, for the operating account, optional masked bank details |
 | `POST` | `/api/v1/pay/accounts` | `pay:ledger:manage` | Create an optional business account |
 | `POST` | `/api/v1/pay/account-transfers` | `pay:ledger:manage` | Transfer between owned business accounts |
 
