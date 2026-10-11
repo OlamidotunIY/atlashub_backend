@@ -12,5 +12,6 @@ public record RecordAnchorFundingCommand(
         String currency,
         String senderAccountName,
         String senderBankCode,
+        String narration,
         ZonedDateTime receivedAt
 ) {}

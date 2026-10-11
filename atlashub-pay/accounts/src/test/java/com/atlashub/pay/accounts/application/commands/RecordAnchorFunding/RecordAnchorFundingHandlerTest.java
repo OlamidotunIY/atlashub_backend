@@ -31,7 +31,8 @@ class RecordAnchorFundingHandlerTest {
 
         new RecordAnchorFundingHandler(reservedRepository, depositRepository).execute(
                 new RecordAnchorFundingCommand("TEST", "anchor-reserved", null, "transfer-1",
-                        new BigDecimal("1000"), "NGN", "Ada", "090405", ZonedDateTime.now()));
+                        new BigDecimal("1000"), "NGN", "Ada", "090405", "Invoice payment",
+                        ZonedDateTime.now()));
 
         assertTrue(account.peekDomainEvents().stream().anyMatch(ReservedAccountFundedEvent.class::isInstance));
         verify(reservedRepository).save(account);

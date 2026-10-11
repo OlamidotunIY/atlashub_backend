@@ -9,5 +9,6 @@ public record OrganizationAccountFundedEvent(
         implements DomainEvent<OrganizationAccountFundedEvent.Payload> {
     public record Payload(Long organizationId, String environment, Long businessAccountId,
                           String anchorTransferReference, BigDecimal amount, String currency,
+                          String senderAccountName, String senderBankCode, String narration,
                           ZonedDateTime receivedAt) {}
 }

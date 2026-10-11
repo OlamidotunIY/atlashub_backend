@@ -7,6 +7,8 @@ import com.atlashub.pay.accounts.application.commands.ApplyAnchorAccountStatus.A
 import com.atlashub.pay.accounts.application.commands.ApplyAnchorAccountStatus.ApplyAnchorAccountStatusHandler;
 import com.atlashub.pay.accounts.application.commands.RecordAnchorFunding.RecordAnchorFundingCommand;
 import com.atlashub.pay.accounts.application.commands.RecordAnchorFunding.RecordAnchorFundingHandler;
+import com.atlashub.pay.accounts.application.commands.RecordAnchorDebit.RecordAnchorDebitCommand;
+import com.atlashub.pay.accounts.application.commands.RecordAnchorDebit.RecordAnchorDebitHandler;
 import com.atlashub.pay.accounts.domain.valueobject.ConfirmedBankingDetails;
 import com.atlashub.shared.application.messaging.BaseKafkaEventListener;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -32,12 +34,15 @@ public class AnchorWebhookReceivedListener extends BaseKafkaEventListener {
     private static final String GROUP_ID = "pay-accounts-anchor-webhooks";
     private final ApplyAnchorAccountStatusHandler handler;
     private final RecordAnchorFundingHandler fundingHandler;
+    private final RecordAnchorDebitHandler debitHandler;
 
     public AnchorWebhookReceivedListener(ObjectMapper objectMapper, ApplyAnchorAccountStatusHandler handler,
-                                         RecordAnchorFundingHandler fundingHandler) {
+                                         RecordAnchorFundingHandler fundingHandler,
+                                         RecordAnchorDebitHandler debitHandler) {
         super(objectMapper);
         this.handler = handler;
         this.fundingHandler = fundingHandler;
+        this.debitHandler = debitHandler;
     }
 
     @PostConstruct
@@ -56,10 +61,12 @@ public class AnchorWebhookReceivedListener extends BaseKafkaEventListener {
         if (!"PAY_ACCOUNTS".equalsIgnoreCase(event.consumer())) {
             return;
         }
-        if (("payin.received".equalsIgnoreCase(event.eventType())
-                || "payment.received".equalsIgnoreCase(event.eventType()))
-                && event.includedResources().stream().anyMatch(value -> "PayIn".equalsIgnoreCase(value.type()))) {
+        if (isInboundMovement(event.eventType())) {
             dispatchFunding(event);
+            return;
+        }
+        if (isOutboundMovement(event.eventType())) {
+            dispatchDebit(event, "nip.transfer.reversed".equalsIgnoreCase(event.eventType()));
             return;
         }
         if (!isAccountLifecycleEvent(event.eventType())) return;
@@ -94,6 +101,10 @@ public class AnchorWebhookReceivedListener extends BaseKafkaEventListener {
     }
 
     private void dispatchFunding(AnchorWebhookReceivedEvent event) {
+        if ("nip.inbound.completed".equalsIgnoreCase(event.eventType())) {
+            dispatchInboundNip(event);
+            return;
+        }
         IncludedResource payIn = event.includedResources().stream()
                 .filter(value -> "PayIn".equalsIgnoreCase(value.type()))
                 .findFirst()
@@ -110,7 +121,80 @@ public class AnchorWebhookReceivedListener extends BaseKafkaEventListener {
                 text(payIn.attributes(), "reference", "sessionId"),
                 decimal(payIn.attributes().get("amount")), text(payIn.attributes(), "currency"),
                 text(transfer, "senderName"), text(transfer, "senderBank"),
+                text(transfer, "narration"),
                 time(text(payIn.attributes(), "paidAt", "createdAt"))));
+    }
+
+    private void dispatchInboundNip(AnchorWebhookReceivedEvent event) {
+        IncludedResource transfer = event.includedResources().stream()
+                .filter(value -> {
+                    String type = normalizeResourceType(value.type());
+                    return type.equals("INBOUND_NIP_TRANSFER") || type.equals("INBOUND_NIPTRANSFER");
+                })
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Anchor inbound completion must include InboundNIPTransfer details"));
+        String depositAccountId = relationshipId(transfer.relationships(), "account", "depositAccount");
+        if (depositAccountId == null) {
+            depositAccountId = relationshipId(event.relationships(), "account", "depositAccount");
+        }
+        Map<String, Object> attributes = transfer.attributes();
+        Map<String, Object> sourceBank = nested(attributes, "sourceBank");
+        fundingHandler.execute(new RecordAnchorFundingCommand(
+                apiEnvironment(event), null, depositAccountId,
+                text(attributes, "reference", "sessionId"), decimal(attributes.get("amount")),
+                text(attributes, "currency"), text(attributes, "sourceAccountName", "senderName"),
+                firstNonBlank(text(attributes, "sourceBankCode", "senderBankCode"),
+                        text(sourceBank, "nipCode", "bankCode", "code")),
+                text(attributes, "description", "narration"),
+                time(text(attributes, "completedAt", "paidAt", "createdAt"))));
+    }
+
+    private void dispatchDebit(AnchorWebhookReceivedEvent event, boolean reversed) {
+        IncludedResource transfer = event.includedResources().stream()
+                .filter(value -> {
+                    String type = normalizeResourceType(value.type());
+                    return type.equals("NIP_TRANSFER") || type.equals("NIPTRANSFER")
+                            || type.equals("BOOK_TRANSFER") || type.equals("TRANSFER");
+                })
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Anchor transfer event must include transfer details"));
+        String depositAccountId = relationshipId(transfer.relationships(), "account", "depositAccount");
+        if (depositAccountId == null) {
+            depositAccountId = relationshipId(event.relationships(), "account", "depositAccount");
+        }
+        ResourceIdentifier counterpartyId = transfer.relationships().get("counterParty");
+        IncludedResource counterparty = counterpartyId == null ? null : event.includedResources().stream()
+                .filter(value -> counterpartyId.id().equals(value.id())).findFirst().orElse(null);
+        Map<String, Object> attributes = transfer.attributes();
+        Map<String, Object> counterpartyAttributes = counterparty == null ? Map.of() : counterparty.attributes();
+        Map<String, Object> bank = nested(counterpartyAttributes, "bank");
+        String reference = text(attributes, "reference", "customerReference");
+        if (reference == null) reference = transfer.id();
+        debitHandler.execute(new RecordAnchorDebitCommand(
+                apiEnvironment(event), depositAccountId, transfer.id(), reference,
+                decimal(attributes.get("amount")), text(attributes, "currency"),
+                text(counterpartyAttributes, "accountName", "name"),
+                text(counterpartyAttributes, "accountNumber"), text(bank, "nipCode", "bankCode", "code"),
+                text(attributes, "reason", "description", "narration"), reversed,
+                time(text(attributes, "completedAt", "updatedAt", "createdAt"))));
+    }
+
+    private boolean isInboundMovement(String eventType) {
+        return "payin.received".equalsIgnoreCase(eventType)
+                || "payment.received".equalsIgnoreCase(eventType)
+                || "nip.inbound.completed".equalsIgnoreCase(eventType);
+    }
+
+    private boolean isOutboundMovement(String eventType) {
+        return "nip.transfer.successful".equalsIgnoreCase(eventType)
+                || "book.transfer.successful".equalsIgnoreCase(eventType)
+                || "nip.transfer.reversed".equalsIgnoreCase(eventType);
+    }
+
+    private String apiEnvironment(AnchorWebhookReceivedEvent event) {
+        return "SANDBOX".equalsIgnoreCase(event.environment()) ? "TEST" : "LIVE";
     }
 
     private boolean isAccountResource(String type) {
@@ -167,6 +251,10 @@ public class AnchorWebhookReceivedListener extends BaseKafkaEventListener {
             }
         }
         return null;
+    }
+
+    private String firstNonBlank(String first, String second) {
+        return first == null || first.isBlank() ? second : first;
     }
 
     @SuppressWarnings("unchecked")

@@ -90,6 +90,11 @@ Verified Anchor credits to an organization operating account publish `Organizati
 reserved-account credits publish `ReservedAccountFundedEvent` with customer/vendor attribution. Ledger and
 `pay:tx-query` consume compatible event contracts idempotently.
 
+Completed direct Anchor withdrawals publish `OrganizationAccountDebitedEvent`; `nip.transfer.reversed` publishes
+`OrganizationAccountDebitReversedEvent`. Provider transfer IDs and customer references are retained for replay-safe
+ledger posting and transaction history. Full counterparty account numbers are never published; only masked numbers
+and safe bank/display metadata leave `pay:accounts`.
+
 An operating-account credit does not by itself mean a Paystack settlement is reconciled. `pay:settlement` matches it
 against Paystack settlement evidence using destination, currency, and net amount before publishing
 `ProviderSettlementReceivedEvent`.
