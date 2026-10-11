@@ -62,7 +62,7 @@ class CashEvacuationTest {
         assertTrue(events.get(0) instanceof CashEvacuatedEvent);
         CashEvacuatedEvent event = (CashEvacuatedEvent) events.get(0);
         assertEquals(1L, event.payload().evacuationId());
-        assertEquals(new BigDecimal("50000.00"), event.payload().amount());
+        assertEquals(new BigDecimal("50000.0000"), event.payload().amount());
         assertEquals("NGN", event.payload().currency());
     }
 
