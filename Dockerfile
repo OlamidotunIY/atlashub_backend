@@ -26,6 +26,7 @@ COPY atlashub-commerce/catalog/build.gradle        atlashub-commerce/catalog/
 COPY atlashub-commerce/inventory/build.gradle      atlashub-commerce/inventory/
 COPY atlashub-commerce/storefront/build.gradle     atlashub-commerce/storefront/
 COPY atlashub-accounting/gl/build.gradle           atlashub-accounting/gl/
+COPY atlashub-accounting/cash/build.gradle         atlashub-accounting/cash/
 COPY atlashub-infrastructure/anchor/build.gradle   atlashub-infrastructure/anchor/
 COPY atlashub-infrastructure/audit/build.gradle    atlashub-infrastructure/audit/
 COPY atlashub-infrastructure/eventbus/build.gradle atlashub-infrastructure/eventbus/
