@@ -48,6 +48,11 @@ Settlement
 
 Confirmation publishes `ProviderSettlementReceivedEvent`. `pay:ledger` consumes its own compatible copy and performs the idempotent `PROVIDER_SETTLED` posting keyed by provider settlement ID. Settlement never calls a ledger handler synchronously.
 
+The matching Anchor credit is recorded before or alongside settlement reconciliation. Ledger confirmation therefore
+debits the operating liability and credits provider clearing for the matched net amount; it does not credit the
+business again. The resulting books retain one operating balance backed by the Anchor cash movement and a cleared
+Paystack receivable.
+
 ### Supporting aggregates
 
 - `SettlementCreditEvidence` persists every verified Anchor inbound credit before matching. This allows both credit-before-settlement and settlement-before-credit delivery orders without losing evidence.
