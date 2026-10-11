@@ -4,10 +4,12 @@ import com.atlashub.pay.ledger.infrastructure.persistence.entities.BalanceSnapsh
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
 
+@Repository("payLedgerSpringDataBalanceSnapshotRepository")
 public interface SpringDataBalanceSnapshotRepository extends JpaRepository<BalanceSnapshotJpa, Long> {
     Optional<BalanceSnapshotJpa> findTopByAccountIdOrderBySnapshotAtDesc(Long accountId);
     
