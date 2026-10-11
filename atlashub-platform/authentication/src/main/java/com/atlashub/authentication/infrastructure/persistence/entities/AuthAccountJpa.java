@@ -1,11 +1,17 @@
 package com.atlashub.authentication.infrastructure.persistence.entities;
 
 import com.atlashub.shared.infrastructure.persistence.entities.BaseJpaEntity;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.ZonedDateTime;
 
@@ -19,6 +25,7 @@ import java.time.ZonedDateTime;
         }
 )
 @Getter
+@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 public class AuthAccountJpa implements BaseJpaEntity {
