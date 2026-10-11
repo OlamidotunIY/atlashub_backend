@@ -16,7 +16,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
 
-@Entity
+@Entity(name = "AccountingBalanceSnapshotJpa")
 @Table(
         name = "accounting_balance_snapshots",
         indexes = {
