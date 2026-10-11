@@ -13,7 +13,9 @@ public class ProjectPayoutTransactionHandler extends Command<ProjectPayoutTransa
     @Override public Void execute(ProjectPayoutTransactionCommand c) {
         support.upsert(c.organizationId(), c.environment(), TransactionType.PAYOUT, c.status(), c.amount(),
                 "BANK_TRANSFER", null, c.reference(), c.sourceSystem(), c.sourceReferenceId(), null, null, null,
-                c.recipientName(), c.recipientAccountNumber(), "Payout", Map.of(), c.occurredAt());
+                c.recipientName(), c.recipientAccountNumber(),
+                c.description() == null || c.description().isBlank() ? "Payout" : c.description(),
+                c.metadata() == null ? Map.of() : c.metadata(), c.occurredAt());
         return null;
     }
 }

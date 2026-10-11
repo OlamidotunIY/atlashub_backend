@@ -43,6 +43,8 @@ Infrastructure listeners on `pay-events` delegate only to application command ha
 | `ChargeSuccessfulEvent` / `ChargeFailedEvent` | Successful or failed charge, including provider fee |
 | Refund/dispute charge events | Update the existing charge status |
 | `OrganizationAccountFundedEvent` | Operating-account funding activity |
+| `OrganizationAccountDebitedEvent` | Successful direct Anchor withdrawal with masked recipient metadata |
+| `OrganizationAccountDebitReversedEvent` | Incoming reversal linked to the original Anchor transfer |
 | `ReservedAccountFundedEvent` | Customer/vendor transfer collection activity |
 | `LedgerTransactionPostedEvent` | Ledger entries and account-relative directions; enriches an existing provider record when references match |
 | `ProviderSettlementReceivedEvent` | Confirmed two-sided settlement only |
@@ -97,6 +99,10 @@ All endpoints require `pay:ledger:read`. Tenant/environment scope comes only fro
 
 Responses use presentation DTOs and `ApiResponse`. Account-specific results expose direction relative to the
 requested account rather than whichever ledger entry happened to be loaded first.
+
+Organization-wide direction is semantic: account funding and reversals are incoming, payouts are outgoing, and
+settlements/internal account transfers are internal. Provider-safe sender/recipient metadata is searchable through
+the description/source fields and returned metadata; full external account numbers are never projected.
 
 ## Boundaries
 
