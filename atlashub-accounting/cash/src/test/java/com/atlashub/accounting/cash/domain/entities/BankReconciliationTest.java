@@ -47,14 +47,13 @@ class BankReconciliationTest {
     }
 
     @Test
-    @DisplayName("Should throw when statement and book currencies differ")
-    void create_currencyMismatch_throwsException() {
+    @DisplayName("Should throw when statement balance or book balance is null")
+    void create_nullBalance_throwsException() {
         Money statementBalance = Money.of(new BigDecimal("1000.00"), CurrencyCode.NGN);
-        Money bookBalance = Money.of(new BigDecimal("1000.00"), CurrencyCode.USD);
 
         assertThrows(InvalidReconciliationStateException.class, () ->
                 BankReconciliation.create(
-                        100L, 10L, "1010-BANK", LocalDate.now(), statementBalance, bookBalance,
+                        100L, 10L, "1010-BANK", LocalDate.now(), statementBalance, null,
                         List.of(), List.of()));
     }
 
