@@ -36,6 +36,7 @@ dependencies {
 
     // Accounting Modules
     implementation project(':atlashub-accounting:gl')
+    implementation project(':atlashub-accounting:cash')
 
     // Infrastructure Modules
     implementation project(':atlashub-infrastructure:eventbus')
