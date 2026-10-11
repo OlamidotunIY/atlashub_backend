@@ -5,6 +5,8 @@ import com.atlashub.pay.ledger.application.commands.ProcessLedgerEvent.ProcessLe
 import com.atlashub.pay.ledger.infrastructure.messaging.events.LedgerInboundEvents.ChargeSuccessfulEvent;
 import com.atlashub.pay.ledger.infrastructure.messaging.events.LedgerInboundEvents.ChargeRefundedEvent;
 import com.atlashub.pay.ledger.infrastructure.messaging.events.LedgerInboundEvents.OrganizationAccountFundedEvent;
+import com.atlashub.pay.ledger.infrastructure.messaging.events.LedgerInboundEvents.OrganizationAccountDebitedEvent;
+import com.atlashub.pay.ledger.infrastructure.messaging.events.LedgerInboundEvents.OrganizationAccountDebitReversedEvent;
 import com.atlashub.pay.ledger.infrastructure.messaging.events.LedgerInboundEvents.PayoutCompletedEvent;
 import com.atlashub.pay.ledger.infrastructure.messaging.events.LedgerInboundEvents.ProviderSettlementReceivedEvent;
 import com.atlashub.pay.ledger.infrastructure.messaging.events.LedgerInboundEvents.ReservedAccountActivatedEvent;
@@ -39,6 +41,8 @@ public class PayLedgerEventListener extends BaseKafkaEventListener {
         registerSubscription("ChargeRefundedEvent", "pay-ledger-charge-refunded");
         registerSubscription("ReservedAccountFundedEvent", "pay-ledger-reserved-account-funded");
         registerSubscription("OrganizationAccountFundedEvent", "pay-ledger-organization-account-funded");
+        registerSubscription("OrganizationAccountDebitedEvent", "pay-ledger-organization-account-debited");
+        registerSubscription("OrganizationAccountDebitReversedEvent", "pay-ledger-organization-account-debit-reversed");
         registerSubscription("PayoutCompletedEvent", "pay-ledger-payout-completed");
         registerSubscription("ProviderSettlementReceivedEvent", "pay-ledger-provider-settled");
     }
@@ -73,7 +77,9 @@ public class PayLedgerEventListener extends BaseKafkaEventListener {
                         handler.execute(command(ProcessLedgerEventCommand.Action.CHARGE_RECEIVED,
                                 event.payload().organizationId(), event.payload().environment(), null, null, null,
                                 event.payload().chargeReference(), "CARD_CHARGE", event.payload().sourceReferenceId(),
-                                event.payload().amount().amount(), event.payload().amount().currency().name())));
+                                event.payload().amount().amount().subtract(event.payload().providerFee() == null
+                                        ? BigDecimal.ZERO : event.payload().providerFee().amount()),
+                                event.payload().amount().currency().name())));
     }
 
     @KafkaListener(topics = "pay-events", groupId = "pay-ledger-charge-refunded")
@@ -108,6 +114,28 @@ public class PayLedgerEventListener extends BaseKafkaEventListener {
                                 event.payload().organizationId(), event.payload().environment(), null, null, null,
                                 event.payload().anchorTransferReference(), "EXTERNAL_COLLECTION",
                                 event.payload().businessAccountId().toString(), event.payload().amount(),
+                                event.payload().currency())));
+    }
+
+    @KafkaListener(topics = "pay-events", groupId = "pay-ledger-organization-account-debited")
+    public void organizationDebited(String message) {
+        processEventIfMatches(message, "OrganizationAccountDebitedEvent", OrganizationAccountDebitedEvent.class,
+                log, "pay-ledger-organization-account-debited", e -> e instanceof TimeoutException, event ->
+                        handler.execute(command(ProcessLedgerEventCommand.Action.ORGANIZATION_ACCOUNT_DEBITED,
+                                event.payload().organizationId(), event.payload().environment(), null, null, null,
+                                event.payload().transferReference(), "PAYOUT", event.payload().anchorTransferId(),
+                                event.payload().amount(), event.payload().currency())));
+    }
+
+    @KafkaListener(topics = "pay-events", groupId = "pay-ledger-organization-account-debit-reversed")
+    public void organizationDebitReversed(String message) {
+        processEventIfMatches(message, "OrganizationAccountDebitReversedEvent",
+                OrganizationAccountDebitReversedEvent.class, log,
+                "pay-ledger-organization-account-debit-reversed", e -> e instanceof TimeoutException, event ->
+                        handler.execute(command(ProcessLedgerEventCommand.Action.ORGANIZATION_ACCOUNT_DEBIT_REVERSED,
+                                event.payload().organizationId(), event.payload().environment(), null, null, null,
+                                "reversal:" + event.payload().anchorTransferId(), "EXTERNAL_COLLECTION",
+                                event.payload().transferReference(), event.payload().amount(),
                                 event.payload().currency())));
     }
 

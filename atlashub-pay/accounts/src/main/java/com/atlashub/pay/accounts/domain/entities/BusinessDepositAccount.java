@@ -10,6 +10,8 @@ import com.atlashub.pay.accounts.domain.exceptions.InvalidBankingAccountDataExce
 import com.atlashub.pay.accounts.domain.exceptions.InvalidBankingStateException;
 import com.atlashub.pay.accounts.domain.events.BusinessDepositAccountActivatedEvent;
 import com.atlashub.pay.accounts.domain.events.OrganizationAccountFundedEvent;
+import com.atlashub.pay.accounts.domain.events.OrganizationAccountDebitedEvent;
+import com.atlashub.pay.accounts.domain.events.OrganizationAccountDebitReversedEvent;
 import com.atlashub.shared.domain.valueobject.CorrelationId;
 
 import java.math.BigDecimal;
@@ -77,6 +79,7 @@ public class BusinessDepositAccount extends AggregateRoot<Long> {
     }
 
     public void recordFunding(String transferReference, BigDecimal amount, CurrencyCode fundingCurrency,
+                              String senderAccountName, String senderBankCode, String narration,
                               ZonedDateTime receivedAt) {
         if (transferReference == null || transferReference.isBlank() || amount == null
                 || amount.signum() <= 0 || fundingCurrency == null) {
@@ -85,8 +88,45 @@ public class BusinessDepositAccount extends AggregateRoot<Long> {
         registerEvent(new OrganizationAccountFundedEvent(
                 UUID.randomUUID().toString(), id, ZonedDateTime.now(), CorrelationId.getOrCreate(),
                 new OrganizationAccountFundedEvent.Payload(organizationId, environment.name(), id,
-                        transferReference, amount, fundingCurrency.name(),
+                        transferReference, amount, fundingCurrency.name(), senderAccountName, senderBankCode,
+                        narration,
                         receivedAt == null ? ZonedDateTime.now() : receivedAt)));
+    }
+
+    public void recordDebit(String anchorTransferId, String transferReference, BigDecimal amount,
+                            CurrencyCode transferCurrency, String recipientName,
+                            String maskedRecipientAccountNumber, String recipientBankCode, String narration,
+                            ZonedDateTime completedAt) {
+        validateMovement(anchorTransferId, transferReference, amount, transferCurrency);
+        registerEvent(new OrganizationAccountDebitedEvent(
+                UUID.randomUUID().toString(), id, ZonedDateTime.now(), CorrelationId.getOrCreate(),
+                new OrganizationAccountDebitedEvent.Payload(organizationId, environment.name(), id,
+                        anchorTransferId, transferReference, amount, transferCurrency.name(), recipientName,
+                        maskedRecipientAccountNumber, recipientBankCode, narration,
+                        completedAt == null ? ZonedDateTime.now() : completedAt)));
+    }
+
+    public void recordDebitReversal(String anchorTransferId, String transferReference, BigDecimal amount,
+                                    CurrencyCode transferCurrency, String narration, ZonedDateTime reversedAt) {
+        validateMovement(anchorTransferId, transferReference, amount, transferCurrency);
+        registerEvent(new OrganizationAccountDebitReversedEvent(
+                UUID.randomUUID().toString(), id, ZonedDateTime.now(), CorrelationId.getOrCreate(),
+                new OrganizationAccountDebitReversedEvent.Payload(organizationId, environment.name(), id,
+                        anchorTransferId, transferReference, amount, transferCurrency.name(), narration,
+                        reversedAt == null ? ZonedDateTime.now() : reversedAt)));
+    }
+
+    private void validateMovement(String anchorTransferId, String transferReference, BigDecimal amount,
+                                  CurrencyCode transferCurrency) {
+        if (anchorTransferId == null || anchorTransferId.isBlank() || transferReference == null
+                || transferReference.isBlank() || amount == null || amount.signum() <= 0
+                || transferCurrency == null) {
+            throw new InvalidBankingAccountDataException(
+                    "Valid Anchor transfer id, reference, amount and currency are required");
+        }
+        if (transferCurrency != currency) {
+            throw new InvalidBankingAccountDataException("Transfer currency must match the deposit account currency");
+        }
     }
 
     public void freeze(String reason) { frozen=true; status=ExternalAccountStatus.FROZEN; failureReason=reason; touch(); }

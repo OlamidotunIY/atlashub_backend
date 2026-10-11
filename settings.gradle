@@ -43,3 +43,4 @@ include 'atlashub-commerce:storefront'
 // Accounting
 include 'atlashub-accounting'
 include 'atlashub-accounting:gl'
+include 'atlashub-accounting:cash'

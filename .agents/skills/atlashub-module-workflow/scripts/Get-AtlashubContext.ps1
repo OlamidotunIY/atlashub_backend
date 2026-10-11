@@ -38,8 +38,9 @@ if (-not $gradleDir -or -not (Test-Path -LiteralPath (Join-Path $gradleDir "buil
     throw "Could not resolve the Gradle project containing '$sourceRoot'."
 }
 
-$moduleDoc = if ($normalizedModule -eq "pay" -and $normalizedSubModule) {
-    Join-Path $repoRoot "docs\modules\pay-$normalizedSubModule-design.md"
+$subModuleDoc = if ($normalizedSubModule) { Join-Path $repoRoot "docs\modules\$normalizedModule-$normalizedSubModule-design.md" } else { "" }
+$moduleDoc = if ($subModuleDoc -and (Test-Path -LiteralPath $subModuleDoc)) {
+    $subModuleDoc
 } elseif ($normalizedModule -eq "authentication") {
     Join-Path $repoRoot "docs\modules\auth-design.md"
 } elseif ($normalizedModule -in @('eventbus', 'audit', 'ratelimiter', 'storage')) {

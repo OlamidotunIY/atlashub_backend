@@ -11,6 +11,7 @@ import com.atlashub.pay.ledger.presentation.dto.CreateBusinessAccountRequest;
 import com.atlashub.pay.ledger.presentation.dto.CreateBusinessAccountResponse;
 import com.atlashub.pay.ledger.presentation.dto.ExternalBankAccountResponse;
 import com.atlashub.pay.ledger.presentation.dto.FinancialAccountResponse;
+import com.atlashub.pay.ledger.presentation.dto.FinancialAccountSummaryResponse;
 import com.atlashub.shared.application.dto.ApiResponse;
 import com.atlashub.shared.application.security.AuthenticatedPrincipal;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -45,10 +46,10 @@ public class FinancialAccountController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<FinancialAccountResponse>>> list(
+    public ResponseEntity<ApiResponse<List<FinancialAccountSummaryResponse>>> list(
             @AuthenticationPrincipal AuthenticatedPrincipal principal) {
         var accounts = listHandler.execute(new ListFinancialAccountsQuery(
-                principal.activeOrganizationId(), principal.environment())).stream().map(this::map).toList();
+                principal.activeOrganizationId(), principal.environment())).stream().map(this::mapSummary).toList();
         return ok(accounts);
     }
 
@@ -74,9 +75,17 @@ public class FinancialAccountController {
                 result.bankAccount().id(), result.bankAccount().accountName(), result.bankAccount().maskedAccountNumber(),
                 result.bankAccount().bankName(), result.bankAccount().bankCode(), result.bankAccount().currency(),
                 result.bankAccount().status(), result.bankAccount().activatedAt());
-        return new FinancialAccountResponse(result.id(), result.name(), result.type(), result.scope(),
-                result.currency(), result.status(), result.restrictions(), result.balance(), result.balanceAsOf(),
-                bankAccount, result.createdAt());
+        return new FinancialAccountResponse(result.id(), result.businessName(), result.name(), result.type(),
+                result.scope(), result.currency(), result.status(), result.frozen(), result.restrictions(),
+                result.ledgerBalance(), result.availableBalance(), result.pendingSettlementBalance(),
+                result.balanceAsOf(), bankAccount, result.createdAt());
+    }
+
+    private FinancialAccountSummaryResponse mapSummary(FinancialAccountResult result) {
+        return new FinancialAccountSummaryResponse(result.id(), result.businessName(), result.name(), result.type(),
+                result.scope(), result.currency(), result.status(), result.frozen(), result.restrictions(),
+                result.ledgerBalance(), result.availableBalance(), result.pendingSettlementBalance(),
+                result.balanceAsOf(), result.createdAt());
     }
 
     private <T> ResponseEntity<ApiResponse<T>> ok(T data) {

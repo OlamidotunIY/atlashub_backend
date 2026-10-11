@@ -4,6 +4,8 @@ import com.atlashub.pay.ledger.domain.entities.LedgerEntry;
 import com.atlashub.pay.ledger.domain.entities.LedgerTransaction;
 import com.atlashub.pay.ledger.domain.valueobject.EntryType;
 import com.atlashub.pay.ledger.domain.valueobject.NormalBalance;
+import com.atlashub.pay.ledger.domain.valueobject.LedgerAccountStatus;
+import com.atlashub.pay.ledger.domain.valueobject.LedgerAccountType;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -26,5 +28,14 @@ public class BalanceCalculator {
             }
         }
         return balance;
+    }
+
+    public BigDecimal calculateAvailableBalance(LedgerAccountType accountType, LedgerAccountStatus status,
+                                                BigDecimal ledgerBalance,
+                                                BigDecimal pendingSettlementBalance) {
+        if (status == LedgerAccountStatus.FROZEN) return BigDecimal.ZERO;
+        BigDecimal pending = accountType == LedgerAccountType.OPERATING
+                ? pendingSettlementBalance.max(BigDecimal.ZERO) : BigDecimal.ZERO;
+        return ledgerBalance.subtract(pending).max(BigDecimal.ZERO);
     }
 }

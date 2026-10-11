@@ -80,7 +80,30 @@ public final class TransactionInboundEvents {
 
     public record OrganizationFundingPayload(Long organizationId, String environment, Long businessAccountId,
                                              String anchorTransferReference, BigDecimal amount, String currency,
+                                             String senderAccountName, String senderBankCode, String narration,
                                              ZonedDateTime receivedAt) {
+    }
+
+    public record OrganizationAccountDebitedEvent(String eventId, Long aggregateId, ZonedDateTime occurredAt,
+                                                  String correlationId, OrganizationDebitPayload payload) {
+    }
+
+    public record OrganizationDebitPayload(Long organizationId, String environment, Long businessAccountId,
+                                           String anchorTransferId, String transferReference, BigDecimal amount,
+                                           String currency, String recipientName,
+                                           String maskedRecipientAccountNumber, String recipientBankCode,
+                                           String narration, ZonedDateTime completedAt) {
+    }
+
+    public record OrganizationAccountDebitReversedEvent(String eventId, Long aggregateId, ZonedDateTime occurredAt,
+                                                        String correlationId,
+                                                        OrganizationDebitReversalPayload payload) {
+    }
+
+    public record OrganizationDebitReversalPayload(Long organizationId, String environment, Long businessAccountId,
+                                                   String anchorTransferId, String transferReference,
+                                                   BigDecimal amount, String currency, String narration,
+                                                   ZonedDateTime reversedAt) {
     }
 
     public record ReservedAccountFundedEvent(String eventId, Long aggregateId, ZonedDateTime occurredAt,

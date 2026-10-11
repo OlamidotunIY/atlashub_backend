@@ -127,6 +127,15 @@ public class TransactionRecord extends AggregateRoot<Long> {
     }
 
     public TransactionDirection primaryDirection() {
+        if (type == TransactionType.ACCOUNT_FUNDING || type == TransactionType.CHARGE) {
+            return TransactionDirection.INCOMING;
+        }
+        if (type == TransactionType.PAYOUT || type == TransactionType.REFUND) {
+            return TransactionDirection.OUTGOING;
+        }
+        if (type == TransactionType.SETTLEMENT || type == TransactionType.ACCOUNT_TRANSFER) {
+            return TransactionDirection.INTERNAL;
+        }
         if (accountEntries.isEmpty()) return TransactionDirection.INTERNAL;
         return accountEntries.getFirst().getDirection();
     }

@@ -58,8 +58,12 @@ public class ProcessLedgerEventHandler extends Command<ProcessLedgerEventCommand
             case CHARGE_REFUNDED -> post(
                     command, LedgerAccountType.OPERATING, LedgerAccountType.PROVIDER_CLEARING, null, null);
             case PROVIDER_SETTLED -> post(
-                    command, LedgerAccountType.SUSPENSE, LedgerAccountType.PROVIDER_CLEARING, null, null);
+                    command, LedgerAccountType.OPERATING, LedgerAccountType.PROVIDER_CLEARING, null, null);
             case ORGANIZATION_ACCOUNT_FUNDED -> post(
+                    command, LedgerAccountType.SUSPENSE, LedgerAccountType.OPERATING, null, null);
+            case ORGANIZATION_ACCOUNT_DEBITED -> post(
+                    command, LedgerAccountType.OPERATING, LedgerAccountType.SUSPENSE, null, null);
+            case ORGANIZATION_ACCOUNT_DEBIT_REVERSED -> post(
                     command, LedgerAccountType.SUSPENSE, LedgerAccountType.OPERATING, null, null);
             case RESERVED_ACCOUNT_FUNDED -> postReservedFunding(command);
             case PAYOUT_COMPLETED -> post(

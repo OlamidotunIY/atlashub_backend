@@ -15,7 +15,9 @@ public class ProjectAccountFundingHandler extends Command<ProjectAccountFundingC
         support.upsert(c.organizationId(), c.environment(), TransactionType.ACCOUNT_FUNDING,
                 TransactionStatus.SUCCESSFUL, c.amount(), "BANK_TRANSFER", c.provider(), c.reference(),
                 "EXTERNAL_COLLECTION", c.accountId() == null ? null : c.accountId().toString(), c.partyType(),
-                c.partyReferenceId(), null, null, null, "Account funding", Map.of(), c.occurredAt());
+                c.partyReferenceId(), null, null, null,
+                c.description() == null || c.description().isBlank() ? "Account funding" : c.description(),
+                c.metadata() == null ? Map.of() : c.metadata(), c.occurredAt());
         return null;
     }
 }

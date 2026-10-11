@@ -40,7 +40,8 @@ public class RecordAnchorFundingHandler extends Command<RecordAnchorFundingComma
             BusinessDepositAccount account = depositRepository
                     .findByAnchorAccountIdAndEnvironment(command.depositAccountId(), environment)
                     .orElseThrow(() -> new InvalidBankingStateException("Organization funding destination was not found"));
-            account.recordFunding(command.transferReference(), command.amount(), currency, command.receivedAt());
+            account.recordFunding(command.transferReference(), command.amount(), currency,
+                    command.senderAccountName(), command.senderBankCode(), command.narration(), command.receivedAt());
             depositRepository.save(account);
             return null;
         }

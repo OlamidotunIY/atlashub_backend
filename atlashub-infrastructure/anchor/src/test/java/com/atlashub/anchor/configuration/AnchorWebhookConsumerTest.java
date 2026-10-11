@@ -14,5 +14,8 @@ class AnchorWebhookConsumerTest {
         assertTrue(AnchorWebhookConsumer.COMPLIANCE.enabledEvents()
                 .contains("customer.identification.approved"));
         assertTrue(AnchorWebhookConsumer.PAY_ACCOUNTS.enabledEvents().contains("payin.received"));
+        assertTrue(AnchorWebhookConsumer.PAY_ACCOUNTS.enabledEvents().contains("nip.inbound.completed"));
+        assertTrue(AnchorWebhookConsumer.PAY_ACCOUNTS.enabledEvents().contains("nip.transfer.successful"));
+        assertTrue(AnchorWebhookConsumer.PAY_ACCOUNTS.enabledEvents().contains("nip.transfer.reversed"));
     }
 }
