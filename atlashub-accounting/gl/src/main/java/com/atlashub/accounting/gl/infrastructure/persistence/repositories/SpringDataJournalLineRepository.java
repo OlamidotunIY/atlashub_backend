@@ -9,5 +9,7 @@ public interface SpringDataJournalLineRepository extends JpaRepository<JournalLi
 
     List<JournalLineJpa> findAllByJournalEntryId(Long journalEntryId);
 
+    List<JournalLineJpa> findAllByAccountId(Long accountId);
+
     void deleteAllByJournalEntryId(Long journalEntryId);
 }
