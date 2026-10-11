@@ -36,6 +36,15 @@ banking activation is a banking-status event and is not a ledger-bootstrap trigg
 Every created account receives a zero `BalanceSnapshot`. Balances are derived from the latest snapshot plus later
 entries; there is no mutable current-balance column.
 
+Organization-facing account responses expose:
+
+- `ledgerBalance`: the account's complete AtlasHub book balance.
+- `pendingSettlementBalance`: the operating account's net Paystack receivable, derived from `PROVIDER_CLEARING`.
+- `availableBalance`: settled spendable value; pending settlement is excluded and frozen accounts expose zero.
+
+Purpose-specific reserves such as payroll, tax, escrow, and split funds remain balances in their dedicated ledger
+accounts. AtlasHub does not report those separate-account balances as a synthetic held balance.
+
 ## Transactions
 
 `LedgerTransaction` owns at least two immutable `LedgerEntry` values. Construction rejects unequal debit and credit
@@ -47,11 +56,15 @@ external collection, payout, settlement, split, commerce, payroll, and `INTERNAL
 
 ### Important postings
 
-- Verified charge receipt: debit provider clearing, credit the applicable operating/party/business account.
+- Verified charge receipt: debit provider clearing and credit the applicable operating/party/business account for
+  the net amount after the provider fee.
 - Charge refund: debit operating/customer funds, credit provider clearing.
-- Confirmed Anchor funding: provider/account clearing against the attributed business or party account.
-- Final Paystack settlement: only after settlement has both Paystack evidence and matching Anchor credit; clears the
-  provider receivable without recognizing revenue again.
+- Confirmed Anchor funding: debit suspense and credit the attributed business or party account.
+- Final Paystack settlement: only after settlement has both Paystack evidence and matching Anchor credit; debit the
+  operating account and credit provider clearing. This removes the provisional duplicate Anchor credit and clears
+  the provider receivable without recognizing revenue again.
+- Successful direct Anchor withdrawal: debit operating and credit suspense. A provider reversal posts the exact
+  opposite movement under a distinct idempotency reference.
 - Internal account transfer: debit the source business account and credit the destination business account.
 
 ## Application API
@@ -69,9 +82,10 @@ external collection, payout, settlement, split, commerce, payroll, and `INTERNAL
 
 ### Queries
 
-- `ListFinancialAccountsQuery`: active business-account summaries with current balance, restrictions, and display
+- `ListFinancialAccountsQuery`: open business-account summaries with ledger, available, and pending-settlement
+  balances, business name, frozen status, restrictions, and display
   metadata. Collection results never include external banking details.
-- `GetFinancialAccountQuery`: one owned active business account. When it is the operating account, the detail result
+- `GetFinancialAccountQuery`: one owned open business account. When it is the operating account, the detail result
   includes masked Anchor account information if an active deposit account exists.
 
 Transaction-history queries do not live here. `pay:tx-query` owns the unified organization, account, customer, and
@@ -83,7 +97,7 @@ Tenant and environment always come from `AuthenticatedPrincipal`.
 
 | Method | Endpoint | Permission | Purpose |
 |---|---|---|---|
-| `GET` | `/api/v1/pay/accounts` | `pay:ledger:read` | List active business-account summaries and balances; no bank-account object |
+| `GET` | `/api/v1/pay/accounts` | `pay:ledger:read` | List active/frozen business-account summaries and balances; no bank-account object |
 | `GET` | `/api/v1/pay/accounts/{accountId}` | `pay:ledger:read` | Get one account and, for the operating account, optional masked bank details |
 | `POST` | `/api/v1/pay/accounts` | `pay:ledger:manage` | Create an optional business account |
 | `POST` | `/api/v1/pay/account-transfers` | `pay:ledger:manage` | Transfer between owned business accounts |

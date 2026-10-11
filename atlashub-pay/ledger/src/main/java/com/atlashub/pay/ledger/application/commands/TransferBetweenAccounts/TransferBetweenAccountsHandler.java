@@ -13,6 +13,7 @@ import com.atlashub.pay.ledger.domain.repositories.LedgerAccountRepository;
 import com.atlashub.pay.ledger.domain.repositories.LedgerTransactionRepository;
 import com.atlashub.pay.ledger.domain.services.BalanceCalculator;
 import com.atlashub.pay.ledger.domain.valueobject.LedgerAccountScope;
+import com.atlashub.pay.ledger.domain.valueobject.LedgerAccountType;
 import com.atlashub.shared.application.security.ApiEnvironment;
 import com.atlashub.shared.application.usecase.Command;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -59,7 +60,10 @@ public class TransferBetweenAccountsHandler
         BigDecimal balance = calculator.calculateRunningBalance(source.getId(), source.getNormalBalance(),
                 snapshot.getBalance().amount(), transactions.findByAccountIdAndEnvironmentAndPostedAtAfter(
                         source.getId(), environment, snapshot.getSnapshotAt()));
-        if (balance.compareTo(command.amount()) < 0) {
+        BigDecimal pending = pendingSettlementBalance(source, environment);
+        BigDecimal available = calculator.calculateAvailableBalance(
+                source.getAccountType(), source.getStatus(), balance, pending);
+        if (available.compareTo(command.amount()) < 0) {
             throw new InsufficientFundsException();
         }
         var result = postHandler.execute(new PostLedgerTransactionCommand(command.organizationId(),
@@ -92,5 +96,22 @@ public class TransferBetweenAccountsHandler
             throw new LedgerAccountNotFoundException(id.toString());
         }
         return account;
+    }
+
+    private BigDecimal pendingSettlementBalance(LedgerAccount source, ApiEnvironment environment) {
+        if (source.getAccountType() != LedgerAccountType.OPERATING) return BigDecimal.ZERO;
+        return accounts.findByOrganizationIdAndEnvironmentAndAccountTypeAndCurrency(
+                        source.getOrganizationId(), environment, LedgerAccountType.PROVIDER_CLEARING,
+                        source.getCurrency())
+                .map(clearing -> {
+                    var snapshot = snapshots.findLatestByAccountId(clearing.getId())
+                            .orElseThrow(() -> new LedgerInvariantException(
+                                    "Missing provider-clearing balance snapshot"));
+                    return calculator.calculateRunningBalance(clearing.getId(), clearing.getNormalBalance(),
+                            snapshot.getBalance().amount(),
+                            transactions.findByAccountIdAndEnvironmentAndPostedAtAfter(
+                                    clearing.getId(), environment, snapshot.getSnapshotAt())).max(BigDecimal.ZERO);
+                })
+                .orElse(BigDecimal.ZERO);
     }
 }

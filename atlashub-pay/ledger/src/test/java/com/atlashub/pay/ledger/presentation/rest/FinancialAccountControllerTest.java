@@ -37,14 +37,17 @@ class FinancialAccountControllerTest {
     void listReturnsSummariesWithoutBankAccountContract() {
         ZonedDateTime now = ZonedDateTime.now();
         when(listHandler.execute(any(ListFinancialAccountsQuery.class))).thenReturn(List.of(
-                new FinancialAccountResult(1L, "Operating Account", "OPERATING", "BUSINESS", "NGN", "ACTIVE",
-                        Set.of(), new BigDecimal("5000"), now, null, now)));
+                new FinancialAccountResult(1L, "AtlasHub Ltd", "Operating Account", "OPERATING", "BUSINESS",
+                        "NGN", "ACTIVE", false, Set.of(), new BigDecimal("5000"), new BigDecimal("4000"),
+                        new BigDecimal("1000"), now, null, now)));
         AuthenticatedPrincipal principal = principal();
 
         var response = controller.list(principal);
 
         assertEquals(1, response.getBody().data().size());
         assertEquals("Operating Account", response.getBody().data().getFirst().name());
+        assertEquals("AtlasHub Ltd", response.getBody().data().getFirst().businessName());
+        assertEquals(new BigDecimal("4000"), response.getBody().data().getFirst().availableBalance());
         ArgumentCaptor<ListFinancialAccountsQuery> query = ArgumentCaptor.forClass(ListFinancialAccountsQuery.class);
         verify(listHandler).execute(query.capture());
         assertEquals(42L, query.getValue().organizationId());
@@ -57,8 +60,9 @@ class FinancialAccountControllerTest {
         BankAccountResult bank = new BankAccountResult(
                 50L, "AtlasHub Ltd", "******1234", "Anchor MFB", "090270", "NGN", "ACTIVE", now);
         when(getHandler.execute(any(GetFinancialAccountQuery.class))).thenReturn(
-                new FinancialAccountResult(1L, "Operating Account", "OPERATING", "BUSINESS", "NGN", "ACTIVE",
-                        Set.of(), new BigDecimal("5000"), now, bank, now));
+                new FinancialAccountResult(1L, "AtlasHub Ltd", "Operating Account", "OPERATING", "BUSINESS",
+                        "NGN", "ACTIVE", false, Set.of(), new BigDecimal("5000"), new BigDecimal("4000"),
+                        new BigDecimal("1000"), now, bank, now));
 
         var response = controller.get(principal(), 1L);
 
