@@ -19,6 +19,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.kafka:spring-kafka'
+    testRuntimeOnly 'com.h2database:h2'
 
     // Optional: Swagger for API docs
     implementation 'io.swagger.core.v3:swagger-annotations:2.2.20'
