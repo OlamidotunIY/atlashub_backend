@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDate;
 import java.util.Optional;
 
-@Component
+@Component("accountingGlBalanceSnapshotRepositoryAdapter")
 public class BalanceSnapshotRepositoryAdapter
         extends JpaBaseRepository<BalanceSnapshot, BalanceSnapshotJpa>
         implements BalanceSnapshotRepository {

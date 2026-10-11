@@ -10,6 +10,8 @@ import com.atlashub.shared.domain.valueobject.Money;
 import com.atlashub.shared.infrastructure.service.DomainSequenceGenerator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -37,6 +39,15 @@ class BalanceSnapshotRepositoryAdapterTest {
         sequenceGenerator = mock(DomainSequenceGenerator.class);
         eventPublisher = mock(DomainEventPublisher.class);
         adapter = new BalanceSnapshotRepositoryAdapter(springDataRepo, mapper, sequenceGenerator, eventPublisher);
+    }
+
+    @Test
+    void declaresModuleSpecificSpringBeanName() {
+        Component component = BalanceSnapshotRepositoryAdapter.class.getAnnotation(Component.class);
+        Repository repository = SpringDataBalanceSnapshotRepository.class.getAnnotation(Repository.class);
+
+        assertEquals("accountingGlBalanceSnapshotRepositoryAdapter", component.value());
+        assertEquals("accountingGlSpringDataBalanceSnapshotRepository", repository.value());
     }
 
     @Test
