@@ -27,10 +27,11 @@ public class OrganizationRegisteredPaymentProfileListener extends BaseKafkaEvent
 
     @PostConstruct
     public void init() {
+        registerSubscription("OrganizationRegistered", GROUP_ID);
         registerSubscription("com.atlashub.accounts.domain.events.OrganizationRegistered", GROUP_ID);
     }
 
-    @KafkaListener(topics = "accounts-events", groupId = GROUP_ID)
+    @KafkaListener(topics = "organization-events", groupId = GROUP_ID)
     public void listen(String message) {
         processEventIfMatches(message, "OrganizationRegistered", OrganizationRegistered.class, log, GROUP_ID,
                 error -> error instanceof TimeoutException,

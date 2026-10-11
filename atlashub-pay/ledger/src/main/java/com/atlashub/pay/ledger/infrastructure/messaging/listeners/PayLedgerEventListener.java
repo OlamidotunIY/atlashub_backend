@@ -35,6 +35,7 @@ public class PayLedgerEventListener extends BaseKafkaEventListener {
 
     @PostConstruct
     public void init() {
+        registerSubscription("OrganizationRegistered", "pay-ledger-organization-registered");
         registerSubscription("com.atlashub.accounts.domain.events.OrganizationRegistered", "pay-ledger-organization-registered");
         registerSubscription("ReservedAccountActivatedEvent", "pay-ledger-reserved-account-activated");
         registerSubscription("ChargeSuccessfulEvent", "pay-ledger-charge-successful");
@@ -47,7 +48,7 @@ public class PayLedgerEventListener extends BaseKafkaEventListener {
         registerSubscription("ProviderSettlementReceivedEvent", "pay-ledger-provider-settled");
     }
 
-    @KafkaListener(topics = "accounts-events", groupId = "pay-ledger-organization-registered")
+    @KafkaListener(topics = "organization-events", groupId = "pay-ledger-organization-registered")
     public void organizationRegistered(String message) {
         processEventIfMatches(message, "OrganizationRegistered", OrganizationRegistered.class,
                 log, "pay-ledger-organization-registered", e -> e instanceof TimeoutException, event -> {
