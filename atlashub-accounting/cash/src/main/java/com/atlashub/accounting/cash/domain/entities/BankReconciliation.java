@@ -89,7 +89,7 @@ public class BankReconciliation extends AggregateRoot<Long> {
             throw new InvalidReconciliationStateException("Statement closing balance and book balance currencies must match");
         }
 
-        Money difference = statementClosingBalance.minus(bookBalance);
+        Money difference = statementClosingBalance.subtract(bookBalance);
         ZonedDateTime now = ZonedDateTime.now();
 
         return new BankReconciliation(
