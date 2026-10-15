@@ -41,6 +41,8 @@ if (-not $gradleDir -or -not (Test-Path -LiteralPath (Join-Path $gradleDir "buil
 $subModuleDoc = if ($normalizedSubModule) { Join-Path $repoRoot "docs\modules\$normalizedModule-$normalizedSubModule-design.md" } else { "" }
 $moduleDoc = if ($subModuleDoc -and (Test-Path -LiteralPath $subModuleDoc)) {
     $subModuleDoc
+} elseif ($normalizedModule -eq "accounting" -and ($normalizedSubModule -in @('ap', 'ar', 'ap-ar'))) {
+    Join-Path $repoRoot "docs\modules\accounting-ap-ar-design.md"
 } elseif ($normalizedModule -eq "authentication") {
     Join-Path $repoRoot "docs\modules\auth-design.md"
 } elseif ($normalizedModule -in @('eventbus', 'audit', 'ratelimiter', 'storage')) {
