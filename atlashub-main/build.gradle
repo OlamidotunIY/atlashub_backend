@@ -39,6 +39,8 @@ dependencies {
     implementation project(':atlashub-accounting:cash')
     implementation project(':atlashub-accounting:ap')
     implementation project(':atlashub-accounting:ar')
+    implementation project(':atlashub-accounting:assets')
+    implementation project(':atlashub-accounting:budget')
 
     // Infrastructure Modules
     implementation project(':atlashub-infrastructure:eventbus')
