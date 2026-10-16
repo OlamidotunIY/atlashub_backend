@@ -29,6 +29,8 @@ dependencies {
     implementation project(':atlashub-pay:charges')
     implementation project(':atlashub-pay:settlement')
     implementation project(':atlashub-pay:tx-query')
+    implementation project(':atlashub-pay:splits')
+    implementation project(':atlashub-pay:transfers')
 
     // Commerce Modules
     implementation project(':atlashub-commerce:catalog')

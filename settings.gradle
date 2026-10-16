@@ -9,6 +9,7 @@ include 'atlashub-pay:ledger'
 include 'atlashub-pay:charges'
 include 'atlashub-pay:settlement'
 include 'atlashub-pay:tx-query'
+include 'atlashub-pay:transfers'
 
 // Platform
 include 'atlashub-platform'
