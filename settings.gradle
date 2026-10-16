@@ -11,6 +11,7 @@ include 'atlashub-pay:settlement'
 include 'atlashub-pay:tx-query'
 include 'atlashub-pay:transfers'
 include 'atlashub-pay:mandates'
+include 'atlashub-pay:controls'
 
 // Platform
 include 'atlashub-platform'

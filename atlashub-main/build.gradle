@@ -32,6 +32,7 @@ dependencies {
     implementation project(':atlashub-pay:splits')
     implementation project(':atlashub-pay:transfers')
     implementation project(':atlashub-pay:mandates')
+    implementation project(':atlashub-pay:controls')
 
     // Commerce Modules
     implementation project(':atlashub-commerce:catalog')
