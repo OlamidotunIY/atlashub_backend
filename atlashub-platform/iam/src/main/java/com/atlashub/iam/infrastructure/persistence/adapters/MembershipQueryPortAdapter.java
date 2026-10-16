@@ -81,6 +81,14 @@ public class MembershipQueryPortAdapter implements MembershipQueryPort {
                 .toList();
     }
 
+    @Override
+    public int countMembersWithPermission(Long orgId, String permission) {
+        return (int) memberRepository.findAllByOrganizationId(orgId).stream()
+                .filter(member -> member.getStatus() == MemberStatus.ACTIVE)
+                .filter(member -> getPermissions(member.getUserId(), orgId).contains(permission))
+                .count();
+    }
+
     private Optional<OrganizationMember> activeMember(Long userId, Long orgId) {
         return memberRepository.findByOrganizationIdAndUserId(orgId, userId)
                 .filter(member -> member.getStatus() == MemberStatus.ACTIVE);
