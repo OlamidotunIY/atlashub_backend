@@ -42,6 +42,9 @@ dependencies {
     implementation project(':atlashub-accounting:assets')
     implementation project(':atlashub-accounting:budget')
 
+    // HR Modules
+    implementation project(':atlashub-hr:staff')
+
     // Infrastructure Modules
     implementation project(':atlashub-infrastructure:eventbus')
     implementation project(':atlashub-infrastructure:anchor')

@@ -48,3 +48,6 @@ include 'atlashub-accounting:ap'
 include 'atlashub-accounting:ar'
 include 'atlashub-accounting:assets'
 include 'atlashub-accounting:budget'
+
+// HR
+include 'atlashub-hr:staff'
