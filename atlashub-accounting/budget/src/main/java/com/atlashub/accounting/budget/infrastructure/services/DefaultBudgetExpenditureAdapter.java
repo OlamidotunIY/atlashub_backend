@@ -1,6 +1,6 @@
 package com.atlashub.accounting.budget.infrastructure.services;
 
-import com.atlashub.accounting.budget.application.port.BudgetExpenditurePort;
+import com.atlashub.shared.application.port.BudgetExpenditurePort;
 import com.atlashub.shared.application.port.GlAccountQueryPort;
 import com.atlashub.shared.domain.valueobject.Money;
 import org.springframework.beans.factory.annotation.Autowired;

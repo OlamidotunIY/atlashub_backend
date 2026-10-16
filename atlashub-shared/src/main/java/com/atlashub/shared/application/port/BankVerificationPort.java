@@ -1,4 +1,4 @@
-package com.atlashub.hr.staff.application.port;
+package com.atlashub.shared.application.port;
 
 public interface BankVerificationPort {
 

@@ -1,6 +1,6 @@
 package com.atlashub.hr.payroll.application.command.DisbursePayroll;
 
-import com.atlashub.hr.payroll.application.port.PayrollReserveAccountPort;
+import com.atlashub.shared.application.port.PayrollReserveAccountPort;
 import com.atlashub.hr.payroll.domain.entities.PayrollRun;
 import com.atlashub.hr.payroll.domain.entities.Payslip;
 import com.atlashub.hr.payroll.domain.exceptions.InsufficientPayrollReserveException;

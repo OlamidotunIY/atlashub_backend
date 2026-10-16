@@ -1,6 +1,6 @@
 package com.atlashub.hr.payroll.infrastructure.services;
 
-import com.atlashub.hr.payroll.application.port.PayrollReserveAccountPort;
+import com.atlashub.shared.application.port.PayrollReserveAccountPort;
 import com.atlashub.shared.domain.valueobject.CurrencyCode;
 import com.atlashub.shared.domain.valueobject.Money;
 import org.springframework.stereotype.Component;

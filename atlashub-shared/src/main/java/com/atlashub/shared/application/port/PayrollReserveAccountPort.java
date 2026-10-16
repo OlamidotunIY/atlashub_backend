@@ -1,4 +1,4 @@
-package com.atlashub.hr.payroll.application.port;
+package com.atlashub.shared.application.port;
 
 import com.atlashub.shared.domain.valueobject.Money;
 

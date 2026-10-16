@@ -1,4 +1,4 @@
-package com.atlashub.accounting.budget.application.port;
+package com.atlashub.shared.application.port;
 
 import com.atlashub.shared.domain.valueobject.Money;
 

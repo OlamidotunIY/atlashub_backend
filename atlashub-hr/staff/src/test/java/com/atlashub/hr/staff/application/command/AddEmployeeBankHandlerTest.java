@@ -1,6 +1,6 @@
 package com.atlashub.hr.staff.application.command.AddEmployeeBank;
 
-import com.atlashub.hr.staff.application.port.BankVerificationPort;
+import com.atlashub.shared.application.port.BankVerificationPort;
 import com.atlashub.hr.staff.domain.entities.Employee;
 import com.atlashub.hr.staff.domain.entities.EmployeeBank;
 import com.atlashub.hr.staff.domain.exceptions.EmployeeBankUnverifiedException;

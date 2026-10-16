@@ -1,6 +1,6 @@
 package com.atlashub.accounting.budget.application.query.GetBudgetVariance;
 
-import com.atlashub.accounting.budget.application.port.BudgetExpenditurePort;
+import com.atlashub.shared.application.port.BudgetExpenditurePort;
 import com.atlashub.accounting.budget.domain.entities.Budget;
 import com.atlashub.accounting.budget.domain.exceptions.BudgetNotFoundException;
 import com.atlashub.accounting.budget.domain.repositories.BudgetRepository;

@@ -1,6 +1,6 @@
 package com.atlashub.hr.staff.infrastructure.services;
 
-import com.atlashub.hr.staff.application.port.BankVerificationPort;
+import com.atlashub.shared.application.port.BankVerificationPort;
 import org.springframework.stereotype.Component;
 
 @Component

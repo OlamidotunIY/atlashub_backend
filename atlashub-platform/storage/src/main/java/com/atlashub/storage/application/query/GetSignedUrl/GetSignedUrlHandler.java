@@ -1,6 +1,6 @@
 package com.atlashub.storage.application.query.GetSignedUrl;
 
-import com.atlashub.storage.domain.ports.StoragePort;
+import com.atlashub.shared.application.port.StoragePort;
 import com.atlashub.shared.application.usecase.Query;
 import org.springframework.stereotype.Component;
 
