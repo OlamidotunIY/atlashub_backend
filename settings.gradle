@@ -18,6 +18,7 @@ include 'atlashub-platform:compliance'
 include 'atlashub-platform:notifications'
 include 'atlashub-platform:authentication'
 include 'atlashub-platform:storage'
+include 'atlashub-platform:billing'
 
 // Infrastructure
 include 'atlashub-infrastructure'
