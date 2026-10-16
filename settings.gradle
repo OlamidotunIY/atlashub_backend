@@ -51,3 +51,4 @@ include 'atlashub-accounting:budget'
 
 // HR
 include 'atlashub-hr:staff'
+include 'atlashub-hr:leave'
