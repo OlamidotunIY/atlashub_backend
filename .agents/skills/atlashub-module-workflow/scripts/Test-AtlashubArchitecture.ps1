@@ -12,14 +12,27 @@ $repoRoot = $context.repositoryRoot
 $sourceRoot = $context.sourceRoot
 $moduleRoot = Split-Path (Split-Path (Split-Path (Split-Path $sourceRoot -Parent) -Parent) -Parent) -Parent
 
+$targetRoots = if ($context.subModule) { @($sourceRoot) } else { @($moduleRoot) }
+
 if ($AllFiles) {
-    $files = Get-ChildItem -LiteralPath $moduleRoot -Recurse -Filter '*.java' -File
+    $files = $targetRoots | Where-Object { Test-Path -LiteralPath $_ } | ForEach-Object {
+        Get-ChildItem -LiteralPath $_ -Recurse -Filter '*.java' -File
+    } | Sort-Object FullName -Unique
 } else {
     $changed = @(& git -C $repoRoot diff --name-only --diff-filter=ACMR 2>$null; & git -C $repoRoot ls-files --others --exclude-standard 2>$null)
     $files = $changed | Where-Object { $_ -like '*.java' } | ForEach-Object {
         $candidate = Join-Path $repoRoot $_
-        if ((Test-Path -LiteralPath $candidate) -and $candidate.StartsWith($moduleRoot, [StringComparison]::OrdinalIgnoreCase)) {
-            Get-Item -LiteralPath $candidate
+        if (Test-Path -LiteralPath $candidate) {
+            $isTarget = $false
+            foreach ($root in $targetRoots) {
+                if ($candidate.StartsWith($root, [StringComparison]::OrdinalIgnoreCase)) {
+                    $isTarget = $true
+                    break
+                }
+            }
+            if ($isTarget) {
+                Get-Item -LiteralPath $candidate
+            }
         }
     } | Sort-Object FullName -Unique
 }

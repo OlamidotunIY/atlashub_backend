@@ -12,11 +12,16 @@ import org.springframework.retry.annotation.Backoff;
 import org.springframework.stereotype.Component;
 
 import java.time.ZonedDateTime;
+import java.util.Set;
 
 @Slf4j
 @Component("notificationsAuthVerificationListener")
 public class AuthVerificationListener extends BaseKafkaEventListener {
     private static final String GROUP_ID = "notifications-auth-group";
+    private static final Set<String> EMAIL_OTP_TYPES = Set.of(
+            "email_verification",
+            "email_otp"
+    );
     private final SendRegistrationOtpHandler handler;
 
     public AuthVerificationListener(ObjectMapper objectMapper, SendRegistrationOtpHandler handler) {
@@ -33,7 +38,7 @@ public class AuthVerificationListener extends BaseKafkaEventListener {
     @KafkaListener(topics = "auth-events", groupId = GROUP_ID)
     public void onAuthEvent(String payload) {
         processEventIfMatches(payload, "OtpVerificationCreated", OtpVerificationCreatedEvent.class, log, GROUP_ID, exception -> true, event -> {
-            if (!"email_verification".equals(event.payload().verificationType())) return;
+            if (!EMAIL_OTP_TYPES.contains(event.payload().verificationType())) return;
             handler.execute(new SendRegistrationOtpCommand(event.payload().recipientEmail(), event.correlationId(), event.payload().expiresAt().toEpochSecond()));
         });
     }
