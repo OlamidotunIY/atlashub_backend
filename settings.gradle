@@ -10,6 +10,7 @@ include 'atlashub-pay:charges'
 include 'atlashub-pay:settlement'
 include 'atlashub-pay:tx-query'
 include 'atlashub-pay:transfers'
+include 'atlashub-pay:mandates'
 
 // Platform
 include 'atlashub-platform'
