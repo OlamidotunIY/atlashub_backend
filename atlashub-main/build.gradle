@@ -46,6 +46,7 @@ dependencies {
     implementation project(':atlashub-hr:staff')
     implementation project(':atlashub-hr:leave')
     implementation project(':atlashub-hr:attendance')
+    implementation project(':atlashub-hr:loan')
 
     // Infrastructure Modules
     implementation project(':atlashub-infrastructure:eventbus')
