@@ -60,6 +60,9 @@ dependencies {
     implementation project(':atlashub-logistics:warehousing')
     implementation project(':atlashub-logistics:returns')
 
+    // Analytics Modules
+    implementation project(':atlashub-analytics')
+
     // Infrastructure Modules
     implementation project(':atlashub-infrastructure:eventbus')
     implementation project(':atlashub-infrastructure:anchor')

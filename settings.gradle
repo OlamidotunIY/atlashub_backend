@@ -65,3 +65,6 @@ include 'atlashub-hr:payroll'
 include 'atlashub-logistics:shipping'
 include 'atlashub-logistics:warehousing'
 include 'atlashub-logistics:returns'
+
+// Analytics
+include 'atlashub-analytics'
