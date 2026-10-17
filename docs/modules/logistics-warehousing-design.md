@@ -1,17 +1,22 @@
-# Logistics Warehousing Design (`atlashub-logistics` / `com.atlashub.logistics.warehousing`)
+# Logistics Warehousing Design (`:atlashub-logistics:warehousing` / `com.atlashub.logistics.warehousing`)
 
 ## Role & Purpose
 
-The `warehousing` subpackage manages centralized warehouses and their stock. Organizations that operate warehouses use this to track stock held before distribution to outlets. Stock at a warehouse is tracked separately from outlet stock. Inter-location stock transfers (warehouse ↔ outlet or warehouse ↔ warehouse) go through this subpackage.
+The `:atlashub-logistics:warehousing` submodule manages:
+1. **Merchant Warehouses & AtlasHub Distribution Centers** (`Warehouse` with `FacilityType`: `MERCHANT_WAREHOUSE` | `ATLASHUB_DISTRIBUTION_CENTER`).
+2. **Warehouse Stock & Reservations** (`WarehouseInventory`).
+3. **Inter-Outlet & Warehouse Stock Transfers** (`StockTransfer`: `OUTLET` ↔ `OUTLET`, `WAREHOUSE` ↔ `OUTLET`, `WAREHOUSE` ↔ `WAREHOUSE`).
+   - Inter-outlet transfers are initiated by the business from their dashboard.
+   - The business pays the transfer shipping fee directly, and `INTER_OUTLET_TRANSFER` shipments are **ineligible for the monthly 10% merchant shipping incentive**.
 
-Gradle module: `atlashub-logistics`  
+Gradle module: `:atlashub-logistics:warehousing`  
 Package: `com.atlashub.logistics.warehousing`
 
 ---
 
 ## Domain Layer
 
-### `Warehouse` (Aggregate Root)
+### 1. `Warehouse` (Aggregate Root)
 
 **Package:** `com.atlashub.logistics.warehousing.domain.entities`
 
@@ -20,35 +25,41 @@ Warehouse
 ├── id             : Long
 ├── organizationId : Long
 ├── name           : String
+├── code           : String            ← e.g., "DC-LOS-01" or "WH-MERCH-01"
+├── facilityType   : FacilityType      ← MERCHANT_WAREHOUSE | ATLASHUB_DISTRIBUTION_CENTER
 ├── address        : Address
 ├── managerId      : Long
-└── status         : WarehouseStatus ← ACTIVE | INACTIVE
+├── status         : WarehouseStatus   ← ACTIVE | INACTIVE
+└── createdAt      : ZonedDateTime
 ```
 
 **Business methods:** `deactivate()`, `reactivate()`
 
 ---
 
-### `WarehouseInventory` (Aggregate Root)
+### 2. `WarehouseInventory` (Aggregate Root)
 
 ```
 WarehouseInventory
 ├── id               : Long
+├── organizationId   : Long
 ├── warehouseId      : Long
 ├── productId        : Long
-├── quantity         : Integer
-└── reservedQuantity : Integer
+├── quantity         : int
+├── reservedQuantity : int
+└── updatedAt        : ZonedDateTime
 ```
 
-**Business methods (on entity — pessimistic lock at DB level for all mutations):**
-- `addStock(qty)` — qty > 0
-- `reserveStock(qty)` — `quantity - reservedQuantity >= qty`; throws `InsufficientWarehouseStockException`
-- `deductStock(qty)` — `reservedQuantity >= qty`
-- `releaseReservedStock(qty)` — `reservedQuantity >= qty`
+**Business methods:**
+- `addStock(int qty)` — `qty > 0`
+- `reserveStock(int qty)` — `quantity - reservedQuantity >= qty`; throws `InsufficientWarehouseStockException`
+- `deductStock(int qty)` — `reservedQuantity >= qty`
+- `releaseReservedStock(int qty)` — `reservedQuantity >= qty`
+- `availableQuantity()` — returns `quantity - reservedQuantity`
 
 ---
 
-### `StockTransfer` (Aggregate Root)
+### 3. `StockTransfer` (Aggregate Root)
 
 ```
 StockTransfer
@@ -56,183 +67,55 @@ StockTransfer
 ├── organizationId      : Long
 ├── sourceId            : Long            ← outletId or warehouseId
 ├── sourceType          : LocationType    ← OUTLET | WAREHOUSE
+├── sourceAddress       : Address
 ├── destinationId       : Long
-├── destinationType     : LocationType
+├── destinationType     : LocationType    ← OUTLET | WAREHOUSE
+├── destinationAddress  : Address
+├── totalWeightKg       : BigDecimal
+├── transferShippingFee : Money           ← paid by business; 0% monthly incentive eligibility
 ├── status              : TransferStatus  ← REQUESTED | APPROVED | DISPATCHED | RECEIVED | CANCELLED
-├── shipmentId          : Long            ← nullable — linked Shipment for tracking
+├── shipmentId          : Long            ← nullable — linked Shipment (type = INTER_OUTLET_TRANSFER)
 ├── items               : List<StockTransferItem>
+├── requestedBy         : Long
+├── approvedBy          : Long            ← nullable
 ├── requestedAt         : ZonedDateTime
 └── receivedAt          : ZonedDateTime   ← nullable
 ```
 
-**Business methods (on entity):**
-- `approve()` → REQUESTED → APPROVED; registers `StockTransferApprovedEvent`
-- `dispatch(shipmentId)` → APPROVED → DISPATCHED; links shipment for tracking
-- `receive(receivedItems)` → DISPATCHED → RECEIVED; registers `StockTransferReceivedEvent`
-- `cancel()` → REQUESTED or APPROVED → CANCELLED
-
-### `StockTransferItem` (Entity)
-
-```
-StockTransferItem
-├── id                : Long
-├── transferId        : Long
-├── productId         : Long
-└── quantity          : Integer
-```
-
----
-
-### Domain Events
-
-| Event | Published When | Consumed By |
-|---|---|---|
-| `StockTransferApprovedEvent` | Transfer approved | `shipping` (creates tracking shipment if inter-city) |
-| `StockTransferDispatchedEvent` | Goods dispatched | `notifications` |
-| `StockTransferReceivedEvent` | Transfer received | `commerce` (update outlet inventory), `accounting` (Dr Inventory-Dest, Cr Inventory-Source) |
-
----
-
-### Domain Exceptions — `com.atlashub.logistics.warehousing.domain.exceptions`
-
-```java
-public class WarehouseNotFoundException extends NotFoundException {
-    public WarehouseNotFoundException(Long id) { super("Warehouse not found: " + id); }
-}
-public class TransferNotFoundException extends NotFoundException {
-    public TransferNotFoundException(Long id) { super("Stock transfer not found: " + id); }
-}
-public class InvalidTransferStateException extends BusinessRuleException {
-    public InvalidTransferStateException(String message) { super(message); }
-}
-public class InsufficientWarehouseStockException extends BusinessRuleException {
-    public InsufficientWarehouseStockException(Long productId) {
-        super("Insufficient warehouse stock for product: " + productId);
-    }
-}
-```
+**Business methods:**
+- `approve(Long approverId)` → `REQUESTED` → `APPROVED`; registers `StockTransferApprovedEvent`
+- `markDispatched(Long shipmentId)` → `APPROVED` → `DISPATCHED`; links `shipmentId` and registers `StockTransferDispatchedEvent`
+- `receive(ZonedDateTime now)` → `DISPATCHED` → `RECEIVED`; sets `receivedAt` and registers `StockTransferReceivedEvent`
+- `cancel()` → `REQUESTED` or `APPROVED` → `CANCELLED`
 
 ---
 
 ## Application Layer
 
-### Commands — `com.atlashub.logistics.warehousing.application.commands`
+### Commands (`com.atlashub.logistics.warehousing.application.command`)
+- `RegisterWarehouse` (`RegisterWarehouseCommand`, `RegisterWarehouseHandler`, `RegisterWarehouseResult`)
+- `AdjustWarehouseStock` (`AdjustWarehouseStockCommand`, `AdjustWarehouseStockHandler`, `AdjustWarehouseStockResult`)
+- `RequestStockTransfer` (`RequestStockTransferCommand`, `RequestStockTransferHandler`, `RequestStockTransferResult`)
+- `ApproveStockTransfer` (`ApproveStockTransferCommand`, `ApproveStockTransferHandler`)
+- `DispatchStockTransfer` (`DispatchStockTransferCommand`, `DispatchStockTransferHandler`)
+- `ReceiveStockTransfer` (`ReceiveStockTransferCommand`, `ReceiveStockTransferHandler`)
 
-#### `RegisterWarehouseCommand`
-```java
-record RegisterWarehouseCommand(Long organizationId, String name, Address address, Long managerId)
-```
-**Handler:** `RegisterWarehouseHandler` | **Response:** `Long warehouseId`  
-**RBAC:** `@PreAuthorize("hasAuthority('logistics:fleet:manage')")`
-
----
-
-#### `RequestStockTransferCommand`
-```java
-record RequestStockTransferCommand(
-    Long organizationId, Long sourceId, LocationType sourceType,
-    Long destinationId, LocationType destinationType, List<TransferItemDto> items
-)
-```
-**Handler:** `RequestStockTransferHandler` | **Response:** `Long transferId`
-
----
-
-#### `ApproveStockTransferCommand`
-```java
-record ApproveStockTransferCommand(Long transferId)
-```
-**Handler:** `ApproveStockTransferHandler` | **Response:** `void`  
-**Flow:** Load `StockTransfer` → `transfer.approve()` → save → `StockTransferApprovedEvent` published → if cross-city, shipping subpackage creates a `Shipment`
-
----
-
-#### `ReceiveStockTransferCommand`
-```java
-record ReceiveStockTransferCommand(Long transferId, List<ReceivedItemDto> receivedItems)
-```
-**Handler:** `ReceiveStockTransferHandler` | **Response:** `void`  
-**Flow:** Load `StockTransfer` (pessimistic lock) → `transfer.receive(items)` → update `WarehouseInventory.addStock()` at destination → save → `StockTransferReceivedEvent` published
-
----
-
-### Queries — `com.atlashub.logistics.warehousing.application.queries`
-
-#### `ListStockTransfersQuery`
-```java
-record ListStockTransfersQuery(Long organizationId, Long locationId, TransferStatus status)
-```
-**Handler:** `ListStockTransfersHandler` | **Result:** `List<StockTransferResult>` (bounded per org/location)
-
----
-
-#### `ListWarehousesQuery`
-```java
-record ListWarehousesQuery(Long organizationId, WarehouseStatus status)
-```
-**Handler:** `ListWarehousesHandler` | **Result:** `List<WarehouseResult>` (bounded per org)
-
----
-
-#### `GetWarehouseInventoryQuery`
-```java
-record GetWarehouseInventoryQuery(Long warehouseId, Long productId)
-```
-**Handler:** `GetWarehouseInventoryHandler` | **Result:** `WarehouseInventoryResult(warehouseId, productId, quantity, reservedQuantity, availableQuantity)`
-
----
-
-## Infrastructure Layer
-
-### Persistence
-
-| JPA Entity | Table | Locking |
-|---|---|---|
-| `WarehouseJpaEntity` | `logistics_warehouses` | — |
-| `WarehouseInventoryJpaEntity` | `logistics_warehouse_inventory` | `@Lock(PESSIMISTIC_WRITE)` on mutations |
-| `StockTransferJpaEntity` | `logistics_stock_transfers` | `@Lock(PESSIMISTIC_WRITE)` during receive |
-| `StockTransferItemJpaEntity` | `logistics_stock_transfer_items` | — |
-
-**Repository Adapters:**
-- `WarehouseRepositoryAdapter` → `logistics_warehouse_seq`
-- `WarehouseInventoryRepositoryAdapter` → `logistics_warehouse_inventory_seq`
-- `StockTransferRepositoryAdapter` → `logistics_stock_transfer_seq`
+### Queries (`com.atlashub.logistics.warehousing.application.query`)
+- `ListWarehouses` (`ListWarehousesQuery`, `ListWarehousesHandler`, `WarehouseResult`)
+- `GetWarehouseInventory` (`GetWarehouseInventoryQuery`, `GetWarehouseInventoryHandler`, `WarehouseInventoryResult`)
+- `ListStockTransfers` (`ListStockTransfersQuery`, `ListStockTransfersHandler`, `StockTransferResult`)
 
 ---
 
 ## Presentation Layer
 
-### Controller: `WarehouseController` — `/api/v1/logistics/warehouses`
-
-| Method | Path | RBAC | Request | Response |
-|---|---|---|---|---|
-| `POST` | `/warehouses` | `logistics:fleet:manage` | `RegisterWarehouseRequest` | `Long` |
-| `GET` | `/warehouses` | — | `?orgId&status` | `List<WarehouseResult>` |
-| `GET` | `/warehouses/{id}/inventory` | — | `?productId` | `WarehouseInventoryResult` |
-| `POST` | `/stock-transfers` | — | `RequestStockTransferRequest` | `Long` |
-| `POST` | `/stock-transfers/{id}/approve` | `logistics:fleet:manage` | — | `void` |
-| `POST` | `/stock-transfers/{id}/receive` | — | `ReceiveStockTransferRequest` | `void` |
-| `GET` | `/stock-transfers` | — | `?orgId&locationId&status` | `List<StockTransferResult>` |
-
----
-
-## Complete File List
-
-```
-atlashub-logistics/src/main/java/com/atlashub/logistics/warehousing/
-├── domain/
-│   ├── entities/ [Warehouse, WarehouseInventory, StockTransfer, StockTransferItem]
-│   ├── events/ [StockTransferApprovedEvent, StockTransferDispatchedEvent, StockTransferReceivedEvent]
-│   ├── exceptions/ [WarehouseNotFoundException, TransferNotFoundException, InvalidTransferStateException, InsufficientWarehouseStockException]
-│   ├── repositories/ [WarehouseRepository, WarehouseInventoryRepository, StockTransferRepository]
-│   └── valueobject/ [WarehouseStatus, LocationType, TransferStatus]
-├── application/
-│   ├── commands/ [RegisterWarehouse, RequestStockTransfer, ApproveStockTransfer, ReceiveStockTransfer]
-│   └── queries/ [ListWarehouses, GetWarehouseInventory, ListStockTransfers]
-├── infrastructure/
-│   └── persistence/ [adapters, entities, mappers, repositories]
-└── presentation/
-    ├── dto/ [RegisterWarehouseRequest, RequestStockTransferRequest, ReceiveStockTransferRequest, WarehouseResult, WarehouseInventoryResult, StockTransferResult]
-    └── rest/
-        └── WarehouseController.java
-```
+### Controller: `WarehouseController` (`/api/v1/warehouses` & `/api/v1/stock-transfers`)
+- `POST /api/v1/warehouses`
+- `GET /api/v1/warehouses`
+- `POST /api/v1/warehouses/{id}/inventory`
+- `GET /api/v1/warehouses/{id}/inventory`
+- `POST /api/v1/stock-transfers`
+- `POST /api/v1/stock-transfers/{id}/approve`
+- `POST /api/v1/stock-transfers/{id}/dispatch`
+- `POST /api/v1/stock-transfers/{id}/receive`
+- `GET /api/v1/stock-transfers`
