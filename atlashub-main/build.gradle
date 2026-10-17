@@ -22,6 +22,7 @@ dependencies {
     implementation project(':atlashub-platform:notifications')
     implementation project(':atlashub-platform:storage')
     implementation project(':atlashub-platform:billing')
+    implementation project(':atlashub-platform:support')
 
     // Pay Modules
     implementation project(':atlashub-pay:accounts')

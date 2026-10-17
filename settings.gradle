@@ -22,6 +22,7 @@ include 'atlashub-platform:notifications'
 include 'atlashub-platform:authentication'
 include 'atlashub-platform:storage'
 include 'atlashub-platform:billing'
+include 'atlashub-platform:support'
 
 // Infrastructure
 include 'atlashub-infrastructure'
