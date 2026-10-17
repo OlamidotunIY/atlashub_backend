@@ -140,7 +140,7 @@ Every monetary value uses the `Money` value object (amount + currency). The `Mon
 | Catalog, Billing | ✅ MVP |
 | Atlas Pay | ✅ MVP |
 | Commerce (POS + Marketplace) | ✅ MVP |
-| Logistics (Internal Fleet + LaaS) | ✅ MVP |
+| Logistics (Internal Fleet + 3PL + Consolidation + Returns) | ✅ MVP |
 | HR & Payroll | ✅ MVP |
 | Accounting | ✅ MVP |
 | Analytics | ✅ MVP |

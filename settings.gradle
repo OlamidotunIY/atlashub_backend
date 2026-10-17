@@ -59,3 +59,8 @@ include 'atlashub-hr:leave'
 include 'atlashub-hr:attendance'
 include 'atlashub-hr:loan'
 include 'atlashub-hr:payroll'
+
+// Logistics
+include 'atlashub-logistics:shipping'
+include 'atlashub-logistics:warehousing'
+include 'atlashub-logistics:returns'

@@ -54,6 +54,11 @@ dependencies {
     implementation project(':atlashub-hr:loan')
     implementation project(':atlashub-hr:payroll')
 
+    // Logistics Modules
+    implementation project(':atlashub-logistics:shipping')
+    implementation project(':atlashub-logistics:warehousing')
+    implementation project(':atlashub-logistics:returns')
+
     // Infrastructure Modules
     implementation project(':atlashub-infrastructure:eventbus')
     implementation project(':atlashub-infrastructure:anchor')
