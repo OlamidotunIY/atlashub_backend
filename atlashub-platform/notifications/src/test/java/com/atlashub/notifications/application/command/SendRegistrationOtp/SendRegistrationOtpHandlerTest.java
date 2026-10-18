@@ -1,7 +1,7 @@
 package com.atlashub.notifications.application.command.SendRegistrationOtp;
 
 import com.atlashub.notifications.domain.entities.NotificationDelivery;
-import com.atlashub.notifications.domain.ports.EmailPort;
+import com.atlashub.shared.application.port.EmailPort;
 import com.atlashub.notifications.domain.repositories.NotificationDeliveryRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

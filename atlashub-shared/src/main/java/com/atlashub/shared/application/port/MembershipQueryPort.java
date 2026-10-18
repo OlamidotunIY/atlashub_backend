@@ -11,6 +11,7 @@ public interface MembershipQueryPort {
     MembershipStatus getMemberStatus(Long userId, Long orgId);
     Optional<String> getActiveRoleName(Long userId, Long orgId);
     List<Long> listOrganizationIds(Long userId);
+    int countMembersWithPermission(Long orgId, String permission);
 
     enum MembershipStatus {
         ACTIVE,

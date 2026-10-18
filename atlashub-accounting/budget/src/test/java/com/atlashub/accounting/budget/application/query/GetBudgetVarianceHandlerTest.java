@@ -1,6 +1,6 @@
 package com.atlashub.accounting.budget.application.query;
 
-import com.atlashub.accounting.budget.application.port.BudgetExpenditurePort;
+import com.atlashub.shared.application.port.BudgetExpenditurePort;
 import com.atlashub.accounting.budget.application.query.GetBudgetVariance.BudgetVarianceResult;
 import com.atlashub.accounting.budget.application.query.GetBudgetVariance.GetBudgetVarianceHandler;
 import com.atlashub.accounting.budget.application.query.GetBudgetVariance.GetBudgetVarianceQuery;

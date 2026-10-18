@@ -81,6 +81,11 @@ public class ApplicationConfig {
         return new com.atlashub.pay.ledger.domain.services.BalanceCalculator();
     }
 
+    @Bean
+    public com.atlashub.hr.payroll.domain.services.PayrollCalculationService payrollCalculationService() {
+        return new com.atlashub.hr.payroll.domain.services.PayrollCalculationService();
+    }
+
     // ── Swagger / OpenAPI ─────────────────────────────────────────────────────
 
     @Bean

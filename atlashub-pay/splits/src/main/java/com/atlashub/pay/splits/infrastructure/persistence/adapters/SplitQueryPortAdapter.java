@@ -1,11 +1,12 @@
 package com.atlashub.pay.splits.infrastructure.persistence.adapters;
 
 import com.atlashub.pay.splits.domain.entities.SplitRule;
-import com.atlashub.pay.splits.domain.exceptions.SplitRuleInactiveException;
-import com.atlashub.pay.splits.domain.exceptions.SplitRuleNotFoundException;
-import com.atlashub.pay.splits.domain.ports.SplitQueryPort;
 import com.atlashub.pay.splits.domain.repositories.SplitRuleRepository;
+import com.atlashub.shared.application.port.SplitQueryPort;
 import org.springframework.stereotype.Component;
+
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Component
 public class SplitQueryPortAdapter implements SplitQueryPort {
@@ -17,14 +18,23 @@ public class SplitQueryPortAdapter implements SplitQueryPort {
     }
 
     @Override
-    public SplitRule findActiveSplitRule(Long splitRuleId) {
-        SplitRule rule = splitRuleRepository.findById(splitRuleId)
-                .orElseThrow(SplitRuleNotFoundException::new);
-        
-        if (!rule.isActive()) {
-            throw new SplitRuleInactiveException();
-        }
-        
-        return rule;
+    public Optional<SplitRuleDto> findActiveSplitRule(Long splitRuleId) {
+        return splitRuleRepository.findById(splitRuleId)
+                .filter(SplitRule::isActive)
+                .map(this::toDto);
+    }
+
+    private SplitRuleDto toDto(SplitRule rule) {
+        return new SplitRuleDto(
+                rule.getId(),
+                rule.getOrganizationId(),
+                rule.getName(),
+                rule.getType() != null ? rule.getType().name() : null,
+                rule.getPlatformFeePercentage(),
+                rule.getSubaccounts().stream()
+                        .map(s -> new SplitSubaccountDto(s.getId(), s.getRecipientId(), s.getShare()))
+                        .collect(Collectors.toList()),
+                rule.isActive()
+        );
     }
 }

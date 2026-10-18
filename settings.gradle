@@ -9,6 +9,9 @@ include 'atlashub-pay:ledger'
 include 'atlashub-pay:charges'
 include 'atlashub-pay:settlement'
 include 'atlashub-pay:tx-query'
+include 'atlashub-pay:transfers'
+include 'atlashub-pay:mandates'
+include 'atlashub-pay:controls'
 
 // Platform
 include 'atlashub-platform'
@@ -18,6 +21,8 @@ include 'atlashub-platform:compliance'
 include 'atlashub-platform:notifications'
 include 'atlashub-platform:authentication'
 include 'atlashub-platform:storage'
+include 'atlashub-platform:billing'
+include 'atlashub-platform:support'
 
 // Infrastructure
 include 'atlashub-infrastructure'
@@ -48,3 +53,18 @@ include 'atlashub-accounting:ap'
 include 'atlashub-accounting:ar'
 include 'atlashub-accounting:assets'
 include 'atlashub-accounting:budget'
+
+// HR
+include 'atlashub-hr:staff'
+include 'atlashub-hr:leave'
+include 'atlashub-hr:attendance'
+include 'atlashub-hr:loan'
+include 'atlashub-hr:payroll'
+
+// Logistics
+include 'atlashub-logistics:shipping'
+include 'atlashub-logistics:warehousing'
+include 'atlashub-logistics:returns'
+
+// Analytics
+include 'atlashub-analytics'

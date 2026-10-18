@@ -1,7 +1,7 @@
 package com.atlashub.notifications.infrastructure.persistence.adapters;
 
 import com.atlashub.notifications.domain.exceptions.OtpDeliveryException;
-import com.atlashub.notifications.domain.ports.EmailPort;
+import com.atlashub.shared.application.port.EmailPort;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Value;

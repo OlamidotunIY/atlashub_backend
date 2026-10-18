@@ -2,7 +2,7 @@ package com.atlashub.notifications.application.command.SendRegistrationOtp;
 
 import com.atlashub.notifications.domain.entities.NotificationDelivery;
 import com.atlashub.notifications.domain.exceptions.OtpDeliveryException;
-import com.atlashub.notifications.domain.ports.EmailPort;
+import com.atlashub.shared.application.port.EmailPort;
 import com.atlashub.notifications.domain.repositories.NotificationDeliveryRepository;
 import com.atlashub.notifications.domain.valueobject.DeliveryStatus;
 import com.atlashub.notifications.domain.valueobject.NotificationChannel;

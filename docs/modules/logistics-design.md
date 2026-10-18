@@ -2,48 +2,73 @@
 
 ## Overview
 
-The `atlashub-logistics` module is the **movement engine** of AtlasHub. It is a single Gradle module with four internal subpackages, each documented separately.
+The `atlashub-logistics` module group is the **movement and fulfillment engine** of AtlasHub. Following the platform's multi-submodule structure (`atlashub-pay`, `atlashub-commerce`, `atlashub-hr`), `atlashub-logistics` contains three dedicated Gradle submodules under the root package `com.atlashub.logistics`:
 
-All subpackages share the root package `com.atlashub.logistics`.
+1. **`:atlashub-logistics:shipping`** (`com.atlashub.logistics.shipping`) — Checkout shipping rate & delivery window calculation, `STANDARD` vs `URGENT` tiers, cross-merchant shipment consolidation & batching, monthly 10% merchant shipping incentive ledger, API-exposed storefront delivery code verification, `INTRA_STATE` vs `INTER_STATE` milestone and live tracking, AtlasHub Internal Fleet (`DispatchRider`, `FleetVehicle`, `CoverageZone`), and 3PL partner carrier orchestration.
+2. **`:atlashub-logistics:warehousing`** (`com.atlashub.logistics.warehousing`) — AtlasHub distribution centers and merchant warehouses, warehouse inventory reservation/deduction, hub scan integration, and `INTER_OUTLET_TRANSFER` / warehouse-to-outlet stock transfers.
+3. **`:atlashub-logistics:returns`** (`com.atlashub.logistics.returns`) — Reverse logistics, 3-part failed delivery fault attribution (`CUSTOMER_FAULT`, `MERCHANT_FAULT`, `CARRIER_FAULT`), Return-to-Origin (RTO) shipments after 2 failed delivery attempts, and customer return shipment inspection & refund triggers.
 
----
-
-## Subpackage Documentation
-
-| Subpackage | Package | Design Doc |
-|---|---|---|
-| **Shipping & Fleet** | `com.atlashub.logistics.shipping` | [logistics-shipping-design.md](logistics-shipping-design.md) |
-| **Logistics-as-a-Service** | `com.atlashub.logistics.laas` | [logistics-laas-design.md](logistics-laas-design.md) |
-| **Warehousing** | `com.atlashub.logistics.warehousing` | [logistics-warehousing-design.md](logistics-warehousing-design.md) |
-| **Returns** | `com.atlashub.logistics.returns` | [logistics-returns-design.md](logistics-returns-design.md) |
+> **Scope Note:** Logistics-as-a-Service (`laas`) has been removed from scope. AtlasHub operates strictly through **AtlasHub Internal Fleet** (in covered zones) and **3PL Partner Carriers** (in non-covered or overflow zones).
 
 ---
 
-## Key Cross-Cutting Concerns
+## Submodule Documentation
 
-### Operating Modes
-A single organization can use all three modes simultaneously: **Internal Fleet** (own vehicles/riders), **LaaS** (as a logistics company serving shipper clients), and **3PL** (routing through external carriers like GIG Logistics, DHL).
-
-### WebSocket Events
-`ShipmentLocationUpdatedEvent` → `/topic/shipment/{trackingNumber}` (public tracking board)  
-`ShipmentAssignedEvent` → `/user/{riderId}/queue/notifications` (rider notification)  
-Dispatched via `SelectiveWebSocketBroadcaster` in notifications module.
-
-### Public Tracking
-`GET /api/v1/tracking?trackingNumber=ATL-xxx` — `@PublicEndpoint`, no auth required.
-
-### Saga Participation
-Logistics is a participant in the **Stock Transfer Saga** (choreography). See [sagas-design.md](../architecture/sagas-design.md).
-
-### Module Dependencies
-- **Publishes to:** `logistics-events` topic consumed by `commerce`, `accounting`, `notifications`
-- **Consumes from:** `commerce-events` (`StockTransferApprovedEvent`, `PurchaseOrderSentEvent`, `OnlineOrderCreatedEvent`)
+| Submodule | Gradle Path | Package | Design Doc |
+|---|---|---|---|
+| **Shipping, Fleet & Incentives** | `:atlashub-logistics:shipping` | `com.atlashub.logistics.shipping` | [logistics-shipping-design.md](logistics-shipping-design.md) |
+| **Warehousing & Stock Transfers** | `:atlashub-logistics:warehousing` | `com.atlashub.logistics.warehousing` | [logistics-warehousing-design.md](logistics-warehousing-design.md) |
+| **Returns & Failed Delivery Policy** | `:atlashub-logistics:returns` | `com.atlashub.logistics.returns` | [logistics-returns-design.md](logistics-returns-design.md) |
 
 ---
 
-## Gradle
+## Core Business Model & Operating Principles
+
+### 1. Checkout & Automatic Shipping Fee Split (Prepaid Only)
+- **No Cash on Delivery (COD)**: All storefront orders are prepaid at checkout.
+- **Automatic Fee Split**: When a customer places an order on a merchant's storefront, AtlasHub calculates the shipping fee and delivery date window based on origin and destination addresses. At checkout payment capture:
+  - **Item revenue** routes to the merchant's settlement ledger.
+  - **Shipping fee** routes **directly to AtlasHub** (merchants never initiate a separate payment for customer order delivery).
+- **Outside Coverage Fallback**: If the merchant's pickup address or customer's delivery address is outside AtlasHub's active coverage (both Internal Fleet and 3PL), the merchant can still use the storefront via customer pickup or merchant self-fulfillment.
+
+### 2. Delivery Tiers (`STANDARD` vs `URGENT`) & Date Windows
+- **Two Tiers Only**:
+  - **`STANDARD`**: Eligible for cross-merchant consolidation/batching within a promised delivery window.
+  - **`URGENT`**: Attracts a 2x–3x+ premium multiplier over the standard shipping fee. Merchants can enable or disable Urgent Delivery on their storefront. Urgent shipments are dispatched immediately (never batched/delayed).
+- **Range-Based Delivery Windows**: Customers are always given a delivery window (`deliveryWindowStart` to `deliveryWindowEnd`), never a single fixed date.
+
+### 3. Cross-Merchant Consolidation & 10% Monthly Merchant Incentive
+- **Consolidation Batching**: AtlasHub groups `STANDARD` shipments moving along the same corridor/zone into a `ConsolidationBatch` up to each shipment's `latestDispatchAt` guard so promised delivery windows are never breached.
+- **10% Monthly Merchant Rebate (`CUSTOMER_ORDER` only)**:
+  - For each batched `CUSTOMER_ORDER` shipment, AtlasHub computes net carrier cost savings:
+    $$\text{Savings} = \max(0, \text{baselineSingleShipmentCost} - \text{allocatedActualBatchCost})$$
+  - At month-end, each business receives an automatic rebate equal to **10% (`0.10`)** of the cumulative net shipping savings generated by their store's orders that month.
+  - Merchants never see the internal 10% percentage or AtlasHub's underlying carrier costs—only their monthly shipping incentive credit. Customers do not receive a discount on `STANDARD` shipping.
+- **Inter-Outlet Transfers (`INTER_OUTLET_TRANSFER`)**: Initiated by a business from their dashboard (`OUTLET` ↔ `OUTLET` or `WAREHOUSE` ↔ `OUTLET`). Paid directly by the business and **ineligible for the monthly shipping incentive** (`0%`).
+
+### 4. API-Exposed Storefront Delivery Code (No AtlasHub SMS/Email OTP)
+- Every `Shipment` generates a secret 6-digit `deliveryCode`.
+- AtlasHub does **not** send this code via SMS or email; instead, it exposes an authenticated endpoint (`GET /api/v1/shipments/delivery-code?shipmentId={id}`) so businesses can embed and display the code directly in their storefront, mobile app, or customer portal.
+- Riders/carriers cannot view the code and must submit it (`deliveryCode` + `proofOfDeliveryUrl`) at handover to complete delivery.
+
+### 5. Route-Aware Milestone & Live Tracking (`INTRA_STATE` vs `INTER_STATE`)
+- **`INTRA_STATE`** (same state): `CREATED` → `ASSIGNED_TO_RIDER` → `PICKED_UP_FROM_STORE` → `IN_TRANSIT` → `ARRIVING_SOON` → `DELIVERED`, with real-time GPS streaming.
+- **`INTER_STATE`** (cross-state hub-and-spoke): `CREATED` → `PICKED_UP_FROM_STORE` → `ARRIVED_ORIGIN_DISTRIBUTION_CENTER` → `CONSOLIDATED_FOR_LINEHAUL` → `LEFT_ORIGIN_DISTRIBUTION_CENTER` → `IN_TRANSIT_TO_DESTINATION_STATE` → `ARRIVED_DESTINATION_DISTRIBUTION_CENTER` → `OUT_FOR_DELIVERY` → `DELIVERED`.
+
+### 6. 3-Part Failed Delivery Policy (Mandatory 2 Attempts)
+- A shipment can only be marked `FAILED` after **2 recorded delivery attempts**.
+- Fault attribution determines financial settlement:
+  1. **`CUSTOMER_FAULT`**: Outbound shipping is non-refundable; RTO fee is deducted from the customer's item refund; item refund is released only after physical return to the merchant.
+  2. **`MERCHANT_FAULT`**: Customer receives 100% item + shipping refund; merchant bears outbound + return shipping cost and forfeits incentive eligibility on that order.
+  3. **`CARRIER_FAULT`**: Customer receives 100% refund; merchant is compensated up to `declaredValue`; AtlasHub files a carrier claim.
+
+---
+
+## Gradle Structure
 
 ```groovy
 // settings.gradle
-include 'atlashub-logistics'
+include 'atlashub-logistics:shipping'
+include 'atlashub-logistics:warehousing'
+include 'atlashub-logistics:returns'
 ```

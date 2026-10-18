@@ -1,6 +1,6 @@
 package com.atlashub.storage.infrastructure.services;
 
-import com.atlashub.storage.domain.ports.StoragePort;
+import com.atlashub.shared.application.port.StoragePort;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.HttpMethod;

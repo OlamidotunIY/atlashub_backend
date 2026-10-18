@@ -1,0 +1,43 @@
+package com.atlashub.logistics.shipping.application.queries.GetShipmentDetails;
+
+import com.atlashub.logistics.shipping.domain.valueobject.Address;
+import com.atlashub.logistics.shipping.domain.valueobject.Dimensions;
+import com.atlashub.shared.domain.valueobject.Money;
+import java.math.BigDecimal;
+import java.time.ZonedDateTime;
+
+public record ShipmentDetailsResult(
+        Long id,
+        Long organizationId,
+        Long orderId,
+        String trackingNumber,
+        String type,
+        String serviceTier,
+        String routeType,
+        String fulfillmentChannel,
+        Address originAddress,
+        Address destinationAddress,
+        BigDecimal weightKg,
+        Dimensions dimensions,
+        Money declaredValue,
+        Money customerShippingFee,
+        String deliveryCode,
+        ZonedDateTime deliveryWindowStart,
+        ZonedDateTime deliveryWindowEnd,
+        String currentMilestone,
+        String status,
+        int deliveryAttempts,
+        String failureFaultType,
+        String failureReason,
+        Long riderId,
+        Long vehicleId,
+        String carrier3PLCode,
+        String proofOfDeliveryUrl,
+        String currentLocation,
+        BigDecimal currentLatitude,
+        BigDecimal currentLongitude,
+        boolean incentiveEligible,
+        ZonedDateTime dispatchedAt,
+        ZonedDateTime deliveredAt,
+        ZonedDateTime createdAt
+) {}
