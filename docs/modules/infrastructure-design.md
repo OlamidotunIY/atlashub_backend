@@ -34,6 +34,15 @@ When a use case saves an aggregate and wants to publish events, it writes the ev
 ### Inbox Pattern (Idempotency)
 When a module consumer receives an event, it checks the `EventDeliveryTracker` before processing. If the `(eventId, consumerId)` pair already exists and status is `SUCCESS`, the message is acknowledged and discarded — preventing double processing.
 
+### Authorized bounded replay
+
+Operational recovery uses `POST /api/v1/internal/events/replay`. The caller must hold
+`eventbus:events:manage`, and the handler records the authenticated operator. Every request is restricted to one
+topic, an inclusive `from`/`to` window, and at most 1,000 outbox messages. `dryRun=true` reports the number of
+matching messages without publishing them. Replayed messages retain their original key and serialized envelope;
+consumer inbox tracking therefore skips deliveries already marked `SUCCESS` and retries only unfinished or failed
+deliveries. The single-event recovery endpoint is protected by the same handler permission and is never public.
+
 **Entities**:
 - **`EventDeliveryTracker`**: `eventId`, `consumerId`, `status` (PENDING, SUCCESS, DLQ), `processedAt`
 
