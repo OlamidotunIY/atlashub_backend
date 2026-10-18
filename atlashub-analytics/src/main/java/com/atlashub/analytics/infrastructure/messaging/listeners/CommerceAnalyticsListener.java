@@ -2,17 +2,11 @@ package com.atlashub.analytics.infrastructure.messaging.listeners;
 
 import com.atlashub.analytics.application.command.RecordAnalyticsMetricEvent.RecordAnalyticsMetricEventCommand;
 import com.atlashub.analytics.application.command.RecordAnalyticsMetricEvent.RecordAnalyticsMetricEventHandler;
-import com.atlashub.analytics.application.command.UpdateCustomerPerformanceProjection.UpdateCustomerPerformanceProjectionCommand;
-import com.atlashub.analytics.application.command.UpdateCustomerPerformanceProjection.UpdateCustomerPerformanceProjectionHandler;
 import com.atlashub.analytics.application.command.UpdateDailySalesProjection.UpdateDailySalesProjectionCommand;
 import com.atlashub.analytics.application.command.UpdateDailySalesProjection.UpdateDailySalesProjectionHandler;
-import com.atlashub.analytics.application.command.UpdateInventoryHealthProjection.UpdateInventoryHealthProjectionCommand;
-import com.atlashub.analytics.application.command.UpdateInventoryHealthProjection.UpdateInventoryHealthProjectionHandler;
-import com.atlashub.analytics.application.command.UpdateProductDemandProjection.UpdateProductDemandProjectionCommand;
-import com.atlashub.analytics.application.command.UpdateProductDemandProjection.UpdateProductDemandProjectionHandler;
-import com.atlashub.analytics.infrastructure.messaging.events.PosSaleCompletedPayload;
-import com.atlashub.analytics.infrastructure.messaging.events.PosSaleRefundedPayload;
-import com.atlashub.analytics.infrastructure.messaging.events.StockAdjustedPayload;
+import com.atlashub.analytics.infrastructure.messaging.events.PosSaleCompletedEvent;
+import com.atlashub.analytics.infrastructure.messaging.events.PosSaleRefundedEvent;
+import com.atlashub.analytics.infrastructure.messaging.events.StockAdjustedEvent;
 import com.atlashub.shared.application.messaging.BaseKafkaEventListener;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
@@ -21,7 +15,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
-import java.time.ZonedDateTime;
+import java.math.BigDecimal;
 import java.util.concurrent.TimeoutException;
 
 @Component
@@ -31,24 +25,15 @@ public class CommerceAnalyticsListener extends BaseKafkaEventListener {
     private static final String GROUP_ID = "analytics-commerce-group";
 
     private final UpdateDailySalesProjectionHandler dailySalesHandler;
-    private final UpdateProductDemandProjectionHandler productDemandHandler;
-    private final UpdateCustomerPerformanceProjectionHandler customerPerformanceHandler;
-    private final UpdateInventoryHealthProjectionHandler inventoryHealthHandler;
     private final RecordAnalyticsMetricEventHandler metricEventHandler;
 
     public CommerceAnalyticsListener(
             ObjectMapper objectMapper,
             UpdateDailySalesProjectionHandler dailySalesHandler,
-            UpdateProductDemandProjectionHandler productDemandHandler,
-            UpdateCustomerPerformanceProjectionHandler customerPerformanceHandler,
-            UpdateInventoryHealthProjectionHandler inventoryHealthHandler,
             RecordAnalyticsMetricEventHandler metricEventHandler
     ) {
         super(objectMapper);
         this.dailySalesHandler = dailySalesHandler;
-        this.productDemandHandler = productDemandHandler;
-        this.customerPerformanceHandler = customerPerformanceHandler;
-        this.inventoryHealthHandler = inventoryHealthHandler;
         this.metricEventHandler = metricEventHandler;
     }
 
@@ -61,109 +46,62 @@ public class CommerceAnalyticsListener extends BaseKafkaEventListener {
 
     @KafkaListener(topics = "commerce-events", groupId = GROUP_ID)
     public void listen(String messagePayload) {
-        processEventIfMatches(messagePayload, "PosSaleCompletedEvent", PosSaleCompletedPayload.class, log, GROUP_ID, e -> e instanceof TimeoutException, p -> {
+        processEventIfMatches(messagePayload, "PosSaleCompletedEvent", PosSaleCompletedEvent.class, log, GROUP_ID, e -> e instanceof TimeoutException, event -> {
+            PosSaleCompletedEvent.Payload payload = event.payload();
+            java.time.ZonedDateTime saleTimestamp = payload.completedAt() != null ? payload.completedAt() : event.occurredAt();
             dailySalesHandler.execute(new UpdateDailySalesProjectionCommand(
-                    p.organizationId(),
-                    p.environment(),
-                    p.outletId(),
-                    p.saleDate(),
-                    p.grossAmount(),
-                    p.discountAmount(),
-                    p.taxAmount(),
-                    p.netAmount(),
-                    p.paymentMethod(),
+                    payload.organizationId(),
+                    "live",
+                    payload.outletId(),
+                    saleTimestamp.toLocalDate(),
+                    payload.totalNet(),
+                    BigDecimal.ZERO,
+                    BigDecimal.ZERO,
+                    payload.totalNet(),
+                    payload.paymentMethod(),
                     false
             ));
 
-            String month = String.format("%04d-%02d", p.saleDate().getYear(), p.saleDate().getMonthValue());
-            if (p.productId() != null) {
-                productDemandHandler.execute(new UpdateProductDemandProjectionCommand(
-                        p.organizationId(),
-                        p.environment(),
-                        p.productId(),
-                        p.outletId(),
-                        month,
-                        p.quantity(),
-                        p.netAmount(),
-                        false
-                ));
-            }
-
-            if (p.customerId() != null) {
-                customerPerformanceHandler.execute(new UpdateCustomerPerformanceProjectionCommand(
-                        p.organizationId(),
-                        p.environment(),
-                        p.customerId(),
-                        month,
-                        p.netAmount(),
-                        false
-                ));
-            }
-
             metricEventHandler.execute(new RecordAnalyticsMetricEventCommand(
-                    p.eventId(),
-                    p.organizationId(),
-                    p.environment(),
+                    event.eventId(),
+                    payload.organizationId(),
+                    "live",
                     "POS_SALE_COMPLETED",
                     "commerce",
-                    p.netAmount(),
-                    "NGN",
+                    payload.totalNet(),
+                    payload.currency(),
                     "{}",
-                    ZonedDateTime.now()
+                    saleTimestamp
             ));
         });
 
-        processEventIfMatches(messagePayload, "PosSaleRefundedEvent", PosSaleRefundedPayload.class, log, GROUP_ID, e -> e instanceof TimeoutException, p -> {
-            dailySalesHandler.execute(new UpdateDailySalesProjectionCommand(
-                    p.organizationId(),
-                    p.environment(),
-                    p.outletId(),
-                    p.refundDate(),
-                    p.grossAmount(),
-                    p.discountAmount(),
-                    p.taxAmount(),
-                    p.netAmount(),
-                    p.paymentMethod(),
-                    true
+        processEventIfMatches(messagePayload, "PosSaleRefundedEvent", PosSaleRefundedEvent.class, log, GROUP_ID, e -> e instanceof TimeoutException, event -> {
+            PosSaleRefundedEvent.Payload payload = event.payload();
+            metricEventHandler.execute(new RecordAnalyticsMetricEventCommand(
+                    event.eventId(),
+                    payload.organizationId(),
+                    "live",
+                    "POS_SALE_REFUNDED",
+                    "commerce",
+                    payload.refundAmount(),
+                    payload.currency(),
+                    "{}",
+                    payload.refundedAt() != null ? payload.refundedAt() : event.occurredAt()
             ));
-
-            String month = String.format("%04d-%02d", p.refundDate().getYear(), p.refundDate().getMonthValue());
-            if (p.productId() != null) {
-                productDemandHandler.execute(new UpdateProductDemandProjectionCommand(
-                        p.organizationId(),
-                        p.environment(),
-                        p.productId(),
-                        p.outletId(),
-                        month,
-                        p.quantity(),
-                        p.netAmount(),
-                        true
-                ));
-            }
-
-            if (p.customerId() != null) {
-                customerPerformanceHandler.execute(new UpdateCustomerPerformanceProjectionCommand(
-                        p.organizationId(),
-                        p.environment(),
-                        p.customerId(),
-                        month,
-                        p.netAmount(),
-                        true
-                ));
-            }
         });
 
-        processEventIfMatches(messagePayload, "StockAdjustedEvent", StockAdjustedPayload.class, log, GROUP_ID, e -> e instanceof TimeoutException, p -> {
-            inventoryHealthHandler.execute(new UpdateInventoryHealthProjectionCommand(
-                    p.organizationId(),
-                    p.environment(),
-                    p.outletId(),
-                    p.productId(),
-                    p.currentStock(),
-                    p.reorderPoint(),
-                    p.coverageDays(),
-                    p.inventoryValue(),
-                    p.deadStock()
+        processEventIfMatches(messagePayload, "StockAdjustedEvent", StockAdjustedEvent.class, log, GROUP_ID, e -> e instanceof TimeoutException, event -> {
+            StockAdjustedEvent.Payload payload = event.payload();
+            metricEventHandler.execute(new RecordAnalyticsMetricEventCommand(
+                    event.eventId(),
+                    payload.organizationId(),
+                    "live",
+                    "STOCK_ADJUSTED",
+                    "commerce",
+                    null,
+                    null,
+                    "{}",
+                    payload.adjustedAt() != null ? payload.adjustedAt() : event.occurredAt()
             ));
         });
     }

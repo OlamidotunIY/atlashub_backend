@@ -4,9 +4,10 @@ import com.atlashub.analytics.application.command.RecordAnalyticsMetricEvent.Rec
 import com.atlashub.analytics.application.command.RecordAnalyticsMetricEvent.RecordAnalyticsMetricEventHandler;
 import com.atlashub.analytics.application.command.UpdateHeadcountProjection.UpdateHeadcountProjectionCommand;
 import com.atlashub.analytics.application.command.UpdateHeadcountProjection.UpdateHeadcountProjectionHandler;
-import com.atlashub.analytics.application.command.UpdatePayrollCostProjection.UpdatePayrollCostProjectionCommand;
-import com.atlashub.analytics.application.command.UpdatePayrollCostProjection.UpdatePayrollCostProjectionHandler;
-import com.atlashub.analytics.infrastructure.messaging.events.PayrollDisbursedPayload;
+import com.atlashub.analytics.infrastructure.messaging.events.EmployeeOnboardedEvent;
+import com.atlashub.analytics.infrastructure.messaging.events.EmployeeSuspendedEvent;
+import com.atlashub.analytics.infrastructure.messaging.events.EmployeeTerminatedEvent;
+import com.atlashub.analytics.infrastructure.messaging.events.PayrollDisbursedEvent;
 import com.atlashub.shared.application.messaging.BaseKafkaEventListener;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
@@ -15,7 +16,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
-import java.time.ZonedDateTime;
 import java.util.concurrent.TimeoutException;
 
 @Component
@@ -24,18 +24,15 @@ public class HrAnalyticsListener extends BaseKafkaEventListener {
     private static final Logger log = LoggerFactory.getLogger(HrAnalyticsListener.class);
     private static final String GROUP_ID = "analytics-hr-group";
 
-    private final UpdatePayrollCostProjectionHandler payrollCostHandler;
     private final UpdateHeadcountProjectionHandler headcountHandler;
     private final RecordAnalyticsMetricEventHandler metricEventHandler;
 
     public HrAnalyticsListener(
             ObjectMapper objectMapper,
-            UpdatePayrollCostProjectionHandler payrollCostHandler,
             UpdateHeadcountProjectionHandler headcountHandler,
             RecordAnalyticsMetricEventHandler metricEventHandler
     ) {
         super(objectMapper);
-        this.payrollCostHandler = payrollCostHandler;
         this.headcountHandler = headcountHandler;
         this.metricEventHandler = metricEventHandler;
     }
@@ -50,50 +47,41 @@ public class HrAnalyticsListener extends BaseKafkaEventListener {
 
     @KafkaListener(topics = "hr-events", groupId = GROUP_ID)
     public void listen(String messagePayload) {
-        processEventIfMatches(messagePayload, "PayrollDisbursedEvent", PayrollDisbursedPayload.class, log, GROUP_ID, e -> e instanceof TimeoutException, p -> {
-            payrollCostHandler.execute(new UpdatePayrollCostProjectionCommand(
-                    p.organizationId(),
-                    p.environment(),
-                    p.month(),
-                    p.grossPayroll(),
-                    p.deductions(),
-                    p.netPayroll(),
-                    p.headcount()
-            ));
-
+        processEventIfMatches(messagePayload, "PayrollDisbursedEvent", PayrollDisbursedEvent.class, log, GROUP_ID, e -> e instanceof TimeoutException, event -> {
+            PayrollDisbursedEvent.Payload payload = event.payload();
             metricEventHandler.execute(new RecordAnalyticsMetricEventCommand(
-                    p.eventId(),
-                    p.organizationId(),
-                    p.environment(),
+                    event.eventId(),
+                    payload.organizationId(),
+                    "live",
                     "PAYROLL_DISBURSED",
                     "hr",
-                    p.netPayroll(),
-                    "NGN",
+                    payload.totalAmount(),
+                    payload.currency(),
                     "{}",
-                    ZonedDateTime.now()
+                    payload.disbursedAt() != null ? payload.disbursedAt() : event.occurredAt()
             ));
         });
 
-        processEventIfMatches(messagePayload, "EmployeeOnboardedEvent", PayrollDisbursedPayload.class, log, GROUP_ID, e -> e instanceof TimeoutException, p -> {
+        processEventIfMatches(messagePayload, "EmployeeOnboardedEvent", EmployeeOnboardedEvent.class, log, GROUP_ID, e -> e instanceof TimeoutException, event -> {
             headcountHandler.execute(new UpdateHeadcountProjectionCommand(
-                    p.organizationId(),
-                    p.environment(),
+                    event.payload().organizationId(),
+                    "live",
                     "HIRED"
             ));
         });
 
-        processEventIfMatches(messagePayload, "EmployeeTerminatedEvent", PayrollDisbursedPayload.class, log, GROUP_ID, e -> e instanceof TimeoutException, p -> {
+        processEventIfMatches(messagePayload, "EmployeeTerminatedEvent", EmployeeTerminatedEvent.class, log, GROUP_ID, e -> e instanceof TimeoutException, event -> {
             headcountHandler.execute(new UpdateHeadcountProjectionCommand(
-                    p.organizationId(),
-                    p.environment(),
+                    event.payload().organizationId(),
+                    "live",
                     "TERMINATED"
             ));
         });
 
-        processEventIfMatches(messagePayload, "EmployeeSuspendedEvent", PayrollDisbursedPayload.class, log, GROUP_ID, e -> e instanceof TimeoutException, p -> {
+        processEventIfMatches(messagePayload, "EmployeeSuspendedEvent", EmployeeSuspendedEvent.class, log, GROUP_ID, e -> e instanceof TimeoutException, event -> {
             headcountHandler.execute(new UpdateHeadcountProjectionCommand(
-                    p.organizationId(),
-                    p.environment(),
+                    event.payload().organizationId(),
+                    "live",
                     "SUSPENDED"
             ));
         });
