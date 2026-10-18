@@ -27,4 +27,10 @@ class PlatformPermissionCatalogTest {
         assertEquals("compliance", complianceRead.resource());
         assertEquals("READ", complianceRead.action().name());
     }
+
+    @Test
+    void includes_the_analytics_reports_permission() {
+        assertEquals(true, PlatformPermissionCatalog.definitions().stream()
+                .anyMatch(definition -> definition.code().equals("analytics:reports:read")));
+    }
 }

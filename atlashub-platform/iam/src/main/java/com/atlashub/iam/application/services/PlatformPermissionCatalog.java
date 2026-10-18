@@ -51,6 +51,7 @@ public final class PlatformPermissionCatalog {
                 permission("accounting:accounts:manage", "Manage chart of accounts"),
                 permission("accounting:expenses:approve", "Approve expenses"),
                 permission("accounting:budget:manage", "Manage budgets"),
+                permission("analytics:reports:read", "View business analytics reports"),
                 permission("iam:members:invite", "Invite organization members"),
                 permission("iam:members:manage", "Manage organization members"),
                 permission("iam:roles:manage", "Manage custom roles"),

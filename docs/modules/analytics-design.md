@@ -756,6 +756,10 @@ All projection tables use **native SQL upserts** (`@Modifying @Query("INSERT ...
 
 **`AnalyticsDashboardController`** — `@RequestMapping("/api/v1/analytics")`
 
+#### Business overview endpoint
+
+`GET /api/v1/analytics/overview` requires `analytics:reports:read` and derives organization and environment solely from the authenticated principal. It returns a 30-day sales summary plus current-month payment, people, delivery, and inventory-urgency projections. Financial health is explicitly marked unavailable until its accounting-backed projection exists; the endpoint never reads operational tables or substitutes fabricated values.
+
 All endpoints are GET-only and require Bearer JWT authentication.
 
 ---
