@@ -650,9 +650,9 @@ public class CommerceAnalyticsListener extends BaseKafkaEventListener {
 
 | Inbound Event | Commands Invoked |
 |---|---|
-| `PosSaleCompletedEvent` | `UpdateDailySalesProjection`, `UpdateProductSalesProjection`, `UpdateCashierPerformanceProjection`, `RecordAnalyticsEvent` |
-| `PosSaleRefundedEvent` | `UpdateDailySalesProjection` (isRefund=true) |
-| `StockAdjustedEvent` | `UpdateInventoryValueProjection` |
+| `PosSaleCompletedEvent` | `UpdateDailySalesProjection`, `UpdateProductDemandProjection`, `UpdateCustomerPerformanceProjection`, `UpdateOutletPerformanceProjection`, `RecordAnalyticsMetricEvent` |
+| `PosSaleRefundedEvent` | Reverse daily/product projections; update customer refunds and outlet sales; record metric event |
+| `StockAdjustedEvent` | `UpdateInventoryHealthProjection`, `RecordAnalyticsMetricEvent` |
 | `PurchaseOrderReceivedEvent` | `UpdateInventoryValueProjection` |
 
 ---
@@ -680,6 +680,16 @@ public class CommerceAnalyticsListener extends BaseKafkaEventListener {
 | `EmployeeOnboardedEvent` | `UpdateHeadcountProjection` (changeType=HIRED) |
 | `EmployeeTerminatedEvent` | `UpdateHeadcountProjection` (changeType=TERMINATED) |
 | `EmployeeSuspendedEvent` | `UpdateHeadcountProjection` (changeType=SUSPENDED) |
+
+---
+
+### Projection event payload contract
+
+Commerce sale completion and refund events carry producer-owned gross, discount, tax, net, payment method,
+customer, outlet, and product-line facts. Inventory adjustments carry the aggregate's reorder level. Payroll
+disbursement carries gross pay, deductions, net pay, currency, and payslip headcount. These are additive event
+fields: copied consumer records ignore unknown fields, and analytics guards fields absent from historical envelopes
+during bounded replay. Analytics never queries another module's operational tables to reconstruct missing facts.
 
 ---
 

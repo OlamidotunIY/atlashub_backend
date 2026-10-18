@@ -5,6 +5,7 @@ import com.atlashub.shared.domain.event.DomainEvent;
 
 import java.math.BigDecimal;
 import java.time.ZonedDateTime;
+import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record PosSaleCompletedEvent(
@@ -19,11 +20,19 @@ public record PosSaleCompletedEvent(
             Long salesOrderId,
             Long organizationId,
             Long outletId,
+            Long customerId,
+            BigDecimal totalGross,
+            BigDecimal totalDiscount,
+            BigDecimal totalTax,
             BigDecimal totalNet,
             String currency,
             String paymentMethod,
             Long cashierId,
+            List<ItemPayload> items,
             ZonedDateTime completedAt
     ) {
     }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record ItemPayload(Long productId, Long variantId, int quantity, BigDecimal totalAmount) {}
 }

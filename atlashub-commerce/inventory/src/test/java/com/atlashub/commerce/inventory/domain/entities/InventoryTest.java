@@ -138,6 +138,7 @@ class InventoryTest {
         assertTrue(events2.get(0) instanceof StockAdjustedEvent);
 
         StockAdjustedEvent event = (StockAdjustedEvent) events2.get(0);
+        assertEquals(10, event.payload().reorderLevel());
         assertEquals(50, event.payload().previousQty());
         assertEquals(40, event.payload().newQty());
         assertEquals(AdjustmentReason.DAMAGE, event.payload().reason());

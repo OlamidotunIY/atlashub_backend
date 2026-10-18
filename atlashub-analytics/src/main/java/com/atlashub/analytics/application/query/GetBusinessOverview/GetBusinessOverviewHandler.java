@@ -10,7 +10,9 @@ import com.atlashub.analytics.domain.repositories.TransactionVolumeProjectionRep
 import com.atlashub.shared.application.usecase.Query;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import java.math.*;
+import org.springframework.security.access.prepost.PreAuthorize;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -23,6 +25,7 @@ public class GetBusinessOverviewHandler extends Query<GetBusinessOverviewQuery, 
         this.sales=sales; this.payments=payments; this.people=people; this.logistics=logistics; this.inventory=inventory; this.finance=finance;
     }
     @Override @Transactional(readOnly = true)
+    @PreAuthorize("hasAuthority('analytics:reports:read')")
     public BusinessOverviewResult execute(GetBusinessOverviewQuery query) {
         String env=query.environment()!=null?query.environment():"live"; LocalDate to=query.asOfDate()!=null?query.asOfDate():LocalDate.now(); LocalDate from=to.minusDays(29); String month=String.format("%04d-%02d",to.getYear(),to.getMonthValue());
         var rows=sales.findByOrgEnvAndDateRange(query.organizationId(),env,null,from,to); long tx=rows.stream().mapToLong(r->r.getTotalTransactions()).sum(); BigDecimal net=rows.stream().map(r->r.getTotalNet()).reduce(BigDecimal.ZERO,BigDecimal::add); BigDecimal aov=tx==0?BigDecimal.ZERO:net.divide(BigDecimal.valueOf(tx),2,RoundingMode.HALF_UP);

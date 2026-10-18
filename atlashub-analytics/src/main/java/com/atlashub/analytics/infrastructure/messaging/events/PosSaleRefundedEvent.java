@@ -5,6 +5,7 @@ import com.atlashub.shared.domain.event.DomainEvent;
 
 import java.math.BigDecimal;
 import java.time.ZonedDateTime;
+import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record PosSaleRefundedEvent(
@@ -18,13 +19,23 @@ public record PosSaleRefundedEvent(
     public record Payload(
             Long salesOrderId,
             Long organizationId,
+            Long outletId,
+            Long customerId,
             String chargeReference,
+            BigDecimal totalGross,
+            BigDecimal totalDiscount,
+            BigDecimal totalTax,
             BigDecimal refundAmount,
             String currency,
+            String paymentMethod,
             String refundReason,
             String customerNuban,
             String customerBankCode,
+            List<ItemPayload> items,
             ZonedDateTime refundedAt
     ) {
     }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record ItemPayload(Long productId, Long variantId, int quantity, BigDecimal totalAmount) {}
 }

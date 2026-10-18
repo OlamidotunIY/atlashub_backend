@@ -4,6 +4,14 @@ import com.atlashub.analytics.application.command.RecordAnalyticsMetricEvent.Rec
 import com.atlashub.analytics.application.command.RecordAnalyticsMetricEvent.RecordAnalyticsMetricEventHandler;
 import com.atlashub.analytics.application.command.UpdateDailySalesProjection.UpdateDailySalesProjectionCommand;
 import com.atlashub.analytics.application.command.UpdateDailySalesProjection.UpdateDailySalesProjectionHandler;
+import com.atlashub.analytics.application.command.UpdateCustomerPerformanceProjection.UpdateCustomerPerformanceProjectionCommand;
+import com.atlashub.analytics.application.command.UpdateCustomerPerformanceProjection.UpdateCustomerPerformanceProjectionHandler;
+import com.atlashub.analytics.application.command.UpdateInventoryHealthProjection.UpdateInventoryHealthProjectionCommand;
+import com.atlashub.analytics.application.command.UpdateInventoryHealthProjection.UpdateInventoryHealthProjectionHandler;
+import com.atlashub.analytics.application.command.UpdateOutletPerformanceProjection.UpdateOutletPerformanceProjectionCommand;
+import com.atlashub.analytics.application.command.UpdateOutletPerformanceProjection.UpdateOutletPerformanceProjectionHandler;
+import com.atlashub.analytics.application.command.UpdateProductDemandProjection.UpdateProductDemandProjectionCommand;
+import com.atlashub.analytics.application.command.UpdateProductDemandProjection.UpdateProductDemandProjectionHandler;
 import com.atlashub.analytics.infrastructure.messaging.events.PosSaleCompletedEvent;
 import com.atlashub.analytics.infrastructure.messaging.events.PosSaleRefundedEvent;
 import com.atlashub.analytics.infrastructure.messaging.events.StockAdjustedEvent;
@@ -26,15 +34,27 @@ public class CommerceAnalyticsListener extends BaseKafkaEventListener {
 
     private final UpdateDailySalesProjectionHandler dailySalesHandler;
     private final RecordAnalyticsMetricEventHandler metricEventHandler;
+    private final UpdateProductDemandProjectionHandler productDemandHandler;
+    private final UpdateCustomerPerformanceProjectionHandler customerPerformanceHandler;
+    private final UpdateOutletPerformanceProjectionHandler outletPerformanceHandler;
+    private final UpdateInventoryHealthProjectionHandler inventoryHealthHandler;
 
     public CommerceAnalyticsListener(
             ObjectMapper objectMapper,
             UpdateDailySalesProjectionHandler dailySalesHandler,
-            RecordAnalyticsMetricEventHandler metricEventHandler
+            RecordAnalyticsMetricEventHandler metricEventHandler,
+            UpdateProductDemandProjectionHandler productDemandHandler,
+            UpdateCustomerPerformanceProjectionHandler customerPerformanceHandler,
+            UpdateOutletPerformanceProjectionHandler outletPerformanceHandler,
+            UpdateInventoryHealthProjectionHandler inventoryHealthHandler
     ) {
         super(objectMapper);
         this.dailySalesHandler = dailySalesHandler;
         this.metricEventHandler = metricEventHandler;
+        this.productDemandHandler = productDemandHandler;
+        this.customerPerformanceHandler = customerPerformanceHandler;
+        this.outletPerformanceHandler = outletPerformanceHandler;
+        this.inventoryHealthHandler = inventoryHealthHandler;
     }
 
     @PostConstruct
@@ -54,13 +74,29 @@ public class CommerceAnalyticsListener extends BaseKafkaEventListener {
                     "live",
                     payload.outletId(),
                     saleTimestamp.toLocalDate(),
-                    payload.totalNet(),
-                    BigDecimal.ZERO,
-                    BigDecimal.ZERO,
+                    valueOr(payload.totalGross(), payload.totalNet()),
+                    valueOr(payload.totalDiscount(), BigDecimal.ZERO),
+                    valueOr(payload.totalTax(), BigDecimal.ZERO),
                     payload.totalNet(),
                     payload.paymentMethod(),
                     false
             ));
+
+            outletPerformanceHandler.execute(new UpdateOutletPerformanceProjectionCommand(
+                    payload.organizationId(), "live", payload.outletId(), metricMonth(saleTimestamp),
+                    payload.totalNet(), valueOr(payload.totalDiscount(), BigDecimal.ZERO), 1, BigDecimal.ZERO));
+
+            if (payload.customerId() != null) {
+                customerPerformanceHandler.execute(new UpdateCustomerPerformanceProjectionCommand(
+                        payload.organizationId(), "live", payload.customerId(), metricMonth(saleTimestamp),
+                        payload.totalNet(), false));
+            }
+
+            if (payload.items() != null) {
+                payload.items().forEach(item -> productDemandHandler.execute(new UpdateProductDemandProjectionCommand(
+                        payload.organizationId(), "live", item.productId(), payload.outletId(),
+                        metricMonth(saleTimestamp), item.quantity(), item.totalAmount(), false)));
+            }
 
             metricEventHandler.execute(new RecordAnalyticsMetricEventCommand(
                     event.eventId(),
@@ -77,6 +113,27 @@ public class CommerceAnalyticsListener extends BaseKafkaEventListener {
 
         processEventIfMatches(messagePayload, "PosSaleRefundedEvent", PosSaleRefundedEvent.class, log, GROUP_ID, e -> e instanceof TimeoutException, event -> {
             PosSaleRefundedEvent.Payload payload = event.payload();
+            java.time.ZonedDateTime refundTimestamp = payload.refundedAt() != null ? payload.refundedAt() : event.occurredAt();
+            if (payload.outletId() != null) {
+                dailySalesHandler.execute(new UpdateDailySalesProjectionCommand(
+                        payload.organizationId(), "live", payload.outletId(), refundTimestamp.toLocalDate(),
+                        valueOr(payload.totalGross(), payload.refundAmount()),
+                        valueOr(payload.totalDiscount(), BigDecimal.ZERO),
+                        valueOr(payload.totalTax(), BigDecimal.ZERO), payload.refundAmount(), payload.paymentMethod(), true));
+                outletPerformanceHandler.execute(new UpdateOutletPerformanceProjectionCommand(
+                        payload.organizationId(), "live", payload.outletId(), metricMonth(refundTimestamp),
+                        payload.refundAmount().negate(), BigDecimal.ZERO, 0, BigDecimal.ZERO));
+            }
+            if (payload.customerId() != null) {
+                customerPerformanceHandler.execute(new UpdateCustomerPerformanceProjectionCommand(
+                        payload.organizationId(), "live", payload.customerId(), metricMonth(refundTimestamp),
+                        payload.refundAmount(), true));
+            }
+            if (payload.items() != null && payload.outletId() != null) {
+                payload.items().forEach(item -> productDemandHandler.execute(new UpdateProductDemandProjectionCommand(
+                        payload.organizationId(), "live", item.productId(), payload.outletId(),
+                        metricMonth(refundTimestamp), item.quantity(), item.totalAmount(), true)));
+            }
             metricEventHandler.execute(new RecordAnalyticsMetricEventCommand(
                     event.eventId(),
                     payload.organizationId(),
@@ -86,12 +143,17 @@ public class CommerceAnalyticsListener extends BaseKafkaEventListener {
                     payload.refundAmount(),
                     payload.currency(),
                     "{}",
-                    payload.refundedAt() != null ? payload.refundedAt() : event.occurredAt()
+                    refundTimestamp
             ));
         });
 
         processEventIfMatches(messagePayload, "StockAdjustedEvent", StockAdjustedEvent.class, log, GROUP_ID, e -> e instanceof TimeoutException, event -> {
             StockAdjustedEvent.Payload payload = event.payload();
+            if (payload.reorderLevel() != null) {
+                inventoryHealthHandler.execute(new UpdateInventoryHealthProjectionCommand(
+                        payload.organizationId(), "live", payload.outletId(), payload.productId(), payload.newQty(),
+                        payload.reorderLevel(), 0, BigDecimal.ZERO, false));
+            }
             metricEventHandler.execute(new RecordAnalyticsMetricEventCommand(
                     event.eventId(),
                     payload.organizationId(),
@@ -104,5 +166,13 @@ public class CommerceAnalyticsListener extends BaseKafkaEventListener {
                     payload.adjustedAt() != null ? payload.adjustedAt() : event.occurredAt()
             ));
         });
+    }
+
+    private String metricMonth(java.time.ZonedDateTime timestamp) {
+        return String.format("%04d-%02d", timestamp.getYear(), timestamp.getMonthValue());
+    }
+
+    private BigDecimal valueOr(BigDecimal value, BigDecimal fallback) {
+        return value != null ? value : fallback;
     }
 }

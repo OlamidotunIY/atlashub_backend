@@ -20,6 +20,10 @@ public record PayrollDisbursedEvent(
             Long organizationId,
             String period,
             BigDecimal totalAmount,
+            BigDecimal totalGross,
+            BigDecimal totalDeductions,
+            BigDecimal totalNet,
+            int headcount,
             String currency,
             ZonedDateTime disbursedAt
     ) {

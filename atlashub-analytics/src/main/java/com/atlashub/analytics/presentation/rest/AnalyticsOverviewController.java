@@ -11,7 +11,6 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -19,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
+import java.util.Locale;
 
 @RestController
 @RequestMapping("/api/v1/analytics/overview")
@@ -29,13 +29,13 @@ public class AnalyticsOverviewController {
     public AnalyticsOverviewController(GetBusinessOverviewHandler handler) { this.handler = handler; }
 
     @GetMapping
-    @PreAuthorize("hasAuthority('analytics:reports:read')")
     @Operation(summary = "Get business overview", description = "Returns organization-scoped, eventually-consistent analytics projections")
     public ResponseEntity<ApiResponse<BusinessOverviewDto>> getOverview(
             @AuthenticationPrincipal AuthenticatedPrincipal principal,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate asOfDate
     ) {
-        BusinessPerformanceMapper mapper = new BusinessPerformanceMapper(handler.execute(new GetBusinessOverviewQuery(principal.activeOrganizationId(), principal.environment(), asOfDate)));
+        BusinessPerformanceMapper mapper = new BusinessPerformanceMapper(handler.execute(new GetBusinessOverviewQuery(
+                principal.activeOrganizationId(), principal.environment().toLowerCase(Locale.ROOT), asOfDate)));
         return ResponseEntity.ok(new ApiResponse<>(true, "Business overview retrieved successfully", mapper.toDto(), null));
     }
 

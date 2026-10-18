@@ -9,6 +9,7 @@ import com.atlashub.analytics.domain.repositories.HeadcountProjectionRepository;
 import com.atlashub.analytics.domain.repositories.InventoryHealthProjectionRepository;
 import com.atlashub.analytics.domain.repositories.TransactionVolumeProjectionRepository;
 import org.junit.jupiter.api.Test;
+import org.springframework.security.access.prepost.PreAuthorize;
 import java.time.LocalDate;
 import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -22,6 +23,13 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class GetBusinessOverviewHandlerTest {
+    @Test
+    void enforces_report_read_permission_at_the_handler_boundary() throws Exception {
+        PreAuthorize annotation = GetBusinessOverviewHandler.class
+                .getMethod("execute", GetBusinessOverviewQuery.class).getAnnotation(PreAuthorize.class);
+        org.junit.jupiter.api.Assertions.assertNotNull(annotation);
+        org.junit.jupiter.api.Assertions.assertEquals("hasAuthority('analytics:reports:read')", annotation.value());
+    }
     @Test
     void scopes_all_reads_to_the_requested_organization_and_environment() {
         DailySalesProjectionRepository sales=mock(DailySalesProjectionRepository.class); TransactionVolumeProjectionRepository payments=mock(TransactionVolumeProjectionRepository.class); HeadcountProjectionRepository people=mock(HeadcountProjectionRepository.class); DeliveryPerformanceProjectionRepository logistics=mock(DeliveryPerformanceProjectionRepository.class); InventoryHealthProjectionRepository inventory=mock(InventoryHealthProjectionRepository.class); FinancialHealthProjectionRepository finance=mock(FinancialHealthProjectionRepository.class);

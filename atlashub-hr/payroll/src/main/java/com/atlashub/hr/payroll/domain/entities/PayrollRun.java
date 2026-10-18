@@ -164,6 +164,8 @@ public class PayrollRun extends AggregateRoot<Long> {
             payslip.markDisbursed();
         }
 
+        BigDecimal grossAmount = this.totalGross != null ? this.totalGross.amount() : BigDecimal.ZERO;
+        BigDecimal deductionAmount = this.totalDeductions != null ? this.totalDeductions.amount() : BigDecimal.ZERO;
         BigDecimal netAmount = this.totalNet != null ? this.totalNet.amount() : BigDecimal.ZERO;
         String currency = this.totalNet != null ? this.totalNet.currency().name() : CurrencyCode.NGN.name();
 
@@ -171,7 +173,10 @@ public class PayrollRun extends AggregateRoot<Long> {
                 this.id,
                 this.organizationId,
                 this.period.toString(),
+                grossAmount,
+                deductionAmount,
                 netAmount,
+                this.payslips.size(),
                 currency,
                 ZonedDateTime.now()
         ));

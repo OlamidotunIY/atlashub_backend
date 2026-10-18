@@ -4,6 +4,8 @@ import com.atlashub.analytics.application.command.RecordAnalyticsMetricEvent.Rec
 import com.atlashub.analytics.application.command.RecordAnalyticsMetricEvent.RecordAnalyticsMetricEventHandler;
 import com.atlashub.analytics.application.command.UpdateHeadcountProjection.UpdateHeadcountProjectionCommand;
 import com.atlashub.analytics.application.command.UpdateHeadcountProjection.UpdateHeadcountProjectionHandler;
+import com.atlashub.analytics.application.command.UpdatePayrollCostProjection.UpdatePayrollCostProjectionCommand;
+import com.atlashub.analytics.application.command.UpdatePayrollCostProjection.UpdatePayrollCostProjectionHandler;
 import com.atlashub.analytics.infrastructure.messaging.events.EmployeeOnboardedEvent;
 import com.atlashub.analytics.infrastructure.messaging.events.EmployeeSuspendedEvent;
 import com.atlashub.analytics.infrastructure.messaging.events.EmployeeTerminatedEvent;
@@ -26,15 +28,18 @@ public class HrAnalyticsListener extends BaseKafkaEventListener {
 
     private final UpdateHeadcountProjectionHandler headcountHandler;
     private final RecordAnalyticsMetricEventHandler metricEventHandler;
+    private final UpdatePayrollCostProjectionHandler payrollCostHandler;
 
     public HrAnalyticsListener(
             ObjectMapper objectMapper,
             UpdateHeadcountProjectionHandler headcountHandler,
-            RecordAnalyticsMetricEventHandler metricEventHandler
+            RecordAnalyticsMetricEventHandler metricEventHandler,
+            UpdatePayrollCostProjectionHandler payrollCostHandler
     ) {
         super(objectMapper);
         this.headcountHandler = headcountHandler;
         this.metricEventHandler = metricEventHandler;
+        this.payrollCostHandler = payrollCostHandler;
     }
 
     @PostConstruct
@@ -49,13 +54,18 @@ public class HrAnalyticsListener extends BaseKafkaEventListener {
     public void listen(String messagePayload) {
         processEventIfMatches(messagePayload, "PayrollDisbursedEvent", PayrollDisbursedEvent.class, log, GROUP_ID, e -> e instanceof TimeoutException, event -> {
             PayrollDisbursedEvent.Payload payload = event.payload();
+            if (payload.totalNet() != null) {
+                payrollCostHandler.execute(new UpdatePayrollCostProjectionCommand(
+                        payload.organizationId(), "live", payload.period(), payload.totalGross(),
+                        payload.totalDeductions(), payload.totalNet(), payload.headcount()));
+            }
             metricEventHandler.execute(new RecordAnalyticsMetricEventCommand(
                     event.eventId(),
                     payload.organizationId(),
                     "live",
                     "PAYROLL_DISBURSED",
                     "hr",
-                    payload.totalAmount(),
+                    payload.totalNet() != null ? payload.totalNet() : payload.totalAmount(),
                     payload.currency(),
                     "{}",
                     payload.disbursedAt() != null ? payload.disbursedAt() : event.occurredAt()

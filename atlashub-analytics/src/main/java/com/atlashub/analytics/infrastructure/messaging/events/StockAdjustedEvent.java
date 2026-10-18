@@ -20,6 +20,7 @@ public record StockAdjustedEvent(
             Long productId,
             int previousQty,
             int newQty,
+            Integer reorderLevel,
             String reason,
             Long adjustedBy,
             ZonedDateTime adjustedAt

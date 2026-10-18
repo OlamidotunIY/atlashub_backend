@@ -2,6 +2,7 @@ package com.atlashub.analytics.infrastructure.messaging.listeners;
 
 import com.atlashub.analytics.application.command.RecordAnalyticsMetricEvent.RecordAnalyticsMetricEventHandler;
 import com.atlashub.analytics.application.command.UpdateHeadcountProjection.UpdateHeadcountProjectionHandler;
+import com.atlashub.analytics.application.command.UpdatePayrollCostProjection.UpdatePayrollCostProjectionHandler;
 import com.atlashub.shared.application.port.EventTrackerPort;
 import com.atlashub.shared.infrastructure.persistence.repository.DeadLetterRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -20,6 +21,7 @@ class HrAnalyticsListenerTest {
 
     private UpdateHeadcountProjectionHandler headcountHandler;
     private RecordAnalyticsMetricEventHandler metricEventHandler;
+    private UpdatePayrollCostProjectionHandler payrollCostHandler;
     private EventTrackerPort eventTracker;
     private HrAnalyticsListener listener;
 
@@ -27,10 +29,11 @@ class HrAnalyticsListenerTest {
     void setUp() {
         headcountHandler = mock(UpdateHeadcountProjectionHandler.class);
         metricEventHandler = mock(RecordAnalyticsMetricEventHandler.class);
+        payrollCostHandler = mock(UpdatePayrollCostProjectionHandler.class);
         eventTracker = mock(EventTrackerPort.class);
 
         ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
-        listener = new HrAnalyticsListener(objectMapper, headcountHandler, metricEventHandler);
+        listener = new HrAnalyticsListener(objectMapper, headcountHandler, metricEventHandler, payrollCostHandler);
         ReflectionTestUtils.setField(listener, "EventTrackerPort", eventTracker);
         ReflectionTestUtils.setField(listener, "deadLetterRepository", mock(DeadLetterRepository.class));
     }
@@ -77,6 +80,10 @@ class HrAnalyticsListenerTest {
                       "organizationId": 100,
                       "period": "2026-10",
                       "totalAmount": 500000.0,
+                      "totalGross": 625000.0,
+                      "totalDeductions": 125000.0,
+                      "totalNet": 500000.0,
+                      "headcount": 8,
                       "currency": "NGN",
                       "disbursedAt": "2026-10-17T10:00:00Z"
                     }
@@ -85,5 +92,6 @@ class HrAnalyticsListenerTest {
                 """);
 
         verify(metricEventHandler).execute(any());
+        verify(payrollCostHandler).execute(any());
     }
 }

@@ -193,6 +193,11 @@ class SalesOrderTest {
 
         assertEquals(OrderStatus.COMPLETED, order.getStatus());
         assertTrue(order.peekDomainEvents().stream().anyMatch(e -> e instanceof PosSaleCompletedEvent));
+        PosSaleCompletedEvent event = (PosSaleCompletedEvent) order.peekDomainEvents().stream()
+                .filter(PosSaleCompletedEvent.class::isInstance).findFirst().orElseThrow();
+        assertEquals(0, new BigDecimal("5000.00").compareTo(event.payload().totalGross()));
+        assertEquals(1, event.payload().items().size());
+        assertEquals(100L, event.payload().items().getFirst().productId());
     }
 
     @Test
@@ -267,6 +272,11 @@ class SalesOrderTest {
 
         assertEquals(OrderStatus.REFUNDED, order.getStatus());
         assertTrue(order.peekDomainEvents().stream().anyMatch(e -> e instanceof PosSaleRefundedEvent));
+        PosSaleRefundedEvent event = (PosSaleRefundedEvent) order.peekDomainEvents().stream()
+                .filter(PosSaleRefundedEvent.class::isInstance).findFirst().orElseThrow();
+        assertEquals(20L, event.payload().outletId());
+        assertEquals("CASH", event.payload().paymentMethod());
+        assertEquals(1, event.payload().items().size());
     }
 
     @Test

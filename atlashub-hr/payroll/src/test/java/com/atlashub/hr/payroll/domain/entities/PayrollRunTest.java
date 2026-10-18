@@ -2,6 +2,7 @@ package com.atlashub.hr.payroll.domain.entities;
 
 import com.atlashub.hr.payroll.domain.exceptions.InvalidPayrollStateException;
 import com.atlashub.hr.payroll.domain.exceptions.SelfApprovalNotAllowedException;
+import com.atlashub.hr.payroll.domain.events.PayrollDisbursedEvent;
 import com.atlashub.hr.payroll.domain.valueobject.PayrollStatus;
 import com.atlashub.shared.domain.valueobject.CurrencyCode;
 import com.atlashub.shared.domain.valueobject.Money;
@@ -138,6 +139,12 @@ class PayrollRunTest {
         run.markDisbursed();
         assertThat(run.getStatus()).isEqualTo(PayrollStatus.DISBURSED);
         assertThat(payslip.getStatus()).isEqualTo(com.atlashub.hr.payroll.domain.valueobject.PayslipStatus.DISBURSED);
+        PayrollDisbursedEvent event = (PayrollDisbursedEvent) run.peekDomainEvents().stream()
+                .filter(PayrollDisbursedEvent.class::isInstance).findFirst().orElseThrow();
+        assertThat(event.payload().totalGross()).isEqualByComparingTo("100000.00");
+        assertThat(event.payload().totalDeductions()).isEqualByComparingTo("0.00");
+        assertThat(event.payload().totalNet()).isEqualByComparingTo("100000.00");
+        assertThat(event.payload().headcount()).isEqualTo(1);
     }
 
     @Test
