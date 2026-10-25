@@ -1,3 +1,5 @@
+> **PRD v1 HISTORICAL / SUPERSEDED (2026-10-25):** The old Nigerian banking-focused assumptions in this document (atomic user+organization signup, mandatory 5-step KYC/KYB, Atlas-issued Anchor bank accounts/NUBAN, Atlas-owned settlement, compliance approval for LIVE, provider restrictions at signup) are **NOT the newly approved product direction**. See [current target Product Requirements v2](./atlashub-prd-v2.md), [independent identity/organization](./architecture/identity-organization-separation.md), [provider/banking retirement](./architecture/provider-banking-decommission.md). Existing code may still implement this v1 flow; data and provider decommission require migration. Provider/local legal verification still applies per capability.
+
 # AtlasHub — Product Requirements Document (PRD)
 
 > **Status**: ✅ LOCKED  
