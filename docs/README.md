@@ -148,3 +148,15 @@ Every monetary value uses the `Money` value object (amount + currency). The `Mon
 | Hotel | 🚫 Future (vision doc only) |
 | Driver Network / Auto-Dispatch | 🚫 Near-future |
 | OTA Channel Manager | 🚫 Future |
+
+
+---
+
+## Architecture modernization: proposed Storefront and AI integration (2026-10-25)
+
+The module documentation above records existing/legacy assumptions and can differ from future target architecture. The new Storefront target decisions, not yet implemented, are:
+- [Storefront React platform proposal](./architecture/storefront-theme-platform-proposal.md) — Vite/React Router scaffold, full React templates, Portal for merchant and creator, SDK/CLI, isolated Cloudflare Workers for Platforms, R2 and CDN.
+- [Java storefront business/identity/API boundary](./architecture/storefront-platform-integration.md) — Java-owned identity, merchant data, licensing and trusted checkout vs TypeScript storefront portal/management backend. **No fourth backend repository.**
+- [Global multi-provider integrations](./architecture/global-provider-integrations-proposal.md), [AI voice/command-center architecture](./architecture/ai-command-center-voice-security-proposal.md) and [global delivery plan](./architecture/global-expansion-delivery-plan.md).
+
+The dedicated [atlashub_storefront repository](https://github.com/OlamidotunIY/atlashub_storefront) is **already created** and contains detailed architecture, module, contract, security, operations and decision documents. Independent creators publish reviewed React themes there. Businesses follow Atlas Web recommendations to the separate Storefront Portal, using planned central Atlas Hub SSO.
