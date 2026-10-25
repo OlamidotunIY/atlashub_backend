@@ -11,13 +11,13 @@
 - **atlashub_theme_sdk (future separate creator-tooling repo):** Vite React scaffold, public storefront SDK, CLI and contract packages; not yet verified created.
 - **atlashub_web:** existing merchant dashboard, with storefront recommendations and safe external portal deep links only. It does not host complete theme marketplace/merchant publishing pages.
 
-**Do not create a fourth backend repository.** The Node/TypeScript Storefront management backend lives in the existing storefront monorepo and can be deployed independently.
+**No additional backend or authentication backend repo required.** The existing Storefront backend repo remains standalone and independently deployable. Separate Auth Web and Storefront Portal frontend repositories already exist; a theme SDK/CLI repo is planned but not yet verified created. No Turborepo/Nx.
 
 ## Identity and SSO
 
 Atlas Hub Java identity is authoritative across the central Auth Web, merchant Atlas Web and independent Storefront Portal. **User registration is a separate operation from Organization creation, with zero-org Users supported and no mandatory Anchor banking/KYB.** Independent creators can register creator profiles without forming a business; the same User may have creator status and memberships in several organizations.
 
-Portal requires true central SSO: OIDC Authorization Code + PKCE or secure BFF equivalent with IdP session, independently scoped Portal session, secure cookies and revocation. Existing AtlasHub login/session does **not** automatically constitute OIDC SSO. No handoff of bearer tokens in redirect parameters; no reading Atlas Web JWT from another origin's localStorage. Validate selected organization/role/entitlement on every server mutation. Creator ownership is not merchant management permission.
+Portal and Atlas Web use dedicated [Auth Web](https://github.com/OlamidotunIY/atlashub_auth_web) UI and require true central SSO: OIDC Authorization Code + PKCE or secure BFF equivalent with IdP session, independently scoped Portal session, secure cookies and revocation. Existing AtlasHub login/session does **not** automatically constitute OIDC SSO. No handoff of bearer tokens in redirect parameters; no reading Atlas Web JWT from another origin's localStorage. Validate selected organization/role/entitlement on every server mutation. Creator ownership is not merchant management permission.
 
 Java IAM evolution: grant per-org storefront manage/license/domain/publish permissions; public storefront query scopes; creator identity associations/scopes; reviewer audit and scoped staff actions. If creator metadata stays in Storefront DB, Java User remains identity reference.
 
