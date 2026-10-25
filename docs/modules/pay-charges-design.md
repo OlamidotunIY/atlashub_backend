@@ -1,3 +1,5 @@
+> **LEGACY-VS-TARGET NOTICE (2026-10-25):** The older provider/banking assumptions in this module are being replaced by optional merchant-connected integrations. No global Anchor bank/KYB prerequisite to user registration or organization use. See [current v2 requirements](../atlashub-prd-v2.md), [provider retirement](../architecture/provider-banking-decommission.md). Existing content retained for safe migration, not an implemented target.
+
 # Pay Charges Design (`atlashub-pay:charges`)
 
 ## Status and purpose
@@ -150,3 +152,10 @@ Persistence requirements:
 
 The module depends only on provider-neutral shared ports. `atlashub-infrastructure:paystack` implements those ports;
 no charges application or domain code imports Paystack infrastructure or provider DTOs.
+
+
+---
+
+## Target connected-processor model
+
+Payments are initialized against the **selected eligible merchant OrganizationIntegration**, not a global Atlas Paystack/Anchor profile. Persist payment intent and each attempt with provider, connection, exact currency, amount, environment and idempotency key. Multiple eligible providers may be offered based on merchant country/account, capability and currency; no invented global support. Sign/verify provider webhooks, process idempotently, reconcile unknown states, normalize success/refund/chargeback events into Java Commerce/Accounting. No permanent payment secret in theme React code or Portal. See [provider-banking retirement](../architecture/provider-banking-decommission.md).
