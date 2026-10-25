@@ -1,22 +1,32 @@
 # Atlas Hub Java Backend — Storefront Platform integration contract
 
-**Status:** Proposed contract and migration, not implemented. Captures 2026-10-25 Storefront architecture decision. All full theme, hosting, SSO, storage, creator and Cloudflare specifications live in [atlashub_storefront](https://github.com/OlamidotunIY/atlashub_storefront). This document states **what Java must own or expose**.
+**Status:** Proposed contract and migration, not implemented. Captures 2026-10-25 Storefront architecture decision. Backend/hosting, storage, SSR and Cloudflare details live in [atlashub_storefront](https://github.com/OlamidotunIY/atlashub_storefront). The independent merchant/creator frontend lives in [atlashub_storefront_portal](https://github.com/OlamidotunIY/atlashub_storefront_portal), centralized login/register frontend in [atlashub_auth_web](https://github.com/OlamidotunIY/atlashub_auth_web) and public theme creator SDK/CLI repository is separately planned (not verified created). This document states **what Java must own or expose**.
 
 ## Repository boundaries
 
 - **This Java backend:** users, identity/organization membership, RBAC, compliance and access checks, billing/theme entitlements, merchant provider integrations, products, variants, catalog public views, published price, taxes, inventory, orders, cart, trusted checkout, fulfillment and accounting.
-- **atlashub_storefront TypeScript monorepo:** separate Storefront Portal frontend (merchant + creator workspaces), management API/backend (PostgreSQL metadata), developer Vite+React theme scaffold, SDK, CLI, source/archive build jobs, marketplace reviews and releases, storefront config, assets, custom domain orchestration, Cloudflare Workers for Platforms isolation.
+- **atlashub_storefront backend repository:** independently deployed Node/TypeScript management API, PostgreSQL metadata, source/upload validation and build/publishing workers, marketplace/release/domain and Cloudflare Workers for Platforms hosting. Not a monorepo with frontends or SDK.
+- **atlashub_storefront_portal (separate frontend):** creator/merchant marketplace, assets/configuration, domains, preview and publishing UX.
+- **atlashub_auth_web (separate frontend):** central individual login/registration/verification/recovery UX (not a second backend); central SSO supported by Java/IdP.
+- **atlashub_theme_sdk (future separate creator-tooling repo):** Vite React scaffold, public storefront SDK, CLI and contract packages; not yet verified created.
 - **atlashub_web:** existing merchant dashboard, with storefront recommendations and safe external portal deep links only. It does not host complete theme marketplace/merchant publishing pages.
 
 **Do not create a fourth backend repository.** The Node/TypeScript Storefront management backend lives in the existing storefront monorepo and can be deployed independently.
 
 ## Identity and SSO
 
-Atlas Hub identity is authoritative across both merchant Atlas Web and dedicated Storefront Portal. Independent creators can register creator profiles without forming a business; the same User may have creator status and memberships in several organizations.
+Atlas Hub Java identity is authoritative across the central Auth Web, merchant Atlas Web and independent Storefront Portal. **User registration is a separate operation from Organization creation, with zero-org Users supported and no mandatory Anchor banking/KYB.** Independent creators can register creator profiles without forming a business; the same User may have creator status and memberships in several organizations.
 
 Portal requires true central SSO: OIDC Authorization Code + PKCE or secure BFF equivalent with IdP session, independently scoped Portal session, secure cookies and revocation. Existing AtlasHub login/session does **not** automatically constitute OIDC SSO. No handoff of bearer tokens in redirect parameters; no reading Atlas Web JWT from another origin's localStorage. Validate selected organization/role/entitlement on every server mutation. Creator ownership is not merchant management permission.
 
 Java IAM evolution: grant per-org storefront manage/license/domain/publish permissions; public storefront query scopes; creator identity associations/scopes; reviewer audit and scoped staff actions. If creator metadata stays in Storefront DB, Java User remains identity reference.
+
+## Registration and provider activation boundary
+
+- `RegisterUser` creates a valid global account independently of `CreateOrganization`; users need not own a business to build React themes.
+- `CreateOrganization` establishes the business and OWNER membership with no Anchor bank/KYB. Provider connections are optional and do not gate normal merchant configuration or non-financial modules.
+- Public checkout is enabled only when merchant-selected payment method has an active eligible provider connection and server-confirmed provider verification. No blanket compliance approval gate; applicable provider onboarding requirements still apply.
+- Existing `platform:compliance` five-step Anchor KYB is a retirement/migration candidate; retain historical data appropriately. See [Identity separation](identity-organization-separation.md) and [banking decommission](provider-banking-decommission.md).
 
 ## Business data and public storefront APIs
 
