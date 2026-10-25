@@ -1,3 +1,5 @@
+> **LEGACY-VS-TARGET NOTICE (2026-10-25):** The older provider/banking assumptions in this module are being replaced by optional merchant-connected integrations. No global Anchor bank/KYB prerequisite to user registration or organization use. See [current v2 requirements](../atlashub-prd-v2.md), [provider retirement](../architecture/provider-banking-decommission.md). Existing content retained for safe migration, not an implemented target.
+
 # Pay Settlement Design (`atlashub-pay:settlement`)
 
 ## Role & Purpose
@@ -279,3 +281,10 @@ atlashub-pay/settlement/src/main/java/com/atlashub/pay/settlement/
     └── rest/
         └── SettlementController.java
 ```
+
+
+---
+
+## Target direct merchant settlement
+
+AtlasHub does not automatically route Paystack proceeds to Anchor Atlas-held account. A merchant's connected provider settles to its contracted merchant-owned destination, where the provider supports it. AtlasHub records normalized settlement reports, fees, clearing/reconciliation discrepancies and business accounting events without claiming bank custody. Pending provider funds must not become fictitious Atlas ledger availability; remove/retire Anchor deposit requirements. See [provider-banking retirement](../architecture/provider-banking-decommission.md).
