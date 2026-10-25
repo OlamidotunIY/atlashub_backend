@@ -47,3 +47,14 @@ include 'atlashub-commerce'
 include 'atlashub-commerce:catalog'
 ```
 
+
+
+---
+
+## Proposed architecture boundary — third-party React storefront hosting
+
+**Migration note (2026-10-25; not implemented):** This Java `commerce.storefront` domain remains responsible for POS, sales orders, checkout saga, reservations, transactions, and order state. **It is not** the website theme engine, marketplace creator dashboard, domain/HTTPS manager or host for uploaded third-party React code.
+
+The new [atlashub_storefront TypeScript monorepo](https://github.com/OlamidotunIY/atlashub_storefront) owns the dedicated Merchant+Creator Storefront Portal, Vite/React Router theme SDK/scaffold, CLI/publishing, versioned theme releases, per-storefront config/assets, Cloudflare Workers for Platforms isolated rendering and domain infrastructure. Java exports controlled public commerce APIs and platform theme entitlements; no extra backend repository.
+
+The documented Paystack/Anchor routing and specific charge event names above describe existing/legacy design; target global provider integration uses merchant-connected capabilities and normalized payment events. Preserve Java stock/order/financial invariants and checkout authority throughout migration. Read [full Java integration proposal](../architecture/storefront-platform-integration.md) and [Storefront platform proposal](../architecture/storefront-theme-platform-proposal.md).
