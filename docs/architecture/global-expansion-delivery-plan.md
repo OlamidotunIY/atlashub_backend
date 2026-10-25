@@ -6,7 +6,7 @@ Date: 2026-10-24.
 ## Existing module inventory
 The current `settings.gradle` registers accounts/authentication, compliance, IAM, billing, commerce/catalog/inventory/storefront, pay/accounts/charges/ledger/settlement/splits/transfers/mandates/controls/tx-query, accounting/gl/cash/ap/ar/assets/budget, logistics/shipping/warehousing/returns, HR/staff/payroll/attendance/leave/loan, analytics, infrastructure Anchor/Paystack and a Spring Boot entry point.
 
-The proposals preserve the modular monolith as business system of record. Two **separate** repositories are proposed for Python intelligence and the TypeScript storefront theme platform, but are not yet created.
+The proposals preserve the Java modular monolith as business system of record. Two **separate repositories already exist**: [atlashub_intelligence](https://github.com/OlamidotunIY/atlashub_intelligence) for Python AI, and [atlashub_storefront](https://github.com/OlamidotunIY/atlashub_storefront) for the TypeScript Storefront Portal, Node management backend, SDK/CLI and rendering. Atlas Web is the existing business dashboard with storefront recommendations. **No additional storefront backend repository is required.**
 
 ## Accounting: documentation-to-code gaps found by static source inspection
 - GL design: default chart-of-accounts seeding and `OrganizationComplianceApprovedListener` not present in current GL implementation.
@@ -48,10 +48,13 @@ Exit: NG historical migrations and multi-currency reconciliation tests pass.
 - Isolate optional AtlasHub-managed shipping incentives/contracts.
 Exit: test domestic and international shipments with fully attributed external events.
 
-### Phase E: hosted storefronts
-- Stable public commerce API; one tenant-aware runtime; theme schema/catalog; secure domain verification/HTTPS; publish/preview/rollback.
-- First-party audited themes, then creators/marketplace with admission process.
-Exit: two merchant domains on same infrastructure with isolated prices/catalog/orders.
+### Phase E: dedicated hosted React storefronts (2026-10-25 decision)
+- Reuse existing `atlashub_storefront` TypeScript monorepo for a separate Storefront Portal frontend (merchant and independent creator workspaces) plus its Node management backend, theme scaffold/SDK/CLI, review/build workers, hosting and storage integration. Atlas Web displays theme recommendations/deep links, not duplicate management screens; central IdP OIDC/BFF SSO must be built.
+- Give third-party developers Vite + React + TypeScript + React Router Framework Mode route contracts, public storefront SDK and schema-defined merchant settings with valid defaults; no drag-and-drop MVP; creator submits source via CLI to private storage, isolated reproducible builds, security review and immutable theme releases.
+- Merchant licensing/purchases use AtlasHub platform billing. Merchants customize own logo/colors/banners/content/assets in dedicated portal; manage domain validation/TLS, preview, publish, rollback and preserved overrides. The Java core remains authoritative for catalog, stock, pricing, orders, trusted checkout, provider routing and payment status.
+- Selected subject to PoC: Cloudflare Workers for Platforms **untrusted mode**, one user Worker per storefront installation, trusted host dispatch with per-store limits, R2 private source/releases and tenant assets, CDN for immutable assets/public HTML caching, Cloudflare for SaaS custom domains, PostgreSQL for metadata only. Browser theme JS still requires CSP/review, and checkout/account stays trusted and separated.
+- Prototype **two independently authored themes and two separate merchants**, including different and same theme release installs; prove SSR SEO, cross-tenant isolation, public Java SDK, provider-safe cart/checkout, catalog invalidation, domain certificate, rollback, script CPU/traffic/asset cost. If infeasible, choose safe alternative with new ADR; do not deploy arbitrary creator Node code in a privileged shared renderer.
+Exit: merchants can enter from Atlas Web with central SSO, buy/install theme, configure branding, bind domain and publish a safe isolated public storefront. Current detailed contracts: [Java integration](storefront-platform-integration.md), [Theme proposal](storefront-theme-platform-proposal.md) and [Storefront repo](https://github.com/OlamidotunIY/atlashub_storefront).
 
 ### Phase F: intelligence
 - Java tool policies + text-only read tools first; authenticated write commands with previews, approvals and audit second.
