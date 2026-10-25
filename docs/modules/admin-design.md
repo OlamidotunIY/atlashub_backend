@@ -1,3 +1,5 @@
+> **V2 MODERNIZATION NOTE (2026-10-25):** The target has independent global User registration and Organization creation, and optional merchant-connected providers instead of Atlas mandatory Anchor banking/KYB. The detailed module below may reflect existing legacy software. See [v2 PRD](../atlashub-prd-v2.md) and [banking retirement](../architecture/provider-banking-decommission.md). No implemented code is changed by this note.
+
 # Admin Module Design (`atlashub-platform:admin`)
 
 ## Status and boundary
@@ -97,3 +99,10 @@ No compliance approval/rejection endpoint exists.
 ## Activation requirements
 
 Before adding the module to `settings.gradle`, implement staff security/MFA, per-resource controllers, shared read-port adapters in owning modules, operations task commands/listeners, ban/unban events, audit tests, and explicit architecture tests proving the admin module cannot transition compliance.
+
+
+---
+
+## Target v2 module-specific changes
+
+Global default Atlas-operated five-step Anchor KYB review is a **legacy feature to decommission**. Admin retains legitimate support, user/org suspension, roles/abuse, reviews, provider connector health and marketplace moderation according to policy. If provider-hosted onboarding, provider manages its own compliance review; platform administrators should not override provider verification. Historic KYB records require restricted read-only retention/migration, not deletion without review. [Retirement](../architecture/provider-banking-decommission.md).
