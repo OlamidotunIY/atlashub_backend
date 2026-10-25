@@ -1,3 +1,5 @@
+> **V2 MODERNIZATION NOTE (2026-10-25):** The target has independent global User registration and Organization creation, and optional merchant-connected providers instead of Atlas mandatory Anchor banking/KYB. The detailed module below may reflect existing legacy software. See [v2 PRD](../atlashub-prd-v2.md) and [banking retirement](../architecture/provider-banking-decommission.md). No implemented code is changed by this note.
+
 # Pay Ledger Design (`atlashub-pay:ledger`)
 
 ## Purpose
@@ -127,3 +129,10 @@ unchanged.
 - `pay:ledger:read`: view financial accounts and unified transaction history.
 - `pay:ledger:manage`: create optional business accounts and transfer between them.
 - Freeze/unfreeze/close remain platform staff operations and are not organization permissions.
+
+
+---
+
+## Target v2 module-specific changes
+
+Existing shadow ledger for Atlas-issued Anchor banking is **legacy**; moving to merchant-connected payment processors and direct merchant settlement means ledger must not represent funds in external merchant bank accounts as Atlas-held cash. Preserve accounting truth via provider clearing, fees, externally confirmed payment and settlement reconciliations, refunds/disputes and audit. Do not infer real balances from webhook alone. Migrate/close historical Atlas bank accounts with signed reconciliation before retiring ledger entries. [Retirement](../architecture/provider-banking-decommission.md).
