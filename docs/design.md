@@ -1,3 +1,5 @@
+> **MIGRATION NOTICE (2026-10-25):** This design describes the *existing legacy Java code* and older assumptions. The target architecture has individual registration without organization, independent organization creation, optional merchant-connected payment/logistics providers (not compulsory Anchor banking/KYB), separate [Auth Web](https://github.com/OlamidotunIY/atlashub_auth_web), [Storefront Portal](https://github.com/OlamidotunIY/atlashub_storefront_portal), and [Storefront Platform](https://github.com/OlamidotunIY/atlashub_storefront) repos. See [identity separation](./architecture/identity-organization-separation.md), [provider decommission](./architecture/provider-banking-decommission.md), [Storefront integration](./architecture/storefront-platform-integration.md) and [v2 PRD](./atlashub-prd-v2.md). Implemented current state differs from proposed v2 until migration is completed.
+
 # AtlasHub Platform — System Design Overview
 
 ## What Is AtlasHub?
