@@ -1,3 +1,5 @@
+> **LEGACY-VS-TARGET NOTICE (2026-10-25):** The older provider/banking assumptions in this module are being replaced by optional merchant-connected integrations. No global Anchor bank/KYB prerequisite to user registration or organization use. See [current v2 requirements](../atlashub-prd-v2.md), [provider retirement](../architecture/provider-banking-decommission.md). Existing content retained for safe migration, not an implemented target.
+
 # Pay Transfers Design (`atlashub-pay:transfers`)
 
 ## Role & Purpose
@@ -849,3 +851,10 @@ com.atlashub.pay.transfers/
     └── rest/
         └── PayoutController.java
 ```
+
+
+---
+
+## Target payouts
+
+Payouts require explicit connected merchant provider capability, verified authorization, supported region/currency and real confirmed provider outcome. If `PayoutGatewayPort` is absent, **fail closed**, never mark success with a mock provider reference in LIVE. Provider payout restrictions, bank verification and provider KYB apply only to requested capability; no global banking prerequisite to organization/identity. See [provider-banking retirement](../architecture/provider-banking-decommission.md).
