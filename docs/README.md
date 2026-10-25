@@ -31,7 +31,7 @@ atlashub-backend/
 ├── atlashub-platform/
 │   ├── accounts/             ← User and Organization registration
 │   ├── auth/                 ← JWT, sessions, API key HMAC verification
-│   ├── compliance/           ← KYC 5-step journey, document verification
+│   ├── compliance/           ← LEGACY mandatory Anchor banking KYB (retire after migration)
 │   ├── iam/                  ← Custom roles, permissions, memberships, invitations, API keys
 │   ├── catalog/              ← Platform product catalogue and pricing plans
 │   ├── billing/              ← Subscriptions, invoices, entitlements
@@ -59,7 +59,7 @@ atlashub-backend/
 |---|---|---|
 | `accounts` | [accounts-design.md](./modules/accounts-design.md) | User & Organization registration |
 | `auth` | [auth-design.md](./modules/auth-design.md) | JWT, sessions, HMAC signing |
-| `compliance` | [compliance-design.md](./modules/compliance-design.md) | KYC 5-step journey |
+| `compliance` (LEGACY, decommission target) | [compliance-design.md](./modules/compliance-design.md) | Historical Anchor five-step KYB, **not required** for user/org signup or general Atlas Hub operations |
 | `iam` | [iam-design.md](./modules/iam-design.md) | Roles, permissions, memberships, API keys |
 | `catalog` | [catalog-design.md](./modules/catalog-design.md) | Platform product catalogue & pricing |
 | `billing` | [billing-design.md](./modules/billing-design.md) | Subscriptions, invoices, entitlements |
@@ -109,7 +109,7 @@ atlashub-backend/
 | [setup/elasticsearch-setup.md](./setup/elasticsearch-setup.md) | Index schemas, CDC sync, full-text search |
 | [setup/api-key-hmac-auth.md](./setup/api-key-hmac-auth.md) | HMAC signing algorithm, verification, key rotation |
 | [setup/webhook-infrastructure.md](./setup/webhook-infrastructure.md) | Outbound webhooks, delivery, retry, merchant verification |
-| [setup/anchor-integration.md](./setup/anchor-integration.md) | NUBAN issuance, inbound transfers |
+| [setup/anchor-integration.md](./setup/anchor-integration.md) | **Legacy Atlas-owned banking**; retire/migrate before removing |
 | [setup/paystack-integration.md](./setup/paystack-integration.md) | Card/USSD checkout, refunds, settlement routing and reconciliation |
 | [setup/moniepoint-integration.md](./setup/moniepoint-integration.md) | POS terminals, card-present, QR payments |
 
@@ -138,7 +138,7 @@ Every monetary value uses the `Money` value object (amount + currency). The `Mon
 
 | Module | MVP Status |
 |---|---|
-| Accounts, Auth, Compliance, IAM | ✅ MVP |
+| Accounts, Auth, IAM | Target: independent user/org registration, central SSO and IAM; **not yet migrated** |
 | Catalog, Billing | ✅ MVP |
 | Atlas Pay | ✅ MVP |
 | Commerce (POS + Marketplace) | ✅ MVP |
