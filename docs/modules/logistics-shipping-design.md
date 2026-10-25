@@ -1,3 +1,5 @@
+> **V2 MODERNIZATION NOTE (2026-10-25):** The target has independent global User registration and Organization creation, and optional merchant-connected providers instead of Atlas mandatory Anchor banking/KYB. The detailed module below may reflect existing legacy software. See [v2 PRD](../atlashub-prd-v2.md) and [banking retirement](../architecture/provider-banking-decommission.md). No implemented code is changed by this note.
+
 # Logistics Shipping Design (`:atlashub-logistics:shipping` / `com.atlashub.logistics.shipping`)
 
 ## Role & Purpose
@@ -334,3 +336,10 @@ Per AtlasHub architecture rules, all outbound provider ports and cross-module qu
    - `POST /api/v1/shipments/incentives/calculate` — trigger monthly incentive calculation
 3. `FleetController` (`/api/v1/logistics/fleet`)
    - Manage `CoverageZone`, `MerchantShippingConfig`, `FleetVehicle`, and `DispatchRider`.
+
+
+---
+
+## Target v2 module-specific changes
+
+External delivery becomes **merchant-connected carrier capability** per location/country, including international legs and last mile when provider coverage allows. Existing Atlas fleet/flat state routes/mock ThirdPartyCarrierPort quotes are legacy/test-only, not real global shipment proof. Merchant may use inventory and business accounts without any carrier; connected eligible carrier enables quote/book/track/returns. AtlasHub does not default to taking carrier fees or managing the fleet. [Provider transition](../architecture/provider-banking-decommission.md).
