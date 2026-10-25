@@ -1,9 +1,13 @@
 # Architecture proposal: merchant-connected integrations and global operations
 
-Status: PROPOSED — documentation only; not implemented.
+Status: ACCEPTED target provider-connected architecture — documentation only; not implemented. Supersedes mandatory Atlas-operated Anchor banking and global KYB.
 Date: 2026-10-24
 Scope: AtlasHub backend (Java/Spring Boot modular monolith).
-Related: [AI command center](./ai-command-center-voice-security-proposal.md), [storefront platform](./storefront-theme-platform-proposal.md), [delivery plan](./global-expansion-delivery-plan.md).
+Related: [User/Organization separation](./identity-organization-separation.md), [Anchor retirement](./provider-banking-decommission.md), [AI command center](./ai-command-center-voice-security-proposal.md), [storefront platform](./storefront-theme-platform-proposal.md), [delivery plan](./global-expansion-delivery-plan.md).
+
+## Individual vs business vs provider lifecycle
+
+Identity signup creates global User/AuthAccount without organization; a zero-organization user can authenticate and become independent template creator. An existing authenticated User may create an Organization separately with OWNER IAM membership. No default Atlas bank account or compulsory Anchor 5-step KYB, no universal compliance approval gate. Business/provider capabilities follow separate contract/verification requirements. Provider KYB/KYC, privacy/data protection, tax and any actual regulatory duties still apply where required. [Details](./identity-organization-separation.md), [decommission checklist](./provider-banking-decommission.md).
 
 ## Product boundary
 AtlasHub owns business identity, authorization, commerce, product catalog, inventory, fulfillment orders, HR, general-ledger accounting, audit, and normalized payment/shipping status. Merchants own provider accounts and control receipt of merchant funds. Providers fulfill external services through merchant-authorized integrations. AtlasHub does **not** claim to hold the merchant's external balances, settle their funds, control arbitrary bank accounts, or guarantee provider availability.
