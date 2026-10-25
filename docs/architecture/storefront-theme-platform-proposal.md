@@ -8,7 +8,7 @@
 
 ### Merchant
 
-Continue using Atlas Web for business administration, which shows Storefront recommendations/links. Clicking opens **dedicated Storefront Portal** via safe URL/deep link, automatically signed in **if** central Atlas Hub identity session exists and OIDC/BFF SSO is implemented. In Portal merchant can explore marketplace, view demos, purchase/license and install theme, configure defaults/overrides (logo, colors, banners, font, copy, collection, social links), upload store images, manage drafts/previews, verify custom domains/TLS, publish, update or roll back. Java still owns catalog/products, pricing, inventory, orders, payment/shipping availability and checkout; no duplicate merchant operations dashboard.
+Register individual account through Auth Web **without creating a business or passing Anchor KYB**; use Atlas Web for separate optional `CreateOrganization` when needed. Continue using Atlas Web for business administration, which shows Storefront recommendations/links. Clicking opens **dedicated Storefront Portal** via safe URL/deep link, automatically signed in **if** central Atlas Hub identity session exists and OIDC/BFF SSO is implemented. In Portal merchant can explore marketplace, view demos, purchase/license and install theme, configure defaults/overrides (logo, colors, banners, font, copy, collection, social links), upload store images, manage drafts/previews, verify custom domains/TLS, publish, update or roll back. Java still owns catalog/products, pricing, inventory, orders, payment/shipping availability and checkout; no duplicate merchant operations dashboard.
 
 ### Developer
 
@@ -22,9 +22,13 @@ Portal's merchant and creator workspaces use **one AtlasHub user identity** and 
 |---|---|
 | `atlashub_backend` | Java authoritative business/identity/billing/checkout APIs, permission and events |
 | `atlashub_web` | Existing merchant operations and Storefront recommendations/deep links |
-| `atlashub_storefront` | **TypeScript monorepo** with separate Portal frontend, Node management backend, Vite React scaffolder, SDK, CLI, build/review and deployment workers, isolated Cloudflare storefront runtime, object-storage/CDN integrations |
+| `atlashub_storefront` | **Standalone Node/TypeScript management/hosting backend repository**, theme registry/build/review, domain management, Cloudflare Workers for Platforms and storage |
+| `atlashub_storefront_portal` | **Separate frontend repository** for merchant theme marketplace, stores and creator dashboard |
+| `atlashub_auth_web` | **Separate frontend repository** for central login, user signup, verification and recovery; Java/IdP owns sessions/token/identity |
+| `atlashub_theme_sdk` (planned, not verified created) | Independent Vite/React scaffold, public theme SDK, CLI and package contracts |
+| `atlashub_web` | Existing merchant business dashboard and links to Portal, no duplicated marketplace |
 
-**No fourth backend repository is necessary.** Portal and backend are separate deployable apps under existing storefront GitHub repository.
+**Repositories are independent (no Turborepo/Nx)**: Portal, Auth frontend, Storefront backend/hosting, Java backend and Atlas Web have independent build/deploy. SDK repo is planned but not found. No additional standalone authentication **backend** repository needed, although Auth **frontend** is separate.
 
 ## Hosting selected subject to prototype
 
@@ -59,6 +63,9 @@ React Router Framework Mode offers SSR and pre-rendering needed for SEO/public c
 - [Implementation roadmap](https://github.com/OlamidotunIY/atlashub_storefront/blob/main/docs/modules/index.md)
 
 ## Required Java migration
+
+Decouple individual `RegisterUser` from authenticated `CreateOrganization` (OWNER membership); allow no-org user/independent creator; remove mandatory Anchor banking/KYB compliance gates and automatic bank account provisioning. Payment capability through merchant-owned provider connection only when supported, not universal Atlas-held funds. See [v2 PRD](../atlashub-prd-v2.md), [identity](identity-organization-separation.md), [provider decommission](provider-banking-decommission.md).
+
 
 Create central SSO identity and independent creator ability, new permissions and entitlement APIs; define versioned public storefront commerce facade; separate theme licensing from merchant checkout payment rails; normalize provider-connected charge events; emit catalog/inventory/price invalidation; keep existing commerce-storefront POS/order/checkout functionality in Java; enforce trusted cart and checkout regardless of theme rendering. No production code is changed by this document.
 
