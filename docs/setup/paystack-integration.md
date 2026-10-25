@@ -1,3 +1,5 @@
+> **LEGACY-VS-TARGET NOTICE (2026-10-25):** The older provider/banking assumptions in this module are being replaced by optional merchant-connected integrations. No global Anchor bank/KYB prerequisite to user registration or organization use. See [current v2 requirements](../atlashub-prd-v2.md), [provider retirement](../architecture/provider-banking-decommission.md). Existing content retained for safe migration, not an implemented target.
+
 # Paystack Integration
 
 ## Current role
@@ -108,3 +110,10 @@ as settlement confirmation.
 See [Paystack infrastructure design](../modules/paystack-design.md),
 [charges design](../modules/pay-charges-design.md), and
 [settlement design](../modules/pay-settlement-design.md).
+
+
+---
+
+## Target provider-connected Paystack usage
+
+Paystack is one **optional merchant-connected provider**, subject to its eligible country, merchant account type, onboarding/activation and contractual merchant settlement rules. Do not assume global AtlasHub-owned Paystack subaccount settled into Anchor accounts. Use merchant connection-scoped credentials and verified webhook + reconciliation; feature unavailable until connected and activated. Paystack still requires its **own** KYC/KYB and verification before permitted live service (see https://support.paystack.com/en/articles/2123970). See [provider transition](../architecture/provider-banking-decommission.md).
