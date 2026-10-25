@@ -1,7 +1,7 @@
 # Global AtlasHub delivery plan and documentation inventory
 
 Status: PROPOSED — implementation and rollout plan, not a claim of completed features.
-Date: 2026-10-24.
+Date: 2026-10-25.
 
 ## Existing module inventory
 The current `settings.gradle` registers accounts/authentication, compliance, IAM, billing, commerce/catalog/inventory/storefront, pay/accounts/charges/ledger/settlement/splits/transfers/mandates/controls/tx-query, accounting/gl/cash/ap/ar/assets/budget, logistics/shipping/warehousing/returns, HR/staff/payroll/attendance/leave/loan, analytics, infrastructure Anchor/Paystack and a Spring Boot entry point.
@@ -25,15 +25,18 @@ These findings are limited to static repository inspection; no runtime tests or 
 ### Phase A: freeze business and capability contracts
 - Adopt the proposed boundary: merchant-connected external integrations, AtlasHub-owned business truth, billing segregation.
 - Specify provider installation, connection ownership, capabilities, endpoint/event contracts.
+- **Separate global RegisterUser from authenticated CreateOrganization**, allow zero-org identity and independent creator onboarding. Change all `OrganizationRegistered` consumers via compatible migration; no automatic bank/KYB record or Anchor account.
+- **Retire mandatory Atlas-owned banking and universal Anchor five-step KYB** from registration and general LIVE capability gating. Preserve historic banking and sensitive compliance data until legal, financial and migration obligations are resolved. Provider onboarding/KYB occurs only when the merchant activates a provider-dependent capability.
+- Integrate central standalone [Auth Web](https://github.com/OlamidotunIY/atlashub_auth_web) and independent [Storefront Portal](https://github.com/OlamidotunIY/atlashub_storefront_portal) via Java/IdP OIDC/BFF SSO. Independent future `atlashub_theme_sdk` repository not yet verified. Do not use monorepo tooling.
 - Specify legal entity/country/currency/address changes; avoid changing DB representation without a migration plan.
 - Agree non-goals for global localization and financial services licensing.
 Exit: reviewed ADRs, API schemas and migration/test matrix.
 
 ### Phase B: provider migration
-- Migrate one provider end-to-end (Paystack merchant-connected), including account authorization, safe checkout, webhook validation, reconciliation, retries and refunds.
+- Migrate one provider end-to-end (Paystack merchant-connected, if supported merchant account agreement permits), including hosted account activation/verification, encrypted authorized connection, safe checkout, webhook validation, direct merchant settlement/reconciliation, retries and refunds. Organization remains usable if not connected.
 - Connect second eligible provider and test explicit customer choice/merchant routing.
 - Replace fail-open fake payout successes with hard failures/unsupported statuses.
-- Remove Anchor compulsory onboarding coupling; optionally preserve Anchor as one installed banking connector.
+- Remove Anchor compulsory onboarding, five-step KYB and automatic accounts; optionally preserve Anchor only as an explicitly selected supported merchant connector. Decommission old bank accounts/ledger and obligations safely.
 Exit: completed paid test order, refunds/replays/unknown-status recovery and accounting invariants.
 
 ### Phase C: worldwide data model and accounting
@@ -49,7 +52,7 @@ Exit: NG historical migrations and multi-currency reconciliation tests pass.
 Exit: test domestic and international shipments with fully attributed external events.
 
 ### Phase E: dedicated hosted React storefronts (2026-10-25 decision)
-- Reuse existing `atlashub_storefront` TypeScript monorepo for a separate Storefront Portal frontend (merchant and independent creator workspaces) plus its Node management backend, theme scaffold/SDK/CLI, review/build workers, hosting and storage integration. Atlas Web displays theme recommendations/deep links, not duplicate management screens; central IdP OIDC/BFF SSO must be built.
+- Use **independent repositories**: `atlashub_storefront_portal` for merchant/creator frontend, `atlashub_auth_web` for universal auth UI, `atlashub_storefront` for Node management backend/build/hosting. Planned `atlashub_theme_sdk` for standalone scaffolder/SDK/CLI/versioned contracts (not yet verified created). No Turborepo/Nx. Atlas Web displays theme recommendations/deep links, not duplicate management; Java IdP OIDC/BFF SSO must be built.
 - Give third-party developers Vite + React + TypeScript + React Router Framework Mode route contracts, public storefront SDK and schema-defined merchant settings with valid defaults; no drag-and-drop MVP; creator submits source via CLI to private storage, isolated reproducible builds, security review and immutable theme releases.
 - Merchant licensing/purchases use AtlasHub platform billing. Merchants customize own logo/colors/banners/content/assets in dedicated portal; manage domain validation/TLS, preview, publish, rollback and preserved overrides. The Java core remains authoritative for catalog, stock, pricing, orders, trusted checkout, provider routing and payment status.
 - Selected subject to PoC: Cloudflare Workers for Platforms **untrusted mode**, one user Worker per storefront installation, trusted host dispatch with per-store limits, R2 private source/releases and tenant assets, CDN for immutable assets/public HTML caching, Cloudflare for SaaS custom domains, PostgreSQL for metadata only. Browser theme JS still requires CSP/review, and checkout/account stays trusted and separated.
