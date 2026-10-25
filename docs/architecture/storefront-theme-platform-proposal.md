@@ -1,57 +1,67 @@
-# Architecture proposal: AtlasHub Storefront, theme engine and creator ecosystem
+# Atlas Hub Storefront Platform — accepted proposal for implementation
 
-Status: PROPOSED — not implemented. Date: 2026-10-24.
-Companion repository proposed: `atlashub_storefront` (TypeScript monorepo), not yet provisioned.
+**State:** Accepted design direction (2026-10-25), implementation not started. **This supersedes** the earlier draft describing a constrained declarative-only editor and Next.js-first website. Do not treat proposed services, CLI, SSO or Cloudflare deployment as implemented.
 
-## Separate the systems
-- AtlasHub Java commerce core owns products, prices, inventory, fulfillment location selection, order lifecycle, customer checkout, provider routing and permissions. Expose versioned storefront-facing APIs; do not expose internal aggregates or shared database tables.
-- Storefront platform backend owns theme registry, theme versions, manifests, tenant storefront configuration, publication, asset references, domain verification, render deployment, and third-party creator workflow. Platform billing/entitlement source of truth remains Java, coordinated through supported ports/events.
-- Theme engine owns a constrained declarative format (page templates, sections, blocks, data bindings, design tokens, language strings and assets) and rendering contracts.
-- Storefront runtime is the tenant-aware public renderer. Next.js is an optional implementation choice for this runtime, not the entire theme engine or one project per theme.
-- Theme editor handles previews, draft/published state, drag/drop or configuration UI, validation and revisions.
+**Primary long-form source of truth:** [atlashub_storefront documentation index](https://github.com/OlamidotunIY/atlashub_storefront/blob/main/README.md). Java cross-service contract: [storefront-platform-integration.md](storefront-platform-integration.md).
 
-## Why hundreds of themes are feasible
-A single multitenant deployment can serve thousands of storefronts by resolving Host -> Storefront -> PublishedThemeVersion -> configuration -> commerce data. A store is a tenant configuration + domain + active theme, not a separately deployed server by default. 200 themes can be separately versioned theme packages/manifests and assets while using one constrained component library and one runtime. No need for 200 Next.js apps or 200 Node servers.
+## Final user experience
 
-Alternative to Next.js: a custom Node.js (Fastify/NestJS) server with a Liquid-like safe template interpreter and CDN caching. Recommend TypeScript monorepo and a renderer spike **before freezing** Next.js as mandatory. Next.js offers SSR/streaming/routing and documented multi-tenant patterns; creator flexibility and security depend on theme format, not Next.js itself. See https://nextjs.org/docs/app/guides/multi-tenant and https://shopify.dev/docs/storefronts/themes/architecture.
+### Merchant
 
-## Proposed repository layout
-```
-atlashub_storefront/
-  docs/
-  apps/
-    management-api/       # Theme/domain/deployment/catalog APIs (Node/TypeScript)
-    storefront-runtime/    # Single multi-tenant SSR/runtime (candidate Next.js)
-    theme-editor/          # Creator/merchant browser editor
-    jobs/                  # Build/validation/publishing/domain workers
-  packages/
-    theme-schema/          # Versioned manifests and safe bindings
-    theme-engine/          # Render resolution and validation
-    storefront-api-client/ # Java commerce API contracts
-    components/            # Allowed audited UI primitives
-    theme-sdk/             # Creator tooling / SDK
-  themes/
-    starter/               # First-party theme only; no other themes initially
-```
+Continue using Atlas Web for business administration, which shows Storefront recommendations/links. Clicking opens **dedicated Storefront Portal** via safe URL/deep link, automatically signed in **if** central Atlas Hub identity session exists and OIDC/BFF SSO is implemented. In Portal merchant can explore marketplace, view demos, purchase/license and install theme, configure defaults/overrides (logo, colors, banners, font, copy, collection, social links), upload store images, manage drafts/previews, verify custom domains/TLS, publish, update or roll back. Java still owns catalog/products, pricing, inventory, orders, payment/shipping availability and checkout; no duplicate merchant operations dashboard.
 
-## Theme contract
-`ThemeManifest`: ID, creator, version, schema/runtime compatibility, supported page types, settings/sections/blocks, allowed feature flags, translations, assets, security constraints and license.
-`Storefront`: organization, domain aliases, publication state, active theme version, locale, market, permissions.
-`PageDefinition`: page type/route, ordered section instances, settings, data bindings and optional blocks.
-`ThemeRelease`: immutable uploaded asset bundle, signature/hash, validation output, rollback version.
-No theme directly chooses payment processor from secrets; checkout obtains allowed methods from Java commerce APIs. Inventory/price must not be authoritative in theme state.
+### Developer
 
-## Creator security
-Initial launch: approved declarative themes and audited components; no arbitrary server-side user JavaScript or build scripts. Third-party submissions get static analysis, sandbox previews, content security policy, asset limits, signed releases, human review/appeal, version compatibility checks and staged publishing. Any future custom executable extensions run isolated with explicit capabilities and resource budgets. Hard tenant isolation and hostname ownership verification prevent cross-store data leakage.
+Independent creator joins Atlas Hub identity (does not need merchant registration), uses **Vite + React + TypeScript + React Router Framework Mode scaffold** with required public pages, SDK and theme manifest. Complete design freedom for layouts/animations/styles/approved interactions, limited ability to access platform data. Local development and proposed `atlashub theme validate/build/preview/publish` CLI; source upload, isolated build, security review, immutable version, listing and creator workspace (versions, earnings, reviews/unlisting). No drag-and-drop theme authoring at launch. Developer provides valid default values for configurable fields; merchant dashboard forms consume developer-declared schema and preserve overrides across releases.
 
-## Hosted domains
-Merchant adds domain; verify DNS/ownership, provision certificate, map host to verified storefront, configure redirects, cache invalidation and safe origin routing. Prevent arbitrary Host header tenant spoofing; only resolve verified domain records. Shared multi-tenant runtime or regionally distributed runtime pools are preferred initially; dedicated deployments only if explicitly required. Domain registration sales are optional separate registrar integration, not necessary for connect-existing-domain MVP.
+Portal's merchant and creator workspaces use **one AtlasHub user identity** and separate app sessions; same user may use both. Atlas Web does not duplicate Portal full marketplace or publishing.
 
-## Publishing sequence
-Create store draft -> choose entitled theme -> configure sections/assets -> validate and preview -> verify domain -> publish immutable theme release/config -> warm cache -> serve catalog/pricing/checkout from AtlasHub -> rollback if necessary.
+## Repositories and technology
 
-## DDD and Clean Architecture
-Domains: ThemeCatalog, ThemeAuthoring, ThemeRelease, StorefrontPublication, DomainProvisioning, CreatorMarketplace, CommerceIntegration. Keep business rules and policies framework independent. CQRS for theme catalog/search/read projections and explicit publishing commands, but do not over-engineer ephemeral rendering operations. TypeScript monorepo can use per-package ports/adapters, schema validation and contract tests without duplicating every Spring abstraction.
+| Repo | Role |
+|---|---|
+| `atlashub_backend` | Java authoritative business/identity/billing/checkout APIs, permission and events |
+| `atlashub_web` | Existing merchant operations and Storefront recommendations/deep links |
+| `atlashub_storefront` | **TypeScript monorepo** with separate Portal frontend, Node management backend, Vite React scaffolder, SDK, CLI, build/review and deployment workers, isolated Cloudflare storefront runtime, object-storage/CDN integrations |
 
-## Non-goals and risks
-A purchased theme does not guarantee unrestricted arbitrary code execution. Do not imply merchant data resides in a dedicated deployment. Preserve uptime and security, accessibility, performance, SEO, localization, payment redirects/webhooks, checkout order security, privacy and observability. Inventory pricing and provider capabilities remain verified by backend at checkout.
+**No fourth backend repository is necessary.** Portal and backend are separate deployable apps under existing storefront GitHub repository.
+
+## Hosting selected subject to prototype
+
+Preferred runtime: **Cloudflare Workers for Platforms** in **untrusted mode**, one isolated user Worker per installed merchant storefront initially, shared trusted **dynamic dispatch Worker** resolves verified custom hostname to deployment, per-merchant usage quotas; optional constrained outbound gateway. **Cloudflare R2** private source archive + immutable approved static/theme release storage + merchant-specific public branding assets; **Cloudflare CDN** for content-hash assets/cached public pages; **Cloudflare for SaaS** verified domains/certificates. **PostgreSQL** belongs to storefront metadata, not Java business entities.
+
+React Router Framework Mode offers SSR and pre-rendering needed for SEO/public catalog; Vite is build/dev tooling, not an SSR runtime by itself. Next.js is not selected or required. Verify build and deployed SSR compatibility in Workers for Platforms, isolation and cost/limits in two-merchant/two-theme prototype before permanent production commitment.
+
+## Runtime flow
+
+1. Developer submits private source archive by scoped CLI upload. Isolated builder validates dependencies, contracts, assets, CSS/scripts/permissions, produces client and server bundles, calculates immutable digests. Security/human review approves public marketplace listing.
+2. Merchant license confirmed through AtlasHub **platform billing**. Installation references approved ThemeRelease and a validated merchant config revision (developer defaults + merchant overrides/asset IDs).
+3. Merchant domain ownership and certificate verification produce a ready DomainBinding. Published storefront pointer maps to a healthy per-merchant Worker deployment.
+4. Customer requests domain. Trusted dispatch validates exact hostname/store mapping -> isolated Worker SSR returns SEO HTML + CDN assets + hydrated React.
+5. Theme's scoped public SDK obtains catalog view models from Java through authorized public gateway. Cart/checkout on trusted Java/Atlas-owned surfaces recalculates prices/tax/stock/shipping/payment options; provider webhooks are verified server-side before order marked paid.
+6. Publish and rollback atomically switch ThemeRelease/ConfigRevision/Worker mapping; cache invalidation keyed by store/market/locale/version; preserve store data when theme changes.
+
+**Security:** sandbox builds and server SSR, but React browser JS is still untrusted and can alter its page. Restrict CSP/egress and SDK capabilities, disallow privileged bindings/secrets, keep account/checkout origins trusted and separate, enforce server-side purchase/licensing/tenant rules. Unlisting a theme does not normally break existing licensed installations; abusive/harmful release revocation requires policy and incident workflow.
+
+## Full specification links
+
+- [Storefront system architecture](https://github.com/OlamidotunIY/atlashub_storefront/blob/main/docs/architecture/system.md)
+- [Portals and SSO](https://github.com/OlamidotunIY/atlashub_storefront/blob/main/docs/architecture/portal-identity.md)
+- [Creator SDK/CLI](https://github.com/OlamidotunIY/atlashub_storefront/blob/main/docs/developer/sdk-cli.md)
+- [Theme routes, settings/defaults, manifest](https://github.com/OlamidotunIY/atlashub_storefront/blob/main/docs/contracts/theme-manifest.md)
+- [Publishing, review, paid theme lifecycle](https://github.com/OlamidotunIY/atlashub_storefront/blob/main/docs/architecture/marketplace-lifecycle.md)
+- [Object storage and tenant assets](https://github.com/OlamidotunIY/atlashub_storefront/blob/main/docs/architecture/storage-data.md)
+- [SSR deployment and isolation](https://github.com/OlamidotunIY/atlashub_storefront/blob/main/docs/architecture/runtime-hosting.md)
+- [Domain + trusted checkout + SEO](https://github.com/OlamidotunIY/atlashub_storefront/blob/main/docs/architecture/domains-checkout-seo.md)
+- [Security threat model](https://github.com/OlamidotunIY/atlashub_storefront/blob/main/docs/security/theme-sandbox.md)
+- [Cost, quotas and support](https://github.com/OlamidotunIY/atlashub_storefront/blob/main/docs/architecture/operations-costs.md)
+- [API and event contracts](https://github.com/OlamidotunIY/atlashub_storefront/blob/main/docs/contracts/platform-apis.md)
+- [Implementation roadmap](https://github.com/OlamidotunIY/atlashub_storefront/blob/main/docs/modules/index.md)
+
+## Required Java migration
+
+Create central SSO identity and independent creator ability, new permissions and entitlement APIs; define versioned public storefront commerce facade; separate theme licensing from merchant checkout payment rails; normalize provider-connected charge events; emit catalog/inventory/price invalidation; keep existing commerce-storefront POS/order/checkout functionality in Java; enforce trusted cart and checkout regardless of theme rendering. No production code is changed by this document.
+
+## Go/no-go gates
+
+End-to-end two independently authored React theme packages, two distinct merchants (including two installations of same approved theme), server-rendered discoverable product pages, correct tenant mapping and pricing, secure origin/checkout, unsafe dependency/network restrictions, SSO session and role isolation, domain verification/TLS, accurate publishing/rollback, storage lifecycle, per-store Worker cost/performance benchmarks. If Worker SSR cannot satisfy security/cost/compatibility, record a replacement ADR before shipping.
