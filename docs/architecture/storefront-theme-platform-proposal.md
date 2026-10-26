@@ -25,10 +25,10 @@ Portal's merchant and creator workspaces use **one AtlasHub user identity** and 
 | `atlashub_storefront` | **Standalone Node/TypeScript management/hosting backend repository**, theme registry/build/review, domain management, Cloudflare Workers for Platforms and storage |
 | `atlashub_storefront_portal` | **Separate frontend repository** for merchant theme marketplace, stores and creator dashboard |
 | `atlashub_auth_web` | **Separate frontend repository** for central login, user signup, verification and recovery; Java/IdP owns sessions/token/identity |
-| `atlashub_theme_sdk` (planned, not verified created) | Independent Vite/React scaffold, public theme SDK, CLI and package contracts |
+| [`atlashub_theme_sdk`](https://github.com/OlamidotunIY/atlashub_theme_sdk) (created, documentation-first) | Independent Vite/React scaffold, public theme SDK, CLI and versioned contracts; implementation pending |
 | `atlashub_web` | Existing merchant business dashboard and links to Portal, no duplicated marketplace |
 
-**Repositories are independent (no Turborepo/Nx)**: Portal, Auth frontend, Storefront backend/hosting, Java backend and Atlas Web have independent build/deploy. SDK repo is planned but not found. No additional standalone authentication **backend** repository needed, although Auth **frontend** is separate.
+**Repositories are independent (no Turborepo/Nx)**: Portal, Auth frontend, Storefront backend/hosting, Java backend and Atlas Web have independent build/deploy. SDK repo is created; tools and npm packages are not yet implemented. No additional standalone authentication **backend** repository needed, although Auth **frontend** is separate.
 
 ## Hosting selected subject to prototype
 
