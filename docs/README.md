@@ -162,3 +162,16 @@ The module documentation above records existing/legacy assumptions and can diffe
 - [Global multi-provider integrations](./architecture/global-provider-integrations-proposal.md), [AI voice/command-center architecture](./architecture/ai-command-center-voice-security-proposal.md) and [global delivery plan](./architecture/global-expansion-delivery-plan.md).
 
 The dedicated [atlashub_storefront repository](https://github.com/OlamidotunIY/atlashub_storefront) is **already created** and contains detailed architecture, module, contract, security, operations and decision documents. Independent creators publish reviewed React themes there. Businesses follow Atlas Web recommendations to the separate Storefront Portal, using planned central Atlas Hub SSO.
+
+
+## Cross-repository clean architecture standards (2026-10-26)
+
+The independent Atlas Hub repositories adopt the Java backend's **DDD + Clean Architecture + Hexagonal/Ports-and-Adapters** principles with *language- and product-specific folder layouts*. Do not duplicate Java's business aggregates or force CQRS for trivial UI/stream operations. Each repository is built/released independently; **no Turborepo/Nx**.
+
+- [Auth Web frontend: Clean/Hexagonal rules](https://github.com/OlamidotunIY/atlashub_auth_web/blob/main/docs/architecture/clean-hexagonal.md) — central identity UI, not auth backend.
+- [Storefront Portal frontend: Clean/Hexagonal rules](https://github.com/OlamidotunIY/atlashub_storefront_portal/blob/main/docs/architecture/clean-hexagonal.md) — merchant and creator UI.
+- [Storefront backend: Clean/Hexagonal rules](https://github.com/OlamidotunIY/atlashub_storefront/blob/main/docs/architecture/clean-hexagonal.md) — theme domain, publishing, storage and Workers.
+- [Theme SDK: Clean/Hexagonal rules](https://github.com/OlamidotunIY/atlashub_theme_sdk/blob/main/docs/architecture/clean-hexagonal.md) — public API, scaffold, CLI and versioned contracts; repository now exists but code is not built.
+- [Atlas Intelligence: Clean/Hexagonal rules](https://github.com/OlamidotunIY/atlashub_intelligence/blob/main/docs/architecture/clean-hexagonal.md) — Python tool orchestration, local models and voice risk signals.
+
+Each new repo also maintains `docs/architecture/folder-structure.md`, `docs/guidelines/engineering-rules.md`, `docs/guidelines/testing-release.md`, a module plan, and a PR architecture checklist. Java remains authoritative for user/organization registration, IAM, business operations, merchant-connected provider eligibility and financial/checkout state.
