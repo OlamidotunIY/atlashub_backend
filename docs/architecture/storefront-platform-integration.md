@@ -1,6 +1,6 @@
 # Atlas Hub Java Backend — Storefront Platform integration contract
 
-**Status:** Proposed contract and migration, not implemented. Captures 2026-10-25 Storefront architecture decision. Backend/hosting, storage, SSR and Cloudflare details live in [atlashub_storefront](https://github.com/OlamidotunIY/atlashub_storefront). The independent merchant/creator frontend lives in [atlashub_storefront_portal](https://github.com/OlamidotunIY/atlashub_storefront_portal), centralized login/register frontend in [atlashub_auth_web](https://github.com/OlamidotunIY/atlashub_auth_web) and public theme creator SDK/CLI repository is separately planned (not verified created). This document states **what Java must own or expose**.
+**Status:** Proposed contract and migration, not implemented. Captures 2026-10-25 Storefront architecture decision. Backend/hosting, storage, SSR and Cloudflare details live in [atlashub_storefront](https://github.com/OlamidotunIY/atlashub_storefront). The independent merchant/creator frontend lives in [atlashub_storefront_portal](https://github.com/OlamidotunIY/atlashub_storefront_portal), centralized login/register frontend in [atlashub_auth_web](https://github.com/OlamidotunIY/atlashub_auth_web) and public theme creator SDK/CLI repository [`atlashub_theme_sdk`](https://github.com/OlamidotunIY/atlashub_theme_sdk) now exists with architecture documentation (source implementation pending). This document states **what Java must own or expose**.
 
 ## Repository boundaries
 
@@ -8,10 +8,10 @@
 - **atlashub_storefront backend repository:** independently deployed Node/TypeScript management API, PostgreSQL metadata, source/upload validation and build/publishing workers, marketplace/release/domain and Cloudflare Workers for Platforms hosting. Not a monorepo with frontends or SDK.
 - **atlashub_storefront_portal (separate frontend):** creator/merchant marketplace, assets/configuration, domains, preview and publishing UX.
 - **atlashub_auth_web (separate frontend):** central individual login/registration/verification/recovery UX (not a second backend); central SSO supported by Java/IdP.
-- **atlashub_theme_sdk (future separate creator-tooling repo):** Vite React scaffold, public storefront SDK, CLI and contract packages; not yet verified created.
+- **atlashub_theme_sdk (created separate creator-tooling repo):** Vite React scaffold, public storefront SDK, CLI and contract packages; not yet implemented or published.
 - **atlashub_web:** existing merchant dashboard, with storefront recommendations and safe external portal deep links only. It does not host complete theme marketplace/merchant publishing pages.
 
-**No additional backend or authentication backend repo required.** The existing Storefront backend repo remains standalone and independently deployable. Separate Auth Web and Storefront Portal frontend repositories already exist; a theme SDK/CLI repo is planned but not yet verified created. No Turborepo/Nx.
+**No additional backend or authentication backend repo required.** The existing Storefront backend repo remains standalone and independently deployable. Separate Auth Web and Storefront Portal frontend repositories already exist; the independent theme SDK repository exists, but its tooling is not yet built. No Turborepo/Nx.
 
 ## Identity and SSO
 
