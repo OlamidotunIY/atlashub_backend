@@ -1,5 +1,8 @@
 # Atlas Hub Java Backend — Storefront Platform integration contract
 
+**Shared contract update (2026-10-26):** [atlashub_contracts](https://github.com/OlamidotunIY/atlashub_contracts) now holds the first Protobuf `v1alpha1` public [catalog contract](https://github.com/OlamidotunIY/atlashub_contracts/blob/main/proto/atlashub/commerce/v1alpha1/public_catalog.proto). Java can implement native gRPC for trusted clients, while browser themes must use a compatible Connect/gRPC-Web gateway with verified store identity. No native gRPC server, browser bridge or generated npm/Maven package is yet implemented. This contract is *not* Java domain model/authorization. Existing proposed REST-style paths here remain conceptual until transport is chosen and deployed.
+
+
 **Status:** Proposed contract and migration, not implemented. Captures 2026-10-25 Storefront architecture decision. Backend/hosting, storage, SSR and Cloudflare details live in [atlashub_storefront](https://github.com/OlamidotunIY/atlashub_storefront). The independent merchant/creator frontend lives in [atlashub_storefront_portal](https://github.com/OlamidotunIY/atlashub_storefront_portal), centralized login/register frontend in [atlashub_auth_web](https://github.com/OlamidotunIY/atlashub_auth_web) and public theme creator SDK/CLI repository [`atlashub_theme_sdk`](https://github.com/OlamidotunIY/atlashub_theme_sdk) now exists with architecture documentation (source implementation pending). This document states **what Java must own or expose**.
 
 ## Repository boundaries
