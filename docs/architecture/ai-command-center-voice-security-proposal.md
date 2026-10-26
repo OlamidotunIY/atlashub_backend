@@ -1,7 +1,10 @@
 # Architecture proposal: Atlas Intelligence agent, text/voice and speaker-risk signals
 
+**Shared contract update (2026-10-26):** [atlashub_contracts](https://github.com/OlamidotunIY/atlashub_contracts) now owns initial Protobuf `v1alpha1` Java/Python [authorized tool gateway](https://github.com/OlamidotunIY/atlashub_contracts/blob/main/proto/atlashub/intelligence/v1alpha1/tool_gateway.proto), to be implemented as a native gRPC Java adapter and Python client. The separate Python repository already exists; neither service nor generated SDK is implemented. Browser voice uses WebRTC/WebSocket gateway. Java maps generated DTOs into DDD application use cases and enforces org/approval/provider capabilities.
+
+
 Status: PROPOSED — not implemented. Date: 2026-10-24.
-Companion repository proposed: `atlashub_intelligence` (Python), not yet provisioned.
+Companion repository [atlashub_intelligence](https://github.com/OlamidotunIY/atlashub_intelligence) exists (architecture docs only).
 Related: [global integrations](./global-provider-integrations-proposal.md), [delivery plan](./global-expansion-delivery-plan.md).
 
 ## Ownership and protocols
