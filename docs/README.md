@@ -175,3 +175,10 @@ The independent Atlas Hub repositories adopt the Java backend's **DDD + Clean Ar
 - [Atlas Intelligence: Clean/Hexagonal rules](https://github.com/OlamidotunIY/atlashub_intelligence/blob/main/docs/architecture/clean-hexagonal.md) — Python tool orchestration, local models and voice risk signals.
 
 Each new repo also maintains `docs/architecture/folder-structure.md`, `docs/guidelines/engineering-rules.md`, `docs/guidelines/testing-release.md`, a module plan, and a PR architecture checklist. Java remains authoritative for user/organization registration, IAM, business operations, merchant-connected provider eligibility and financial/checkout state.
+
+
+## Shared canonical contracts: Protobuf and gRPC (2026-10-26)
+
+The now-created [atlashub_contracts](https://github.com/OlamidotunIY/atlashub_contracts) repository is the **single schema authority** for shared wire protocols and events. The Java Spring backend maps generated Java Protobuf messages and native gRPC endpoints to existing DDD/CQRS application use cases; **generated message types do not become domain entities**. Python Intelligence consumes private native gRPC tool contracts. Storefront/public browser SDK consumes only approved public contracts through a compatible **Connect/gRPC-Web gateway** (a native Java gRPC server alone is not browser-compatible). Central OIDC authentication is separate from RPC, User registration does not require Organization, and optional merchant provider KYC is not a global banking gate.
+
+Current contract versions are **draft v1alpha1**; package generation/registry, native gRPC controllers, browser gateway and consumer integration are not implemented. Details: [contract ownership](https://github.com/OlamidotunIY/atlashub_contracts/blob/main/docs/modules/index.md), [API security](https://github.com/OlamidotunIY/atlashub_contracts/blob/main/docs/architecture/transports-security.md), [generated package plan](https://github.com/OlamidotunIY/atlashub_contracts/blob/main/docs/architecture/generated-packages.md).
