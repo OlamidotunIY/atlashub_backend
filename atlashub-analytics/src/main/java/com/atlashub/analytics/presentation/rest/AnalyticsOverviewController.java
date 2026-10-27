@@ -45,9 +45,13 @@ public class AnalyticsOverviewController {
                     new BusinessOverviewDto.Sales(result.sales().netRevenue(), result.sales().transactions(), result.sales().averageOrderValue()),
                     new BusinessOverviewDto.Payments(result.payments().chargeVolume(), result.payments().successfulCharges(), result.payments().failedCharges(), result.payments().payoutAmount()),
                     new BusinessOverviewDto.People(result.people().total(), result.people().active(), result.people().suspended()),
+                    new BusinessOverviewDto.Payroll(result.payroll().gross(), result.payroll().deductions(), result.payroll().net(), result.payroll().headcount()),
+                    new BusinessOverviewDto.Commerce(result.commerce().outletCount(), result.commerce().outletSales(), result.commerce().discounts(), result.commerce().expenses(), result.commerce().netProfit(), result.commerce().trackedProducts(), result.commerce().unitsSold(), result.commerce().productRevenue()),
                     new BusinessOverviewDto.Logistics(result.logistics().shipments(), result.logistics().delivered(), result.logistics().failed(), result.logistics().deliverySuccessRate()),
                     new BusinessOverviewDto.Inventory(result.inventory().outOfStockCount(), result.inventory().lowStockCount(), result.inventory().deadStockCount(), result.inventory().inventoryValue()),
-                    new BusinessOverviewDto.Finance(result.finance().available(), result.finance().cashBalance(), result.finance().receivables(), result.finance().payables(), result.finance().reconciliationStatus()));
+                    new BusinessOverviewDto.Finance(result.finance().available(), result.finance().cashBalance(), result.finance().receivables(), result.finance().payables(), result.finance().reconciliationStatus()),
+                    result.attention().stream().map(item -> new BusinessOverviewDto.Attention(item.code(), item.module(), item.severity(), item.count())).toList(),
+                    result.recentActivity().stream().map(item -> new BusinessOverviewDto.Activity(item.eventId(), item.module(), item.type(), item.amount(), item.currency(), item.occurredAt())).toList());
         }
     }
 }

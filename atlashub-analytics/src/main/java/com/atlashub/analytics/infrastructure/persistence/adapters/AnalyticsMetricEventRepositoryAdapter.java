@@ -9,6 +9,7 @@ import com.atlashub.shared.application.port.DomainEventPublisher;
 import com.atlashub.shared.infrastructure.persistence.repository.JpaBaseRepository;
 import com.atlashub.shared.infrastructure.service.DomainSequenceGenerator;
 import org.springframework.stereotype.Component;
+import org.springframework.data.domain.PageRequest;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -41,5 +42,12 @@ public class AnalyticsMetricEventRepositoryAdapter
                 .stream()
                 .map(mapper::toDomain)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<AnalyticsMetricEvent> findRecent(Long organizationId, String environment, int limit) {
+        return springDataRepo.findRecent(organizationId, environment, PageRequest.of(0, limit)).stream()
+                .map(mapper::toDomain)
+                .toList();
     }
 }

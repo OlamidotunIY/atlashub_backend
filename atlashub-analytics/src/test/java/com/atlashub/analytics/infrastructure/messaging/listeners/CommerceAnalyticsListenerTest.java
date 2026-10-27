@@ -100,7 +100,7 @@ class CommerceAnalyticsListenerTest {
     }
 
     @Test
-    @DisplayName("Should record StockAdjustedEvent without inventing inventory-health fields")
+    @DisplayName("Should update inventory health from producer-owned stock and reorder fields")
     void shouldProcessStockAdjustedEvent() {
         when(eventTracker.isProcessed("evt-456", "analytics-commerce-group")).thenReturn(false);
 

@@ -63,7 +63,7 @@ class HrAnalyticsListenerTest {
     }
 
     @Test
-    @DisplayName("Should record a nested PayrollDisbursedEvent without inventing deductions or headcount")
+    @DisplayName("Should project producer-owned payroll totals and headcount")
     void shouldRecordNestedPayrollDisbursedEvent() {
         when(eventTracker.isProcessed("corr-payroll-1", "analytics-hr-group")).thenReturn(false);
 

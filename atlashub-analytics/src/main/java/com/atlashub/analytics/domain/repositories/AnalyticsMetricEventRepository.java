@@ -8,4 +8,5 @@ import java.util.List;
 public interface AnalyticsMetricEventRepository extends Repository<AnalyticsMetricEvent> {
 
     List<AnalyticsMetricEvent> findByOrgEnvAndType(Long organizationId, String environment, String metricType);
+    List<AnalyticsMetricEvent> findRecent(Long organizationId, String environment, int limit);
 }
