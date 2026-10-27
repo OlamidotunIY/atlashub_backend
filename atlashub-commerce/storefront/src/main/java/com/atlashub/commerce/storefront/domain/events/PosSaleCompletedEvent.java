@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.math.BigDecimal;
 import java.time.ZonedDateTime;
 import java.util.UUID;
+import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record PosSaleCompletedEvent(
@@ -21,22 +22,34 @@ public record PosSaleCompletedEvent(
             Long salesOrderId,
             Long organizationId,
             Long outletId,
+            Long customerId,
+            BigDecimal totalGross,
+            BigDecimal totalDiscount,
+            BigDecimal totalTax,
             BigDecimal totalNet,
             String currency,
             String paymentMethod,
             Long cashierId,
+            List<ItemPayload> items,
             ZonedDateTime completedAt
     ) {
     }
+
+    public record ItemPayload(Long productId, Long variantId, int quantity, BigDecimal totalAmount) {}
 
     public static PosSaleCompletedEvent of(
             Long salesOrderId,
             Long organizationId,
             Long outletId,
+            Long customerId,
+            BigDecimal totalGross,
+            BigDecimal totalDiscount,
+            BigDecimal totalTax,
             BigDecimal totalNet,
             String currency,
             String paymentMethod,
-            Long cashierId
+            Long cashierId,
+            List<ItemPayload> items
     ) {
         ZonedDateTime now = ZonedDateTime.now();
         return new PosSaleCompletedEvent(
@@ -48,10 +61,15 @@ public record PosSaleCompletedEvent(
                         salesOrderId,
                         organizationId,
                         outletId,
+                        customerId,
+                        totalGross,
+                        totalDiscount,
+                        totalTax,
                         totalNet,
                         currency,
                         paymentMethod,
                         cashierId,
+                        items != null ? List.copyOf(items) : List.of(),
                         now
                 )
         );

@@ -650,9 +650,9 @@ public class CommerceAnalyticsListener extends BaseKafkaEventListener {
 
 | Inbound Event | Commands Invoked |
 |---|---|
-| `PosSaleCompletedEvent` | `UpdateDailySalesProjection`, `UpdateProductSalesProjection`, `UpdateCashierPerformanceProjection`, `RecordAnalyticsEvent` |
-| `PosSaleRefundedEvent` | `UpdateDailySalesProjection` (isRefund=true) |
-| `StockAdjustedEvent` | `UpdateInventoryValueProjection` |
+| `PosSaleCompletedEvent` | `UpdateDailySalesProjection`, `UpdateProductDemandProjection`, `UpdateCustomerPerformanceProjection`, `UpdateOutletPerformanceProjection`, `RecordAnalyticsMetricEvent` |
+| `PosSaleRefundedEvent` | Reverse daily/product projections; update customer refunds and outlet sales; record metric event |
+| `StockAdjustedEvent` | `UpdateInventoryHealthProjection`, `RecordAnalyticsMetricEvent` |
 | `PurchaseOrderReceivedEvent` | `UpdateInventoryValueProjection` |
 
 ---
@@ -680,6 +680,16 @@ public class CommerceAnalyticsListener extends BaseKafkaEventListener {
 | `EmployeeOnboardedEvent` | `UpdateHeadcountProjection` (changeType=HIRED) |
 | `EmployeeTerminatedEvent` | `UpdateHeadcountProjection` (changeType=TERMINATED) |
 | `EmployeeSuspendedEvent` | `UpdateHeadcountProjection` (changeType=SUSPENDED) |
+
+---
+
+### Projection event payload contract
+
+Commerce sale completion and refund events carry producer-owned gross, discount, tax, net, payment method,
+customer, outlet, and product-line facts. Inventory adjustments carry the aggregate's reorder level. Payroll
+disbursement carries gross pay, deductions, net pay, currency, and payslip headcount. These are additive event
+fields: copied consumer records ignore unknown fields, and analytics guards fields absent from historical envelopes
+during bounded replay. Analytics never queries another module's operational tables to reconstruct missing facts.
 
 ---
 
@@ -755,6 +765,16 @@ All projection tables use **native SQL upserts** (`@Modifying @Query("INSERT ...
 ### Controller
 
 **`AnalyticsDashboardController`** — `@RequestMapping("/api/v1/analytics")`
+
+#### Business overview endpoint
+
+`GET /api/v1/analytics/overview` requires `analytics:reports:read` at the query-handler boundary and derives
+organization and environment solely from the authenticated principal. It returns a 30-day sales summary plus
+current-month payment, payroll, people, outlet, product-demand, delivery, inventory-urgency, and financial-health
+projections. It also returns the latest 12 cross-module metric events and a deterministic attention list for
+out-of-stock products, low stock, failed payments, and failed deliveries. Financial health is explicitly marked
+unavailable until its accounting-backed projection exists; the endpoint never reads operational tables or
+substitutes fabricated values.
 
 All endpoints are GET-only and require Bearer JWT authentication.
 

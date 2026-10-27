@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.time.ZonedDateTime;
 
 @Component
 public class JpaOutboxMessageRepositoryAdapter implements OutboxMessageRepository {
@@ -75,6 +76,13 @@ public class JpaOutboxMessageRepositoryAdapter implements OutboxMessageRepositor
         }
 
         return Optional.empty();
+    }
+
+    @Override
+    public List<OutboxMessage> findReplayCandidates(String topic, ZonedDateTime from, ZonedDateTime to, int limit) {
+        return repository.findReplayCandidates(topic, from, to, PageRequest.of(0, limit)).stream()
+                .map(this::mapToDomain)
+                .toList();
     }
 
     private OutboxMessageJpaEntity mapToEntity(OutboxMessage domain) {

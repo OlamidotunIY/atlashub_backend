@@ -4,7 +4,8 @@ import com.atlashub.analytics.application.command.RecordAnalyticsMetricEvent.Rec
 import com.atlashub.analytics.application.command.RecordAnalyticsMetricEvent.RecordAnalyticsMetricEventHandler;
 import com.atlashub.analytics.application.command.UpdateDeliveryPerformanceProjection.UpdateDeliveryPerformanceProjectionCommand;
 import com.atlashub.analytics.application.command.UpdateDeliveryPerformanceProjection.UpdateDeliveryPerformanceProjectionHandler;
-import com.atlashub.analytics.infrastructure.messaging.events.ShipmentStatusPayload;
+import com.atlashub.analytics.infrastructure.messaging.events.ShipmentDeliveredEvent;
+import com.atlashub.analytics.infrastructure.messaging.events.ShipmentFailedEvent;
 import com.atlashub.shared.application.messaging.BaseKafkaEventListener;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
@@ -13,7 +14,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
-import java.time.ZonedDateTime;
 import java.util.concurrent.TimeoutException;
 
 @Component
@@ -43,38 +43,46 @@ public class LogisticsAnalyticsListener extends BaseKafkaEventListener {
 
     @KafkaListener(topics = "logistics-events", groupId = GROUP_ID)
     public void listen(String messagePayload) {
-        processEventIfMatches(messagePayload, "ShipmentDeliveredEvent", ShipmentStatusPayload.class, log, GROUP_ID, e -> e instanceof TimeoutException, p -> {
+        processEventIfMatches(messagePayload, "ShipmentDeliveredEvent", ShipmentDeliveredEvent.class, log, GROUP_ID, e -> e instanceof TimeoutException, event -> {
+            ShipmentDeliveredEvent.Payload payload = event.payload();
+            java.time.ZonedDateTime deliveryTimestamp = payload.deliveredAt() != null ? payload.deliveredAt() : event.occurredAt();
             deliveryHandler.execute(new UpdateDeliveryPerformanceProjectionCommand(
-                    p.organizationId(),
-                    p.environment(),
-                    p.month(),
+                    payload.organizationId(),
+                    "live",
+                    metricMonth(deliveryTimestamp),
                     true,
                     false,
-                    p.deliveryMinutes()
+                    null
             ));
 
             metricEventHandler.execute(new RecordAnalyticsMetricEventCommand(
-                    p.eventId(),
-                    p.organizationId(),
-                    p.environment(),
+                    event.eventId(),
+                    payload.organizationId(),
+                    "live",
                     "SHIPMENT_DELIVERED",
                     "logistics",
                     null,
                     null,
                     "{}",
-                    ZonedDateTime.now()
+                    deliveryTimestamp
             ));
         });
 
-        processEventIfMatches(messagePayload, "ShipmentFailedEvent", ShipmentStatusPayload.class, log, GROUP_ID, e -> e instanceof TimeoutException, p -> {
+        processEventIfMatches(messagePayload, "ShipmentFailedEvent", ShipmentFailedEvent.class, log, GROUP_ID, e -> e instanceof TimeoutException, event -> {
+            ShipmentFailedEvent.Payload payload = event.payload();
+            java.time.ZonedDateTime failureTimestamp = payload.failedAt() != null ? payload.failedAt() : event.occurredAt();
             deliveryHandler.execute(new UpdateDeliveryPerformanceProjectionCommand(
-                    p.organizationId(),
-                    p.environment(),
-                    p.month(),
+                    payload.organizationId(),
+                    "live",
+                    metricMonth(failureTimestamp),
                     false,
                     false,
                     null
             ));
         });
+    }
+
+    private String metricMonth(java.time.ZonedDateTime timestamp) {
+        return String.format("%04d-%02d", timestamp.getYear(), timestamp.getMonthValue());
     }
 }

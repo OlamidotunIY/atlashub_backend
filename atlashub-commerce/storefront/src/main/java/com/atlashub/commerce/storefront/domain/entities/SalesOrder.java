@@ -207,10 +207,17 @@ public class SalesOrder extends AggregateRoot<Long> {
                 id,
                 organizationId,
                 outletId,
+                customerId,
+                totalGross.amount(),
+                totalDiscount.amount(),
+                totalTax.amount(),
                 totalNet.amount(),
                 totalNet.currency().name(),
                 paymentMethod.name(),
-                cashierId
+                cashierId,
+                items.stream().map(item -> new PosSaleCompletedEvent.ItemPayload(
+                        item.getProductId(), item.getVariantId(), item.getQuantity(), item.getTotalPrice().amount()
+                )).toList()
         ));
     }
 
@@ -232,12 +239,21 @@ public class SalesOrder extends AggregateRoot<Long> {
         registerEvent(PosSaleRefundedEvent.of(
                 id,
                 organizationId,
+                outletId,
+                customerId,
                 chargeReference,
+                totalGross.amount(),
+                totalDiscount.amount(),
+                totalTax.amount(),
                 totalNet.amount(),
                 totalNet.currency().name(),
+                paymentMethod.name(),
                 reason,
                 customerNuban,
-                customerBankCode
+                customerBankCode,
+                items.stream().map(item -> new PosSaleRefundedEvent.ItemPayload(
+                        item.getProductId(), item.getVariantId(), item.getQuantity(), item.getTotalPrice().amount()
+                )).toList()
         ));
     }
 

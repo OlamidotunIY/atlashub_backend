@@ -22,6 +22,10 @@ public record PayrollDisbursedEvent(
             Long organizationId,
             String period,
             BigDecimal totalAmount,
+            BigDecimal totalGross,
+            BigDecimal totalDeductions,
+            BigDecimal totalNet,
+            int headcount,
             String currency,
             ZonedDateTime disbursedAt
     ) {
@@ -31,7 +35,10 @@ public record PayrollDisbursedEvent(
             Long payrollRunId,
             Long organizationId,
             String period,
-            BigDecimal totalAmount,
+            BigDecimal totalGross,
+            BigDecimal totalDeductions,
+            BigDecimal totalNet,
+            int headcount,
             String currency,
             ZonedDateTime disbursedAt
     ) {
@@ -44,7 +51,11 @@ public record PayrollDisbursedEvent(
                         payrollRunId,
                         organizationId,
                         period,
-                        totalAmount,
+                        totalNet,
+                        totalGross,
+                        totalDeductions,
+                        totalNet,
+                        headcount,
                         currency,
                         disbursedAt
                 )

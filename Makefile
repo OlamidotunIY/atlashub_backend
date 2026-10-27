@@ -4,6 +4,11 @@ JWT_KEY_DIR = infrastructure/JWT
 JWT_PRIVATE_KEY = $(JWT_KEY_DIR)/atlashub-jwt-private.pem
 JWT_PUBLIC_KEY = $(JWT_KEY_DIR)/atlashub-jwt-public.pem
 SSH_OPTIONS = -o BatchMode=yes -o ConnectTimeout=15 -o ServerAliveInterval=15 -o ServerAliveCountMax=2 -o StrictHostKeyChecking=no
+MYSQL_TUNNEL_PORT ?= 3307
+MYSQL_SERVICE ?= mysql
+MYSQL_SERVICE_PORT ?= 3306
+MYSQL_NAMESPACE ?= default
+MYSQL_SERVICE_IP = $(shell $(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "sudo k3s kubectl -n $(MYSQL_NAMESPACE) get svc $(MYSQL_SERVICE) -o jsonpath='{.spec.clusterIP}'")
 
 ifeq ($(OS),Windows_NT)
     SSH = C:\Windows\sysnative\OpenSSH\ssh.exe
@@ -17,7 +22,7 @@ else
     SSH_KEY = ~/.ssh/id_rsa_azure
 endif
 
-.PHONY: start stop backup-db restore-db ssh prune-runtime-images
+.PHONY: start stop backup-db restore-db ssh mysql-tunnel prune-runtime-images
 
 # 1. Build the infrastructure from scratch and restore the database
 start:
@@ -75,6 +80,14 @@ stop:
 ssh:
 	@echo "=> Connecting to VM..."
 	$(SSH) -i $(SSH_KEY) -o StrictHostKeyChecking=no ubuntu@$(VM_IP)
+
+# Open a local MySQL tunnel directly to the Kubernetes service ClusterIP.
+# Override the local port when needed: make mysql-tunnel MYSQL_TUNNEL_PORT=3308
+mysql-tunnel:
+	$(if $(strip $(MYSQL_SERVICE_IP)),,$(error Unable to resolve the Kubernetes MySQL service IP))
+	@echo "=> Forwarding local port $(MYSQL_TUNNEL_PORT) to $(MYSQL_SERVICE):$(MYSQL_SERVICE_PORT) in namespace $(MYSQL_NAMESPACE)..."
+	@echo "=> Keep this terminal open; press Ctrl+C to close the tunnel."
+	$(SSH) $(SSH_OPTIONS) -o ExitOnForwardFailure=yes -N -i $(SSH_KEY) -L $(MYSQL_TUNNEL_PORT):$(MYSQL_SERVICE_IP):$(MYSQL_SERVICE_PORT) ubuntu@$(VM_IP)
 
 # 4. Update Cloudflare DNS
 update-dns:

@@ -117,7 +117,7 @@ public class Inventory extends AggregateRoot<Long> {
         int previousQty = this.quantity;
         this.quantity = newQty;
         registerEvent(StockAdjustedEvent.of(
-                id, organizationId, outletId, productId, previousQty, newQty, reason, adjustedBy
+                id, organizationId, outletId, productId, previousQty, newQty, reorderLevel, reason, adjustedBy
         ));
     }
 

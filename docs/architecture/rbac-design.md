@@ -238,6 +238,9 @@ Spring Security throws `AccessDeniedException`, which the `GlobalExceptionHandle
 
 ### Full Permission Registry (by module)
 
+The infrastructure event recovery surface uses `eventbus:events:manage`. It is an administrative permission and is
+enforced on both single-event and bounded replay handlers; it must not be granted to ordinary organization roles.
+
 | Module | Permission Code | Description |
 |---|---|---|
 | `iam` | `iam:members:invite` | Invite a new organization member |

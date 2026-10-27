@@ -8,6 +8,7 @@ import com.atlashub.eventbus.domain.model.OutboxMessage;
 import com.atlashub.eventbus.domain.repository.OutboxMessageRepository;
 import com.atlashub.shared.application.usecase.BaseUseCase;
 import org.springframework.stereotype.Service;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import com.atlashub.shared.infrastructure.persistence.repository.DeadLetterRepository;
 
@@ -27,6 +28,7 @@ public class ReplayEventUseCase extends BaseUseCase<ReplayEventCommand, Void> {
     }
 
     @Override
+    @PreAuthorize("hasAuthority('eventbus:events:manage')")
     public Void execute(ReplayEventCommand input) {
         OutboxMessage message = outboxMessageRepository.findByEventId(input.eventId())
                 .orElseThrow(() -> new EventNotFoundException("Event with ID " + input.eventId() + " not found in outbox"));

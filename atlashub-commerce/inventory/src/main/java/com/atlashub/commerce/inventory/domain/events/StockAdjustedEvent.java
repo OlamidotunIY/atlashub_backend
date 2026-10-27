@@ -20,6 +20,7 @@ public record StockAdjustedEvent(
             Long productId,
             int previousQty,
             int newQty,
+            Integer reorderLevel,
             AdjustmentReason reason,
             Long adjustedBy,
             ZonedDateTime adjustedAt
@@ -27,14 +28,15 @@ public record StockAdjustedEvent(
     }
 
     public static StockAdjustedEvent of(Long inventoryId, Long organizationId, Long outletId, Long productId,
-                                        int previousQty, int newQty, AdjustmentReason reason, Long adjustedBy) {
+                                        int previousQty, int newQty, Integer reorderLevel,
+                                        AdjustmentReason reason, Long adjustedBy) {
         ZonedDateTime now = ZonedDateTime.now();
         return new StockAdjustedEvent(
                 UUID.randomUUID().toString(),
                 inventoryId,
                 now,
                 UUID.randomUUID().toString(),
-                new Payload(organizationId, outletId, productId, previousQty, newQty, reason, adjustedBy, now)
+                new Payload(organizationId, outletId, productId, previousQty, newQty, reorderLevel, reason, adjustedBy, now)
         );
     }
 }

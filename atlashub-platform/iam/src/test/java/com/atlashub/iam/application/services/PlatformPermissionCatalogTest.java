@@ -7,6 +7,7 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PlatformPermissionCatalogTest {
 
@@ -26,5 +27,17 @@ class PlatformPermissionCatalogTest {
         assertEquals("compliance", complianceRead.module());
         assertEquals("compliance", complianceRead.resource());
         assertEquals("READ", complianceRead.action().name());
+    }
+
+    @Test
+    void includes_the_analytics_reports_permission() {
+        assertTrue(PlatformPermissionCatalog.definitions().stream()
+                .anyMatch(definition -> definition.code().equals("analytics:reports:read")));
+    }
+
+    @Test
+    void includes_the_event_replay_management_permission() {
+        assertTrue(PlatformPermissionCatalog.definitions().stream()
+                .anyMatch(definition -> definition.code().equals("eventbus:events:manage")));
     }
 }
