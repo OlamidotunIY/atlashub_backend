@@ -1,3 +1,5 @@
+> **V2 MODERNIZATION NOTE (2026-10-25):** The target has independent global User registration and Organization creation, and optional merchant-connected providers instead of Atlas mandatory Anchor banking/KYB. The detailed module below may reflect existing legacy software. See [v2 PRD](../atlashub-prd-v2.md) and [banking retirement](../architecture/provider-banking-decommission.md). No implemented code is changed by this note.
+
 # AtlasHub Financing Module Design (`atlashub-financing`)
 
 ## Role and Boundaries
@@ -401,3 +403,10 @@ atlashub-financing/src/main/java/com/atlashub/financing/
     ├── dto/ [CreateFinancingRequestRequest, GrantConsentRequest, OfferResponse, FacilityResponse, RiskSignalResponse]
     └── rest/ [FinancingRequestController, FinancingOfferController, FinancingFacilityController, LenderApplicationController]
 ```
+
+
+---
+
+## Target v2 module-specific changes
+
+Financing features tied to Anchor balance freezes, mandatory platform banking/KYB or Atlas-held settlement are **out of automatic target scope**. Evaluate only under separate legally reviewed lender contracts, provider capability, consent and actual external enforcement APIs. No implicit wallet seizure/hold from merchant order proceeds. Global organization creation and general commerce do not require financing/KYB enrollment. Preserve existing approved financial obligations and historical data during banking offboarding. [Provider transition](../architecture/provider-banking-decommission.md).

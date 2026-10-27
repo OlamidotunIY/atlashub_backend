@@ -1,3 +1,5 @@
+> **V2 MODERNIZATION NOTE (2026-10-25):** The target has independent global User registration and Organization creation, and optional merchant-connected providers instead of Atlas mandatory Anchor banking/KYB. The detailed module below may reflect existing legacy software. See [v2 PRD](../atlashub-prd-v2.md) and [banking retirement](../architecture/provider-banking-decommission.md). No implemented code is changed by this note.
+
 # HR Payroll Design (`atlashub-hr` / `com.atlashub.hr.payroll`)
 
 ## Role & Purpose
@@ -602,3 +604,10 @@ atlashub-hr/src/main/java/com/atlashub/hr/payroll/
     └── rest/
         └── HrPayrollController.java
 ```
+
+
+---
+
+## Target v2 module-specific changes
+
+User and organization registration are separate. Organization can run HR staff records and payroll computation/accounting without Anchor banking or a payment provider. Any automatic salary payout requires a real connected provider's active payout capability/authorization and verified execution, never fake or inferred success; country payroll taxes and legal requirements may remain. Provider KYC does not block HR setup. [Target v2 PRD](../atlashub-prd-v2.md).

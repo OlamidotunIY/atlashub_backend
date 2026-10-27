@@ -1,3 +1,5 @@
+> **V2 MODERNIZATION NOTE (2026-10-25):** The target has independent global User registration and Organization creation, and optional merchant-connected providers instead of Atlas mandatory Anchor banking/KYB. The detailed module below may reflect existing legacy software. See [v2 PRD](../atlashub-prd-v2.md) and [banking retirement](../architecture/provider-banking-decommission.md). No implemented code is changed by this note.
+
 # Pay Controls Design (`atlashub-pay:controls`)
 
 ## Role and Boundary
@@ -274,3 +276,10 @@ atlashub-pay/controls/src/main/java/com/atlashub/pay/controls/
     ├── dto/ [ControlledFundsPolicyResponse, PaymentControlDecisionResponse, SubmitControlEvidenceRequest, ControlCaseResponse]
     └── rest/ [PaymentControlController]
 ```
+
+
+---
+
+## Target v2 module-specific changes
+
+Provider funds are merchant-held, not AtlasHub-held. The platform cannot arbitrarily freeze, debit or hold third-party bank accounts merely due to AtlasScore financing rules. Disable such controls unless a **specific provider's documented supported APIs, merchant consent, loan contract and legal authority** permit the action, with maker-checker/audit. Any autonomous financing product involving custody/lending demands separate regulatory and legal review and cannot rely on the retired universal Anchor/KYB pathway. [Retirement](../architecture/provider-banking-decommission.md).

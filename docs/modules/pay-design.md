@@ -1,3 +1,5 @@
+> **LEGACY IMPLEMENTATION / V2 TARGET NOTICE (2026-10-25):** This document describes the existing code/Anchor-based banking programme. User identity registration is now a separate proposed flow from organization creation. No compulsory Atlas-operated bank account or five-step KYB approval in v2. Provider-specific verification and applicable non-banking legal duties remain. The replacement design is in [Identity & Organization](../architecture/identity-organization-separation.md) and [Banking Retirement](../architecture/provider-banking-decommission.md). The old detail below remains for migration reference.
+
 # Pay Module Design (`atlashub-pay`) — Index
 
 ## Overview
@@ -80,3 +82,12 @@ include 'atlashub-pay:tx-query'
 include 'atlashub-pay:webhooks'
 include 'atlashub-pay:controls'
 ```
+
+
+---
+
+## Target Pay boundaries
+
+**Atlas Hub no longer automatically issues every merchant a banking account or holds merchant proceeds.** `pay` remains as provider-neutral orchestration, payment attempts, webhook state verification, refunds, reconciliation and normalized finance events. Payment collection, settlement and payouts use eligible **merchant-connected provider accounts** when supported; no universal Anchor/FBO, platform-held wallet or misleading shadow bank balances. An org without provider can still use non-provider business modules. Provider onboarding happens only after merchant requests capability. Old modules retained during migration, not the desired final product.
+
+See [merchant integration retirement](../architecture/provider-banking-decommission.md).

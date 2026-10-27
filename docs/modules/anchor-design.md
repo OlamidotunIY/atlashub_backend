@@ -1,3 +1,5 @@
+> **LEGACY IMPLEMENTATION / V2 TARGET NOTICE (2026-10-25):** This document describes the existing code/Anchor-based banking programme. User identity registration is now a separate proposed flow from organization creation. No compulsory Atlas-operated bank account or five-step KYB approval in v2. Provider-specific verification and applicable non-banking legal duties remain. The replacement design is in [Identity & Organization](../architecture/identity-organization-separation.md) and [Banking Retirement](../architecture/provider-banking-decommission.md). The old detail below remains for migration reference.
+
 # Anchor Infrastructure Design (`atlashub-infrastructure:anchor`)
 
 ## Purpose
@@ -45,3 +47,12 @@ business events.
 The endpoint verifies the Anchor signature over the unmodified request body before parsing and publishes a verified
 `AnchorWebhookReceivedEvent`. Consumer modules keep their own compatible event contracts and delegate only to command
 handlers. Duplicate delivery is safe through consumer delivery tracking and aggregate/provider-reference uniqueness.
+
+
+---
+
+## Legacy module decommission
+
+The Anchor integration module is existing/legacy Atlas-operated banking implementation, not required for organization creation or live commerce. Do not presume it stays in target architecture. Retire compulsory KYB, deposit/FBO/reserved account provisioning and bank-balance shadow models after migrating existing users, finances and provider contracts. Preserve only optional provider integration if later technically/contractually suitable.
+
+See [provider-banking-decommission](../architecture/provider-banking-decommission.md).

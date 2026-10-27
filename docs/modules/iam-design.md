@@ -1,3 +1,5 @@
+> **V2 MODERNIZATION NOTE (2026-10-25):** The target has independent global User registration and Organization creation, and optional merchant-connected providers instead of Atlas mandatory Anchor banking/KYB. The detailed module below may reflect existing legacy software. See [v2 PRD](../atlashub-prd-v2.md) and [banking retirement](../architecture/provider-banking-decommission.md). No implemented code is changed by this note.
+
 # IAM Module Design (`atlashub-platform:iam`)
 
 ## Role & Purpose
@@ -406,3 +408,10 @@ When a `CustomRole`'s permissions change, IAM publishes `CustomRolePermissionsCh
 - **Outbox**: invitation/member events, `ApiKeyRevokedEvent`, `ApiKeyAuthenticatedEvent`, and `CustomRolePermissionsChangedEvent`, routed to `iam-events` where applicable
 - **Inbox**: `OrganizationRegistered`, `SubscriptionSuspendedEvent`, `EmployeeSuspendedEvent`, `OrganizationBannedEvent`, and IAM's own asynchronous API-key usage event
 - **Invitation expiry**: `InvitationExpirationScheduler` under `infrastructure/messaging/schedulers` invokes only `ExpireInvitationsHandler`
+
+
+---
+
+## Target v2 module-specific changes
+
+Target v2 requires **global zero-org User** and explicit separately authenticated `CreateOrganization`. Organization OWNER is created on org creation, not as side-effect of User registration. A user may hold CreatorProfile without business; one User can join multiple orgs. IAM must not grant merchant powers from creator status and must recheck org membership, not trust client org selection or SSO UI. Provider onboarding statuses gate only capabilities, not baseline IAM. [Identity design](../architecture/identity-organization-separation.md).

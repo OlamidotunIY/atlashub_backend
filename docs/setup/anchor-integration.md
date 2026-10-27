@@ -1,3 +1,5 @@
+> **LEGACY IMPLEMENTATION / V2 TARGET NOTICE (2026-10-25):** This document describes the existing code/Anchor-based banking programme. User identity registration is now a separate proposed flow from organization creation. No compulsory Atlas-operated bank account or five-step KYB approval in v2. Provider-specific verification and applicable non-banking legal duties remain. The replacement design is in [Identity & Organization](../architecture/identity-organization-separation.md) and [Banking Retirement](../architecture/provider-banking-decommission.md). The old detail below remains for migration reference.
+
 # Anchor Integration
 
 ## Boundary
@@ -96,3 +98,12 @@ Typed paths currently used are:
 | Webhook subscriptions | `/api/v1/webhooks` |
 
 Paths live only in the typed Anchor clients. Domain adapters call client methods and do not concatenate URLs.
+
+
+---
+
+## Retirement notice
+
+This entire guide describes **legacy Atlas-operated banking integration** and is *not* required onboarding for new users or organizations. Do not provision Atlas Anchor business customers, NUBAN, FBO/subaccounts or issue reserved accounts automatically. Anchor may remain only as explicitly enabled, contractually supported **optional merchant connector** after refactoring, otherwise retire; existing live account closure, webhooks, historical balances, financial obligations and stored KYB records require planned migration/retention.
+
+See [retirement design](../architecture/provider-banking-decommission.md) and [merchant provider framework](../architecture/global-provider-integrations-proposal.md).

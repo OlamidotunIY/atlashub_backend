@@ -1,3 +1,5 @@
+> **LEGACY IMPLEMENTATION / V2 TARGET NOTICE (2026-10-25):** This document describes the existing code/Anchor-based banking programme. User identity registration is now a separate proposed flow from organization creation. No compulsory Atlas-operated bank account or five-step KYB approval in v2. Provider-specific verification and applicable non-banking legal duties remain. The replacement design is in [Identity & Organization](../architecture/identity-organization-separation.md) and [Banking Retirement](../architecture/provider-banking-decommission.md). The old detail below remains for migration reference.
+
 # Authentication Module Design (`atlashub-platform:authentication`)
 
 ## Role & Purpose
@@ -263,3 +265,16 @@ Refresh token rotation means every use creates a new token and invalidates the o
 
 ### HMAC Signing
 See [setup/api-key-hmac-auth.md](../setup/api-key-hmac-auth.md) for the complete implementation guide.
+
+
+---
+
+## Target authentication changes
+
+- Individual registration/login independent of organization; `activeOrganizationId` nullable for no-org users; org-scoped APIs fail safely without chosen membership.
+- Centralized login/register frontend: [atlashub_auth_web](https://github.com/OlamidotunIY/atlashub_auth_web), shared for Atlas Web, Storefront Portal, future apps.
+- Java `auth` or integrated conformant IdP owns credentials, MFA, sessions, OIDC Authorization Code+PKCE/BFF and logout; frontend is **not** token authority. Current JWT-only auth does not by itself imply implemented SSO.
+- Remove blanket `ComplianceStatus.APPROVED` login/LIVE gating tied to Anchor; enforce provider-specific KYC/capability only for provider-dependent operations, independent of general authentication and HR/inventory/business functions.
+- Any organization environment switch must validate IAM membership. Global identity remains valid on org suspension unless separately disabled.
+
+See [identity migration](../architecture/identity-organization-separation.md).

@@ -1,3 +1,5 @@
+> **LEGACY-VS-TARGET NOTICE (2026-10-25):** The older provider/banking assumptions in this module are being replaced by optional merchant-connected integrations. No global Anchor bank/KYB prerequisite to user registration or organization use. See [current v2 requirements](../atlashub-prd-v2.md), [provider retirement](../architecture/provider-banking-decommission.md). Existing content retained for safe migration, not an implemented target.
+
 # Logistics Module Design (`atlashub-logistics`) — Index
 
 ## Overview
@@ -72,3 +74,10 @@ include 'atlashub-logistics:shipping'
 include 'atlashub-logistics:warehousing'
 include 'atlashub-logistics:returns'
 ```
+
+
+---
+
+## Target merchant-connected shipping
+
+External domestic/cross-border/last-mile logistics are fulfilled through merchant-connected carrier providers. Replace assumptions AtlasHub **must** run own fleet, collect fees and pay a blanket shipping discount or split. Warehousing, returns, stock transfers and order fulfillment remain AtlasHub business domains. Quotes, labels, booking and tracking must use actual authorized provider adapters, country/region-aware routes; simulated tracking only in explicit tests. See [provider transition](../architecture/provider-banking-decommission.md).

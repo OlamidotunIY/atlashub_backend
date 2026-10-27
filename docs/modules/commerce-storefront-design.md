@@ -606,3 +606,16 @@ atlashub-commerce/src/main/java/com/atlashub/commerce/storefront/
 │   └── schedulers/ [StockReleaseScheduler]
 └── presentation/ [dto/, rest/CommercePosController, rest/CommerceHospitalityController, rest/CommerceOnlineController]
 ```
+
+
+---
+
+## Architecture migration addendum (2026-10-25)
+
+**Status:** Proposed, not implemented. The term "storefront" in this Java module means transactional commerce/POS/online order workflow, **not** hosting/publishing merchant websites or running third-party theme code.
+
+Public web rendering, Vite+React Router theme packages, developer SDK/CLI, marketplace, creator dashboards, merchant config/logo/assets, custom domain TLS, isolated Cloudflare Workers for Platforms and publish/rollback are scoped to the separately deployed [atlashub_storefront monorepo](https://github.com/OlamidotunIY/atlashub_storefront). Its management backend remains in that repository; no separate backend GitHub repository needed. Atlas Web displays recommendations/deep links and central SSO is a **planned** Java identity integration.
+
+This Java module retains true price/stock/tax/order/cart/checkout state, reserves inventory, applies business invariants and consumes verified payment outcomes. Public storefront SDK endpoints expose scoped published catalog/collection/variant/cart and trusted checkout initiation only; arbitrary themes cannot execute private Java commands or choose provider secrets. Specific provider names/event flows in historical sections must be migrated to [normalized merchant-connected provider events](../architecture/global-provider-integrations-proposal.md) rather than assumed to represent target global design.
+
+See [cross-service implementation contract](../architecture/storefront-platform-integration.md), [React storefront proposal](../architecture/storefront-theme-platform-proposal.md) and [dedicated Portal SSO design](https://github.com/OlamidotunIY/atlashub_storefront/blob/main/docs/architecture/portal-identity.md).

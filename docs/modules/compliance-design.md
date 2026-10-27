@@ -1,3 +1,5 @@
+> **LEGACY IMPLEMENTATION / V2 TARGET NOTICE (2026-10-25):** This document describes the existing code/Anchor-based banking programme. User identity registration is now a separate proposed flow from organization creation. No compulsory Atlas-operated bank account or five-step KYB approval in v2. Provider-specific verification and applicable non-banking legal duties remain. The replacement design is in [Identity & Organization](../architecture/identity-organization-separation.md) and [Banking Retirement](../architecture/provider-banking-decommission.md). The old detail below remains for migration reference.
+
 # Compliance / KYB Module Design (`atlashub-platform:compliance`)
 
 ## Role & Purpose
@@ -463,3 +465,17 @@ Compliance suspension freezes/suspends financial capability but preserves all hi
 8. Keep the five-step journey, but replace the fragile `completedSteps.size() == 5` check with semantic readiness validation for each of the five steps.
 
 No legacy record is automatically treated as Anchor-approved merely because the old local status was `APPROVED`.
+
+
+---
+
+## Target retirement plan for the existing compliance product
+
+The existing `atlashub-platform:compliance` module described here is the **mandatory Anchor five-step KYB/banking eligibility workflow**. It is **NOT in the target merchant-integrations product** and is planned for *decommissioning after migration* (not merely renamed). Organization creation, login, general LIVE usage, HR, inventory, storefront/theme creator onboarding and accounting **must never depend on its APPROVED state**.
+
+- Stop auto-creating KYB records on `OrganizationCreated` and stop platform-owned mandatory collection of bank/KYB documents.
+- Bank account provisioning and Anchor verification no longer follow business creation. Any requested payment provider's onboarding and document requirements are provider-specific, hosted/managed by that provider when supported. Atlas stores only appropriate connection state/consent/references.
+- Existing bank KYB personal/document records, status history, audit and legacy consumer events must be migrated/retained/deleted according to legal/contractual and privacy obligations before removal.
+- Separate any residual, genuinely applicable platform privacy/terms, fraud, security, tax and marketplace or regulated-finance obligations from this retired **Anchor-KYB product**. **No universal KYB requirement; not a claim that no compliance laws apply.**
+
+See [banking/KYB decommission](../architecture/provider-banking-decommission.md) and [provider connections](../architecture/global-provider-integrations-proposal.md).

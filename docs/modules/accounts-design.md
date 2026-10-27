@@ -1,3 +1,5 @@
+> **LEGACY IMPLEMENTATION / V2 TARGET NOTICE (2026-10-25):** This document describes the existing code/Anchor-based banking programme. User identity registration is now a separate proposed flow from organization creation. No compulsory Atlas-operated bank account or five-step KYB approval in v2. Provider-specific verification and applicable non-banking legal duties remain. The replacement design is in [Identity & Organization](../architecture/identity-organization-separation.md) and [Banking Retirement](../architecture/provider-banking-decommission.md). The old detail below remains for migration reference.
+
 # Accounts Module Design (`atlashub-platform:accounts`)
 
 ## Role & Purpose
@@ -346,3 +348,16 @@ Organization switching is implemented by authentication and synchronized back th
 
 ### Idempotency
 - `RegisterOrganizationHandler` checks for email uniqueness before creating the user. If a duplicate registration is attempted concurrently, the DB unique constraint on `email` serves as the final guard.
+
+
+---
+
+## Target account-flow replacement
+
+- **RegisterUser** creates global User/AuthAccount/email verification *without* Organization. Email unique; users with zero organizations valid and can access creator workflows.
+- **CreateOrganization** requires an already-authenticated individual User, creates org and OWNER IAM membership, independent of Anchor or KYB. Multi-organization membership and invitations. No mandatory provider connection.
+- Remove registration restrictions solely inherited from Anchor categories, industries and NG/NGN programmes. Global identity and legal entity/org/outlet/market/currency are distinct.
+- `OrganizationRegistered`/listeners are a legacy compatibility concern: preserve older event consumers while migrating IAM, billing, compliance init and banking handlers. Do not auto-provision bank when org created.
+- Organization `ACTIVE` represents usable core software regardless of payment-provider state; provider-dependent operations are separately capability gated.
+
+See [full identity design](../architecture/identity-organization-separation.md) and [banking retirement](../architecture/provider-banking-decommission.md).

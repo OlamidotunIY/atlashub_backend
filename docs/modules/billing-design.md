@@ -1,3 +1,5 @@
+> **LEGACY-VS-TARGET NOTICE (2026-10-25):** The older provider/banking assumptions in this module are being replaced by optional merchant-connected integrations. No global Anchor bank/KYB prerequisite to user registration or organization use. See [current v2 requirements](../atlashub-prd-v2.md), [provider retirement](../architecture/provider-banking-decommission.md). Existing content retained for safe migration, not an implemented target.
+
 # Billing Module Design (`atlashub-platform:billing`)
 
 ## Role & Purpose
@@ -268,3 +270,10 @@ public interface EntitlementQueryPort {
 - **Outbox**: `SubscriptionSuspendedEvent`, `InvoiceIssuedEvent` — both trigger downstream actions that must be delivered reliably
 - **Inbox**: `OrganizationCreatedEvent` (auto-create subscription — idempotent), `PaymentSuccessfulEvent` — idempotent. A duplicate delivery must not mark the same invoice paid twice.
 
+
+
+---
+
+## Target billing separation
+
+The platform's own AtlasHub subscription and **theme marketplace license purchase** billing remains independent of the merchants' connected payment processor. Basic User registration never triggers organization subscription; a separate `CreateOrganization` event initiates the organization's entitled software products/plan. Provider KYB and Anchor deposit provisioning are **not** prerequisites for identity/normal business plan activation. Ensure idempotent org creation events and ledger recognition for creator revenue share and refunds. See [v2 PRD](../atlashub-prd-v2.md).

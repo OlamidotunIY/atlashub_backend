@@ -1,3 +1,5 @@
+> **LEGACY IMPLEMENTATION / V2 TARGET NOTICE (2026-10-25):** This document describes the existing code/Anchor-based banking programme. User identity registration is now a separate proposed flow from organization creation. No compulsory Atlas-operated bank account or five-step KYB approval in v2. Provider-specific verification and applicable non-banking legal duties remain. The replacement design is in [Identity & Organization](../architecture/identity-organization-separation.md) and [Banking Retirement](../architecture/provider-banking-decommission.md). The old detail below remains for migration reference.
+
 # Pay Accounts Design (`atlashub-pay:accounts`)
 
 ## Purpose
@@ -113,3 +115,16 @@ importing accounts internals.
 - Provider IDs and idempotency references are unique with environment.
 - Organization and environment come from authenticated context/events, never trusted request bodies.
 - No destructive migration removes existing deposit/subaccount/reserved-account rows or external resources.
+
+
+---
+
+## Target payment accounts
+
+- `OrganizationBankingProfile`, Anchor BusinessDepositAccount and reserved accounts are **legacy**. Target is provider registry, per-org `OrganizationIntegration`, encrypted connection references, `IntegrationCapability`, provider-specific state and merchant-owned settlement destination where supported.
+- No Anchor bank/subaccount/reserved account on user signup or org creation. No global Compliance APPROVED gate for ordinary business operations.
+- Collection, bank transfer, card, USSD, POS, payouts, refunds and settlement reconciliation are **separate capabilities**; connection/region/currency/merchant verification determine availability.
+- Support multiple eligible merchant-owned processors and explicit routing, never assume one Paystack profile. Externally held funds cannot be depicted as Atlas funds.
+- Old Anchor/webhook and Paystack payout settlement assumptions require staged reconciliation/data migration.
+
+See [provider decommission](../architecture/provider-banking-decommission.md) and [integration architecture](../architecture/global-provider-integrations-proposal.md).
