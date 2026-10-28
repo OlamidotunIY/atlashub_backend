@@ -13,6 +13,6 @@ public interface SpringDataStockTransferRepository extends JpaRepository<StockTr
 
     List<StockTransferJpa> findByOrganizationId(Long organizationId);
 
-    @Query("SELECT st FROM StockTransferJpa st WHERE st.sourceId = :sourceId OR st.destinationId = :destinationId")
+    @Query("SELECT st FROM WarehousingStockTransfer st WHERE st.sourceId = :sourceId OR st.destinationId = :destinationId")
     List<StockTransferJpa> findBySourceIdOrDestinationId(@Param("sourceId") Long sourceId, @Param("destinationId") Long destinationId);
 }

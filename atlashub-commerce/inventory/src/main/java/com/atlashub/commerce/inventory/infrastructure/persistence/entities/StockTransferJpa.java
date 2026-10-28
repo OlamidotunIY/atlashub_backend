@@ -17,7 +17,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.ZonedDateTime;
 
-@Entity
+@Entity(name = "CommerceInventoryStockTransfer")
 @Table(
         name = "commerce_stock_transfers",
         indexes = {

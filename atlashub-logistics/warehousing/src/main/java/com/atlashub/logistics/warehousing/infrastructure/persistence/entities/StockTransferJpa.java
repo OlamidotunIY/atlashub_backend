@@ -18,7 +18,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-@Entity
+@Entity(name = "WarehousingStockTransfer")
 @Table(
         name = "warehousing_stock_transfers",
         indexes = {
