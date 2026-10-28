@@ -18,11 +18,11 @@ dependencies {
     implementation project(':atlashub-platform:authentication')
     implementation project(':atlashub-platform:accounts')
     implementation project(':atlashub-platform:iam')
-    implementation project(':atlashub-platform:compliance')
     implementation project(':atlashub-platform:notifications')
     implementation project(':atlashub-platform:storage')
     implementation project(':atlashub-platform:billing')
     implementation project(':atlashub-platform:support')
+    implementation project(':atlashub-integrations')
 
     // Pay Modules
     implementation project(':atlashub-pay:accounts')
