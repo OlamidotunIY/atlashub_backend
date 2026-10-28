@@ -14,8 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/v1/webhooks/paystack/{environment}")
-@ConditionalOnProperty(prefix = "atlashub.integrations.paystack", name = "enabled", havingValue = "true")
+@RequestMapping("/api/v1/webhooks/paystack/authorizations/{authorizationId}")
 public class PaystackWebhookController {
     private final ReceivePaystackWebhookHandler handler;
 
@@ -24,16 +23,11 @@ public class PaystackWebhookController {
     }
 
     @PostMapping
-    public ResponseEntity<ApiResponse<Void>> receive(@PathVariable String environment,
+    public ResponseEntity<ApiResponse<Void>> receive(@PathVariable Long authorizationId,
                                                      @RequestHeader("x-paystack-signature") String signature,
                                                      @RequestBody byte[] body) {
-        handler.execute(new ReceivePaystackWebhookCommand(parse(environment), body, signature));
+        handler.execute(new ReceivePaystackWebhookCommand(authorizationId, body, signature));
         return ResponseEntity.ok(new ApiResponse<>(true, "Webhook received", null, null));
     }
 
-    private PaystackEnvironment parse(String value) {
-        if ("test".equalsIgnoreCase(value)) return PaystackEnvironment.TEST;
-        if ("live".equalsIgnoreCase(value)) return PaystackEnvironment.LIVE;
-        throw new IllegalArgumentException("Unsupported Paystack environment");
-    }
 }

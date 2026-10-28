@@ -7,6 +7,7 @@ repositories { mavenCentral() }
 
 dependencies {
     implementation project(':atlashub-shared')
+    implementation project(':atlashub-integrations')
     implementation 'org.springframework.boot:spring-boot-starter'
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.kafka:spring-kafka'

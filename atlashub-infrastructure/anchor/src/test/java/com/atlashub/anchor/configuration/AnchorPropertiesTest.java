@@ -46,7 +46,6 @@ class AnchorPropertiesTest {
 
     private AnchorProperties.WebhookSubscriptions subscriptions() {
         return new AnchorProperties.WebhookSubscriptions(
-                new AnchorProperties.WebhookSubscriptionProperties(URI.create("https://sandbox.atlashub.com/api/v1/webhooks/anchor/sandbox/compliance"), "compliance-token"),
                 new AnchorProperties.WebhookSubscriptionProperties(URI.create("https://sandbox.atlashub.com/api/v1/webhooks/anchor/sandbox/pay-accounts"), "pay-accounts-token")
         );
     }

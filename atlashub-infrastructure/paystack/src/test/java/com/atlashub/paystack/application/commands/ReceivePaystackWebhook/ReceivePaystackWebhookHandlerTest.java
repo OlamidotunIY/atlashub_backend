@@ -16,7 +16,7 @@ class ReceivePaystackWebhookHandlerTest {
         byte[] body="{\"event\":\"charge.success\",\"data\":{\"id\":42,\"reference\":\"ref-1\"}}".getBytes(StandardCharsets.UTF_8);
         handler.execute(new ReceivePaystackWebhookCommand(PaystackEnvironment.TEST,body,"signature"));
         verify(verifier).verify(body,"signature",PaystackEnvironment.TEST);
-        var captor=ArgumentCaptor.forClass(com.atlashub.paystack.infrastructure.external.paystack.messaging.events.PaystackWebhookReceivedEvent.class);verify(publisher).publish(captor.capture());assertEquals("charge.success",captor.getValue().eventType());assertEquals("42",captor.getValue().eventId());
+        var captor=ArgumentCaptor.forClass(com.atlashub.paystack.infrastructure.external.paystack.messaging.events.PaystackWebhookReceivedEvent.class);verify(publisher).publish(captor.capture());assertEquals("charge.success",captor.getValue().eventType());assertEquals("charge.success:42",captor.getValue().eventId());
     }
     @Test void rejects_payload_without_identity() {var handler=new ReceivePaystackWebhookHandler(mock(PaystackWebhookSignatureVerifier.class),new ObjectMapper(),mock(PaystackWebhookEventPublisher.class));byte[] body="{\"event\":\"charge.success\",\"data\":{}}".getBytes(StandardCharsets.UTF_8);assertThrows(MalformedPaystackWebhookException.class,()->handler.execute(new ReceivePaystackWebhookCommand(PaystackEnvironment.TEST,body,"signature")));}
 }

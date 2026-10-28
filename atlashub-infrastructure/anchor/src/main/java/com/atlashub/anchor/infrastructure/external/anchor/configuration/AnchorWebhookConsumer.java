@@ -4,15 +4,6 @@ import java.util.List;
 
 /** AtlasHub module callback subscriptions registered with Anchor for each environment. */
 public enum AnchorWebhookConsumer {
-    COMPLIANCE(
-            "compliance",
-            "atlashub-compliance",
-            List.of(
-                    "customer.identification.approved", "customer.identification.error",
-                    "customer.identification.rejected",
-                    "customer.identification.awaitingDocument", "document.approved", "document.rejected"
-            )
-    ),
     PAY_ACCOUNTS(
             "pay-accounts",
             "atlashub-pay-accounts",

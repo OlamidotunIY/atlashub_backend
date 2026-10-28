@@ -5,6 +5,8 @@ import com.atlashub.paystack.infrastructure.external.paystack.configuration.Pays
 import com.atlashub.paystack.exception.InvalidPaystackWebhookSignatureException;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -12,7 +14,6 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 
 @Component
-@ConditionalOnProperty(prefix = "atlashub.integrations.paystack", name = "enabled", havingValue = "true")
 public class PaystackWebhookSignatureVerifier {
     private final PaystackProperties properties;
 
@@ -20,10 +21,22 @@ public class PaystackWebhookSignatureVerifier {
         this.properties = properties;
     }
 
+    @Autowired
+    public PaystackWebhookSignatureVerifier(ObjectProvider<PaystackProperties> properties) {
+        this.properties = properties.getIfAvailable();
+    }
+
     public void verify(byte[] body, String signature, PaystackEnvironment environment) {
+        if (properties == null) throw new IllegalStateException("Legacy Paystack webhook configuration is disabled");
         if (body == null || signature == null || environment == null ||
                 !MessageDigest.isEqual(sign(body, properties.forEnvironment(environment).webhookSecret()),
                         hex(signature))) throw new InvalidPaystackWebhookSignatureException();
+    }
+
+    public void verify(byte[] body, String signature, String merchantSecret) {
+        if (body == null || signature == null || merchantSecret == null || merchantSecret.isBlank()
+                || !MessageDigest.isEqual(sign(body, merchantSecret), hex(signature)))
+            throw new InvalidPaystackWebhookSignatureException();
     }
 
     private byte[] sign(byte[] body, String secret) {

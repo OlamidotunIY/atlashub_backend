@@ -68,17 +68,14 @@ public record AnchorProperties(
     }
 
     public record WebhookSubscriptions(
-            WebhookSubscriptionProperties compliance,
             WebhookSubscriptionProperties payAccounts
     ) {
         public WebhookSubscriptions {
-            Objects.requireNonNull(compliance, "Anchor compliance webhook subscription is required");
             Objects.requireNonNull(payAccounts, "Anchor pay-accounts webhook subscription is required");
         }
 
         public WebhookSubscriptionProperties forConsumer(AnchorWebhookConsumer consumer) {
             return switch (Objects.requireNonNull(consumer, "Anchor webhook consumer is required")) {
-                case COMPLIANCE -> compliance;
                 case PAY_ACCOUNTS -> payAccounts;
             };
         }

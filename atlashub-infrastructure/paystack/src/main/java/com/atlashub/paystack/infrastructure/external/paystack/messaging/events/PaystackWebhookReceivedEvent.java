@@ -5,7 +5,11 @@ import com.atlashub.paystack.infrastructure.external.paystack.configuration.Pays
 import java.util.Map;
 
 public record PaystackWebhookReceivedEvent(String eventId, PaystackEnvironment environment, String eventType,
-                                           Map<String, Object> data) {
+                                           Map<String, Object> data, Long providerConnectionId) {
+    public PaystackWebhookReceivedEvent(String eventId, PaystackEnvironment environment, String eventType,
+                                        Map<String, Object> data) {
+        this(eventId, environment, eventType, data, null);
+    }
     public PaystackWebhookReceivedEvent {
         if (eventId == null || eventId.isBlank() || eventType == null || eventType.isBlank())
             throw new IllegalArgumentException("Paystack webhook event identity is required");

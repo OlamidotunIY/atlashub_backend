@@ -11,8 +11,6 @@ class AnchorWebhookConsumerTest {
     void defines_a_strict_atlas_hub_callback_contract_per_consumer() {
         assertEquals(AnchorWebhookConsumer.PAY_ACCOUNTS,
                 AnchorWebhookConsumer.fromCallbackPath("pay-accounts"));
-        assertTrue(AnchorWebhookConsumer.COMPLIANCE.enabledEvents()
-                .contains("customer.identification.approved"));
         assertTrue(AnchorWebhookConsumer.PAY_ACCOUNTS.enabledEvents().contains("payin.received"));
         assertTrue(AnchorWebhookConsumer.PAY_ACCOUNTS.enabledEvents().contains("nip.inbound.completed"));
         assertTrue(AnchorWebhookConsumer.PAY_ACCOUNTS.enabledEvents().contains("nip.transfer.successful"));

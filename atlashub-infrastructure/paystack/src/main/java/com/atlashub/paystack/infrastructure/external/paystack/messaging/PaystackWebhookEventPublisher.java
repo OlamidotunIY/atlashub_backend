@@ -8,23 +8,32 @@ import java.util.concurrent.TimeUnit;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
+import java.time.Duration;
 
 @Component
-@ConditionalOnProperty(prefix="atlashub.integrations.paystack", name="enabled", havingValue="true")
 public class PaystackWebhookEventPublisher {
     public static final String TOPIC = "paystack-events";
     private final KafkaTemplate<String,String> kafka;
     private final ObjectMapper mapper;
-    private final PaystackProperties properties;
+    private final Duration publishTimeout;
     public PaystackWebhookEventPublisher(KafkaTemplate<String,String> kafka, ObjectMapper mapper,
                                           PaystackProperties properties) {
-        this.kafka=kafka; this.mapper=mapper; this.properties=properties;
+        this.kafka=kafka; this.mapper=mapper; this.publishTimeout=properties.webhookPublishTimeout();
+    }
+    @Autowired
+    public PaystackWebhookEventPublisher(KafkaTemplate<String,String> kafka, ObjectMapper mapper,
+                                          ObjectProvider<PaystackProperties> properties) {
+        this.kafka=kafka; this.mapper=mapper;
+        PaystackProperties configured=properties.getIfAvailable();
+        this.publishTimeout=configured==null?Duration.ofSeconds(5):configured.webhookPublishTimeout();
     }
     public void publish(PaystackWebhookReceivedEvent event) {
         try {
             String body=mapper.writeValueAsString(new PaystackEventEnvelope(
                     PaystackWebhookReceivedEvent.class.getSimpleName(), event.eventId(), event));
-            kafka.send(TOPIC,event.eventId(),body).get(properties.webhookPublishTimeout().toMillis(), TimeUnit.MILLISECONDS);
+            kafka.send(TOPIC,event.eventId(),body).get(publishTimeout.toMillis(), TimeUnit.MILLISECONDS);
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
             throw new IllegalStateException("Paystack webhook publishing was interrupted", ex);

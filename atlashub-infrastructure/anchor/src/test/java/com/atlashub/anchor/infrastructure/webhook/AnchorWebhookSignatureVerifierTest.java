@@ -22,7 +22,7 @@ class AnchorWebhookSignatureVerifierTest {
     void accepts_anchors_documented_hmac_sha1_hex_base64_signature() {
         AnchorWebhookSignatureVerifier verifier = new AnchorWebhookSignatureVerifier(properties());
 
-        verifier.verify(PAYLOAD, SANDBOX_SIGNATURE, AnchorEnvironment.SANDBOX, AnchorWebhookConsumer.COMPLIANCE);
+        verifier.verify(PAYLOAD, SANDBOX_SIGNATURE, AnchorEnvironment.SANDBOX, AnchorWebhookConsumer.PAY_ACCOUNTS);
     }
 
     @Test
@@ -30,7 +30,7 @@ class AnchorWebhookSignatureVerifierTest {
         AnchorWebhookSignatureVerifier verifier = new AnchorWebhookSignatureVerifier(properties());
 
         assertThrows(InvalidAnchorWebhookSignatureException.class, () -> verifier.verify(
-                PAYLOAD, "invalid", AnchorEnvironment.SANDBOX, AnchorWebhookConsumer.COMPLIANCE
+                PAYLOAD, "invalid", AnchorEnvironment.SANDBOX, AnchorWebhookConsumer.PAY_ACCOUNTS
         ));
     }
 
@@ -46,10 +46,9 @@ class AnchorWebhookSignatureVerifierTest {
         );
     }
 
-    private AnchorProperties.WebhookSubscriptions subscriptions(String complianceToken) {
+    private AnchorProperties.WebhookSubscriptions subscriptions(String token) {
         return new AnchorProperties.WebhookSubscriptions(
-                new AnchorProperties.WebhookSubscriptionProperties(URI.create("https://api.atlashub.com/api/v1/webhooks/anchor/sandbox/compliance"), complianceToken),
-                new AnchorProperties.WebhookSubscriptionProperties(URI.create("https://api.atlashub.com/api/v1/webhooks/anchor/sandbox/pay-accounts"), "pay-accounts-token")
+                new AnchorProperties.WebhookSubscriptionProperties(URI.create("https://api.atlashub.com/api/v1/webhooks/anchor/sandbox/pay-accounts"), token)
         );
     }
 

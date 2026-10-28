@@ -78,7 +78,6 @@ class AnchorBankingAdapterTest {
 
     private AnchorProperties properties() {
         AnchorProperties.WebhookSubscriptions subscriptions = new AnchorProperties.WebhookSubscriptions(
-                new AnchorProperties.WebhookSubscriptionProperties(URI.create("https://api.atlashub.test/anchor/compliance"), "token"),
                 new AnchorProperties.WebhookSubscriptionProperties(URI.create("https://api.atlashub.test/anchor/pay-accounts"), "token"));
         AnchorProperties.ProgrammeCapabilities capabilities =
                 new AnchorProperties.ProgrammeCapabilities(true, true, true, true, "fbo-account");
