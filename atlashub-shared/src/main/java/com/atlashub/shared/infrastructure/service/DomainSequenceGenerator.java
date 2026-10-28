@@ -112,8 +112,7 @@ public class DomainSequenceGenerator {
                 || normalized.contains("discount") || normalized.contains("vendor") || normalized.contains("supplier")) {
             return 7;
         }
-        if (normalized.contains("compliance") || normalized.contains("provider_onboarding")
-                || normalized.contains("api_key") || normalized.contains("role") || normalized.contains("invitation")
+        if (normalized.contains("api_key") || normalized.contains("role") || normalized.contains("invitation")
                 || normalized.contains("member") || normalized.contains("permission")) {
             return 8;
         }
