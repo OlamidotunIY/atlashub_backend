@@ -1,9 +1,12 @@
 TF_DIR = infrastructure/terraform
+# Use the executable available on PATH for recursive targets. On Windows the
+# built-in MAKE value can be an unquoted path under C:\Program Files.
+MAKE := make
 VM_IP = $(shell terraform -chdir=$(TF_DIR) output -raw k3s_vm_public_ip)
 JWT_KEY_DIR = infrastructure/JWT
 JWT_PRIVATE_KEY = $(JWT_KEY_DIR)/atlashub-jwt-private.pem
 JWT_PUBLIC_KEY = $(JWT_KEY_DIR)/atlashub-jwt-public.pem
-SSH_OPTIONS = -o BatchMode=yes -o ConnectTimeout=15 -o ServerAliveInterval=15 -o ServerAliveCountMax=2 -o StrictHostKeyChecking=no
+SSH_OPTIONS = -o BatchMode=yes -o ConnectTimeout=15 -o ConnectionAttempts=3 -o ServerAliveInterval=15 -o ServerAliveCountMax=2 -o StrictHostKeyChecking=no
 MYSQL_TUNNEL_PORT ?= 3307
 MYSQL_SERVICE ?= mysql
 MYSQL_SERVICE_PORT ?= 3306
@@ -46,8 +49,8 @@ deploy-stack:
 	@$(SCP) -O $(SSH_OPTIONS) -i $(SSH_KEY) $(FIREBASE_JSON) ubuntu@$(VM_IP):/tmp/$(FIREBASE_JSON_NAME)
 	@$(SCP) -O $(SSH_OPTIONS) -i $(SSH_KEY) $(JWT_PRIVATE_KEY) ubuntu@$(VM_IP):/tmp/atlashub-jwt-private.pem
 	@$(SCP) -O $(SSH_OPTIONS) -i $(SSH_KEY) $(JWT_PUBLIC_KEY) ubuntu@$(VM_IP):/tmp/atlashub-jwt-public.pem
-	@echo "=> Ensuring Docker Image exists in K3s..."
-	@$(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "sudo k3s ctr images ls | grep -q atlashub/app:latest" || $(MAKE) build-image
+	@echo "=> Building the current Docker image and loading it into K3s..."
+	$(MAKE) build-image
 	@echo "=> Applying Kubernetes Secrets..."
 	$(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "export KUBECONFIG=/home/ubuntu/.kube/config && kubectl delete secret atlashub-secrets firebase-secrets jwt-signing-keys --ignore-not-found && kubectl create secret generic atlashub-secrets --from-env-file=/tmp/.env && kubectl create secret generic firebase-secrets --from-file=/tmp/$(FIREBASE_JSON_NAME) && kubectl create secret generic jwt-signing-keys --from-file=private.pem=/tmp/atlashub-jwt-private.pem --from-file=public.pem=/tmp/atlashub-jwt-public.pem"
 	@echo "=> Applying Kubernetes Manifests..."
