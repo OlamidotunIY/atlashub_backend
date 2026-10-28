@@ -57,9 +57,8 @@ public final class PlatformPermissionCatalog {
                 permission("iam:members:manage", "Manage organization members"),
                 permission("iam:roles:manage", "Manage custom roles"),
                 permission("iam:apikeys:manage", "Manage API keys"),
-                permission("compliance:read", "View compliance status"),
-                permission("compliance:manage", "Manage compliance information"),
-                permission("compliance:submit", "Submit compliance applications")
+                permission("integrations:read", "View provider connections"),
+                permission("integrations:manage", "Manage provider connections")
         );
     }
 

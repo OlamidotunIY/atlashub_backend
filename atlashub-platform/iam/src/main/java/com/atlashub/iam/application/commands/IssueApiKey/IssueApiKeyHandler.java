@@ -1,7 +1,6 @@
 package com.atlashub.iam.application.commands.IssueApiKey;
 
 import com.atlashub.iam.application.port.ApiSecretProtector;
-import com.atlashub.shared.application.port.ComplianceQueryPort;
 import com.atlashub.iam.domain.entities.ApiKey;
 import com.atlashub.iam.domain.repositories.ApiKeyRepository;
 import com.atlashub.iam.domain.repositories.CustomRoleRepository;
@@ -17,7 +16,6 @@ import java.security.SecureRandom;
 import java.util.Base64;
 import com.atlashub.iam.domain.exception.CustomRoleNotFoundException;
 import com.atlashub.iam.domain.exception.InvalidApiKeyException;
-import com.atlashub.iam.domain.exception.LiveApiKeyUnavailableException;
 
 @Component
 public class IssueApiKeyHandler extends Command<IssueApiKeyCommand, IssuedApiKeyResult> {
@@ -25,17 +23,14 @@ public class IssueApiKeyHandler extends Command<IssueApiKeyCommand, IssuedApiKey
     private static final Logger log = LoggerFactory.getLogger(IssueApiKeyHandler.class);
     private final ApiKeyRepository apiKeyRepository;
     private final CustomRoleRepository roleRepository;
-    private final ComplianceQueryPort complianceQueryPort;
     private final ApiSecretProtector secretProtector;
     private final SecureRandom secureRandom = new SecureRandom();
 
     public IssueApiKeyHandler(ApiKeyRepository apiKeyRepository,
                               CustomRoleRepository roleRepository,
-                              ComplianceQueryPort complianceQueryPort,
                               ApiSecretProtector secretProtector) {
         this.apiKeyRepository = apiKeyRepository;
         this.roleRepository = roleRepository;
-        this.complianceQueryPort = complianceQueryPort;
         this.secretProtector = secretProtector;
     }
 
@@ -48,9 +43,6 @@ public class IssueApiKeyHandler extends Command<IssueApiKeyCommand, IssuedApiKey
         ApiEnvironment environment = command.environment();
         if (environment == null) {
             throw new InvalidApiKeyException("API key environment is required");
-        }
-        if (environment == ApiEnvironment.LIVE && !complianceQueryPort.isApproved(command.orgId())) {
-            throw new LiveApiKeyUnavailableException("Live API keys require approved compliance");
         }
         if (command.boundRoleId() == null) {
             throw new InvalidApiKeyException("API key role is required");

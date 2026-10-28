@@ -16,8 +16,8 @@ class PermissionTest {
 
     @Test
     void creates_active_permission_with_module_action_code() {
-        Permission permission = Permission.create(1L, "compliance:read", "compliance", "compliance",
-                PermissionAction.READ, "View compliance status", "View compliance status");
+        Permission permission = Permission.create(1L, "integrations:read", "integrations", "integrations",
+                PermissionAction.READ, "View provider connections", "View provider connections");
 
         assertTrue(permission.isActive());
     }

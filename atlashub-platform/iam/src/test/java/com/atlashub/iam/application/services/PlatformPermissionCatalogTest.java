@@ -22,11 +22,11 @@ class PlatformPermissionCatalogTest {
         Map<String, PlatformPermissionCatalog.Definition> definitions = PlatformPermissionCatalog.definitions().stream()
                 .collect(java.util.stream.Collectors.toMap(PlatformPermissionCatalog.Definition::code, definition -> definition));
 
-        PlatformPermissionCatalog.Definition complianceRead = definitions.get("compliance:read");
+        PlatformPermissionCatalog.Definition integrationsRead = definitions.get("integrations:read");
 
-        assertEquals("compliance", complianceRead.module());
-        assertEquals("compliance", complianceRead.resource());
-        assertEquals("READ", complianceRead.action().name());
+        assertEquals("integrations", integrationsRead.module());
+        assertEquals("integrations", integrationsRead.resource());
+        assertEquals("READ", integrationsRead.action().name());
     }
 
     @Test
