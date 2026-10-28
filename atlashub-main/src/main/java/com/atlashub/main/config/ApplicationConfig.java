@@ -77,6 +77,11 @@ public class ApplicationConfig {
     }
 
     @Bean
+    public com.atlashub.authentication.domain.services.PkceVerifier pkceVerifier() {
+        return new com.atlashub.authentication.domain.services.PkceVerifier();
+    }
+
+    @Bean
     public com.atlashub.pay.ledger.domain.services.BalanceCalculator balanceCalculator() {
         return new com.atlashub.pay.ledger.domain.services.BalanceCalculator();
     }

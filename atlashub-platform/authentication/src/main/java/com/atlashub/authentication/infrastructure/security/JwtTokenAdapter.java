@@ -56,6 +56,37 @@ public class JwtTokenAdapter implements TokenPort {
         return new AccessTokenResult(token, jti, expiresAt);
     }
 
+    @Override
+    public IdTokenResult generateIdToken(IdTokenPayload payload) {
+        ZonedDateTime now = ZonedDateTime.now(ZoneId.of("UTC"));
+        ZonedDateTime expiresAt = now.plusMinutes(expirationMinutes);
+
+        var builder = Jwts.builder()
+                .subject(payload.userId())
+                .issuer(issuer)
+                .audience().add(payload.clientId()).and()
+                .header().keyId(keyProvider.keyId()).type("JWT").and()
+                .claim("email", payload.email())
+                .claim("email_verified", payload.emailVerified())
+                .claim("name", ((payload.firstName() == null ? "" : payload.firstName()) + " "
+                        + (payload.lastName() == null ? "" : payload.lastName())).trim())
+                .claim("given_name", payload.firstName())
+                .claim("family_name", payload.lastName())
+                .issuedAt(Date.from(now.toInstant()))
+                .notBefore(Date.from(now.toInstant()))
+                .expiration(Date.from(expiresAt.toInstant()));
+
+        if (payload.nonce() != null && !payload.nonce().isBlank()) {
+            builder.claim("nonce", payload.nonce().trim());
+        }
+        if (payload.orgId() != null && !payload.orgId().isBlank()) {
+            builder.claim("org", payload.orgId().trim());
+        }
+
+        String token = builder.signWith(keyProvider.privateKey(), Jwts.SIG.RS256).compact();
+        return new IdTokenResult(token, expiresAt);
+    }
+
     /**
      * Returns the secret key for use in JWT validation filters.
      */

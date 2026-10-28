@@ -58,6 +58,8 @@ public class SecurityConfig {
                                 "/api/v1/register",
                                 "/api/v1/integrations/stripe/callback",
                                 "/.well-known/jwks.json",
+                                "/.well-known/openid-configuration",
+                                "/api/v1/oauth2/token",
                                 "/api/v1/webhooks/anchor/**",
                                 "/api/v1/webhooks/paystack/**",
                                 "/api/v1/webhooks/stripe/**"
