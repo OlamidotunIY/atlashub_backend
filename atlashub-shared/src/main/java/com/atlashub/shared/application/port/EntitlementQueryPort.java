@@ -10,7 +10,6 @@ public interface EntitlementQueryPort {
 
     enum SubscriptionStatus {
         PENDING_PAYMENT,
-        PENDING_COMPLIANCE,
         ACTIVE,
         SUSPENDED,
         CANCELLED,
