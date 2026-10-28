@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.Objects;
 
-@Component
+@Component("inventoryApproveStockTransferHandler")
 public class ApproveStockTransferHandler extends Command<ApproveStockTransferCommand, Void> {
 
     private final StockTransferRepository stockTransferRepository;
