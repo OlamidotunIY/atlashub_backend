@@ -14,8 +14,8 @@ COPY atlashub-platform/accounts/build.gradle       atlashub-platform/accounts/
 COPY atlashub-platform/authentication/build.gradle atlashub-platform/authentication/
 COPY atlashub-platform/storage/build.gradle        atlashub-platform/storage/
 COPY atlashub-platform/iam/build.gradle            atlashub-platform/iam/
-COPY atlashub-platform/compliance/build.gradle     atlashub-platform/compliance/
 COPY atlashub-platform/notifications/build.gradle  atlashub-platform/notifications/
+COPY atlashub-integrations/build.gradle             atlashub-integrations/
 COPY atlashub-pay/accounts/build.gradle            atlashub-pay/accounts/
 COPY atlashub-pay/charges/build.gradle             atlashub-pay/charges/
 COPY atlashub-pay/ledger/build.gradle              atlashub-pay/ledger/

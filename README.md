@@ -1,4 +1,4 @@
-> **TARGET ARCHITECTURE NOTICE — 2026-10-25 (not yet implemented):** Atlas Hub now separates global **User registration** from optional **Organization creation**, retires mandatory Atlas-owned Anchor banking and five-step KYB approval, and uses **merchant-connected payment/logistics providers** with capability-specific provider verification. User with zero organizations is valid; no payment provider is required for identity, organization, HR, catalog, inventory, accounting or theme-creator signup. Auth UI lives in [atlashub_auth_web](https://github.com/OlamidotunIY/atlashub_auth_web), the dedicated theme portal in [atlashub_storefront_portal](https://github.com/OlamidotunIY/atlashub_storefront_portal), and storefront API/hosting in [atlashub_storefront](https://github.com/OlamidotunIY/atlashub_storefront). **Compliance is not globally eliminated:** provider-specific KYC/KYB and privacy, tax, fraud or jurisdictional requirements remain where applicable. Current Java code and legacy text below still reflect the old Anchor programme; do not mistake them for the target. Full [identity separation](docs/architecture/identity-organization-separation.md), [provider migration](docs/architecture/provider-banking-decommission.md), [integration contract](docs/architecture/global-provider-integrations-proposal.md).
+> **CURRENT ARCHITECTURE — 2026-10-28:** Atlas Hub separates global **User registration** from authenticated **Organization creation** and uses optional merchant-connected providers. A user may authenticate without an organization. The former platform compliance module and automatic Anchor banking onboarding have been removed. Provider verification and capabilities are scoped to each TEST or LIVE connection. See [identity separation](docs/architecture/identity-organization-separation.md), [provider migration](docs/architecture/provider-banking-decommission.md), and [integration architecture](docs/architecture/global-provider-integrations-proposal.md).
 
 # AtlasHub Backend — Unified Business Operating System
 
@@ -76,8 +76,8 @@ AtlasHub is built specifically for:
 * **Periodic Stock Counts**: Carry out discrepancy auditing and variance reconciliations.
 
 ### 3. Embedded Banking & Payments (Atlas Pay)
-* **Dedicated Virtual NUBAN Accounts**: Generate programmatic deposit accounts (via Anchor integration) for instant bank transfer collections with zero manual confirmation.
-* **Card & Online Charge Processing**: Initiate and verify card transactions via Paystack integration with webhook validation and signature authentication.
+* **Provider-Based Collections**: Connect supported merchant accounts and enable only the collection methods verified for that provider, country, currency, and environment.
+* **Card & Online Charge Processing**: Route card charges through eligible Paystack or Stripe connections with connection-scoped credentials, webhook validation, and server reconciliation.
 * **Split Settlements & Automated Commission**: Configure flexible split rules (percentage or fixed fees) across vendor and parent bank accounts upon checkout.
 * **Double-Entry Transaction Ledger**: Maintain immutable financial balances with running calculation engines for business operating and settlement accounts.
 
@@ -87,11 +87,11 @@ AtlasHub is built specifically for:
 * **Maker-Checker Governance**: Sensitive manual adjustments over configured thresholds require a separate supervisor approval; self-approval is rejected at the domain layer.
 * **Balance Snapshotting**: Point-in-time financial snapshots for historical balance verification and reporting.
 
-### 5. Enterprise Identity, Access & Compliance
+### 5. Enterprise Identity, Access & Security
 * **Multi-Tenant Organizations**: Hierarchical organizational structures supporting multiple outlets and staff permissions.
 * **Robust Authentication**: RSA-256 signed JWTs with refresh token rotation, device fingerprinting, and OTP verification via email.
 * **Granular Role-Based Access Control (RBAC)**: Fine-grained permissions per resource (`commerce:orders:create`, `pay:ledger:read`, `gl:entry:approve`, etc.).
-* **Regulatory Compliance & KYC**: Automated onboarding workflows with business document verification (CAC, director IDs, utility bills) and automated verification tier escalation.
+* **Connection-Specific Provider Verification**: Provider onboarding state and confirmed capabilities belong to each merchant connection and never gate ordinary Atlas Hub access.
 * **Tamper-Evident Audit Logging**: Centralized activity stream recording every critical actor action, IP address, and payload.
 
 ---
@@ -127,12 +127,12 @@ atlashub-backend/
 │   ├── authentication/                ← Identity, session management, RSA JWT signing, OTP
 │   ├── accounts/                      ← Users, organizations, outlets
 │   ├── iam/                           ← Roles, permissions, memberships, API keys
-│   ├── compliance/                    ← Business KYC, document verification, AML status
 │   ├── notifications/                 ← Email transmission, delivery tracking
 │   └── storage/                       ← Document and asset uploads (Firebase Storage)
+├── atlashub-integrations/             ← Provider catalog, merchant connections, eligibility, routing
 ├── atlashub-pay/
-│   ├── accounts/                      ← Dedicated business deposit & sub-accounts (Anchor)
-│   ├── charges/                       ← Card & direct charge orchestration (Paystack)
+│   ├── accounts/                      ← Optional provider account references and banking views
+│   ├── charges/                       ← Connected-provider charge orchestration
 │   ├── ledger/                        ← Real-time internal financial accounts & entries
 │   ├── settlement/                    ← Settlement polling, credit evidence, reconciliation
 │   ├── splits/                        ← Split rules and automated revenue sharing

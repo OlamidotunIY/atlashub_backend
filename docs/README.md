@@ -1,4 +1,4 @@
-> **TARGET ARCHITECTURE NOTICE — 2026-10-25 (not yet implemented):** Atlas Hub now separates global **User registration** from optional **Organization creation**, retires mandatory Atlas-owned Anchor banking and five-step KYB approval, and uses **merchant-connected payment/logistics providers** with capability-specific provider verification. User with zero organizations is valid; no payment provider is required for identity, organization, HR, catalog, inventory, accounting or theme-creator signup. Auth UI lives in [atlashub_auth_web](https://github.com/OlamidotunIY/atlashub_auth_web), the dedicated theme portal in [atlashub_storefront_portal](https://github.com/OlamidotunIY/atlashub_storefront_portal), and storefront API/hosting in [atlashub_storefront](https://github.com/OlamidotunIY/atlashub_storefront). **Compliance is not globally eliminated:** provider-specific KYC/KYB and privacy, tax, fraud or jurisdictional requirements remain where applicable. Current Java code and legacy text below still reflect the old Anchor programme; do not mistake them for the target. Full [identity separation](architecture/identity-organization-separation.md), [provider migration](architecture/provider-banking-decommission.md), [integration contract](architecture/global-provider-integrations-proposal.md).
+> **CURRENT ARCHITECTURE — 2026-10-28:** User registration is independent from authenticated organization creation. Merchant payment providers are optional connections with country, currency, environment, health, and verified-capability eligibility. The former universal compliance module and automatic Anchor provisioning have been removed.
 
 # AtlasHub Backend — Documentation
 
@@ -31,7 +31,6 @@ atlashub-backend/
 ├── atlashub-platform/
 │   ├── accounts/             ← User and Organization registration
 │   ├── auth/                 ← JWT, sessions, API key HMAC verification
-│   ├── compliance/           ← LEGACY mandatory Anchor banking KYB (retire after migration)
 │   ├── iam/                  ← Custom roles, permissions, memberships, invitations, API keys
 │   ├── catalog/              ← Platform product catalogue and pricing plans
 │   ├── billing/              ← Subscriptions, invoices, entitlements
@@ -59,7 +58,6 @@ atlashub-backend/
 |---|---|---|
 | `accounts` | [accounts-design.md](./modules/accounts-design.md) | User & Organization registration |
 | `auth` | [auth-design.md](./modules/auth-design.md) | JWT, sessions, HMAC signing |
-| `compliance` (LEGACY, decommission target) | [compliance-design.md](./modules/compliance-design.md) | Historical Anchor five-step KYB, **not required** for user/org signup or general Atlas Hub operations |
 | `iam` | [iam-design.md](./modules/iam-design.md) | Roles, permissions, memberships, API keys |
 | `catalog` | [catalog-design.md](./modules/catalog-design.md) | Platform product catalogue & pricing |
 | `billing` | [billing-design.md](./modules/billing-design.md) | Subscriptions, invoices, entitlements |

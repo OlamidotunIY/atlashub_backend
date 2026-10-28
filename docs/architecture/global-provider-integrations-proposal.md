@@ -1,6 +1,6 @@
 # Architecture proposal: merchant-connected integrations and global operations
 
-Status: ACCEPTED target provider-connected architecture — documentation only; not implemented. Supersedes mandatory Atlas-operated Anchor banking and global KYB.
+Status: IMPLEMENTED CORE — authentication separation, compliance removal, provider catalog/connections, Paystack and Stripe charge routing, and connection-scoped Paystack webhooks are in the Java backend. Additional provider operations continue through the same adapter boundary.
 Date: 2026-10-24
 Scope: AtlasHub backend (Java/Spring Boot modular monolith).
 Related: [User/Organization separation](./identity-organization-separation.md), [Anchor retirement](./provider-banking-decommission.md), [AI command center](./ai-command-center-voice-security-proposal.md), [storefront platform](./storefront-theme-platform-proposal.md), [delivery plan](./global-expansion-delivery-plan.md).
