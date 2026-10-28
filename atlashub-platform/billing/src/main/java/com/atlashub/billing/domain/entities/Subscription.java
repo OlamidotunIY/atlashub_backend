@@ -204,11 +204,6 @@ public class Subscription extends AggregateRoot<Long> {
         this.updatedAt = ZonedDateTime.now();
     }
 
-    public void markCompliancePending() {
-        this.status = SubscriptionStatus.PENDING_COMPLIANCE;
-        this.updatedAt = ZonedDateTime.now();
-    }
-
     @Override
     public Long getId() {
         return id;
