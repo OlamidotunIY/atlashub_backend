@@ -90,9 +90,6 @@ public class Organization extends AggregateRoot<Long> {
         if (registrationType == null || industry == null || currency == null || country == null) {
             throw new InvalidOrganizationException("Registration type, industry, country, and currency are required");
         }
-        if (currency != country.deriveCurrency()) {
-            throw new InvalidOrganizationException("Currency must match the organization's country");
-        }
     }
 
     @Override

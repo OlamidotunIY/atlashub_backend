@@ -1,7 +1,7 @@
 package com.atlashub.accounts.presentation.rest;
 
-import com.atlashub.accounts.application.command.RegisterOrg.RegisterOrganizationCommand;
-import com.atlashub.accounts.application.command.RegisterOrg.RegisterOrganizationHandler;
+import com.atlashub.accounts.application.command.RegisterUser.RegisterUserCommand;
+import com.atlashub.accounts.application.command.RegisterUser.RegisterUserHandler;
 import com.atlashub.accounts.application.command.UpdateUserProfile.UpdateUserProfileCommand;
 import com.atlashub.accounts.application.command.UpdateUserProfile.UpdateUserProfileHandler;
 import com.atlashub.accounts.application.query.GetUserProfile.GetUserProfileHandler;
@@ -37,11 +37,11 @@ import org.springframework.web.bind.annotation.RestController;
 @Validated
 public class UserController {
 
-    private final RegisterOrganizationHandler registerHandler;
+    private final RegisterUserHandler registerHandler;
     private final UpdateUserProfileHandler updateProfileHandler;
     private final GetUserProfileHandler getUserProfileHandler;
 
-    public UserController(RegisterOrganizationHandler registerHandler,
+    public UserController(RegisterUserHandler registerHandler,
                           UpdateUserProfileHandler updateProfileHandler,
                           GetUserProfileHandler getUserProfileHandler) {
         this.registerHandler = registerHandler;
@@ -51,22 +51,10 @@ public class UserController {
 
     @PublicEndpoint
     @PostMapping("/register")
-    @Operation(summary = "Register a new user and organization")
+    @Operation(summary = "Register a new user")
     public ResponseEntity<ApiResponse<Void>> register(@Valid @RequestBody RegisterRequest request) {
-        registerHandler.execute(new RegisterOrganizationCommand(
-                request.businessName(),
-                request.registrationType(),
-                request.industry(),
-                request.description(),
-                request.logoUrl(),
-                request.websiteUrl(),
-                new Country(request.country()),
-                request.firstName(),
-                request.lastName(),
-                request.email(),
-                request.password(),
-                false
-        ));
+        registerHandler.execute(new RegisterUserCommand(request.firstName(), request.lastName(),
+                request.email(), request.password(), new Country(request.country())));
         return done("Registration successful. Please verify your email.");
     }
 
@@ -110,7 +98,6 @@ public class UserController {
                 result.imageUrl(),
                 result.country(),
                 result.activeEnvironment().name(),
-                result.complianceApproved(),
                 result.activeOrganizationRole(),
                 result.activeOrganization() == null ? null : new OrganizationDetailsResponse(
                         result.activeOrganization().id(),

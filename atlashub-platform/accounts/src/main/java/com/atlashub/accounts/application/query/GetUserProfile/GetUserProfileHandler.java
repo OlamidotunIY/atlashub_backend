@@ -6,7 +6,6 @@ import com.atlashub.accounts.domain.entities.User;
 import com.atlashub.accounts.domain.repositories.OrganizationRepository;
 import com.atlashub.accounts.domain.repositories.UserRepository;
 import com.atlashub.shared.application.usecase.Query;
-import com.atlashub.shared.application.port.ComplianceQueryPort;
 import com.atlashub.shared.application.port.MembershipQueryPort;
 import org.springframework.stereotype.Component;
 
@@ -18,14 +17,12 @@ public class GetUserProfileHandler extends Query<GetUserProfileQuery, UserProfil
     private final UserRepository userRepository;
     private final OrganizationRepository organizationRepository;
     private final MembershipQueryPort membershipQueryPort;
-    private final ComplianceQueryPort complianceQueryPort;
 
     public GetUserProfileHandler(UserRepository userRepository, OrganizationRepository organizationRepository,
-                                 MembershipQueryPort membershipQueryPort, ComplianceQueryPort complianceQueryPort) {
+                                 MembershipQueryPort membershipQueryPort) {
         this.userRepository = userRepository;
         this.organizationRepository = organizationRepository;
         this.membershipQueryPort = membershipQueryPort;
-        this.complianceQueryPort = complianceQueryPort;
     }
 
     @Override
@@ -36,18 +33,17 @@ public class GetUserProfileHandler extends Query<GetUserProfileQuery, UserProfil
 
         List<OrganizationSummary> organizations = organizationRepository.findAllByIds(orgIds).stream().map(this::toSummary).toList();
         Organization activeOrganization = user.getActiveOrganizationId() == null
+                || !orgIds.contains(user.getActiveOrganizationId())
                 ? null
                 : organizationRepository.findById(user.getActiveOrganizationId()).orElse(null);
         String activeOrganizationRole = activeOrganization == null
                 ? null
                 : membershipQueryPort.getActiveRoleName(user.getId(), activeOrganization.getId()).orElse(null);
-        boolean complianceApproved = activeOrganization != null
-                && complianceQueryPort.isApproved(activeOrganization.getId());
 
         return new UserProfileResult(
                 user.getId(), user.getFirstName(), user.getLastName(), user.getEmail().value(),
                 user.getPhone() != null ? user.getPhone().value() : null, user.getImageUrl(), user.getCountry().code(),
-                user.getActiveEnvironment(), complianceApproved, activeOrganizationRole,
+                user.getActiveEnvironment(), activeOrganizationRole,
                 toActiveOrganization(activeOrganization), user.getCreatedAt(), organizations);
     }
 
