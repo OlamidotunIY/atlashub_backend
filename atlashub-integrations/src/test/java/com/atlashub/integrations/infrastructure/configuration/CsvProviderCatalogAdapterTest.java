@@ -1,4 +1,4 @@
-package com.atlashub.integrations.application;
+package com.atlashub.integrations.infrastructure.configuration;
 
 import com.atlashub.integrations.domain.valueobject.Capability;
 import com.atlashub.integrations.domain.valueobject.Provider;
@@ -7,11 +7,11 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class ProviderCatalogTest {
-    private final ProviderCatalog catalog = new ProviderCatalog();
+class CsvProviderCatalogAdapterTest {
+    private final CsvProviderCatalogAdapter catalog = new CsvProviderCatalogAdapter();
 
     @Test
-    void country_currency_and_environment_bound_the_published_offering() {
+    void countryCurrencyAndEnvironmentBoundThePublishedOffering() {
         assertTrue(catalog.supports(Provider.PAYSTACK, "NG", ApiEnvironment.LIVE,
                 "NGN", Capability.CARD_COLLECTION));
         assertFalse(catalog.supports(Provider.PAYSTACK, "US", ApiEnvironment.LIVE,
@@ -23,7 +23,7 @@ class ProviderCatalogTest {
     }
 
     @Test
-    void anchor_banking_never_claims_merchant_card_collection() {
+    void anchorBankingNeverClaimsMerchantCardCollection() {
         assertTrue(catalog.supports(Provider.ANCHOR, "NG", ApiEnvironment.TEST,
                 "NGN", Capability.BANKING));
         assertFalse(catalog.supports(Provider.ANCHOR, "NG", ApiEnvironment.TEST,
@@ -31,7 +31,7 @@ class ProviderCatalogTest {
     }
 
     @Test
-    void stripe_market_is_based_on_the_merchants_country_not_the_buyers_country() {
+    void stripeMarketUsesMerchantCountry() {
         assertTrue(catalog.supports(Provider.STRIPE, "FR", ApiEnvironment.LIVE,
                 "EUR", Capability.CARD_COLLECTION));
         assertFalse(catalog.supports(Provider.STRIPE, "NG", ApiEnvironment.LIVE,

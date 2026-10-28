@@ -1,7 +1,7 @@
 package com.atlashub.integrations.infrastructure.security;
 
-import com.atlashub.integrations.infrastructure.persistence.CredentialJpa;
-import com.atlashub.integrations.infrastructure.persistence.SpringCredentialRepository;
+import com.atlashub.integrations.infrastructure.persistence.entities.CredentialJpa;
+import com.atlashub.integrations.infrastructure.persistence.repositories.SpringDataCredentialRepository;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
@@ -14,7 +14,7 @@ import static org.mockito.Mockito.*;
 class EncryptedCredentialVaultTest {
     @Test
     void ciphertext_and_reference_never_contain_the_secret_and_round_trip_is_authenticated() {
-        SpringCredentialRepository rows = mock(SpringCredentialRepository.class);
+        SpringDataCredentialRepository rows = mock(SpringDataCredentialRepository.class);
         String encoded = Base64.getEncoder().encodeToString(new byte[32]);
         EncryptedCredentialVault vault = new EncryptedCredentialVault(rows, () -> encoded);
         String reference = vault.store("sk_test_sensitive");
