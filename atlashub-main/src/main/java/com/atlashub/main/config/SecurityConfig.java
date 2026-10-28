@@ -56,8 +56,11 @@ public class SecurityConfig {
                                 "/api/v1/password/reset",
                                 "/api/v1/devices/verify",
                                 "/api/v1/register",
+                                "/api/v1/integrations/stripe/callback",
                                 "/.well-known/jwks.json",
-                                "/api/v1/webhooks/anchor/**"
+                                "/api/v1/webhooks/anchor/**",
+                                "/api/v1/webhooks/paystack/**",
+                                "/api/v1/webhooks/stripe/**"
                         ).permitAll()
                         // Swagger / OpenAPI
                         .requestMatchers(

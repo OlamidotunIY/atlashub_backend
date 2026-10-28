@@ -40,10 +40,6 @@ jwt:
   expiration-minutes: ${ATLASHUB_JWT_EXPIRY_MINUTES:15}
 
 atlashub:
-  compliance:
-    encryption-key: ${ATLASHUB_COMPLIANCE_ENCRYPTION_KEY:}
-    terms-version: ${ATLASHUB_COMPLIANCE_TERMS_VERSION:v1}
-    anchor-reconciliation-cron: '${ATLASHUB_COMPLIANCE_RECONCILIATION_CRON:0 */15 * * * *}'
   pay:
     accounts:
       encryption-key: ${ATLASHUB_PAY_ACCOUNTS_ENCRYPTION_KEY:}
@@ -56,6 +52,16 @@ atlashub:
     issuer: ${ATLASHUB_JWT_ISSUER:atlashub-authentication}
     audience: ${ATLASHUB_JWT_AUDIENCE:atlashub-api}
   integrations:
+    stripe:
+      redirect-uri: ${ATLASHUB_STRIPE_REDIRECT_URI:http://localhost:8080/api/v1/integrations/stripe/callback}
+      test:
+        client-id: ${ATLASHUB_STRIPE_TEST_CLIENT_ID:}
+        secret-key: ${ATLASHUB_STRIPE_TEST_SECRET_KEY:}
+        webhook-secret: ${ATLASHUB_STRIPE_TEST_WEBHOOK_SECRET:}
+      live:
+        client-id: ${ATLASHUB_STRIPE_LIVE_CLIENT_ID:}
+        secret-key: ${ATLASHUB_STRIPE_LIVE_SECRET_KEY:}
+        webhook-secret: ${ATLASHUB_STRIPE_LIVE_WEBHOOK_SECRET:}
     paystack:
       enabled: ${ATLASHUB_PAYSTACK_ENABLED:false}
       test-merchant-id: ${ATLASHUB_PAYSTACK_TEST_MERCHANT_ID:atlashub-paystack-test}
@@ -89,9 +95,6 @@ atlashub:
           transfers: ${ATLASHUB_ANCHOR_SANDBOX_TRANSFERS:true}
           fbo-account-id: ${ATLASHUB_ANCHOR_SANDBOX_FBO_ACCOUNT_ID:}
         webhooks:
-          compliance:
-            callback-url: ${ATLASHUB_ANCHOR_SANDBOX_COMPLIANCE_WEBHOOK_URL:https://api.atlashub.example/api/v1/webhooks/anchor/sandbox/compliance}
-            token: ${ATLASHUB_ANCHOR_SANDBOX_COMPLIANCE_WEBHOOK_TOKEN:}
           pay-accounts:
             callback-url: ${ATLASHUB_ANCHOR_SANDBOX_PAY_ACCOUNTS_WEBHOOK_URL:https://api.atlashub.example/api/v1/webhooks/anchor/sandbox/pay-accounts}
             token: ${ATLASHUB_ANCHOR_SANDBOX_PAY_ACCOUNTS_WEBHOOK_TOKEN:}
@@ -107,9 +110,6 @@ atlashub:
           transfers: ${ATLASHUB_ANCHOR_LIVE_TRANSFERS:true}
           fbo-account-id: ${ATLASHUB_ANCHOR_LIVE_FBO_ACCOUNT_ID:}
         webhooks:
-          compliance:
-            callback-url: ${ATLASHUB_ANCHOR_LIVE_COMPLIANCE_WEBHOOK_URL:https://api.atlashub.example/api/v1/webhooks/anchor/live/compliance}
-            token: ${ATLASHUB_ANCHOR_LIVE_COMPLIANCE_WEBHOOK_TOKEN:}
           pay-accounts:
             callback-url: ${ATLASHUB_ANCHOR_LIVE_PAY_ACCOUNTS_WEBHOOK_URL:https://api.atlashub.example/api/v1/webhooks/anchor/live/pay-accounts}
             token: ${ATLASHUB_ANCHOR_LIVE_PAY_ACCOUNTS_WEBHOOK_TOKEN:}

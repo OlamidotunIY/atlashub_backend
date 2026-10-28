@@ -24,6 +24,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -78,7 +79,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String environment = claims.get("env", String.class);
 
             if (sessionId == null || sessionId.isBlank()
-                    || organizationId == null || organizationId.isBlank()
                     || environment == null || environment.isBlank()) {
                 SecurityContextHolder.clearContext();
                 filterChain.doFilter(request, response);
@@ -88,7 +88,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             Session session = sessionRepository.findById(Long.valueOf(sessionId))
                     .filter(activeSession -> !activeSession.isExpired())
                     .filter(activeSession -> activeSession.getUserId().equals(userId))
-                    .filter(activeSession -> activeSession.getOrganizationId().equals(Long.valueOf(organizationId)))
+                    .filter(activeSession -> Objects.equals(activeSession.getOrganizationId(),
+                            organizationId == null ? null : Long.valueOf(organizationId)))
                     .filter(activeSession -> activeSession.getEnvironment().equals(environment))
                     .orElse(null);
 
@@ -107,8 +108,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     .toList();
 
             AuthenticatedPrincipal principal = new AuthenticatedPrincipal(
-                    Long.valueOf(userId), Long.valueOf(organizationId), environment, sessionId,
+                    Long.valueOf(userId), organizationId == null ? null : Long.valueOf(organizationId), environment, sessionId,
                     jti, ZonedDateTime.ofInstant(claims.getExpiration().toInstant(), ZoneId.of("UTC")));
+            if (principal.activeOrganizationId() == null && !availableWithoutOrganization(request)) {
+                response.sendError(HttpServletResponse.SC_FORBIDDEN, "Select an organization first");
+                return;
+            }
             UsernamePasswordAuthenticationToken auth =
                     new UsernamePasswordAuthenticationToken(principal, null, authorities);
             SecurityContextHolder.getContext().setAuthentication(auth);
@@ -118,5 +123,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private boolean availableWithoutOrganization(HttpServletRequest request) {
+        String path = request.getRequestURI();
+        if ("POST".equals(request.getMethod()) && "/api/v1/organizations".equals(path)) return true;
+        return path.equals("/api/v1/me") || path.equals("/api/v1/sessions")
+                || path.equals("/api/v1/register") || path.equals("/api/v1/login")
+                || path.equals("/api/v1/refresh") || path.equals("/api/v1/email/verify")
+                || path.equals("/api/v1/email/resend-verification")
+                || path.equals("/api/v1/password/forgot") || path.equals("/api/v1/password/reset")
+                || path.equals("/api/v1/organizations/switch")
+                || path.equals("/api/v1/environments/switch")
+                || path.equals("/api/v1/invitations/accept")
+                || path.equals("/api/v1/invitations/decline")
+                || path.startsWith("/api/v1/devices")
+                || path.equals("/api/v1/logout") || path.equals("/api/v1/logout-all")
+                || path.equals("/api/v1/password/change");
     }
 }
