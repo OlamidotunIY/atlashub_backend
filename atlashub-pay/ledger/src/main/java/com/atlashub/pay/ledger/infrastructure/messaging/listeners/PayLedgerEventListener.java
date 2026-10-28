@@ -11,7 +11,6 @@ import com.atlashub.pay.ledger.infrastructure.messaging.events.LedgerInboundEven
 import com.atlashub.pay.ledger.infrastructure.messaging.events.LedgerInboundEvents.ProviderSettlementReceivedEvent;
 import com.atlashub.pay.ledger.infrastructure.messaging.events.LedgerInboundEvents.ReservedAccountActivatedEvent;
 import com.atlashub.pay.ledger.infrastructure.messaging.events.LedgerInboundEvents.ReservedAccountFundedEvent;
-import com.atlashub.pay.ledger.infrastructure.messaging.events.OrganizationRegistered;
 import com.atlashub.shared.application.messaging.BaseKafkaEventListener;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
@@ -35,8 +34,6 @@ public class PayLedgerEventListener extends BaseKafkaEventListener {
 
     @PostConstruct
     public void init() {
-        registerSubscription("OrganizationRegistered", "pay-ledger-organization-registered");
-        registerSubscription("com.atlashub.accounts.domain.events.OrganizationRegistered", "pay-ledger-organization-registered");
         registerSubscription("ReservedAccountActivatedEvent", "pay-ledger-reserved-account-activated");
         registerSubscription("ChargeSuccessfulEvent", "pay-ledger-charge-successful");
         registerSubscription("ChargeRefundedEvent", "pay-ledger-charge-refunded");
@@ -46,18 +43,6 @@ public class PayLedgerEventListener extends BaseKafkaEventListener {
         registerSubscription("OrganizationAccountDebitReversedEvent", "pay-ledger-organization-account-debit-reversed");
         registerSubscription("PayoutCompletedEvent", "pay-ledger-payout-completed");
         registerSubscription("ProviderSettlementReceivedEvent", "pay-ledger-provider-settled");
-    }
-
-    @KafkaListener(topics = "organization-events", groupId = "pay-ledger-organization-registered")
-    public void organizationRegistered(String message) {
-        processEventIfMatches(message, "OrganizationRegistered", OrganizationRegistered.class,
-                log, "pay-ledger-organization-registered", e -> e instanceof TimeoutException, event -> {
-                    String currency = event.payload().currency();
-                    handler.execute(command(ProcessLedgerEventCommand.Action.BOOTSTRAP_ORGANIZATION,
-                            event.aggregateId(), "TEST", null, null, null, null, "SYSTEM", null, null, currency));
-                    handler.execute(command(ProcessLedgerEventCommand.Action.BOOTSTRAP_ORGANIZATION,
-                            event.aggregateId(), "LIVE", null, null, null, null, "SYSTEM", null, null, currency));
-                });
     }
 
     @KafkaListener(topics = "pay-events", groupId = "pay-ledger-reserved-account-activated")

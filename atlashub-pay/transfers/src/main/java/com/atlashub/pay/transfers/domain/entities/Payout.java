@@ -128,6 +128,13 @@ public class Payout extends AggregateRoot<Long> {
         this.status = PayoutStatus.PROCESSING;
     }
 
+    public void markPending(String providerReference) {
+        if (this.status != PayoutStatus.PROCESSING || providerReference == null || providerReference.isBlank()) {
+            throw new InvalidPayoutStateException("A processing payout requires a provider reference");
+        }
+        this.providerReference = providerReference;
+    }
+
     public void complete(String providerReference) {
         if (this.status != PayoutStatus.PROCESSING) {
             throw new InvalidPayoutStateException("Payout cannot be completed from status: " + this.status);

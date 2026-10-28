@@ -44,7 +44,7 @@ class ExecutePayoutHandlerTest {
     }
 
     @Test
-    @DisplayName("Should execute payout and transition to SUCCESSFUL when gateway returns reference")
+    @DisplayName("Provider acceptance leaves payout pending confirmation")
     void shouldExecutePayoutSuccessfully() {
         Payout payout = Payout.create(
                 1L, 10L, Money.of(new BigDecimal("50000.00"), CurrencyCode.NGN),
@@ -57,13 +57,13 @@ class ExecutePayoutHandlerTest {
 
         handler.execute(new ExecutePayoutCommand(1L));
 
-        assertEquals(PayoutStatus.SUCCESSFUL, payout.getStatus());
+        assertEquals(PayoutStatus.PROCESSING, payout.getStatus());
         assertEquals("TRF_99999", payout.getProviderReference());
-        assertNotNull(payout.getCompletedAt());
+        org.junit.jupiter.api.Assertions.assertNull(payout.getCompletedAt());
     }
 
     @Test
-    @DisplayName("Should mark payout FAILED when gateway throws an error")
+    @DisplayName("Transport uncertainty leaves payout pending confirmation")
     void shouldFailPayoutOnGatewayError() {
         Payout payout = Payout.create(
                 2L, 10L, Money.of(new BigDecimal("50000.00"), CurrencyCode.NGN),
@@ -76,9 +76,8 @@ class ExecutePayoutHandlerTest {
 
         handler.execute(new ExecutePayoutCommand(2L));
 
-        assertEquals(PayoutStatus.FAILED, payout.getStatus());
-        assertEquals("Connection timeout to bank switch", payout.getFailureReason());
-        assertNotNull(payout.getCompletedAt());
+        assertEquals(PayoutStatus.PROCESSING, payout.getStatus());
+        org.junit.jupiter.api.Assertions.assertNull(payout.getCompletedAt());
     }
 
     @Test
@@ -87,5 +86,19 @@ class ExecutePayoutHandlerTest {
         when(payoutRepository.findById(999L)).thenReturn(Optional.empty());
 
         assertThrows(PayoutNotFoundException.class, () -> handler.execute(new ExecutePayoutCommand(999L)));
+    }
+
+    @Test
+    void payout_without_a_connected_gateway_fails_without_a_provider_reference() {
+        Payout payout = Payout.create(3L, 10L,
+                Money.of(new BigDecimal("500.00"), CurrencyCode.NGN), "044", "0123456789",
+                "John Doe", "Test", "REF-NONE", PaymentProvider.PAYSTACK,
+                SourceSystem.MANUAL, "SRC-3", 100L, false);
+        when(payoutRepository.findById(3L)).thenReturn(Optional.of(payout));
+
+        new ExecutePayoutHandler(payoutRepository, null).execute(new ExecutePayoutCommand(3L));
+
+        assertEquals(PayoutStatus.FAILED, payout.getStatus());
+        org.junit.jupiter.api.Assertions.assertNull(payout.getProviderReference());
     }
 }

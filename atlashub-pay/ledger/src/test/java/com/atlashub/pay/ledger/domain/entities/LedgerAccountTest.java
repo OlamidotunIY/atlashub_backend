@@ -17,9 +17,9 @@ class LedgerAccountTest {
                 LedgerAccountType.OPERATING, null, null, null,
                 CurrencyCode.NGN, NormalBalance.CREDIT);
 
-        account.freeze(LedgerRestrictionType.COMPLIANCE);
+        account.freeze(LedgerRestrictionType.MANUAL);
         account.freeze(LedgerRestrictionType.ORGANIZATION_BAN);
-        account.unfreeze(LedgerRestrictionType.COMPLIANCE);
+        account.unfreeze(LedgerRestrictionType.MANUAL);
 
         assertEquals(ApiEnvironment.TEST, account.getEnvironment());
         assertEquals(LedgerAccountStatus.FROZEN, account.getStatus());

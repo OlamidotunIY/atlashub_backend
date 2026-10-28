@@ -65,7 +65,7 @@ class LedgerAccountRepositoryAdapterIntegrationTest {
                 "NGN",
                 "CREDIT",
                 "FROZEN",
-                Set.of(LedgerRestrictionType.COMPLIANCE, LedgerRestrictionType.RISK),
+                Set.of(LedgerRestrictionType.MANUAL, LedgerRestrictionType.RISK),
                 ZonedDateTime.now(),
                 ZonedDateTime.now(),
                 null
@@ -78,7 +78,7 @@ class LedgerAccountRepositoryAdapterIntegrationTest {
         var accounts = repository.findAllByOrganizationIdAndEnvironment(ORGANIZATION_ID, ApiEnvironment.LIVE);
 
         assertEquals(1, accounts.size());
-        assertEquals(Set.of(LedgerRestrictionType.COMPLIANCE, LedgerRestrictionType.RISK),
+        assertEquals(Set.of(LedgerRestrictionType.MANUAL, LedgerRestrictionType.RISK),
                 accounts.getFirst().getActiveRestrictions());
     }
 
@@ -86,7 +86,7 @@ class LedgerAccountRepositoryAdapterIntegrationTest {
     void mapsRestrictionsForSingleAccountAfterPersistenceSessionCloses() {
         var account = repository.findById(ACCOUNT_ID).orElseThrow();
 
-        assertTrue(account.getActiveRestrictions().contains(LedgerRestrictionType.COMPLIANCE));
+        assertTrue(account.getActiveRestrictions().contains(LedgerRestrictionType.MANUAL));
         assertTrue(account.getActiveRestrictions().contains(LedgerRestrictionType.RISK));
     }
 

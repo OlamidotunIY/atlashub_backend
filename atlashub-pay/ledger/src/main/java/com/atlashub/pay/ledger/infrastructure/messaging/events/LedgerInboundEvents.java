@@ -108,15 +108,4 @@ public final class LedgerInboundEvents {
         public record Payload(Long organizationId, ZonedDateTime unbannedAt) {}
     }
 
-    public record OrganizationComplianceSuspendedEvent(
-            String eventId, Long aggregateId, ZonedDateTime occurredAt, String correlationId, Payload payload) {
-        public record Payload(Long organizationId, String anchorBusinessCustomerId,
-                              String reason, ZonedDateTime suspendedAt) {}
-    }
-
-    public record OrganizationComplianceReinstatedEvent(
-            String eventId, Long aggregateId, ZonedDateTime occurredAt, String correlationId, Payload payload) {
-        public record Payload(Long organizationId, String anchorBusinessCustomerId,
-                              String reason, ZonedDateTime reinstatedAt) {}
-    }
 }
