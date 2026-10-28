@@ -9,7 +9,7 @@ import java.math.BigDecimal;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 
-@Component
+@Component("billingGetTransactionVolumeHandler")
 public class GetTransactionVolumeHandler extends Query<GetTransactionVolumeQuery, TransactionVolumeResult> {
 
     private final TransactionVolumeLedgerRepository ledgerRepository;

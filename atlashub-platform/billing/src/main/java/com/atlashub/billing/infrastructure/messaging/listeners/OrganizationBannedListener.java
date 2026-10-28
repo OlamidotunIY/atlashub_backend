@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.concurrent.TimeoutException;
 
-@Component
+@Component("billingOrganizationBannedListener")
 public class OrganizationBannedListener extends BaseKafkaEventListener {
 
     private static final Logger log = LoggerFactory.getLogger(OrganizationBannedListener.class);

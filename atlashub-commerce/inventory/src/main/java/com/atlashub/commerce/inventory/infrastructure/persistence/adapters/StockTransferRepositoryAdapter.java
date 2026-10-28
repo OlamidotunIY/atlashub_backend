@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-@Component
+@Component("inventoryStockTransferRepositoryAdapter")
 public class StockTransferRepositoryAdapter implements StockTransferRepository {
 
     private final SpringDataStockTransferRepository transferRepo;

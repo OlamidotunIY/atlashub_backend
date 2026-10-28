@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Optional;
 import org.springframework.stereotype.Component;
 
-@Component
+@Component("warehousingStockTransferRepositoryAdapter")
 public class StockTransferRepositoryAdapter
         extends JpaBaseRepository<StockTransfer, StockTransferJpa>
         implements StockTransferRepository {

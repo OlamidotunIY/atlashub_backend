@@ -7,7 +7,7 @@ import com.atlashub.shared.application.usecase.Command;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-@Component
+@Component("warehousingReceiveStockTransferHandler")
 public class ReceiveStockTransferHandler extends Command<ReceiveStockTransferCommand, ReceiveStockTransferResult> {
 
     private final StockTransferRepository stockTransferRepository;

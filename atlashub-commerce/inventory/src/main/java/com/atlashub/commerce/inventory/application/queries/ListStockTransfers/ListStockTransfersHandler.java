@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.Objects;
 
-@Component
+@Component("inventoryListStockTransfersHandler")
 public class ListStockTransfersHandler extends Query<ListStockTransfersQuery, PageResult<StockTransferResult>> {
 
     private final StockTransferRepository stockTransferRepository;

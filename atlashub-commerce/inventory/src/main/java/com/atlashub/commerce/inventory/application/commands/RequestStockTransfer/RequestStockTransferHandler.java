@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.Objects;
 
-@Component
+@Component("inventoryRequestStockTransferHandler")
 public class RequestStockTransferHandler extends Command<RequestStockTransferCommand, RequestStockTransferResult> {
 
     private final StockTransferRepository stockTransferRepository;

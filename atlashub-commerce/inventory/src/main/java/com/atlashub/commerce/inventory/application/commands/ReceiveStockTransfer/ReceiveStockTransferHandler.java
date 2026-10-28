@@ -15,7 +15,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
-@Component
+@Component("inventoryReceiveStockTransferHandler")
 public class ReceiveStockTransferHandler extends Command<ReceiveStockTransferCommand, Void> {
 
     private final StockTransferRepository stockTransferRepository;

@@ -7,7 +7,7 @@ import java.util.List;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-@Component
+@Component("warehousingListStockTransfersHandler")
 public class ListStockTransfersHandler extends Query<ListStockTransfersQuery, List<StockTransferResult>> {
 
     private final StockTransferRepository stockTransferRepository;

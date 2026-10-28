@@ -8,7 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 
-@Component
+@Component("analyticsGetTransactionVolumeHandler")
 public class GetTransactionVolumeHandler extends Query<GetTransactionVolumeQuery, TransactionVolumeResult> {
 
     private final TransactionVolumeProjectionRepository repository;
