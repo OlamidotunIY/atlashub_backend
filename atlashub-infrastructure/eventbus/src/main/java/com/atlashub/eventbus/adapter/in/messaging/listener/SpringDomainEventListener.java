@@ -23,13 +23,6 @@ public class SpringDomainEventListener {
 
     private String getTopicForEvent(Class<?> eventType) {
         String eventClassName = eventType.getSimpleName();
-        if (eventType.getPackageName().startsWith("com.atlashub.compliance.")) {
-            return "compliance-events";
-        }
-        if (eventType.getPackageName().startsWith("com.atlashub.pay.")
-                && eventClassName.startsWith("ProviderOnboarding")) {
-            return "pay-events";
-        }
         if (eventClassName.startsWith("ApiKey") || eventClassName.startsWith("CustomRole")
                 || eventClassName.startsWith("Invitation") || eventClassName.startsWith("Member")) {
             return "iam-events";
@@ -39,6 +32,8 @@ public class SpringDomainEventListener {
             return "user-events";
         } else if (eventClassName.startsWith("Auth") || eventClassName.startsWith("Otp")) {
             return "auth-events";
+        } else if (eventClassName.startsWith("ProviderConnection")) {
+            return "integration-events";
         }
         return "system-events";
     }

@@ -4,7 +4,6 @@ public enum AuditResourceType {
     SESSION,
     ACCOUNT,
     ORGANIZATION,
-    COMPLIANCE,
     INVITATION,
     MEMBER,
     INVENTORY,

@@ -24,7 +24,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/audit-logs")
-@Tag(name = "Audit Logs", description = "Immutable security and compliance audit trails")
+@Tag(name = "Audit Logs", description = "Immutable security audit trails")
 @Validated
 public class AuditLogController {
 

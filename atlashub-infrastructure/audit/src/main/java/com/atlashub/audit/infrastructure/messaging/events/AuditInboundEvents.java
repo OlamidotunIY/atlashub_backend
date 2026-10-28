@@ -42,31 +42,6 @@ public final class AuditInboundEvents {
             ZonedDateTime occurredAt
     ) {}
 
-    // Compliance Events
-    public record OrganizationComplianceSubmittedEvent(
-            String eventId,
-            Long organizationId,
-            Long userId,
-            String submissionDetails,
-            ZonedDateTime occurredAt
-    ) {}
-
-    public record OrganizationComplianceApprovedEvent(
-            String eventId,
-            Long organizationId,
-            Long approvedByUserId,
-            String notes,
-            ZonedDateTime occurredAt
-    ) {}
-
-    public record OrganizationComplianceRejectedEvent(
-            String eventId,
-            Long organizationId,
-            Long rejectedByUserId,
-            String reason,
-            ZonedDateTime occurredAt
-    ) {}
-
     public record OrganizationBannedEvent(
             String eventId,
             Long organizationId,

@@ -95,15 +95,15 @@ public class KafkaTopicConfig {
     }
 
     @Bean
-    public NewTopic complianceEventsTopic() {
-        return TopicBuilder.name("compliance-events")
+    public NewTopic anchorEventsTopic() {
+        return TopicBuilder.name("anchor-events")
                 .config("retention.ms", RETENTION_MS)
                 .build();
     }
 
     @Bean
-    public NewTopic anchorEventsTopic() {
-        return TopicBuilder.name("anchor-events")
+    public NewTopic integrationEventsTopic() {
+        return TopicBuilder.name("integration-events")
                 .config("retention.ms", RETENTION_MS)
                 .build();
     }
