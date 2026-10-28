@@ -40,7 +40,7 @@ import java.util.List;
 import java.util.Objects;
 
 @RestController
-@RequestMapping("/api/v1/stock-transfers")
+@RequestMapping("/api/v1/commerce/stock-transfers")
 @Tag(name = "Stock Transfers", description = "Inter-outlet stock transfer requests, approvals, and receipts")
 @SecurityRequirement(name = "bearerAuth")
 public class StockTransferController {

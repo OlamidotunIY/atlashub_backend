@@ -480,7 +480,7 @@ StockReservationJpaRepository
 
 ## Presentation Layer
 
-### Controller: `CommerceInventoryController`
+### Controllers: commerce inventory (`/api/v1` and `/api/v1/commerce`)
 
 | Method | Path | RBAC | Request | Response |
 |---|---|---|---|---|
@@ -490,10 +490,10 @@ StockReservationJpaRepository
 | `POST` | `/inventory/adjust` | `commerce:inventory:adjust` | `AdjustStockRequest` | `void` |
 | `POST` | `/stock-counts` | `commerce:inventory:adjust` | `InitiateStockCountRequest` | `InitiateStockCountResponse` |
 | `POST` | `/stock-counts/{id}/reconcile` | `commerce:inventory:adjust` | `ReconcileStockCountRequest` | `void` |
-| `POST` | `/stock-transfers` | — | `RequestStockTransferRequest` | `RequestStockTransferResponse` |
-| `POST` | `/stock-transfers/{id}/approve` | `commerce:inventory:adjust` | — | `void` |
-| `POST` | `/stock-transfers/{id}/receive` | — | `ReceiveStockTransferRequest` | `void` |
-| `GET` | `/stock-transfers` | — | `?orgId&status&page&size` | `PageResult<StockTransferResult>` |
+| `POST` | `/commerce/stock-transfers` | — | `RequestStockTransferRequest` | `RequestStockTransferResponse` |
+| `POST` | `/commerce/stock-transfers/{id}/approve` | `commerce:inventory:adjust` | — | `void` |
+| `POST` | `/commerce/stock-transfers/{id}/receive` | — | `ReceiveStockTransferRequest` | `void` |
+| `GET` | `/commerce/stock-transfers` | — | `?orgId&status&page&size` | `PageResult<StockTransferResult>` |
 | `POST` | `/returns` | — | `CreateCustomerReturnRequest` | `CreateCustomerReturnResponse` |
 | `POST` | `/returns/{id}/approve` | — | — | `void` |
 
