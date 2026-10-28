@@ -8,6 +8,8 @@ MYSQL_TUNNEL_PORT ?= 3307
 MYSQL_SERVICE ?= mysql
 MYSQL_SERVICE_PORT ?= 3306
 MYSQL_NAMESPACE ?= default
+API_NAMESPACE ?= default
+API_LOG_TAIL ?= 200
 MYSQL_SERVICE_IP = $(shell $(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "sudo k3s kubectl -n $(MYSQL_NAMESPACE) get svc $(MYSQL_SERVICE) -o jsonpath='{.spec.clusterIP}'")
 
 ifeq ($(OS),Windows_NT)
@@ -22,7 +24,7 @@ else
     SSH_KEY = ~/.ssh/id_rsa_azure
 endif
 
-.PHONY: start stop backup-db restore-db ssh mysql-tunnel prune-runtime-images
+.PHONY: start stop backup-db restore-db ssh mysql-tunnel api-logs prune-runtime-images
 
 # 1. Build the infrastructure from scratch and restore the database
 start:
@@ -80,6 +82,13 @@ stop:
 ssh:
 	@echo "=> Connecting to VM..."
 	$(SSH) -i $(SSH_KEY) -o StrictHostKeyChecking=no ubuntu@$(VM_IP)
+
+# Stream API logs from every AtlasHub application pod. Press Ctrl+C to stop.
+# Override the namespace or initial history when needed:
+# make api-logs API_NAMESPACE=production API_LOG_TAIL=500
+api-logs:
+	@echo "=> Streaming AtlasHub API logs from namespace $(API_NAMESPACE)..."
+	$(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "export KUBECONFIG=/home/ubuntu/.kube/config && kubectl logs -n $(API_NAMESPACE) -f -l app=atlashub-app --all-containers=true --tail=$(API_LOG_TAIL) --prefix=true --max-log-requests=10"
 
 # Open a local MySQL tunnel directly to the Kubernetes service ClusterIP.
 # Override the local port when needed: make mysql-tunnel MYSQL_TUNNEL_PORT=3308
