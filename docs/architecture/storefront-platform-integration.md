@@ -24,6 +24,8 @@ Portal and Atlas Web use dedicated [Auth Web](https://github.com/OlamidotunIY/at
 
 Java IAM evolution: grant per-org storefront manage/license/domain/publish permissions; public storefront query scopes; creator identity associations/scopes; reviewer audit and scoped staff actions. If creator metadata stays in Storefront DB, Java User remains identity reference.
 
+Public shopper identity is a separate concern from Atlas Hub business identity. A storefront customer must not become an Atlas Hub User or Organization member. Storefront themes consume a customer-session abstraction supplied by the public SDK; Atlas-hosted customer identity or an approved external identity adapter maps `(storefront, provider, external subject)` to the Java-owned commerce customer. Theme code never receives business sessions, password stores or merchant IAM tokens. The extension model and analytics adapters are specified in the Storefront repository's `customer-identity-extensions.md` and the Theme SDK plugin contract.
+
 ## Registration and provider activation boundary
 
 - `RegisterUser` creates a valid global account independently of `CreateOrganization`; users need not own a business to build React themes.

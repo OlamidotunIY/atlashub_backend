@@ -81,11 +81,11 @@ The repository uses JPA specifications for combined filters and caps page size a
 - page, size, and ascending/descending time order
 
 Additional queries retrieve a transaction by ID, retrieve it by reference, and calculate monthly charge/payout
-volume for the active organization/environment.
+volume for the active organization and explicitly selected payment environment.
 
 ## REST API
 
-All endpoints require `pay:ledger:read`. Tenant/environment scope comes only from `AuthenticatedPrincipal`.
+All endpoints require `pay:ledger:read`. Tenant scope comes from `AuthenticatedPrincipal`; payment environment comes from the explicit `PaymentExecutionContext` described in [the payment environment boundary](../architecture/payment-environment-boundary.md).
 
 | Method | Endpoint | Purpose |
 |---|---|---|

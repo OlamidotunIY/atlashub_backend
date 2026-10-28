@@ -14,7 +14,7 @@ The `auth` module does **not** decide what a user is allowed to do (that is `iam
 
 ### Human Authentication — JWT + Refresh Tokens
 AtlasHub uses a two-token model:
-- **Access Token** (JWT, 15-minute expiry): Signed with RS256. Carries user, active organization, session, environment, and permission claims. Signature validation is local, then the `sid` is checked against Redis on every request; authentication never reads the session database.
+- **Access Token** (JWT, 15-minute expiry): Signed with RS256. Carries user, active organization, session and permission claims. Signature validation is local, then the `sid` is checked against Redis on every request; authentication never reads the session database.
 - **Refresh Token** (opaque UUID, 30-day expiry): Stored in Redis with metadata (device fingerprint, IP, user agent). Used once to obtain a new access token + refresh token pair (rotation).
 
 ### Session Fingerprinting
@@ -37,7 +37,7 @@ Login from an untrusted device fingerprint triggers an email OTP challenge. Trus
 
 ## 2. Machine-to-Machine Authentication (B2B API)
 
-Businesses that integrate with AtlasHub APIs (e.g., a merchant's e-commerce store initiating payments) use **API Key + HMAC-SHA256 request signing**.
+Businesses that integrate with AtlasHub APIs use **API Key + HMAC-SHA256 request signing**. General platform keys have organization/role/scopes without TEST/LIVE. Payment-scoped keys additionally bind one immutable payment environment.
 
 This is more secure than a plain API key because:
 1. The API key is never sent in plaintext in the request body
@@ -48,8 +48,8 @@ This is more secure than a plain API key because:
 
 **Step 1 — API Key Issuance** (managed by IAM; HMAC verification is performed by IAM's authentication service from the main HTTP filter):
 ```
-publicKey:  atlas_pk_live_abc123...   (shown once, safe to expose — identifies the org)
-secretKey:  atlas_sk_live_xyz789...   (shown once only, used for signing — never transmitted)
+publicKey:  atlas_pk_payment_live_abc123...   (payment-key example; shown once)
+secretKey:  atlas_sk_payment_live_xyz789...   (shown once only, used for signing)
 ```
 
 **Step 2 — Building the Signature** (done by the merchant's server):
@@ -63,7 +63,7 @@ signature = HMAC-SHA256(message, secretKey)       # hex-encoded
 
 **Step 3 — Request Headers**:
 ```http
-Authorization: AtlasHmac publicKey=atlas_pk_live_abc123,timestamp=1726543200,nonce=f47ac10b-...,signature=a1b2c3d4...
+Authorization: AtlasHmac publicKey=atlas_pk_payment_live_abc123,timestamp=1726543200,nonce=f47ac10b-...,signature=a1b2c3d4...
 Content-Type: application/json
 ```
 
@@ -73,7 +73,7 @@ Content-Type: application/json
 3. Reject if `|current_time - timestamp| > 300` seconds (5-minute replay window)
 4. Check nonce in Redis: if already seen, reject as replay attack (store nonce with TTL = 10 minutes)
 5. Recompute the HMAC and compare using a constant-time comparison (`MessageDigest.isEqual`)
-6. If valid, inject `HmacAuthPrincipal(orgId, environment)` into the security context
+6. If valid, inject `HmacAuthPrincipal(orgId, role/scopes, optionalPaymentEnvironment)` into the security context. The optional environment exists only for payment-scoped keys.
 
 ---
 
@@ -120,7 +120,6 @@ Session (Redis keys: `session:{tokenHash}` and `session:id:{id}`)
 ├── tokenHash: String     ← SHA-256 of the opaque refresh token; raw token is never persisted
 ├── userId: Long
 ├── organizationId: Long
-├── environment: TEST | LIVE
 ├── deviceFingerprint: String   ← SHA-256(userAgent + deviceType)
 ├── issuedAt: ZonedDateTime
 ├── expiresAt: ZonedDateTime    ← Redis TTL matches this
@@ -159,13 +158,12 @@ Access tokens are signed with RS256 (asymmetric). The private key is held only b
   "jti": "a1b2c3d4-...",                  // unique token ID (for revocation)
   "permissions": ["pay:charges:create",   // RBAC permission claims from iam
                    "commerce:orders:read"],
-  "env": "LIVE",                          // API environment (LIVE or TEST)
   "iat": 1726543200,
   "exp": 1726544100                       // 15 minutes
 }
 ```
 
-The environment and active organization are trusted token context. Controllers must read both from `AuthenticatedPrincipal`; request DTOs must not accept them. Switching organization or environment rotates the session and refresh token, recalculates permissions, and issues a new access token. Switching to LIVE requires approved compliance. TEST and LIVE state, provider resources, idempotency keys, and ledger postings never fall back into each other.
+The active organization and permissions are trusted token context. Switching organization rotates the session and refresh token and recalculates permissions. Payment TEST/LIVE selection is not authentication state and is absent from the session, token and global principal. Payment endpoints resolve an explicit, payment-specific environment according to [the payment environment boundary](../architecture/payment-environment-boundary.md).
 
 ---
 
@@ -182,7 +180,7 @@ The environment and active organization are trusted token context. Controllers m
 
 ## 6. Exceptions & Errors
 
-Authentication uses module-owned exceptions for invalid credentials, locked accounts, required email verification, invalid or expired verification tokens, invalid sessions, unavailable registration credentials, live-mode compliance gating, and domain invariant failures. HMAC/API-key failures belong to IAM and the main security filter rather than this module.
+Authentication uses module-owned exceptions for invalid credentials, locked accounts, required email verification, invalid or expired verification tokens, invalid sessions, unavailable registration credentials and domain invariant failures. Provider production activation and payment-mode failures belong to Integrations/Payment. HMAC/API-key failures belong to IAM and the main security filter rather than this module.
 
 ---
 
@@ -275,6 +273,6 @@ See [setup/api-key-hmac-auth.md](../setup/api-key-hmac-auth.md) for the complete
 - Centralized login/register frontend: [atlashub_auth_web](https://github.com/OlamidotunIY/atlashub_auth_web), shared for Atlas Web, Storefront Portal, future apps.
 - Java `auth` or integrated conformant IdP owns credentials, MFA, sessions, OIDC Authorization Code+PKCE/BFF and logout; frontend is **not** token authority. Current JWT-only auth does not by itself imply implemented SSO.
 - Remove blanket `ComplianceStatus.APPROVED` login/LIVE gating tied to Anchor; enforce provider-specific KYC/capability only for provider-dependent operations, independent of general authentication and HR/inventory/business functions.
-- Any organization environment switch must validate IAM membership. Global identity remains valid on org suspension unless separately disabled.
+- Remove global environment switching and environment claims from identity. The Payment workspace selects TEST/LIVE explicitly for payment operations only. Global identity remains valid on org suspension unless separately disabled.
 
-See [identity migration](../architecture/identity-organization-separation.md).
+See [identity migration](../architecture/identity-organization-separation.md) and [payment environment boundary](../architecture/payment-environment-boundary.md).

@@ -19,14 +19,15 @@ The module never registers a business with a provider. It reads an active profil
 
 ## TEST and LIVE
 
-Every charge has `ApiEnvironment TEST | LIVE`.
+Every charge has `PaymentEnvironment TEST | LIVE`.
 
-- Environment comes from the authenticated principal/API key, never request JSON.
+- Dashboard requests supply an explicit payment environment at the payment API boundary; it is not stored in the authenticated principal.
+- Payment API keys are permanently environment-bound. Webhooks derive environment from the verified endpoint/secret and matched provider authorization.
 - Idempotency is unique by `(organizationId, environment, reference)`.
 - TEST uses sandbox resources only and never falls back to LIVE.
 - LIVE requires an active provider profile for the requested capability.
-- TEST uses AtlasHub's shared Paystack test profile and real Paystack sandbox verification; it never calls Anchor.
-- Commerce TEST checkout creates and consumes TEST charges only.
+- TEST uses only the merchant's verified sandbox authorization for the selected provider; Atlas Hub does not supply a shared merchant profile.
+- TEST activity does not complete production orders or mutate production inventory/accounting. A future commerce simulation must be explicitly isolated.
 
 ## `Charge` aggregate
 
@@ -130,7 +131,7 @@ Commerce publishes `CheckoutPaymentRequestedEvent`; charges later publishes succ
 
 ## API and persistence
 
-Controllers use `AuthenticatedPrincipal.activeOrganizationId()` and `.apiEnvironment()`:
+Controllers use `AuthenticatedPrincipal.activeOrganizationId()` plus an explicit `PaymentExecutionContext`. See [payment environment boundary](../architecture/payment-environment-boundary.md).
 
 | Method | Path | Purpose |
 |---|---|---|

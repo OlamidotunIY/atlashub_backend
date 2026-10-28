@@ -157,7 +157,7 @@ Invitation
 
 ### `ApiKey` (Aggregate Root)
 
-Organizations are issued separate API key pairs for `TEST` and `LIVE` machine-to-machine access. TEST keys are available without provider production approval. LIVE key issuance requires approved AtlasHub compliance. Keys are environment-bound, can be named, revoked, and rotated, and can never switch environment after creation.
+API keys are purpose-scoped machine credentials. General platform keys carry organization, role and permissions without a TEST/LIVE mode. Payment API keys are issued separately for `TEST` or `LIVE`, remain environment-bound and can never switch environment after creation. LIVE payment capability depends on the selected provider connection's verified production authorization rather than universal Atlas Hub compliance.
 
 ```
 ApiKey
@@ -166,7 +166,7 @@ ApiKey
 ├── publicKey: String             ← "atlas_pk_..." — stored plaintext
 ├── secretKeyCiphertext: String   ← AES-256-GCM ciphertext; plaintext is never stored
 ├── name: String                  ← human-readable label (e.g., "Server Key", "Webhook Processor")
-├── environment: ApiEnvironment  ← TEST or LIVE; immutable
+├── paymentEnvironment: PaymentEnvironment? ← required only for payment-scoped keys; immutable
 ├── boundRoleId: Long             ← required; limits the key to the selected organization role
 ├── isRevoked: Boolean
 ├── lastUsedAt: ZonedDateTime     ← nullable
@@ -181,13 +181,13 @@ ApiKey
 
 **Key Generation** (in `IssueApiKeyUseCase`):
 ```
-publicKey  = "atlas_pk_" + environment + "_" + secureRandom
-secretKey        = "atlas_sk_" + environment + "_" + secureRandom
+publicKey  = "atlas_pk_" + purpose + "_" + secureRandom
+secretKey = "atlas_sk_" + purpose + "_" + secureRandom
 secretCiphertext = AES-256-GCM(secretKey)        ← stored in DB; plaintext shown once
 ```
 
 **Permissions via API Key:**
-An API key authenticates as the organization with the permissions of the role selected during key creation. The client must explicitly provide `TEST` or `LIVE` and a role belonging to the active organization. TEST keys are immediately available. LIVE key creation is rejected unless the organization's AtlasHub compliance is approved. Authentication never writes key usage synchronously; it publishes `ApiKeyAuthenticatedEvent`, and IAM records `lastUsedAt` asynchronously.
+An API key authenticates as the organization with the permissions of the role selected during key creation. A general key has no payment mode. A payment key determines TEST/LIVE for payment requests and rejects a conflicting request mode. Production operations still require an eligible active provider authorization. Authentication never writes key usage synchronously; it publishes `ApiKeyAuthenticatedEvent`, and IAM records `lastUsedAt` asynchronously. See [payment environment boundary](../architecture/payment-environment-boundary.md).
 
 ```
 ApiKey (extended)

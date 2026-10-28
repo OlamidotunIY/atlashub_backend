@@ -15,7 +15,7 @@ It uses deterministic tool results for authoritative metrics. Statistical/ML ser
 
 | Aggregate | Ownership and essential state | Key business methods |
 |---|---|---|
-| `IntelligenceConversation` | Organization, requesting user, environment, status, retained messages/turn metadata | `startTurn`, `recordToolInvocation`, `completeTurn`, `failTurn`, `close` |
+| `IntelligenceConversation` | Organization, requesting user, status, retained messages/turn metadata | `startTurn`, `recordToolInvocation`, `completeTurn`, `failTurn`, `close` |
 | `IntelligenceAnalysis` | Organization, analysis type, deterministic input snapshot references, model/prompt versions, output/evidence, status | `begin`, `attachEvidence`, `recordForecast`, `recordRecommendation`, `complete`, `fail` |
 | `ModelRelease` | Approved ML model/version, feature schema, evaluation metrics, lifecycle state | `approve`, `deprecate`, `markDrifting` |
 
@@ -23,7 +23,7 @@ It uses deterministic tool results for authoritative metrics. Statistical/ML ser
 
 ### Domain Services
 
-- `IntelligenceToolPolicyService` resolves allowed tools from the authenticated principal, organization/environment, and requested intent.
+- `IntelligenceToolPolicyService` resolves allowed tools from the authenticated principal, active organization and requested intent. A payment-specific tool may require an explicit `PaymentEnvironment`; non-payment tools do not inherit one from identity.
 - `EvidenceGroundingService` rejects a final answer lacking attributable structured evidence for a factual financial/operational claim.
 - `RecommendationPolicyService` ranks deterministic and ML-produced candidate recommendations; a model cannot issue an instruction beyond its permitted recommendation class.
 
@@ -198,10 +198,10 @@ ModelRelease
 
 ```
 AskBusinessQuestion
-  1. Authenticate principal and resolve active organization/environment.
+  1. Authenticate principal and resolve the active organization.
   2. Classify intent with a constrained intent schema; fall back to clarification on ambiguity.
   3. IntelligenceToolPolicyService permits only tools and fields allowed for that principal.
-  4. Call shared query ports using the active organization/environment.
+  4. Call shared query ports using the active organization. If the approved intent invokes a payment tool, require explicit payment environment context for that tool only.
   5. Persist evidence references and hashes before invoking the generative provider.
   6. Give the provider a structured, minimized tool-result context and output schema.
   7. Validate citations, numeric claims and required limitations.
@@ -286,7 +286,7 @@ Event payloads never contain full prompts, raw provider messages, customer PII, 
 
 ## Conversation Experience and Operational Controls
 
-Conversation contexts are organization/environment bound. A user can continue only a conversation that belongs to the active organization and for which they retain `intelligence:read`. A conversation can be closed by the user, retention policy, organization suspension, or a safety incident. Closing prevents new turns but preserves the redacted audit evidence required by policy.
+Conversation contexts are organization-bound. A user can continue only a conversation that belongs to the active organization and for which they retain `intelligence:read`. An individual payment analysis records its explicit payment environment with the tool invocation/evidence rather than changing the whole conversation or identity session. A conversation can be closed by the user, retention policy, organization suspension, or a safety incident. Closing prevents new turns but preserves the redacted audit evidence required by policy.
 
 The API supports non-streaming and server-sent/streaming response delivery behind the same `AskBusinessQuestionHandler`. The handler persists the selected tools and evidence before delivery; if the client disconnects, the analysis can finish and be retrieved by ID. Rate limits apply per organization/user/API key and provider budget limits apply before a model call. Long-running forecast/analysis work returns an analysis ID and is completed asynchronously through the existing event/outbox pattern.
 
