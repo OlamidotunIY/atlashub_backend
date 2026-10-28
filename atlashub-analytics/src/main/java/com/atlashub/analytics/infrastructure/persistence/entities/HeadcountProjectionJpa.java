@@ -47,7 +47,7 @@ public class HeadcountProjectionJpa implements BaseJpaEntity {
     @Column(name = "suspended", nullable = false)
     private int suspended;
 
-    @Column(name = "terminated", nullable = false)
+    @Column(name = "terminated_count", nullable = false)
     private int terminated;
 
     @Column(name = "new_hires_this_month", nullable = false)

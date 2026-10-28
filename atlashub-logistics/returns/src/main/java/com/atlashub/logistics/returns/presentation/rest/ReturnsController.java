@@ -41,7 +41,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping("/api/v1/logistics")
 @Tag(name = "Logistics Returns", description = "Endpoints for reverse logistics and the 3-part failed delivery and return policy")
 public class ReturnsController {
 

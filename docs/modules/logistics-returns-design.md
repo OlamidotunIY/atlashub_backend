@@ -98,10 +98,10 @@ ReturnShipment
 
 ## Presentation Layer
 
-### Controller: `ReturnsController` (`/api/v1/returns`)
-- `POST /api/v1/returns` — create return / RTO shipment with 3-part policy resolution
-- `POST /api/v1/returns/{id}/in-transit` — mark return shipment in transit
-- `POST /api/v1/returns/{id}/receive` — confirm return received at merchant outlet and release eligible refund
-- `POST /api/v1/returns/{id}/reject` — reject return after inspection
-- `GET /api/v1/returns/details?id={id}` — get return shipment details and financial breakdown
-- `GET /api/v1/returns` — list return shipments for organization
+### Controller: `ReturnsController` (`/api/v1/logistics/returns`)
+- `POST /api/v1/logistics/returns` — create return / RTO shipment with 3-part policy resolution
+- `POST /api/v1/logistics/returns/{id}/in-transit` — mark return shipment in transit
+- `POST /api/v1/logistics/returns/{id}/receive` — confirm return received at merchant outlet and release eligible refund
+- `POST /api/v1/logistics/returns/{id}/reject` — reject return after inspection
+- `GET /api/v1/logistics/returns/details?id={id}` — get return shipment details and financial breakdown
+- `GET /api/v1/logistics/returns` — list return shipments for organization
