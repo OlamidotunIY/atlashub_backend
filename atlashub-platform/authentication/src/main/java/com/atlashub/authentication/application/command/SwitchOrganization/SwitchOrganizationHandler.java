@@ -5,12 +5,9 @@ import com.atlashub.authentication.application.port.TokenPort;
 import com.atlashub.authentication.domain.entities.Session;
 import com.atlashub.authentication.domain.events.ActiveOrganizationSwitchedEvent;
 import com.atlashub.authentication.domain.exceptions.InvalidTokenException;
-import com.atlashub.authentication.domain.exceptions.LiveEnvironmentUnavailableException;
 import com.atlashub.authentication.domain.repositories.SessionRepository;
 import com.atlashub.shared.application.port.DomainEventPublisher;
-import com.atlashub.shared.application.port.ComplianceQueryPort;
 import com.atlashub.shared.application.port.MembershipQueryPort;
-import com.atlashub.shared.application.security.ApiEnvironment;
 import com.atlashub.shared.application.service.HashingUtils;
 import com.atlashub.shared.application.usecase.Command;
 import com.atlashub.shared.domain.event.EnvelopedDomainEvent;
@@ -28,18 +25,15 @@ public class SwitchOrganizationHandler extends Command<SwitchOrganizationCommand
     private final MembershipQueryPort membershipQueryPort;
     private final TokenPort tokenPort;
     private final DomainEventPublisher eventPublisher;
-    private final ComplianceQueryPort complianceQueryPort;
 
     public SwitchOrganizationHandler(SessionRepository sessionRepository,
                                      MembershipQueryPort membershipQueryPort,
                                      TokenPort tokenPort,
-                                     DomainEventPublisher eventPublisher,
-                                     ComplianceQueryPort complianceQueryPort) {
+                                     DomainEventPublisher eventPublisher) {
         this.sessionRepository = sessionRepository;
         this.membershipQueryPort = membershipQueryPort;
         this.tokenPort = tokenPort;
         this.eventPublisher = eventPublisher;
-        this.complianceQueryPort = complianceQueryPort;
     }
 
     @Override
@@ -52,10 +46,6 @@ public class SwitchOrganizationHandler extends Command<SwitchOrganizationCommand
         if (membershipQueryPort.getMemberStatus(input.userId(), input.targetOrganizationId())
                 != MembershipQueryPort.MembershipStatus.ACTIVE) {
             throw new InvalidTokenException();
-        }
-        if (ApiEnvironment.parse(current.getEnvironment()) == ApiEnvironment.LIVE
-                && !complianceQueryPort.isApproved(input.targetOrganizationId())) {
-            throw new LiveEnvironmentUnavailableException();
         }
 
         Set<String> permissions = membershipQueryPort.getPermissions(

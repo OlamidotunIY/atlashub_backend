@@ -5,9 +5,7 @@ import com.atlashub.authentication.application.port.TokenPort;
 import com.atlashub.authentication.domain.entities.Session;
 import com.atlashub.authentication.domain.events.ActiveEnvironmentSwitchedEvent;
 import com.atlashub.authentication.domain.exceptions.InvalidTokenException;
-import com.atlashub.authentication.domain.exceptions.LiveEnvironmentUnavailableException;
 import com.atlashub.authentication.domain.repositories.SessionRepository;
-import com.atlashub.shared.application.port.ComplianceQueryPort;
 import com.atlashub.shared.application.port.DomainEventPublisher;
 import com.atlashub.shared.application.port.MembershipQueryPort;
 import com.atlashub.shared.application.security.ApiEnvironment;
@@ -26,20 +24,17 @@ import java.util.UUID;
 public class SwitchEnvironmentHandler extends Command<SwitchEnvironmentCommand, RefreshTokenResponse> {
     private final SessionRepository sessionRepository;
     private final MembershipQueryPort membershipQueryPort;
-    private final ComplianceQueryPort complianceQueryPort;
     private final TokenPort tokenPort;
     private final DomainEventPublisher eventPublisher;
 
     public SwitchEnvironmentHandler(
             SessionRepository sessionRepository,
             MembershipQueryPort membershipQueryPort,
-            ComplianceQueryPort complianceQueryPort,
             TokenPort tokenPort,
             DomainEventPublisher eventPublisher
     ) {
         this.sessionRepository = sessionRepository;
         this.membershipQueryPort = membershipQueryPort;
-        this.complianceQueryPort = complianceQueryPort;
         this.tokenPort = tokenPort;
         this.eventPublisher = eventPublisher;
     }
@@ -52,16 +47,12 @@ public class SwitchEnvironmentHandler extends Command<SwitchEnvironmentCommand, 
                 .filter(session -> !session.isExpired())
                 .orElseThrow(InvalidTokenException::new);
         ApiEnvironment target = command.targetEnvironment();
-        if (target == ApiEnvironment.LIVE
-                && !complianceQueryPort.isApproved(current.getOrganizationId())) {
-            throw new LiveEnvironmentUnavailableException();
-        }
-        if (membershipQueryPort.getMemberStatus(command.userId(), current.getOrganizationId())
+        if (current.getOrganizationId() != null && membershipQueryPort.getMemberStatus(command.userId(), current.getOrganizationId())
                 != MembershipQueryPort.MembershipStatus.ACTIVE) {
             throw new InvalidTokenException();
         }
 
-        Set<String> permissions = membershipQueryPort.getPermissions(
+        Set<String> permissions = current.getOrganizationId() == null ? Set.of() : membershipQueryPort.getPermissions(
                 command.userId(), current.getOrganizationId());
         String refreshToken = UUID.randomUUID().toString();
         Long replacementId = sessionRepository.nextIdentity();
@@ -74,7 +65,7 @@ public class SwitchEnvironmentHandler extends Command<SwitchEnvironmentCommand, 
         TokenPort.AccessTokenResult access = tokenPort.generateAccessToken(
                 new TokenPort.AccessTokenPayload(
                         current.getUserId(), replacementId.toString(),
-                        current.getOrganizationId().toString(), target.name(), permissions));
+                        current.getOrganizationId() == null ? null : current.getOrganizationId().toString(), target.name(), permissions));
 
         sessionRepository.deleteById(current.getId());
         sessionRepository.save(replacement);

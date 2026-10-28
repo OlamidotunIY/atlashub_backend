@@ -91,11 +91,11 @@ public class LoginHandler extends Command<LoginCommand, LoginResponse> {
         }
 
         Long orgId = user.activeOrganizationId();
-        if (orgId == null || membershipQueryPort.getMemberStatus(account.getUserId(), orgId)
+        if (orgId != null && membershipQueryPort.getMemberStatus(account.getUserId(), orgId)
                 != MembershipQueryPort.MembershipStatus.ACTIVE) {
-            throw new InvalidCredentials();
+            orgId = null;
         }
-        Set<String> permissions = membershipQueryPort.getPermissions(account.getUserId(), orgId);
+        Set<String> permissions = orgId == null ? Set.of() : membershipQueryPort.getPermissions(account.getUserId(), orgId);
 
         boolean firstLogin = account.getLastLoginAt() == null;
 
@@ -124,7 +124,7 @@ public class LoginHandler extends Command<LoginCommand, LoginResponse> {
         ZonedDateTime sessionExpiresAt = now.plusDays(30);
         Long sessionId = sessionRepository.nextIdentity();
 
-        TokenPort.AccessTokenResult accessToken = tokenPort.generateAccessToken(new TokenPort.AccessTokenPayload(user.id().toString(), sessionId.toString(), orgId.toString(), environment, permissions));
+        TokenPort.AccessTokenResult accessToken = tokenPort.generateAccessToken(new TokenPort.AccessTokenPayload(user.id().toString(), sessionId.toString(), orgId == null ? null : orgId.toString(), environment, permissions));
 
         Session session = Session.create(sessionId, HashingUtils.sha256Hex(rawToken), account.getUserId().toString(), orgId, environment, input.deviceFingerprint(), UUID.randomUUID().toString(), sessionExpiresAt, input.ipAddress(), input.userAgent());
         sessionRepository.save(session);

@@ -80,9 +80,9 @@ public class SessionRepositoryAdapter extends JpaBaseRepository<Session, Session
                 redisTemplate.opsForValue().set(redisKey, json, ttlSeconds, TimeUnit.SECONDS);
                 redisTemplate.opsForValue().set(sessionIdKey, json, ttlSeconds, TimeUnit.SECONDS);
                 redisTemplate.opsForSet().add(userSetKey, tokenHash);
-                redisTemplate.opsForSet().add(organizationSetKey, tokenHash);
+                if (session.getOrganizationId() != null) redisTemplate.opsForSet().add(organizationSetKey, tokenHash);
                 redisTemplate.expire(userSetKey, ttlSeconds, TimeUnit.SECONDS);
-                redisTemplate.expire(organizationSetKey, ttlSeconds, TimeUnit.SECONDS);
+                if (session.getOrganizationId() != null) redisTemplate.expire(organizationSetKey, ttlSeconds, TimeUnit.SECONDS);
             } catch (JsonProcessingException e) {
                 throw new RuntimeException("Failed to serialize session to Redis", e);
             }
@@ -199,7 +199,7 @@ public class SessionRepositoryAdapter extends JpaBaseRepository<Session, Session
         String organizationSetKey = ORGANIZATION_SESSIONS_KEY_PREFIX
                 + session.getOrganizationId() + ORGANIZATION_SESSIONS_KEY_SUFFIX;
         redisTemplate.opsForSet().remove(userSetKey, session.getTokenHash());
-        redisTemplate.opsForSet().remove(organizationSetKey, session.getTokenHash());
+        if (session.getOrganizationId() != null) redisTemplate.opsForSet().remove(organizationSetKey, session.getTokenHash());
         redisTemplate.delete(SESSION_KEY_PREFIX + session.getTokenHash());
         redisTemplate.delete(SESSION_ID_KEY_PREFIX + session.getId());
     }

@@ -31,7 +31,7 @@ public class SessionJpa implements BaseJpaEntity {
     @Column(name = "user_id", nullable = false)
     private String userId;
 
-    @Column(name = "organization_id", nullable = false)
+    @Column(name = "organization_id")
     private Long organizationId;
 
     @Column(nullable = false)

@@ -1,8 +1,8 @@
 package com.atlashub.authentication.domain.entities;
 
 import com.atlashub.authentication.domain.exceptions.AuthenticationInvariantException;
-import com.atlashub.shared.domain.entities.AggregateRoot;
 import com.atlashub.shared.application.security.ApiEnvironment;
+import com.atlashub.shared.domain.entities.AggregateRoot;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -27,19 +27,16 @@ public class Session extends AggregateRoot<Long> {
     private final ZonedDateTime createdAt;
     private ZonedDateTime updatedAt;
 
-    /** All-args constructor — used by MapStruct reconstitution. */
+    /**
+     * All-args constructor — used by MapStruct reconstitution.
+     */
     @JsonCreator
-    public Session(@JsonProperty("id") Long id,
-                   @JsonProperty("expiresAt") ZonedDateTime expiresAt,
-                   @JsonProperty("tokenHash") String tokenHash,
-                   @JsonProperty("userId") String userId,
-                   @JsonProperty("organizationId") Long organizationId,
-                   @JsonProperty("environment") String environment,
+    public Session(@JsonProperty("id") Long id, @JsonProperty("expiresAt") ZonedDateTime expiresAt,
+                   @JsonProperty("tokenHash") String tokenHash, @JsonProperty("userId") String userId,
+                   @JsonProperty("organizationId") Long organizationId, @JsonProperty("environment") String environment,
                    @JsonProperty("deviceFingerprint") String deviceFingerprint,
-                   @JsonProperty("tokenFamilyId") String tokenFamilyId,
-                   @JsonProperty("ipAddress") String ipAddress,
-                   @JsonProperty("userAgent") String userAgent,
-                   @JsonProperty("createdAt") ZonedDateTime createdAt,
+                   @JsonProperty("tokenFamilyId") String tokenFamilyId, @JsonProperty("ipAddress") String ipAddress,
+                   @JsonProperty("userAgent") String userAgent, @JsonProperty("createdAt") ZonedDateTime createdAt,
                    @JsonProperty("updatedAt") ZonedDateTime updatedAt) {
         this.id = id;
         this.expiresAt = expiresAt;
@@ -55,21 +52,26 @@ public class Session extends AggregateRoot<Long> {
         this.updatedAt = updatedAt;
     }
 
-    public static Session create(Long id, String tokenHash, String userId, Long organizationId,
-                                 String environment, String deviceFingerprint, String tokenFamilyId,
-                                 ZonedDateTime expiresAt, String ipAddress, String userAgent) {
+    public static Session create(Long id, String tokenHash, String userId, Long organizationId, String environment,
+                                 String deviceFingerprint, String tokenFamilyId, ZonedDateTime expiresAt,
+                                 String ipAddress, String userAgent) {
         if (id == null) throw new AuthenticationInvariantException("Session id cannot be null");
-        if (tokenHash == null || tokenHash.isBlank()) throw new AuthenticationInvariantException("Session token hash cannot be empty");
-        if (userId == null || userId.isBlank()) throw new AuthenticationInvariantException("Session userId cannot be empty");
-        if (organizationId == null) throw new AuthenticationInvariantException("Session organizationId cannot be null");
-        if (environment == null || environment.isBlank()) throw new AuthenticationInvariantException("Session environment is required");
-        if (deviceFingerprint == null || deviceFingerprint.isBlank()) throw new AuthenticationInvariantException("Device fingerprint is required");
-        if (tokenFamilyId == null || tokenFamilyId.isBlank()) throw new AuthenticationInvariantException("Token family is required");
-        if (expiresAt == null || !expiresAt.isAfter(ZonedDateTime.now())) throw new AuthenticationInvariantException("Session expiry must be in the future");
+        if (tokenHash == null || tokenHash.isBlank())
+            throw new AuthenticationInvariantException("Session token hash cannot be empty");
+        if (userId == null || userId.isBlank())
+            throw new AuthenticationInvariantException("Session userId cannot be empty");
+        if (environment == null || environment.isBlank())
+            throw new AuthenticationInvariantException("Session environment is required");
+        if (deviceFingerprint == null || deviceFingerprint.isBlank())
+            throw new AuthenticationInvariantException("Device fingerprint is required");
+        if (tokenFamilyId == null || tokenFamilyId.isBlank())
+            throw new AuthenticationInvariantException("Token family is required");
+        if (expiresAt == null || !expiresAt.isAfter(ZonedDateTime.now()))
+            throw new AuthenticationInvariantException("Session expiry must be in the future");
 
         ZonedDateTime now = ZonedDateTime.now();
-        return new Session(id, expiresAt, tokenHash, userId, organizationId, environment,
-                deviceFingerprint, tokenFamilyId, ipAddress, userAgent, now, now);
+        return new Session(id, expiresAt, tokenHash, userId, organizationId, environment, deviceFingerprint,
+                tokenFamilyId, ipAddress, userAgent, now, now);
     }
 
     public boolean isExpired() {
