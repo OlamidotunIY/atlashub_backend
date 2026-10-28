@@ -20,8 +20,17 @@ public record InitializeChargeRequest(
         @NotBlank String sourceReferenceId,
         String customerReferenceId,
         Long terminalAssignmentId,
+        Long providerConnectionId,
         Map<String, Object> metadata
 ) {
+    public InitializeChargeRequest(String reference, BigDecimal amount, CurrencyCode currency, ChargeChannel channel,
+                                   String email, String sourceSystem, String sourceReferenceId,
+                                   String customerReferenceId, Long terminalAssignmentId,
+                                   Map<String, Object> metadata) {
+        this(reference, amount, currency, channel, email, sourceSystem, sourceReferenceId, customerReferenceId,
+                terminalAssignmentId, null, metadata);
+    }
+
     public InitializeChargeRequest {
         metadata = metadata == null ? Map.of() : Map.copyOf(metadata);
     }

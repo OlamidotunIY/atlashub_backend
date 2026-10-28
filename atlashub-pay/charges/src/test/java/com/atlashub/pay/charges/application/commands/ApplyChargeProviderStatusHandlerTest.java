@@ -54,7 +54,7 @@ class ApplyChargeProviderStatusHandlerTest {
         Charge charge = createPendingCharge();
         when(chargeRepository.findByProviderReferenceAndEnvironment("PAYSTACK-REF-123", ApiEnvironment.TEST))
                 .thenReturn(Optional.of(charge));
-        when(providerPort.fetchStatus("PAYSTACK-REF-123", ApiEnvironment.TEST)).thenReturn(
+        when(providerPort.fetchStatus(20L, "PAYSTACK-REF-123", ApiEnvironment.TEST)).thenReturn(
                 new ChargeProviderPort.ProviderStatus("PAYSTACK-REF-123", "success",
                         new BigDecimal("5000.00"), CurrencyCode.NGN, "card"));
 
@@ -80,7 +80,7 @@ class ApplyChargeProviderStatusHandlerTest {
         Charge charge = createPendingCharge();
         when(chargeRepository.findByProviderReferenceAndEnvironment("PAYSTACK-REF-123", ApiEnvironment.TEST))
                 .thenReturn(Optional.of(charge));
-        when(providerPort.fetchStatus("PAYSTACK-REF-123", ApiEnvironment.TEST)).thenReturn(
+        when(providerPort.fetchStatus(20L, "PAYSTACK-REF-123", ApiEnvironment.TEST)).thenReturn(
                 new ChargeProviderPort.ProviderStatus("PAYSTACK-REF-123", "failed",
                         new BigDecimal("5000.00"), CurrencyCode.NGN, "card"));
 
@@ -126,7 +126,7 @@ class ApplyChargeProviderStatusHandlerTest {
         Charge charge = createPendingCharge();
         when(chargeRepository.findByProviderReferenceAndEnvironment("PAYSTACK-REF-123", ApiEnvironment.TEST))
                 .thenReturn(Optional.of(charge));
-        when(providerPort.fetchStatus("PAYSTACK-REF-123", ApiEnvironment.TEST)).thenReturn(
+        when(providerPort.fetchStatus(20L, "PAYSTACK-REF-123", ApiEnvironment.TEST)).thenReturn(
                 new ChargeProviderPort.ProviderStatus("PAYSTACK-REF-123", "success",
                         new BigDecimal("1000.00"), CurrencyCode.NGN, "card"));
 

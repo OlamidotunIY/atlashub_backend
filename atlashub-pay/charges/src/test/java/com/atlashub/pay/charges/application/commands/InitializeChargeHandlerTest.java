@@ -10,7 +10,7 @@ import com.atlashub.shared.application.port.ChargeProviderPort;
 import com.atlashub.pay.charges.domain.repositories.ChargeRepository;
 import com.atlashub.pay.charges.domain.valueobject.ChargeChannel;
 import com.atlashub.pay.charges.domain.valueobject.ChargeStatus;
-import com.atlashub.shared.application.port.PaymentProviderProfileQueryPort;
+import com.atlashub.shared.application.port.ProviderConnectionQueryPort;
 import com.atlashub.shared.application.security.ApiEnvironment;
 import com.atlashub.shared.domain.valueobject.CurrencyCode;
 import com.atlashub.shared.domain.valueobject.Money;
@@ -23,6 +23,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.util.Map;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -41,7 +42,7 @@ class InitializeChargeHandlerTest {
     private ChargeRepository chargeRepository;
 
     @Mock
-    private PaymentProviderProfileQueryPort providerProfileQueryPort;
+    private ProviderConnectionQueryPort providerConnectionQueryPort;
 
     @Mock
     private ChargeProviderPort chargeProviderPort;
@@ -69,17 +70,11 @@ class InitializeChargeHandlerTest {
         when(chargeRepository.findByOrganizationIdAndEnvironmentAndReference(10L, ApiEnvironment.TEST, "REF-CHG-1"))
                 .thenReturn(Optional.empty());
 
-        PaymentProviderProfileQueryPort.ProviderProfile profile = new PaymentProviderProfileQueryPort.ProviderProfile(
-                100L,
-                10L,
-                ApiEnvironment.TEST,
-                "PAYSTACK",
-                "ACCT_12345",
-                "SETTLE_REF_1",
-                Set.of("CARD_COLLECTION")
-        );
-        when(providerProfileQueryPort.findActiveProfile(10L, ApiEnvironment.TEST, "CARD_COLLECTION"))
-                .thenReturn(Optional.of(profile));
+        ProviderConnectionQueryPort.ProviderConnection connection =
+                new ProviderConnectionQueryPort.ProviderConnection(100L, "PAYSTACK", "ACCT_12345",
+                        Set.of("CARD_COLLECTION"));
+        when(providerConnectionQueryPort.findEligible(10L, ApiEnvironment.TEST, "NGN", "CARD_COLLECTION"))
+                .thenReturn(List.of(connection));
 
         when(chargeRepository.nextIdentity()).thenReturn(999L);
 
@@ -141,7 +136,7 @@ class InitializeChargeHandlerTest {
         assertEquals(ChargeStatus.PENDING, result.status());
         assertEquals("EXISTING-PROV-REF", result.providerReference());
 
-        verify(providerProfileQueryPort, never()).findActiveProfile(any(), any(), any());
+        verify(providerConnectionQueryPort, never()).findEligible(any(), any(), any(), any());
         verify(chargeProviderPort, never()).initialize(any());
         verify(chargeRepository, never()).save(any());
     }
@@ -166,8 +161,8 @@ class InitializeChargeHandlerTest {
         when(chargeRepository.findByOrganizationIdAndEnvironmentAndReference(10L, ApiEnvironment.LIVE, "REF-CHG-1"))
                 .thenReturn(Optional.empty());
 
-        when(providerProfileQueryPort.findActiveProfile(10L, ApiEnvironment.LIVE, "CARD_COLLECTION"))
-                .thenReturn(Optional.empty());
+        when(providerConnectionQueryPort.findEligible(10L, ApiEnvironment.LIVE, "NGN", "CARD_COLLECTION"))
+                .thenReturn(List.of());
 
         assertThrows(InvalidChargeException.class, () -> handler.execute(command));
         verify(chargeProviderPort, never()).initialize(any());
@@ -194,11 +189,11 @@ class InitializeChargeHandlerTest {
         when(chargeRepository.findByOrganizationIdAndEnvironmentAndReference(10L, ApiEnvironment.TEST, "REF-CHG-1"))
                 .thenReturn(Optional.empty());
 
-        PaymentProviderProfileQueryPort.ProviderProfile profile = new PaymentProviderProfileQueryPort.ProviderProfile(
-                100L, 10L, ApiEnvironment.TEST, "PAYSTACK", null, null, Set.of("USSD_COLLECTION")
-        );
-        when(providerProfileQueryPort.findActiveProfile(10L, ApiEnvironment.TEST, "USSD_COLLECTION"))
-                .thenReturn(Optional.of(profile));
+        ProviderConnectionQueryPort.ProviderConnection connection =
+                new ProviderConnectionQueryPort.ProviderConnection(100L, "PAYSTACK", "ACCT_12345",
+                        Set.of("USSD_COLLECTION"));
+        when(providerConnectionQueryPort.findEligible(10L, ApiEnvironment.TEST, "NGN", "USSD_COLLECTION"))
+                .thenReturn(List.of(connection));
         when(chargeRepository.nextIdentity()).thenReturn(111L);
 
         when(chargeProviderPort.initialize(any()))

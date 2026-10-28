@@ -16,7 +16,7 @@ public record ChargeResult(
         Money amount,
         ChargeChannel channel,
         PaymentProvider provider,
-        Long providerProfileId,
+        Long providerConnectionId,
         String providerReference,
         String sourceSystem,
         String sourceReferenceId,

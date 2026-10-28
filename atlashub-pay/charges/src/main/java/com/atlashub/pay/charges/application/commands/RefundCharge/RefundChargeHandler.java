@@ -33,11 +33,13 @@ public class RefundChargeHandler extends Command<RefundChargeCommand, RefundChar
         try {
             ChargeProviderPort.RefundResult providerResult = provider.refund(new ChargeProviderPort.RefundRequest(
                     charge.getEnvironment(), charge.getProviderReference(), charge.getAmount().amount(),
-                    charge.getAmount().currency(), input.reason(), "refund-" + charge.getId()
+                    charge.getAmount().currency(), input.reason(), "refund-" + charge.getId(),
+                    charge.getProviderConnectionId()
             ));
             charge.markRefundSubmitted(providerResult.refundReference());
         } catch (RuntimeException error) {
-            charge.failRefund(error.getMessage());
+            // Submission may have reached the provider. Preserve the pending state so
+            // reconciliation can determine the final outcome without double-refunding.
             chargeRepository.save(charge);
             throw error;
         }

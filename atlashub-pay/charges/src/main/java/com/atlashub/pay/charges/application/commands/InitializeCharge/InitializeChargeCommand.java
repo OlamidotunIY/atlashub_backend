@@ -17,6 +17,14 @@ public record InitializeChargeCommand(
         String sourceReferenceId,
         String customerReferenceId,
         Long terminalAssignmentId,
+        Long providerConnectionId,
         Map<String, Object> metadata
 ) {
+    public InitializeChargeCommand(Long organizationId, ApiEnvironment environment, String reference, Money amount,
+                                   ChargeChannel channel, String email, String sourceSystem,
+                                   String sourceReferenceId, String customerReferenceId, Long terminalAssignmentId,
+                                   Map<String, Object> metadata) {
+        this(organizationId, environment, reference, amount, channel, email, sourceSystem, sourceReferenceId,
+                customerReferenceId, terminalAssignmentId, null, metadata);
+    }
 }

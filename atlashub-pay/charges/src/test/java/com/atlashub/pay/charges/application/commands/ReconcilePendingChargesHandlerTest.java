@@ -62,7 +62,7 @@ class ReconcilePendingChargesHandlerTest {
         Charge charge = createPendingCharge("PAYSTACK-REF-1");
         ZonedDateTime cutoff = ZonedDateTime.now().minusMinutes(15);
         when(chargeRepository.findPendingCharges(cutoff)).thenReturn(List.of(charge));
-        when(chargeProviderPort.fetchStatus("PAYSTACK-REF-1", ApiEnvironment.TEST)).thenReturn(
+        when(chargeProviderPort.fetchStatus(20L, "PAYSTACK-REF-1", ApiEnvironment.TEST)).thenReturn(
                 new ChargeProviderPort.ProviderStatus(
                         "PAYSTACK-REF-1",
                         "success",
@@ -86,7 +86,7 @@ class ReconcilePendingChargesHandlerTest {
         Charge charge = createPendingCharge("PAYSTACK-REF-2");
         ZonedDateTime cutoff = ZonedDateTime.now().minusMinutes(15);
         when(chargeRepository.findPendingCharges(cutoff)).thenReturn(List.of(charge));
-        when(chargeProviderPort.fetchStatus("PAYSTACK-REF-2", ApiEnvironment.TEST)).thenReturn(
+        when(chargeProviderPort.fetchStatus(20L, "PAYSTACK-REF-2", ApiEnvironment.TEST)).thenReturn(
                 new ChargeProviderPort.ProviderStatus(
                         "PAYSTACK-REF-2",
                         "abandoned",
@@ -125,7 +125,7 @@ class ReconcilePendingChargesHandlerTest {
 
         assertEquals(0, result.reconciledCount());
         assertEquals(0, result.failureCount());
-        verify(chargeProviderPort, never()).fetchStatus(any(), any());
+        verify(chargeProviderPort, never()).fetchStatus(any(), any(), any());
         verify(chargeRepository, never()).save(any());
     }
 
@@ -135,7 +135,7 @@ class ReconcilePendingChargesHandlerTest {
         Charge charge = createPendingCharge("PAYSTACK-REF-3");
         ZonedDateTime cutoff = ZonedDateTime.now().minusMinutes(15);
         when(chargeRepository.findPendingCharges(cutoff)).thenReturn(List.of(charge));
-        when(chargeProviderPort.fetchStatus("PAYSTACK-REF-3", ApiEnvironment.TEST))
+        when(chargeProviderPort.fetchStatus(20L, "PAYSTACK-REF-3", ApiEnvironment.TEST))
                 .thenThrow(new RuntimeException("Network timeout"));
 
         ReconcilePendingChargesResult result = handler.execute(new ReconcilePendingChargesCommand(cutoff));
@@ -152,7 +152,7 @@ class ReconcilePendingChargesHandlerTest {
         Charge charge = createPendingCharge("PAYSTACK-REF-4");
         ZonedDateTime cutoff = ZonedDateTime.now().minusMinutes(15);
         when(chargeRepository.findPendingCharges(cutoff)).thenReturn(List.of(charge));
-        when(chargeProviderPort.fetchStatus("PAYSTACK-REF-4", ApiEnvironment.TEST)).thenReturn(
+        when(chargeProviderPort.fetchStatus(20L, "PAYSTACK-REF-4", ApiEnvironment.TEST)).thenReturn(
                 new ChargeProviderPort.ProviderStatus(
                         "PAYSTACK-REF-4",
                         "pending",

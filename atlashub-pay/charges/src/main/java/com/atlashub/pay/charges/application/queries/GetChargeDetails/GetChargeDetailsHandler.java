@@ -27,7 +27,7 @@ public class GetChargeDetailsHandler extends Query<GetChargeDetailsQuery, Charge
 
         return new ChargeResult(charge.getId(), charge.getOrganizationId(), charge.getEnvironment(),
                 charge.getReference(), charge.getAmount(), charge.getChannel(), charge.getProvider(),
-                charge.getProviderProfileId(), charge.getProviderReference(), charge.getSourceSystem(),
+                charge.getProviderConnectionId(), charge.getProviderReference(), charge.getSourceSystem(),
                 charge.getSourceReferenceId(), charge.getCustomerReferenceId(), charge.getProviderFee(),
                 charge.getStatus(), charge.getAuthorizationUrl(), charge.getAccessCode(),
                 charge.getFailureMessage(), charge.getProviderRefundReference(), charge.getRefundReason(),

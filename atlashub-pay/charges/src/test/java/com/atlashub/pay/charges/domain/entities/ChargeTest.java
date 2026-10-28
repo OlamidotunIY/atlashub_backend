@@ -67,7 +67,7 @@ class ChargeTest {
         assertEquals(new BigDecimal("5000.0000"), charge.getAmount().amount());
         assertEquals(ChargeChannel.CARD, charge.getChannel());
         assertEquals(PaymentProvider.PAYSTACK, charge.getProvider());
-        assertEquals(20L, charge.getProviderProfileId());
+        assertEquals(20L, charge.getProviderConnectionId());
         assertEquals("COMMERCE", charge.getSourceSystem());
         assertEquals("ORD-999", charge.getSourceReferenceId());
         assertEquals(ChargeStatus.INITIALIZED, charge.getStatus());

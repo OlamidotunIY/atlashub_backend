@@ -39,7 +39,8 @@ public class ApplyChargeProviderStatusHandler extends Command<ApplyChargeProvide
             throw new ChargeNotFoundException(refIdentifier != null ? refIdentifier : "unknown");
         }
 
-        ChargeProviderPort.ProviderStatus verified = providerPort.fetchStatus(charge.getProviderReference(),
+        ChargeProviderPort.ProviderStatus verified = providerPort.fetchStatus(charge.getProviderConnectionId(),
+                charge.getProviderReference(),
                 input.environment());
         if ("success".equalsIgnoreCase(verified.status())) {
             charge.succeed(verified.providerReference(),

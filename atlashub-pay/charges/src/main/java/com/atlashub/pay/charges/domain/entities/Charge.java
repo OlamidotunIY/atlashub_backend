@@ -30,7 +30,7 @@ public class Charge extends AggregateRoot<Long> {
     private final Money amount;
     private final ChargeChannel channel;
     private final PaymentProvider provider;
-    private final Long providerProfileId;
+    private final Long providerConnectionId;
     private String providerReference;
     private final String sourceSystem;
     private final String sourceReferenceId;
@@ -52,18 +52,18 @@ public class Charge extends AggregateRoot<Long> {
     private ZonedDateTime updatedAt;
 
     public Charge(Long id, Long organizationId, ApiEnvironment environment, String reference, Money amount,
-                  ChargeChannel channel, PaymentProvider provider, Long providerProfileId, String providerReference,
+                  ChargeChannel channel, PaymentProvider provider, Long providerConnectionId, String providerReference,
                   String sourceSystem, String sourceReferenceId, ChargeStatus status, String authorizationUrl,
                   String accessCode, String failureMessage, ZonedDateTime successfulAt, ZonedDateTime expiresAt,
                   ZonedDateTime createdAt, ZonedDateTime updatedAt) {
-        this(id, organizationId, environment, reference, amount, channel, provider, providerProfileId,
+        this(id, organizationId, environment, reference, amount, channel, provider, providerConnectionId,
                 providerReference, sourceSystem, sourceReferenceId, status, authorizationUrl, accessCode,
                 failureMessage, null, null, null, null, null, null, null, null,
                 successfulAt, expiresAt, createdAt, updatedAt);
     }
 
     public Charge(Long id, Long organizationId, ApiEnvironment environment, String reference, Money amount,
-                  ChargeChannel channel, PaymentProvider provider, Long providerProfileId, String providerReference,
+                  ChargeChannel channel, PaymentProvider provider, Long providerConnectionId, String providerReference,
                   String sourceSystem, String sourceReferenceId, ChargeStatus status, String authorizationUrl,
                   String accessCode, String failureMessage, String providerRefundReference, String refundReason,
                   ZonedDateTime refundedAt, String customerReferenceId, Money providerFee,
@@ -77,7 +77,7 @@ public class Charge extends AggregateRoot<Long> {
         this.amount = amount;
         this.channel = channel;
         this.provider = provider;
-        this.providerProfileId = providerProfileId;
+        this.providerConnectionId = providerConnectionId;
         this.providerReference = providerReference;
         this.sourceSystem = sourceSystem;
         this.sourceReferenceId = sourceReferenceId;
@@ -102,14 +102,22 @@ public class Charge extends AggregateRoot<Long> {
 
     public static Charge initialize(Long id, Long org, ApiEnvironment env, String reference, Money amount,
                                     ChargeChannel channel, Long profileId, String source, String sourceRef) {
-        return initialize(id, org, env, reference, amount, channel, profileId, source, sourceRef, null);
+        return initialize(id, org, env, reference, amount, channel, PaymentProvider.PAYSTACK, profileId,
+                source, sourceRef, null);
     }
 
     public static Charge initialize(Long id, Long org, ApiEnvironment env, String reference, Money amount,
                                     ChargeChannel channel, Long profileId, String source, String sourceRef,
                                     String customerReferenceId) {
+        return initialize(id, org, env, reference, amount, channel, PaymentProvider.PAYSTACK, profileId,
+                source, sourceRef, customerReferenceId);
+    }
+
+    public static Charge initialize(Long id, Long org, ApiEnvironment env, String reference, Money amount,
+                                    ChargeChannel channel, PaymentProvider provider, Long profileId, String source,
+                                    String sourceRef, String customerReferenceId) {
         ZonedDateTime now = ZonedDateTime.now();
-        return new Charge(id, org, env, reference, amount, channel, PaymentProvider.PAYSTACK, profileId, null, source,
+        return new Charge(id, org, env, reference, amount, channel, provider, profileId, null, source,
                 sourceRef, ChargeStatus.INITIALIZED, null, null, null, null, null, null, customerReferenceId, null,
                 null, null, null, null, now.plusMinutes(30), now, now);
     }
@@ -128,6 +136,15 @@ public class Charge extends AggregateRoot<Long> {
                 CorrelationId.getOrCreate(), new ChargeInitializedEvent.Payload(organizationId, environment.name(),
                 reference, amount, channel.name(), provider.name(), sourceSystem, sourceReferenceId,
                 customerReferenceId, updatedAt)));
+    }
+
+    public void markSubmissionUnknown() {
+        if (status != ChargeStatus.INITIALIZED)
+            throw new InvalidChargeException("Only an initialized charge can have an uncertain submission");
+        providerReference = reference;
+        failureMessage = "Provider submission outcome is pending verification";
+        status = ChargeStatus.PENDING;
+        touch();
     }
 
     public void succeed(String gatewayReference, Money confirmedAmount, CurrencyCode confirmedCurrency) {
@@ -273,7 +290,7 @@ public class Charge extends AggregateRoot<Long> {
     private void validate() {
         if (id == null || organizationId == null || environment == null || blank(reference) || amount == null ||
                 amount.amount().signum() <= 0 || amount.currency() == null || channel == null || provider == null ||
-                providerProfileId == null || blank(sourceSystem) || blank(sourceReferenceId) || status == null ||
+                providerConnectionId == null || blank(sourceSystem) || blank(sourceReferenceId) || status == null ||
                 expiresAt == null || createdAt == null || updatedAt == null)
             throw new InvalidChargeException("Complete valid charge data is required");
     }

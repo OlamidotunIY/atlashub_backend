@@ -51,8 +51,8 @@ public class ChargeJpa implements BaseJpaEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private PaymentProvider provider;
-    @Column(name = "provider_profile_id", nullable = false)
-    private Long providerProfileId;
+    @Column(name = "provider_connection_id", nullable = false)
+    private Long providerConnectionId;
     @Column(name = "provider_reference")
     private String providerReference;
     @Column(name = "source_system", nullable = false)

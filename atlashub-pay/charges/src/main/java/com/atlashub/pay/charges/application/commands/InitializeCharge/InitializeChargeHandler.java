@@ -4,26 +4,27 @@ import com.atlashub.pay.charges.domain.entities.Charge;
 import com.atlashub.pay.charges.domain.exceptions.InvalidChargeException;
 import com.atlashub.shared.application.port.ChargeProviderPort;
 import com.atlashub.pay.charges.domain.repositories.ChargeRepository;
-import com.atlashub.shared.application.port.PaymentProviderProfileQueryPort;
+import com.atlashub.shared.application.port.ProviderConnectionQueryPort;
 import com.atlashub.shared.application.usecase.Command;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Optional;
 
 @Component
 public class InitializeChargeHandler extends Command<InitializeChargeCommand, InitializeChargeResult> {
 
     private final ChargeRepository chargeRepository;
-    private final PaymentProviderProfileQueryPort providerProfileQueryPort;
+    private final ProviderConnectionQueryPort providerConnectionQueryPort;
     private final ChargeProviderPort chargeProviderPort;
 
     public InitializeChargeHandler(
             ChargeRepository chargeRepository,
-            PaymentProviderProfileQueryPort providerProfileQueryPort,
+            ProviderConnectionQueryPort providerConnectionQueryPort,
             ChargeProviderPort chargeProviderPort
     ) {
         this.chargeRepository = chargeRepository;
-        this.providerProfileQueryPort = providerProfileQueryPort;
+        this.providerConnectionQueryPort = providerConnectionQueryPort;
         this.chargeProviderPort = chargeProviderPort;
     }
 
@@ -44,9 +45,21 @@ public class InitializeChargeHandler extends Command<InitializeChargeCommand, In
             case USSD -> "USSD_COLLECTION";
         };
 
-        PaymentProviderProfileQueryPort.ProviderProfile profile = providerProfileQueryPort
-                .findActiveProfile(input.organizationId(), input.environment(), capability)
-                .orElseThrow(() -> new InvalidChargeException("Capability not enabled for channel: " + input.channel()));
+        List<ProviderConnectionQueryPort.ProviderConnection> eligible = providerConnectionQueryPort.findEligible(
+                input.organizationId(), input.environment(), input.amount().currency().name(), capability);
+        ProviderConnectionQueryPort.ProviderConnection connection;
+        if (input.providerConnectionId() != null) {
+            connection = eligible.stream().filter(candidate ->
+                            candidate.connectionId().equals(input.providerConnectionId()))
+                    .findFirst().orElseThrow(() -> new InvalidChargeException(
+                            "Selected provider connection is not eligible for this payment"));
+        } else if (eligible.size() == 1) {
+            connection = eligible.getFirst();
+        } else if (eligible.isEmpty()) {
+            throw new InvalidChargeException("Capability not enabled for channel: " + input.channel());
+        } else {
+            throw new InvalidChargeException("Select a provider connection for this payment");
+        }
 
         Long chargeId = chargeRepository.nextIdentity();
 
@@ -57,7 +70,8 @@ public class InitializeChargeHandler extends Command<InitializeChargeCommand, In
                 input.reference(),
                 input.amount(),
                 input.channel(),
-                profile.profileId(),
+                com.atlashub.pay.charges.domain.valueobject.PaymentProvider.valueOf(connection.provider()),
+                connection.connectionId(),
                 input.sourceSystem(),
                 input.sourceReferenceId(),
                 input.customerReferenceId()
@@ -70,12 +84,12 @@ public class InitializeChargeHandler extends Command<InitializeChargeCommand, In
                     new ChargeProviderPort.InitializationRequest(
                             input.environment(), input.email(), input.amount().amount(), input.amount().currency(),
                             ChargeProviderPort.ChargeChannel.valueOf(input.channel().name()), input.reference(),
-                            profile.externalMerchantId(), input.metadata()));
+                            connection.externalMerchantId(), input.metadata(), connection.connectionId()));
             charge.markPending(providerResult.providerReference(), providerResult.authorizationUrl(),
                     providerResult.accessCode());
             saved = chargeRepository.save(charge);
         } catch (RuntimeException error) {
-            charge.fail("Provider initialization failed");
+            charge.markSubmissionUnknown();
             chargeRepository.save(charge);
             throw error;
         }

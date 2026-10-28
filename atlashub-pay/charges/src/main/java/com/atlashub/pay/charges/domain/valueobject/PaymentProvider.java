@@ -1,3 +1,3 @@
 package com.atlashub.pay.charges.domain.valueobject;
 
-public enum PaymentProvider {PAYSTACK}
+public enum PaymentProvider {PAYSTACK, ANCHOR, STRIPE}

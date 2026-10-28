@@ -58,7 +58,8 @@ public class ChargeController {
                 new InitializeChargeCommand(principal.activeOrganizationId(), principal.apiEnvironment(),
                         request.reference(), Money.of(request.amount(), request.currency()), request.channel(),
                         request.email(), request.sourceSystem(), request.sourceReferenceId(),
-                        request.customerReferenceId(), request.terminalAssignmentId(), request.metadata());
+                        request.customerReferenceId(), request.terminalAssignmentId(),
+                        request.providerConnectionId(), request.metadata());
 
         InitializeChargeResult result = initializeChargeHandler.execute(command);
         InitializeChargeResponse response =
@@ -96,7 +97,8 @@ public class ChargeController {
         ChargeResult result = getChargeDetailsHandler.execute(query);
         ChargeDetailsResponse response =
                 new ChargeDetailsResponse(result.id(), result.reference(), result.amount().amount(),
-                        result.amount().currency(), result.channel(), result.status(), result.customerReferenceId(),
+                        result.amount().currency(), result.channel(), result.provider(),
+                        result.providerConnectionId(), result.status(), result.customerReferenceId(),
                         result.providerFee() == null ? null : result.providerFee().amount(), result.authorizationUrl(),
                         result.accessCode(), result.failureMessage(), result.providerRefundReference(),
                         result.refundReason(), result.refundedAt(), result.disputeReference(),

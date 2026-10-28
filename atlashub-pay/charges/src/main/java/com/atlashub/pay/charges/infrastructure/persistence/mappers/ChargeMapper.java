@@ -34,7 +34,7 @@ public interface ChargeMapper extends DomainMapper<Charge, ChargeJpa> {
                 persistence.getId(), persistence.getOrganizationId(), persistence.getEnvironment(),
                 persistence.getReference(),
                 new com.atlashub.shared.domain.valueobject.Money(persistence.getAmount(), persistence.getCurrency()),
-                persistence.getChannel(), persistence.getProvider(), persistence.getProviderProfileId(),
+                persistence.getChannel(), persistence.getProvider(), persistence.getProviderConnectionId(),
                 persistence.getProviderReference(), persistence.getSourceSystem(), persistence.getSourceReferenceId(),
                 persistence.getStatus(), persistence.getAuthorizationUrl(), persistence.getAccessCode(),
                 persistence.getFailureMessage(), persistence.getProviderRefundReference(), persistence.getRefundReason(),

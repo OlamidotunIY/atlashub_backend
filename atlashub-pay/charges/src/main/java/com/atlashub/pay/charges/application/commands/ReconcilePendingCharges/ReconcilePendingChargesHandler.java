@@ -41,6 +41,7 @@ public class ReconcilePendingChargesHandler extends Command<ReconcilePendingChar
 
             try {
                 ChargeProviderPort.ProviderStatus status = chargeProviderPort.fetchStatus(
+                        charge.getProviderConnectionId(),
                         providerRef,
                         charge.getEnvironment()
                 );
