@@ -25,7 +25,7 @@ class DispatchBankingProviderRequestsHandlerTest {
         AnchorBankingPort anchor = mock(AnchorBankingPort.class);
         BankingProviderRequest request = BankingProviderRequest.createDepositLifecycle(
                 1L, RequestType.UNFREEZE_DEPOSIT, 2L,
-                "unfreeze-1", "LIVE", "Compliance reinstated");
+                "unfreeze-1", "LIVE", "Manual restriction removed");
         BusinessDepositAccount account = mock(BusinessDepositAccount.class);
         OrganizationBankingProfile profile = mock(OrganizationBankingProfile.class);
         when(requests.findPending(10)).thenReturn(java.util.List.of(request));

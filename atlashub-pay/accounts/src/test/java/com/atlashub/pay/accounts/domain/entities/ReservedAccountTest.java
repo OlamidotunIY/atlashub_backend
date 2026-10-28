@@ -13,13 +13,13 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class ReservedAccountTest {
     @Test
-    void provider_activation_does_not_bypass_an_active_compliance_restriction() {
+    void provider_activation_does_not_bypass_an_active_manual_restriction() {
         ReservedAccount account = ReservedAccount.request(1L, 10L, ApiEnvironment.LIVE,
                 ReservedAccountOwnerType.CUSTOMER, "customer-1", 20L, "anchor-subaccount",
                 "NINEPSB", "request-1", CurrencyCode.NGN);
         assertTrue(account.peekDomainEvents().stream().anyMatch(ReservedAccountRequestedEvent.class::isInstance));
         account.markSubmitted("reserved-1", "anchor-customer");
-        account.restrict(BankingRestrictionType.COMPLIANCE);
+        account.restrict(BankingRestrictionType.MANUAL);
         assertTrue(account.peekDomainEvents().stream().anyMatch(ReservedAccountSuspendedEvent.class::isInstance));
 
         account.activate(new ConfirmedBankingDetails(
@@ -28,7 +28,7 @@ class ReservedAccountTest {
         assertEquals(ExternalAccountStatus.SUSPENDED, account.getStatus());
         assertEquals(1, account.peekDomainEvents().stream()
                 .filter(ReservedAccountActivatedEvent.class::isInstance).count());
-        account.removeRestriction(BankingRestrictionType.COMPLIANCE);
+        account.removeRestriction(BankingRestrictionType.MANUAL);
         assertEquals(ExternalAccountStatus.ACTIVE, account.getStatus());
         assertTrue(account.peekDomainEvents().stream().anyMatch(ReservedAccountReactivatedEvent.class::isInstance));
     }

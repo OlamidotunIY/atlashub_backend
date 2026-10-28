@@ -65,16 +65,6 @@ public class ApplyAnchorAccountStatusHandler extends Command<ApplyAnchorAccountS
                 && !profile.getActiveRestrictions().isEmpty()) return;
         deposit.activate(command.details());
         depositRepository.save(deposit);
-        if (profile.getActiveRestrictions().contains(BankingRestrictionType.COMPLIANCE)) {
-            String freezeReference = "org-banking-freeze-" + deposit.getOrganizationId() + "-"
-                    + environment.name().toLowerCase() + "-activation";
-            if (providerRequestRepository.findByRequestReferenceAndApiEnvironment(
-                    freezeReference, environment.name()).isEmpty()) {
-                providerRequestRepository.save(BankingProviderRequest.createDepositLifecycle(
-                        providerRequestRepository.nextIdentity(), RequestType.FREEZE_DEPOSIT,
-                        deposit.getId(), freezeReference, environment.name(), "Compliance suspended"));
-            }
-        }
         profile.activate();
         profileRepository.save(profile);
     }

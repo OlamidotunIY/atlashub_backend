@@ -31,9 +31,9 @@ class BankingProviderRequestTest {
     void creates_environment_scoped_deposit_lifecycle_request() {
         BankingProviderRequest request = BankingProviderRequest.createDepositLifecycle(
                 1L, RequestType.FREEZE_DEPOSIT, 2L,
-                "freeze-1", "live", "Compliance suspended");
+                "freeze-1", "live", "Manual restriction");
 
         assertEquals("LIVE", request.getApiEnvironment());
-        assertEquals("Compliance suspended", request.getOperationReason());
+        assertEquals("Manual restriction", request.getOperationReason());
     }
 }

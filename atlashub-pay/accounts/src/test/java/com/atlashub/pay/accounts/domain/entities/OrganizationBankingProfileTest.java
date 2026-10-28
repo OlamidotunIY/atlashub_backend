@@ -31,10 +31,10 @@ class OrganizationBankingProfileTest {
                 1L, 10L, ApiEnvironment.LIVE, "live-customer");
         profile.linkDepositAccount(20L);
         profile.activate();
-        profile.restrict(BankingRestrictionType.COMPLIANCE);
+        profile.restrict(BankingRestrictionType.MANUAL);
         profile.restrict(BankingRestrictionType.RISK);
 
-        profile.removeRestriction(BankingRestrictionType.COMPLIANCE);
+        profile.removeRestriction(BankingRestrictionType.MANUAL);
 
         assertEquals(BankingProfileStatus.SUSPENDED, profile.getStatus());
         assertFalse(profile.isUsable());

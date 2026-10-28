@@ -40,9 +40,9 @@ class ApplyOrganizationBankingRestrictionHandlerTest {
 
         new ApplyOrganizationBankingRestrictionHandler(profiles, deposits, reserved, requests)
                 .execute(new ApplyOrganizationBankingRestrictionCommand(
-                        10L, true, "COMPLIANCE", "Compliance suspended", "event-1"));
+                        10L, true, "MANUAL", "Manual restriction", "event-1"));
 
-        assertTrue(profile.getActiveRestrictions().contains(BankingRestrictionType.COMPLIANCE));
+        assertTrue(profile.getActiveRestrictions().contains(BankingRestrictionType.MANUAL));
         ArgumentCaptor<BankingProviderRequest> request = ArgumentCaptor.forClass(BankingProviderRequest.class);
         verify(requests).save(request.capture());
         assertEquals(RequestType.FREEZE_DEPOSIT, request.getValue().getRequestType());
